@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OG Capper Slip Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 OG Capper Bet Slip</h1>
+    <label for="wager1">Wager 1</label>
+    <input type="text" id="wager1" placeholder="e.g. CUBS F5 -0.5 1.5 units" />
+    <label for="wager2">Wager 2</label>
+    <input type="text" id="wager2" placeholder="Optional second wager" />
+    <button onclick="generateSlip()">Create Slip</button>
+    <pre id="output"></pre>
+  </div>
+  <script src="logic.js"></script>
+</body>
+</html>
