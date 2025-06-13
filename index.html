@@ -1,22 +1,60 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OG Capper Slip Generator</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OG Capper Bets Slip Generator</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #00BFFF;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 1rem;
+      font-family: monospace;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      background-color: #00BFFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    pre {
+      background: #000;
+      color: #0f0;
+      padding: 20px;
+      white-space: pre;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin-top: 20px;
+      border: 1px solid #00BFFF;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎯 OG Capper Bet Slip</h1>
-    <label for="wager1">Wager 1</label>
-    <input type="text" id="wager1" placeholder="e.g. CUBS F5 -0.5 1.5 units" />
-    <label for="wager2">Wager 2</label>
-    <input type="text" id="wager2" placeholder="Optional second wager" />
-    <button onclick="fetchData()">Create Slip</button>
-    <pre id="output"></pre>
-  </div>
-  <script src="engine.js"></script>
+  <h1>OG Capper Bets Slip Generator</h1>
+  <label for="wager1">Wager 1</label>
+  <input type="text" id="wager1" name="wager1" />
+
+  <label for="wager2">Wager 2</label>
+  <input type="text" id="wager2" name="wager2" />
+
+  <button onclick="generateSlip()">Create Slip</button>
+
+  <pre id="output"></pre>
+
+  <script src="logic.js"></script>
 </body>
 </html>
