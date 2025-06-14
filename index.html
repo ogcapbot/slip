@@ -1,145 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OG Capper Bets Slip</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OG Capper Bets - Live Ticket Generator</title>
   <style>
     body {
-      background: #0f0f0f;
-      font-family: 'Arial', sans-serif;
-      color: #f5f5f5;
-      margin: 0;
-      padding: 0;
+      font-family: monospace;
+      background: #f4f4f4;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
     }
-    .container {
-      margin-top: 40px;
-      width: 90%;
-      max-width: 500px;
-      background: #1a1a1a;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
-    }
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
+    input, button {
+      padding: 10px;
+      margin: 5px;
       font-size: 16px;
     }
-    input, select {
-      background: #2a2a2a;
-      color: #fff;
-    }
-    button {
-      background: #ff4747;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-    }
     .ticket {
-      background: #fff;
-      color: #000;
-      padding: 15px;
-      border-radius: 8px;
+      background: white;
+      border: 2px solid #000;
+      padding: 16px;
+      width: 375px;
       margin-top: 20px;
-      font-family: monospace;
-      white-space: pre-wrap;
     }
-    .error {
-      color: #ff6b6b;
-      margin-top: 12px;
-      font-size: 14px;
+    .logo {
+      width: 180px;
+    }
+    .official {
+      text-align: center;
+      font-weight: bold;
+      color: red;
+      margin: 8px 0;
+    }
+    .type-label {
+      font-weight: bold;
+      border: 1px solid black;
+      padding: 4px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .hype {
+      font-size: 11px;
+      text-align: center;
+      font-style: italic;
+    }
+    .details {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+    .ticket-id {
+      font-size: 11px;
+      margin: 10px 0;
+    }
+    .footer {
+      font-size: 9px;
+      text-align: center;
+      white-space: pre-line;
+      margin-top: 20px;
+    }
+    .barcode-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .barcode-footer img {
+      width: 80px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>OG Capper Bet Slip</h2>
-    <input type="text" id="betInput" placeholder="e.g. Tigers ML 1.5u" />
-    <select id="unitValue">
-      <option value="100">$100 per unit</option>
-      <option value="50">$50 per unit</option>
-      <option value="25">$25 per unit</option>
-    </select>
-    <button onclick="generateSlip()">Generate Ticket</button>
-    <div class="error" id="error"></div>
-    <div class="ticket" id="ticketOutput"></div>
-  </div>
+  <h2>OG Capper Bets - Ticket Generator</h2>
+  <input type="text" id="wagerInput" placeholder="Example: yankees ml 1.5u">
+  <button onclick="generateSlip()">Create Ticket</button>
+
+  <div id="output"></div>
+
   <script>
-    const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
-    const supportedSports = {
-      "baseball_mlb": "Baseball",
-      "soccer_epl": "Soccer",
-      "soccer_usa_mls": "Soccer",
-      "soccer_italy_serie_a": "Soccer",
-      "soccer_spain_la_liga": "Soccer",
-      "mma_mixed_martial_arts": "MMA",
-      "boxing": "Boxing"
-    };
-
     async function generateSlip() {
-      const input = document.getElementById("betInput").value.toLowerCase();
-      const unitValue = parseFloat(document.getElementById("unitValue").value);
-      const errorEl = document.getElementById("error");
-      const ticketEl = document.getElementById("ticketOutput");
+      const input = document.getElementById('wagerInput').value;
+      const output = document.getElementById('output');
+      output.innerHTML = 'Loading...';
 
-      errorEl.textContent = "";
-      ticketEl.textContent = "";
+      try {
+        const response = await fetch(`https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?regions=us&markets=h2h&apiKey=5b3cb0e7293b7d6217e6e99fa768fd0b`);
+        const games = await response.json();
 
-      const match = input.match(/(.+?)\s+(ml|moneyline)\s+(\d+(\.\d+)?)u/);
-      if (!match) {
-        errorEl.textContent = "Could not parse your input. Try 'Yankees ML 1.5u'.";
-        return;
-      }
+        const game = games.find(g => input.toLowerCase().includes(g.home_team.toLowerCase()) || input.toLowerCase().includes(g.away_team.toLowerCase()));
 
-      const query = match[1].trim();
-      const units = parseFloat(match[3]);
-      const wager = units * unitValue;
-
-      let matched = null;
-
-      for (let sport in supportedSports) {
-        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`);
-        const games = await res.json();
-
-        for (let game of games) {
-          const teams = [game.home_team.toLowerCase(), game.away_team.toLowerCase()];
-          const teamMatch = teams.find(t => t.includes(query));
-          if (teamMatch) {
-            const isHome = teamMatch === game.home_team.toLowerCase();
-            const odds = game.bookmakers?.[0]?.markets?.[0]?.outcomes.find(o => o.name.toLowerCase().includes(query));
-            const opponent = isHome ? game.away_team : game.home_team;
-            const line = odds ? odds.price : "-110";
-            const sportName = supportedSports[sport];
-            const kickoff = new Date(game.commence_time);
-            const timeStr = kickoff.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-
-            const buzzword = units >= 2 ? "🔥 SHARP MOVE" : units >= 1 ? "💰 Smart Play" : "🎯 Target Shot";
-            const headline = `${new Date().toLocaleDateString()} – $${wager.toFixed(2)} ${buzzword} – ${sportName} – Starts @ ${timeStr}`;
-
-            ticketEl.textContent = `${headline}
--------------------------------
-OG Capper Bets
-Bet Type: MONEYLINE
-Wager: ${units}u ($${wager.toFixed(2)})
-Team: ${teamMatch.toUpperCase()}
-Opponent: ${opponent.toUpperCase()}
-Odds: ${line}
-Kickoff: ${kickoff.toLocaleString()}
--------------------------------
-Status: UPCOMING`;
-            return;
-          }
+        if (!game) {
+          output.innerHTML = 'Game not found. Please check your input or try a different team.';
+          return;
         }
+
+        const odds = game.bookmakers[0].markets[0].outcomes.find(o => input.toLowerCase().includes(o.name.toLowerCase()));
+        const now = new Date();
+        const since1981 = Math.floor((now.getTime() - new Date('1981-07-25T12:00:00Z').getTime()) / 1000);
+        const ticketId = `${since1981}-${(now.getMonth()+1).toString().padStart(2, '0')}${now.getFullYear().toString().slice(-2)}`;
+
+        const amount = (parseFloat(input.match(/\d+(\.\d+)?(?=u)/)?.[0] || '1') * 100).toFixed(2);
+
+        const html = `
+        <div class="ticket">
+          <img src="mainLogo.jpeg" alt="OG Capper Logo" class="logo">
+          <div class="official">OFFICIAL PICK</div>
+          <div class="type-label">STRAIGHT BET</div>
+          <div class="hype">"${now.toLocaleDateString()} - $${amount} BANGER - MLB - Starts @ ${new Date(game.commence_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} EST"</div>
+          <div class="details">
+            <strong>Event:</strong> ${game.home_team} vs. ${game.away_team}<br>
+            <strong>Market:</strong> Moneyline<br>
+            <strong>Pick:</strong> ${odds.name}<br>
+            <strong>Units:</strong> ${amount/100}u<br>
+            <strong>Odds:</strong> ${odds.price}<br>
+            <strong>Time:</strong> ${new Date(game.commence_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} EST
+          </div>
+          <div class="ticket-id">Ticket #: ${ticketId}</div>
+          <div class="barcode-footer">
+            <img src="HO1981MU0725RU - Barcode2.png" alt="barcode">
+            <img src="OG Capper Bet - QR Code.png" alt="qr code">
+          </div>
+          <div class="footer">
+════════════════⚠️ STRICT CONFIDENTIALITY NOTICE ⚠️════════════════  
+All OG Capper Bets Content—Public, Free, or Paid—is for your eyes only. Leaking, Sharing, Copying, Forwarding 
+       or Using ANY Content is Strictly Prohibited. Violation = Immediate Termination. No Refund. No Appeal.  
+                    Lifetime Ban. Full Terms, Rules and Disclaimers are available @ ogcapperbets.com.
+          </div>
+        </div>`;
+
+        output.innerHTML = html;
+      } catch (err) {
+        output.innerHTML = `Error: ${err.message}`;
       }
-      errorEl.textContent = `Game not found. Double check your input. If this keeps happening, send us a screenshot.`;
     }
   </script>
 </body>
