@@ -1,7 +1,1 @@
-{
-  "leagues": [
-    "baseball_mlb",
-    "baseball_japan_np",
-    "baseball_kbo"
-  ]
-}
+{"betTypes":["ML","F5","TOTAL","SPREAD"]}

@@ -1,9 +1,1 @@
-{
-  "leagues": [
-    "soccer_epl",
-    "soccer_spain_la_liga",
-    "soccer_italy_serie_a",
-    "soccer_germany_bundesliga",
-    "soccer_france_ligue_one"
-  ]
-}
+{"betTypes":["ML","TOTAL","BTTS","HANDICAP"]}
