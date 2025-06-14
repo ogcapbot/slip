@@ -56,7 +56,7 @@
     async function createTicket() {
       document.getElementById('error').textContent = "";
       const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\\s+(ml)\\s+(\\d+(\\.\\d+)?)(u?)$/i);
+      const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
 
       if (!match) {
         document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
