@@ -1,110 +1,24 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OG Capper Bets - Ticket Generator</title>
-  <style>
-    body {
-      font-family: monospace;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container {
-      width: 340px;
-      background: #fff;
-      border: 2px dashed #000;
-      padding: 16px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-      position: relative;
-    }
-    .logo {
-      width: 100%;
-      height: auto;
-      margin-bottom: 8px;
-    }
-    .title {
-      text-align: center;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-    .label {
-      text-align: center;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    .details {
-      border-top: 1px dashed #000;
-      border-bottom: 1px dashed #000;
-      padding: 8px 0;
-      margin-bottom: 8px;
-    }
-    .fine-print {
-      font-size: 9px;
-      text-align: center;
-      white-space: pre-line;
-      margin-top: 12px;
-    }
-    .barcode, .qr {
-      width: 100%;
-      height: auto;
-      margin-top: 8px;
-    }
-    input, button {
-      margin-top: 12px;
-      padding: 6px;
-      font-size: 14px;
-      width: 320px;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OG Capper Bets</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <input id="wagerInput" placeholder="e.g. yankees ml 1.5u" />
-  <button onclick="generateTicket()">Create Ticket</button>
-
-  <div class="container" id="ticket" style="display:none">
-    <img class="logo" src="mainLogo.jpeg" alt="OG Capper Logo">
-    <div class="title">OFFICIAL PICK</div>
-    <div class="label" id="betType">STRAIGHT BET</div>
-    <div class="details" id="betDetails"></div>
-    <div id="ticketID"></div>
-    <div class="fine-print">
-════════════════⚠️ STRICT CONFIDENTIALITY NOTICE ⚠️════════════════  
-All OG Capper Bets Content—Public, Free, or Paid—is for your eyes only. Leaking, Sharing, Copying, Forwarding 
-       or Using ANY Content is Strictly Prohibited. Violation = Immediate Termination. No Refund. No Appeal.  
-                    Lifetime Ban. Full Terms, Rules and Disclaimers are available @ ogcapperbets.com.
-    </div>
-    <img class="barcode" src="HO1981MU0725RU - Barcode2.png" alt="Barcode">
-    <img class="qr" src="OG Capper Bet - QR Code.png" alt="QR Code">
+  <div id="app">
+    <h1>OG Capper Bets - Ticket Generator</h1>
+    <input type="text" id="userInput" placeholder="e.g. Yankees ML 1.5u"/>
+    <select id="unitValue">
+      <option value="100">$100 per unit</option>
+      <option value="50">$50 per unit</option>
+      <option value="25">$25 per unit</option>
+    </select>
+    <button onclick="generateTicket()">Generate Ticket</button>
+    <pre id="output"></pre>
   </div>
-
-  <script>
-    function generateTicket() {
-      const input = document.getElementById('wagerInput').value.trim();
-      if (!input) return alert('Enter a wager like: yankees ml 1.5u');
-
-      const betDetails = document.getElementById('betDetails');
-      const ticket = document.getElementById('ticket');
-      const ticketID = document.getElementById('ticketID');
-
-      // Fake parse — replace with real logic / API in next update
-      betDetails.innerText = input.toUpperCase();
-
-      // Ticket ID
-      const baseDate = new Date('July 25, 1981 12:00:00');
-      const now = new Date();
-      const seconds = Math.floor((now - baseDate) / 1000);
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const year = now.getFullYear().toString().slice(-2);
-      ticketID.innerText = `TICKET #: ${seconds}-${month}${year}`;
-
-      ticket.style.display = 'block';
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
