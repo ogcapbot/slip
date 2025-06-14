@@ -51,10 +51,12 @@
 
   <script>
     const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
-    const sport = "baseball_mlb";
+    const sports = ["baseball", "soccer", "mma", "boxing", "basketball"];
 
     async function createTicket() {
       document.getElementById('error').textContent = "";
+      document.getElementById('ticket').innerHTML = "";
+
       const input = document.getElementById('betInput').value.trim();
       const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
 
@@ -66,49 +68,61 @@
       const teamQuery = match[1].toLowerCase();
       const units = match[3];
 
-      const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`;
+      for (let sport of sports) {
+        try {
+          const configRes = await fetch(`config/${sport}.json`);
+          if (!configRes.ok) throw new Error("Missing config");
 
-      try {
-        const res = await fetch(url);
-        const games = await res.json();
+          const config = await configRes.json();
+          const leagues = config.leagues;
 
-        const game = games.find(g =>
-          g.home_team.toLowerCase().includes(teamQuery) ||
-          g.away_team.toLowerCase().includes(teamQuery)
-        );
+          for (let league of leagues) {
+            const url = `https://api.the-odds-api.com/v4/sports/${league}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`;
+            const res = await fetch(url);
+            const games = await res.json();
 
-        if (!game) {
-          document.getElementById('error').textContent = "Game not found. Try a different team.";
-          return;
+            const game = games.find(g =>
+              g.home_team.toLowerCase().includes(teamQuery) ||
+              g.away_team.toLowerCase().includes(teamQuery)
+            );
+
+            if (!game) continue;
+
+            const isHome = game.home_team.toLowerCase().includes(teamQuery);
+            const team = isHome ? game.home_team : game.away_team;
+            const opponent = isHome ? game.away_team : game.home_team;
+
+            const bookmaker = game.bookmakers[0];
+            const outcome = bookmaker.markets[0].outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
+
+            const ticketHTML = `
+              <div class='ticket'>
+                <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+                <hr>
+                <p><strong>BOOK:</strong> ${bookmaker.title}</p>
+                <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+                <p><strong>DATE:</strong> ${new Date(game.commence_time).toLocaleString()}</p>
+                <hr>
+                <p><strong>SELECTION:</strong> ${team} ML</p>
+                <p><strong>WAGER:</strong> ${units} unit(s)</p>
+                <p><strong>ODDS:</strong> ${outcome.price > 0 ? '+' + outcome.price : outcome.price}</p>
+                <hr>
+                <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+              </div>
+            `;
+            document.getElementById('ticket').innerHTML = ticketHTML;
+            return;
+          }
+        } catch (e) {
+          if (e.message === "Missing config") {
+            document.getElementById('error').textContent = `Sorry, ${sport.toUpperCase()} bets aren't supported yet — we're working on it.`;
+          } else {
+            console.error(e);
+          }
         }
-
-        const isHome = game.home_team.toLowerCase().includes(teamQuery);
-        const team = isHome ? game.home_team : game.away_team;
-        const opponent = isHome ? game.away_team : game.home_team;
-
-        const bookmaker = game.bookmakers[0];
-        const outcome = bookmaker.markets[0].outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
-
-        const ticketHTML = `
-          <div class='ticket'>
-            <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-            <hr>
-            <p><strong>BOOK:</strong> ${bookmaker.title}</p>
-            <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
-            <p><strong>DATE:</strong> ${new Date(game.commence_time).toLocaleString()}</p>
-            <hr>
-            <p><strong>SELECTION:</strong> ${team} ML</p>
-            <p><strong>WAGER:</strong> ${units} unit(s)</p>
-            <p><strong>ODDS:</strong> ${outcome.price > 0 ? '+' + outcome.price : outcome.price}</p>
-            <hr>
-            <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-          </div>
-        `;
-        document.getElementById('ticket').innerHTML = ticketHTML;
-      } catch (e) {
-        document.getElementById('error').textContent = "Something went wrong. Check console.";
-        console.error(e);
       }
+
+      document.getElementById('error').textContent = `Game not found for: ${teamQuery}`;
     }
   </script>
 </body>
