@@ -1,60 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OG Capper Bets Slip Generator v2</title>
-  <style>
-    body {
-      background-color: #111;
-      color: #00BFFF;
-      font-family: 'Courier New', monospace;
-      padding: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      font-size: 1rem;
-      font-family: monospace;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      font-size: 1rem;
-      background-color: #00BFFF;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    pre {
-      background: #000;
-      color: #0f0;
-      padding: 20px;
-      white-space: pre;
-      overflow-x: auto;
-      font-family: 'Courier New', monospace;
-      margin-top: 20px;
-      border: 1px solid #00BFFF;
-    }
-  </style>
-</head>
-<body>
-  <h1>OG Capper Bets Slip Generator</h1>
-  <label for="wager1">Wager 1</label>
-  <input type="text" id="wager1" name="wager1" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎯 OG Capper Bet Ticket</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>🎯 <span class="yellow">OG Capper Bet Ticket</span></h1>
 
-  <label for="wager2">Wager 2</label>
-  <input type="text" id="wager2" name="wager2" />
+      <div id="access-code-section">
+        <label for="accessCode">Enter Capper Access Code:</label>
+        <input
+          type="text"
+          id="accessCode"
+          maxlength="6"
+          placeholder="Access Code"
+          inputmode="numeric"
+        />
+        <button onclick="verifyAccessCode()">Verify Access</button>
+        <p id="accessMessage"></p>
+      </div>
 
-  <button onclick="generateSlip()">Create Slip</button>
+      <form id="wagerForm" style="display: none">
+        <div id="unitSection">
+          <label for="unitSize">Unit Size ($):</label>
+          <select id="unitSize" name="unitSize"></select>
+        </div>
 
-  <pre id="output"></pre>
+        <div id="wagers"></div>
 
-  <script src="logic.js"></script>
-</body>
+        <button type="button" onclick="addWager()">➕ Add Another Wager</button>
+        <button type="submit">🖨️ Print Ticket</button>
+      </form>
+
+      <div id="ticketOutput" class="ticket-preview"></div>
+    </main>
+    <script src="logic.js"></script>
+    <script src="engine.js"></script>
+  </body>
 </html>
