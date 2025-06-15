@@ -1,0 +1,12 @@
+body { font-family: monospace; background: #f4f4f4; color: #111; }
+.container { max-width: 400px; margin: 2rem auto; padding: 1rem; background: #fff; }
+#bet-input { width: calc(100% - 12px); padding: 6px; margin-bottom: 8px; }
+button { padding: 6px 12px; margin: 4px 0; }
+.title-box { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+.hidden { display: none; }
+.slip-preview {
+  border: 1px dashed #888;
+  padding: 8px;
+  white-space: pre-wrap;
+  background: #fafafa;
+}

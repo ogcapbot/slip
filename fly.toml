@@ -1,0 +1,9 @@
+app = "slip-rdu7la"
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
