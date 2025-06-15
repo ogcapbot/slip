@@ -63,19 +63,20 @@
   <script>
     const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
 
-    function formatDeep(obj, prefix = '') {
+    function extractKeyFields(obj, prefix = '') {
       let output = '';
       if (Array.isArray(obj)) {
         obj.forEach((item, index) => {
-          output += formatDeep(item, `${prefix}[${index}]`);
+          output += extractKeyFields(item, `${prefix}[${index}]`);
         });
       } else if (typeof obj === 'object' && obj !== null) {
         for (const key in obj) {
           const newPrefix = prefix ? `${prefix}.${key}` : key;
-          output += formatDeep(obj[key], newPrefix);
+          if (key.toLowerCase() === 'key') {
+            output += `[[${newPrefix}]]: ${obj[key]}\n`;
+          }
+          output += extractKeyFields(obj[key], newPrefix);
         }
-      } else {
-        output += `[[${prefix}]]: ${obj}\n`;
       }
       return output;
     }
@@ -112,7 +113,7 @@
         let averagePrice = null;
 
         for (const sport of activeSports) {
-          const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`);
+          const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american`);
           if (!oddsRes.ok) continue;
 
           const games = await oddsRes.json();
@@ -171,8 +172,8 @@
         `;
         document.getElementById('ticket').innerHTML = ticketHTML;
 
-        const readableOutput = "###\nOPTIONS\n###\n\n" + formatDeep(foundGame);
-        document.getElementById('optionsOutput').textContent = readableOutput;
+        const keyFieldsOutput = "###\nOPTIONS\n###\n\n" + extractKeyFields(foundGame);
+        document.getElementById('optionsOutput').textContent = keyFieldsOutput;
 
       } catch (e) {
         document.getElementById('error').textContent = "Something went wrong. Check console.";
