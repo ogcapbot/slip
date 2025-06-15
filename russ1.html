@@ -1,162 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>OG Capper Bets - Ticket</title>
-  <style>
-    body {
-      font-family: monospace;
-      background: #111;
-      color: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-    }
-    input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      width: 300px;
-      margin-bottom: 1rem;
-    }
-    button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-    }
-    .ticket {
-      background: #fff;
-      padding: 1.5rem;
-      margin-top: 2rem;
-      border: 2px dashed #000;
-      width: 350px;
-    }
-    .ticket-title {
-      font-weight: bold;
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-    .error {
-      color: red;
-      margin-top: 1rem;
-    }
-    pre {
-      color: white;
-      background-color: #222;
-      padding: 1rem;
-      margin-top: 2rem;
-      max-width: 90%;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-  </style>
-</head>
-<body>
-  <h2 style="color: white;">OG Capper Bets Ticket</h2>
-  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
-  <button onclick="createTicket()">Generate Ticket</button>
-  <div id="ticket"></div>
-  <div id="error" class="error"></div>
-  <pre id="optionsOutput"></pre>
+<script>
+  const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
 
-  <script>
-    const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
-    const sport = "baseball_mlb";
-
-    function formatGameData(game) {
-      let output = "###\nOPTIONS\n###\n\n";
-      for (const key in game) {
-        if (typeof game[key] === "object") {
-          if (Array.isArray(game[key])) {
-            output += `[[${key}]]: ${game[key].length} item(s)\n`;
-            game[key].forEach((item, idx) => {
-              output += `  → Item ${idx + 1}:\n`;
-              for (const subKey in item) {
-                if (typeof item[subKey] !== "object") {
-                  output += `    [[${subKey}]]: ${item[subKey]}\n`;
-                }
-              }
-            });
-          } else {
-            output += `[[${key}]]: Object\n`;
-            for (const subKey in game[key]) {
-              if (typeof game[key][subKey] !== "object") {
-                output += `  [[${subKey}]]: ${game[key][subKey]}\n`;
+  function formatGameData(game) {
+    let output = "###\nOPTIONS\n###\n\n";
+    for (const key in game) {
+      if (typeof game[key] === "object") {
+        if (Array.isArray(game[key])) {
+          output += `[[${key}]]: ${game[key].length} item(s)\n`;
+          game[key].forEach((item, idx) => {
+            output += `  → Item ${idx + 1}:\n`;
+            for (const subKey in item) {
+              if (typeof item[subKey] !== "object") {
+                output += `    [[${subKey}]]: ${item[subKey]}\n`;
               }
             }
-          }
+          });
         } else {
-          output += `[[${key}]]: ${game[key]}\n`;
+          output += `[[${key}]]: Object\n`;
+          for (const subKey in game[key]) {
+            if (typeof game[key][subKey] !== "object") {
+              output += `  [[${subKey}]]: ${game[key][subKey]}\n`;
+            }
+          }
         }
+      } else {
+        output += `[[${key}]]: ${game[key]}\n`;
       }
-      return output;
+    }
+    return output;
+  }
+
+  async function createTicket() {
+    document.getElementById('error').textContent = "";
+    document.getElementById('optionsOutput').textContent = "";
+
+    const input = document.getElementById('betInput').value.trim();
+    const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
+
+    if (!match) {
+      document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
+      return;
     }
 
-    async function createTicket() {
-      document.getElementById('error').textContent = "";
-      document.getElementById('optionsOutput').textContent = "";
+    const teamQuery = match[1].toLowerCase();
+    const units = match[3];
 
-      const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
+    try {
+      // Get all active sports
+      const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${apiKey}`);
+      const sportsList = await sportsRes.json();
+      const activeSports = sportsList.filter(s => s.active);
 
-      if (!match) {
-        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
-        return;
-      }
+      let foundGame = null;
+      let sportUsed = null;
 
-      const teamQuery = match[1].toLowerCase();
-      const units = match[3];
+      for (const sport of activeSports) {
+        const url = `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`;
+        const oddsRes = await fetch(url);
+        if (!oddsRes.ok) continue;
 
-      const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`;
-
-      try {
-        const res = await fetch(url);
-        const games = await res.json();
-
-        const game = games.find(g =>
+        const games = await oddsRes.json();
+        const match = games.find(g =>
           g.home_team.toLowerCase().includes(teamQuery) ||
           g.away_team.toLowerCase().includes(teamQuery)
         );
 
-        if (!game) {
-          document.getElementById('error').textContent = "Game not found. Try a different team.";
-          return;
+        if (match) {
+          foundGame = match;
+          sportUsed = sport.title;
+          break;
         }
-
-        const isHome = game.home_team.toLowerCase().includes(teamQuery);
-        const team = isHome ? game.home_team : game.away_team;
-        const opponent = isHome ? game.away_team : game.home_team;
-
-        const bookmaker = game.bookmakers[0];
-        const outcome = bookmaker.markets[0].outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
-
-        const ticketHTML = `
-          <div class='ticket'>
-            <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-            <hr>
-            <p><strong>BOOK:</strong> ${bookmaker.title}</p>
-            <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
-            <p><strong>DATE:</strong> ${new Date(game.commence_time).toLocaleString()}</p>
-            <hr>
-            <p><strong>SELECTION:</strong> ${team} ML</p>
-            <p><strong>WAGER:</strong> ${units} unit(s)</p>
-            <p><strong>ODDS:</strong> ${outcome.price > 0 ? '+' + outcome.price : outcome.price}</p>
-            <hr>
-            <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-          </div>
-        `;
-        document.getElementById('ticket').innerHTML = ticketHTML;
-
-        // Format and display readable OPTIONS
-        const readableOutput = formatGameData(game);
-        document.getElementById('optionsOutput').textContent = readableOutput;
-
-      } catch (e) {
-        document.getElementById('error').textContent = "Something went wrong. Check console.";
-        console.error(e);
       }
+
+      if (!foundGame) {
+        document.getElementById('error').textContent = "Team not found across available sports.";
+        return;
+      }
+
+      const isHome = foundGame.home_team.toLowerCase().includes(teamQuery);
+      const team = isHome ? foundGame.home_team : foundGame.away_team;
+      const opponent = isHome ? foundGame.away_team : foundGame.home_team;
+
+      const bookmaker = foundGame.bookmakers[0];
+      const outcome = bookmaker.markets[0].outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
+
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>SPORT:</strong> ${sportUsed}</p>
+          <p><strong>BOOK:</strong> ${bookmaker.title}</p>
+          <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+          <p><strong>DATE:</strong> ${new Date(foundGame.commence_time).toLocaleString()}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${team} ML</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>ODDS:</strong> ${outcome.price > 0 ? '+' + outcome.price : outcome.price}</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+      document.getElementById('ticket').innerHTML = ticketHTML;
+
+      const readableOutput = formatGameData(foundGame);
+      document.getElementById('optionsOutput').textContent = readableOutput;
+
+    } catch (e) {
+      document.getElementById('error').textContent = "Something went wrong. Check console.";
+      console.error(e);
     }
-  </script>
-</body>
-</html>
+  }
+</script>
