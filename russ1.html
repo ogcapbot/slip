@@ -64,6 +64,35 @@
     const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
     const sport = "baseball_mlb";
 
+    function formatGameData(game) {
+      let output = "###\nOPTIONS\n###\n\n";
+      for (const key in game) {
+        if (typeof game[key] === "object") {
+          if (Array.isArray(game[key])) {
+            output += `[[${key}]]: ${game[key].length} item(s)\n`;
+            game[key].forEach((item, idx) => {
+              output += `  → Item ${idx + 1}:\n`;
+              for (const subKey in item) {
+                if (typeof item[subKey] !== "object") {
+                  output += `    [[${subKey}]]: ${item[subKey]}\n`;
+                }
+              }
+            });
+          } else {
+            output += `[[${key}]]: Object\n`;
+            for (const subKey in game[key]) {
+              if (typeof game[key][subKey] !== "object") {
+                output += `  [[${subKey}]]: ${game[key][subKey]}\n`;
+              }
+            }
+          }
+        } else {
+          output += `[[${key}]]: ${game[key]}\n`;
+        }
+      }
+      return output;
+    }
+
     async function createTicket() {
       document.getElementById('error').textContent = "";
       document.getElementById('optionsOutput').textContent = "";
@@ -119,9 +148,10 @@
         `;
         document.getElementById('ticket').innerHTML = ticketHTML;
 
-        // Add API output section
-        const apiData = JSON.stringify(game, null, 2);
-        document.getElementById('optionsOutput').textContent = `###\nOPTIONS\n###\n\n${apiData}`;
+        // Format and display readable OPTIONS
+        const readableOutput = formatGameData(game);
+        document.getElementById('optionsOutput').textContent = readableOutput;
+
       } catch (e) {
         document.getElementById('error').textContent = "Something went wrong. Check console.";
         console.error(e);
