@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OG Capper Bets — Live Bet Slip</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>OG Capper Bets</h1>
+    <form id="bet-form">
+      <input type="text" id="bet-input" placeholder="e.g. pirates f5 ml 1u" required />
+      <button type="submit">Build Slip</button>
+    </form>
+
+    <div id="title-box" class="title-box hidden">
+      <blockquote id="ticket-title"></blockquote>
+      <button id="copy-title">Copy Title</button>
+    </div>
+
+    <pre id="slip-preview" class="slip-preview"></pre>
+    <button id="download-btn" class="hidden">Download PDF</button>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>
