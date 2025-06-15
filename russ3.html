@@ -72,47 +72,51 @@
       const teamQuery = match[1].toLowerCase();
       const units = match[3];
 
-      const sportsListRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${oddsKey}`);
-      const sportsList = sportsListRes.ok ? await sportsListRes.json() : [];
-
       let foundGame = null;
       let avgOdds = null;
       let dkOdds = null;
 
+      const sportsListRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${oddsKey}`);
+      const sportsList = sportsListRes.ok ? await sportsListRes.json() : [];
+
       for (const sport of sportsList.filter(s => s.active)) {
-        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${oddsKey}&regions=us&markets=all&oddsFormat=american`);
-        if (!res.ok) continue;
-
-        let games = [];
+        const oddsURL = `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${oddsKey}&regions=us&markets=all&oddsFormat=american`;
         try {
-          games = await res.json();
-        } catch {}
+          const res = await fetch(oddsURL);
+          if (!res.ok) {
+            if (res.status === 422) continue;
+            throw new Error(`Fetch failed: ${res.status}`);
+          }
+          const games = await res.json();
+          const game = games.find(g =>
+            g.home_team?.toLowerCase().includes(teamQuery) ||
+            g.away_team?.toLowerCase().includes(teamQuery)
+          );
+          if (!game) continue;
 
-        const game = games.find(g =>
-          g.home_team?.toLowerCase().includes(teamQuery) ||
-          g.away_team?.toLowerCase().includes(teamQuery)
-        );
-        if (!game) continue;
+          const isHome = game.home_team.toLowerCase().includes(teamQuery);
+          const team = isHome ? game.home_team : game.away_team;
 
-        const isHome = game.home_team.toLowerCase().includes(teamQuery);
-        const team = isHome ? game.home_team : game.away_team;
-
-        const allOdds = [];
-        for (const book of game.bookmakers || []) {
-          const h2h = book.markets?.find(m => m.key === "h2h");
-          const outcome = h2h?.outcomes?.find(o => o.name.toLowerCase() === team.toLowerCase());
-          if (outcome) {
-            allOdds.push(outcome.price);
-            if (book.title.toLowerCase().includes("draftkings")) {
-              dkOdds = outcome.price;
+          const allOdds = [];
+          for (const book of game.bookmakers || []) {
+            const h2h = book.markets?.find(m => m.key === "h2h");
+            const outcome = h2h?.outcomes?.find(o => o.name.toLowerCase() === team.toLowerCase());
+            if (outcome) {
+              allOdds.push(outcome.price);
+              if (book.title.toLowerCase().includes("draftkings")) {
+                dkOdds = outcome.price;
+              }
             }
           }
-        }
 
-        if (allOdds.length > 0) {
-          foundGame = game;
-          avgOdds = Math.round(allOdds.reduce((a, b) => a + b, 0) / allOdds.length);
-          break;
+          if (allOdds.length > 0) {
+            foundGame = game;
+            avgOdds = Math.round(allOdds.reduce((a, b) => a + b, 0) / allOdds.length);
+            break;
+          }
+        } catch (e) {
+          console.warn("Odds API failed for", sport.key, e.message);
+          continue;
         }
       }
 
@@ -126,7 +130,7 @@
       const opponent = isHome ? foundGame.away_team : foundGame.home_team;
       const bookmaker = foundGame.bookmakers?.[0]?.title || "N/A";
 
-      // SportsDB lookup
+      // SportsDB info
       let venue = "?", city = "?", state = "", country = "?";
       let win = "?", loss = "?", draw = "?";
 
@@ -157,7 +161,7 @@
           }
         }
       } catch (e) {
-        console.warn("SportsDB lookup failed", e);
+        console.warn("SportsDB lookup failed", e.message);
       }
 
       const ticketHTML = `
@@ -176,12 +180,11 @@
         </div>
       `;
 
-      // OPTIONS section
       let optionsHTML = `\n###\nOPTIONS\n###\n`;
       for (const book of foundGame.bookmakers || []) {
         optionsHTML += `\n📚 Bookmaker: ${book.title}\n`;
         for (const market of book.markets || []) {
-          optionsHTML += `\n→ Market: ${market.key}\n`;
+          optionsHTML += `→ Market: ${market.key}\n`;
           for (const o of market.outcomes || []) {
             optionsHTML += `   • ${o.name}: ${o.price > 0 ? '+' + o.price : o.price}\n`;
           }
