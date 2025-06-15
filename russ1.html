@@ -92,9 +92,16 @@
       return output;
     }
 
+    function averageOdds(oddsArray) {
+      if (oddsArray.length === 0) return null;
+      const sum = oddsArray.reduce((acc, val) => acc + val, 0);
+      return Math.round(sum / oddsArray.length);
+    }
+
     async function createTicket() {
       document.getElementById('error').textContent = "";
       document.getElementById('optionsOutput').textContent = "";
+      document.getElementById('ticket').innerHTML = "";
 
       const input = document.getElementById('betInput').value.trim();
       const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
@@ -114,26 +121,44 @@
 
         let foundGame = null;
         let sportUsed = null;
+        let averagePrice = null;
 
         for (const sport of activeSports) {
           const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`);
           if (!oddsRes.ok) continue;
 
           const games = await oddsRes.json();
-          const gameMatch = games.find(g =>
-            g.home_team.toLowerCase().includes(teamQuery) ||
-            g.away_team.toLowerCase().includes(teamQuery)
-          );
 
-          if (gameMatch) {
-            foundGame = gameMatch;
-            sportUsed = sport.title;
-            break;
+          for (const game of games) {
+            const isMatch = game.home_team.toLowerCase().includes(teamQuery) ||
+                            game.away_team.toLowerCase().includes(teamQuery);
+
+            if (!isMatch || !game.bookmakers || game.bookmakers.length === 0) continue;
+
+            const prices = [];
+
+            game.bookmakers.forEach(bookmaker => {
+              const market = bookmaker.markets?.find(m => m.key === "h2h");
+              if (!market) return;
+              const outcome = market.outcomes.find(o => o.name.toLowerCase().includes(teamQuery));
+              if (outcome && typeof outcome.price === "number") {
+                prices.push(outcome.price);
+              }
+            });
+
+            if (prices.length > 0) {
+              foundGame = game;
+              sportUsed = sport.title;
+              averagePrice = averageOdds(prices);
+              break;
+            }
           }
+
+          if (foundGame) break;
         }
 
-        if (!foundGame) {
-          document.getElementById('error').textContent = "Team not found across available sports.";
+        if (!foundGame || averagePrice === null) {
+          document.getElementById('error').textContent = "Could not find valid odds for that team.";
           return;
         }
 
@@ -141,21 +166,17 @@
         const team = isHome ? foundGame.home_team : foundGame.away_team;
         const opponent = isHome ? foundGame.away_team : foundGame.home_team;
 
-        const bookmaker = foundGame.bookmakers[0];
-        const outcome = bookmaker.markets[0].outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
-
         const ticketHTML = `
           <div class='ticket'>
             <div class='ticket-title'>🏁 OG CAPPER BETS</div>
             <hr>
             <p><strong>SPORT:</strong> ${sportUsed}</p>
-            <p><strong>BOOK:</strong> ${bookmaker.title}</p>
             <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
             <p><strong>DATE:</strong> ${new Date(foundGame.commence_time).toLocaleString()}</p>
             <hr>
             <p><strong>SELECTION:</strong> ${team} ML</p>
             <p><strong>WAGER:</strong> ${units} unit(s)</p>
-            <p><strong>ODDS:</strong> ${outcome.price > 0 ? '+' + outcome.price : outcome.price}</p>
+            <p><strong>ODDS (Avg):</strong> ${averagePrice > 0 ? '+' + averagePrice : averagePrice}</p>
             <hr>
             <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
           </div>
