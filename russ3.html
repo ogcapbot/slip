@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OG Capper Bets - Ticket</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    input, button {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .ticket {
+      background: #fff;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border: 2px dashed #000;
+      width: 350px;
+    }
+    .ticket-title {
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
+    .details {
+      background: #eee;
+      font-size: 0.9rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      width: 350px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="color: white;">OG Capper Bets Ticket</h2>
+  <input id="betInput" type="text" placeholder="e.g. Louisville ML 1u" />
+  <button onclick="createTicket()">Generate Ticket</button>
+  <div id="ticket"></div>
+  <div id="details"></div>
+  <div id="error" class="error"></div>
+
+  <script>
+    const oddsKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
+    const sportsDbKey = "123";
+
+    async function createTicket() {
+      document.getElementById("error").textContent = "";
+      document.getElementById("ticket").innerHTML = "";
+      document.getElementById("details").innerHTML = "";
+
+      const input = document.getElementById("betInput").value.trim();
+      const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
+      if (!match) {
+        document.getElementById("error").textContent =
+          "Invalid format. Try: Louisville ML 1.5u";
+        return;
+      }
+
+      const teamQuery = match[1].toLowerCase();
+      const units = match[3];
+
+      const sportsList = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${oddsKey}`).then(r => r.json());
+      let foundGame = null;
+      let avgOdds = null;
+      let dkOdds = null;
+
+      for (const sport of sportsList.filter(s => s.active)) {
+        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${oddsKey}&regions=us&oddsFormat=american`);
+        if (!res.ok) continue;
+
+        const games = await res.json();
+        const game = games.find(g =>
+          g.home_team && g.away_team &&
+          (g.home_team.toLowerCase().includes(teamQuery) ||
+           g.away_team.toLowerCase().includes(teamQuery))
+        );
+        if (!game) continue;
+
+        const isHome = game.home_team.toLowerCase().includes(teamQuery);
+        const team = isHome ? game.home_team : game.away_team;
+        const marketOdds = [];
+
+        for (const book of game.bookmakers || []) {
+          const h2h = book.markets?.find(m => m.key === "h2h");
+          const outcome = h2h?.outcomes?.find(o => o.name.toLowerCase() === team.toLowerCase());
+          if (outcome) {
+            marketOdds.push(outcome.price);
+            if (book.title.toLowerCase().includes("draftkings")) {
+              dkOdds = outcome.price;
+            }
+          }
+        }
+
+        if (marketOdds.length > 0) {
+          foundGame = game;
+          avgOdds = Math.round(marketOdds.reduce((a, b) => a + b, 0) / marketOdds.length);
+          break;
+        }
+      }
+
+      if (!foundGame) {
+        document.getElementById("error").textContent = "Game not found or no odds available.";
+        return;
+      }
+
+      const isHome = foundGame.home_team.toLowerCase().includes(teamQuery);
+      const team = isHome ? foundGame.home_team : foundGame.away_team;
+      const opponent = isHome ? foundGame.away_team : foundGame.home_team;
+      const bookmaker = foundGame.bookmakers?.[0]?.title || "N/A";
+
+      // fetch team data from SportsDB
+      const sportsDbTeam = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/searchteams.php?t=${encodeURIComponent(team)}`);
+      const teamData = await sportsDbTeam.json();
+      const teamInfo = teamData?.teams?.[0];
+
+      let venue = teamInfo?.strStadium || "?";
+      let city = teamInfo?.strStadiumLocation || "?";
+      let state = teamInfo?.strState || "";
+      let country = teamInfo?.strCountry || "?";
+
+      let win = "?", loss = "?", draw = "?";
+
+      if (teamInfo?.idLeague) {
+        const tableRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${teamInfo.idLeague}&s=2024-2025`);
+        const standings = await tableRes.json();
+        const me = standings.table?.find(t => t.idTeam === teamInfo.idTeam);
+        if (me) {
+          win = me.intWin ?? "?";
+          loss = me.intLoss ?? "?";
+          draw = me.intDraw ?? "?";
+        }
+      }
+
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>BOOK:</strong> ${bookmaker}</p>
+          <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+          <p><strong>DATE:</strong> ${new Date(foundGame.commence_time).toLocaleString()}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${team} ML</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>ODDS:</strong> Avg ${avgOdds > 0 ? '+' + avgOdds : avgOdds} | DK ${dkOdds !== null ? (dkOdds > 0 ? '+' + dkOdds : dkOdds) : 'N/A'}</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+
+      const extraDetails = `
+        <div class="details">
+          <strong>VENUE:</strong> ${venue} - ${city}${state ? ", " + state : ""} - ${country}
+          <br><strong>TEAM RECORD:</strong> ${win}-${loss}${draw !== "?" ? "-" + draw : ""}
+          <br><br>###
+          OPTIONS
+          ###<br>
+          sport_key: ${foundGame.sport_key}
+          <br>commence_time: ${foundGame.commence_time}
+          <br>id: ${foundGame.id}
+          <br>home_team: ${foundGame.home_team}
+          <br>away_team: ${foundGame.away_team}
+          <br>bookmakers: ${foundGame.bookmakers.length} available
+        </div>
+      `;
+
+      document.getElementById("ticket").innerHTML = ticketHTML;
+      document.getElementById("details").innerHTML = extraDetails;
+    }
+  </script>
+</body>
+</html>
