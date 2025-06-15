@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OG Capper Betslip Generator</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #fff;
+      padding: 20px;
+      color: #000;
+    }
+    .ticket {
+      border: 2px dashed #000;
+      padding: 16px;
+      max-width: 400px;
+      margin: auto;
+      background-color: #fff;
+      position: relative;
+    }
+    .center {
+      text-align: center;
+    }
+    .line {
+      border-top: 1px dashed #000;
+      margin: 10px 0;
+    }
+    .bold {
+      font-weight: bold;
+    }
+    .highlight {
+      background: #000;
+      color: #fff;
+      padding: 4px 6px;
+      display: inline-block;
+    }
+    #clarifyBox {
+      border: 1px solid #999;
+      background: #f9f9f9;
+      padding: 10px;
+      margin-top: 12px;
+      display: none;
+    }
+    button {
+      margin: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="center">
+    <h2>OG Capper Betslip Generator</h2>
+    <input id="betInput" placeholder="e.g. USA ML 1u" size="30" />
+    <button onclick="createTicket()">Generate Ticket</button>
+  </div>
+  <div id="clarifyBox"></div>
+  <pre id="output" class="ticket"></pre>
+
+  <script>
+    let ambiguousResults = [];
+    let userQuery = "";
+
+    async function createTicket() {
+      document.getElementById("clarifyBox").style.display = "none";
+      document.getElementById("output").textContent = "Generating ticket...";
+      userQuery = document.getElementById("betInput").value.trim();
+
+      const possibleGames = await getMatchingGames(userQuery);
+
+      if (possibleGames.length === 0) {
+        document.getElementById("output").textContent = "❌ No live game found for that input. Please check spelling or try again.";
+        return;
+      }
+
+      if (possibleGames.length === 1) {
+        renderTicket(possibleGames[0]);
+        return;
+      }
+
+      ambiguousResults = possibleGames;
+      promptClarification(ambiguousResults[0]);
+    }
+
+    function promptClarification(game) {
+      const box = document.getElementById("clarifyBox");
+      box.innerHTML = `
+        <p>⚠️ The input "${userQuery}" is ambiguous.<br>Did you mean: <strong>${game.home_team} vs ${game.away_team}</strong> (${game.sport_title})?</p>
+        <button onclick="confirmChoice(true)">Yes</button>
+        <button onclick="confirmChoice(false)">No</button>
+      `;
+      box.style.display = "block";
+    }
+
+    function confirmChoice(yes) {
+      const box = document.getElementById("clarifyBox");
+      if (yes) {
+        box.style.display = "none";
+        renderTicket(ambiguousResults[0]);
+      } else {
+        ambiguousResults.shift();
+        if (ambiguousResults.length > 0) {
+          promptClarification(ambiguousResults[0]);
+        } else {
+          box.innerHTML = `<p>❌ No matching event found. Please recheck your input and try again.</p>`;
+        }
+      }
+    }
+
+    async function getMatchingGames(input) {
+      // Simulated fetch from Odds API using a sample response structure
+      const response = await fetch('https://api.the-odds-api.com/v4/sports/?apiKey=5b3cb0e7293b7d6217e6e99fa768fd0b');
+      const sports = await response.json();
+      let matches = [];
+
+      for (const sport of sports) {
+        const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=5b3cb0e7293b7d6217e6e99fa768fd0b&regions=us&markets=h2h&oddsFormat=american`);
+        if (oddsRes.status !== 200) continue;
+        const games = await oddsRes.json();
+        for (const game of games) {
+          const lower = input.toLowerCase();
+          if (game.home_team.toLowerCase().includes(lower) || game.away_team.toLowerCase().includes(lower)) {
+            matches.push({ ...game, sport_title: sport.title });
+          }
+        }
+      }
+      return matches;
+    }
+
+    function renderTicket(game) {
+      const ticketText = `🏁 OG CAPPER BETS
+BOOK: Avg Across Books
+
+EVENT: ${game.home_team} vs ${game.away_team}
+DATE: ${new Date(game.commence_time).toLocaleString()}
+
+SELECTION: ${game.home_team} ML
+WAGER: 1 unit(s)
+
+ODDS: +120
+DRAFTKINGS: +118
+
+LOCATION:
+Venue lookup pending...
+
+RECORDS:
+Lookup pending...
+
+ALL SALES FINAL – NO CANCELLATION`;
+
+      document.getElementById("output").textContent = ticketText;
+    }
+  </script>
+</body>
+</html>
