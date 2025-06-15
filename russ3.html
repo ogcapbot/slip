@@ -65,8 +65,7 @@
       const input = document.getElementById("betInput").value.trim();
       const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
       if (!match) {
-        document.getElementById("error").textContent =
-          "Invalid format. Try: Louisville ML 1.5u";
+        document.getElementById("error").textContent = "Invalid format. Try: Louisville ML 1.5u";
         return;
       }
 
@@ -74,52 +73,45 @@
       const units = match[3];
 
       const sportsListRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${oddsKey}`);
-      if (!sportsListRes.ok) {
-        document.getElementById("error").textContent = "Failed to fetch sports list.";
-        return;
-      }
-      const sportsList = await sportsListRes.json();
+      const sportsList = sportsListRes.ok ? await sportsListRes.json() : [];
 
       let foundGame = null;
       let avgOdds = null;
       let dkOdds = null;
 
       for (const sport of sportsList.filter(s => s.active)) {
-        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${oddsKey}&regions=us&oddsFormat=american`);
+        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${oddsKey}&regions=us&markets=all&oddsFormat=american`);
         if (!res.ok) continue;
 
-        let games;
+        let games = [];
         try {
           games = await res.json();
-        } catch (err) {
-          continue;
-        }
+        } catch {}
 
         const game = games.find(g =>
-          g.home_team && g.away_team &&
-          (g.home_team.toLowerCase().includes(teamQuery) ||
-           g.away_team.toLowerCase().includes(teamQuery))
+          g.home_team?.toLowerCase().includes(teamQuery) ||
+          g.away_team?.toLowerCase().includes(teamQuery)
         );
         if (!game) continue;
 
         const isHome = game.home_team.toLowerCase().includes(teamQuery);
         const team = isHome ? game.home_team : game.away_team;
-        const marketOdds = [];
 
+        const allOdds = [];
         for (const book of game.bookmakers || []) {
           const h2h = book.markets?.find(m => m.key === "h2h");
           const outcome = h2h?.outcomes?.find(o => o.name.toLowerCase() === team.toLowerCase());
           if (outcome) {
-            marketOdds.push(outcome.price);
+            allOdds.push(outcome.price);
             if (book.title.toLowerCase().includes("draftkings")) {
               dkOdds = outcome.price;
             }
           }
         }
 
-        if (marketOdds.length > 0) {
+        if (allOdds.length > 0) {
           foundGame = game;
-          avgOdds = Math.round(marketOdds.reduce((a, b) => a + b, 0) / marketOdds.length);
+          avgOdds = Math.round(allOdds.reduce((a, b) => a + b, 0) / allOdds.length);
           break;
         }
       }
@@ -134,31 +126,33 @@
       const opponent = isHome ? foundGame.away_team : foundGame.home_team;
       const bookmaker = foundGame.bookmakers?.[0]?.title || "N/A";
 
-      // SportsDB fetch
+      // SportsDB lookup
       let venue = "?", city = "?", state = "", country = "?";
       let win = "?", loss = "?", draw = "?";
 
       try {
-        const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/searchteams.php?t=${encodeURIComponent(team)}`);
-        if (teamRes.ok) {
-          const teamData = await teamRes.json();
-          const teamInfo = teamData?.teams?.[0];
+        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/searchteams.php?t=${encodeURIComponent(team)}`);
+        const raw = await res.text();
+        const teamData = raw ? JSON.parse(raw) : {};
+        const teamInfo = teamData?.teams?.[0];
 
+        if (teamInfo) {
           venue = teamInfo?.strStadium || "?";
           city = teamInfo?.strStadiumLocation || "?";
           state = teamInfo?.strState || "";
           country = teamInfo?.strCountry || "?";
 
-          if (teamInfo?.idLeague && teamInfo?.idTeam) {
-            const standingsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${teamInfo.idLeague}&s=2024-2025`);
-            if (standingsRes.ok) {
-              const standings = await standingsRes.json();
-              const me = standings.table?.find(t => t.idTeam === teamInfo.idTeam);
-              if (me) {
-                win = me.intWin ?? "?";
-                loss = me.intLoss ?? "?";
-                draw = me.intDraw ?? "?";
-              }
+          const leagueID = teamInfo.idLeague;
+          const teamID = teamInfo.idTeam;
+          if (leagueID && teamID) {
+            const tableRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${leagueID}&s=2024-2025`);
+            const tableRaw = await tableRes.text();
+            const standings = tableRaw ? JSON.parse(tableRaw) : {};
+            const row = standings.table?.find(t => t.idTeam === teamID);
+            if (row) {
+              win = row.intWin ?? "?";
+              loss = row.intLoss ?? "?";
+              draw = row.intDraw ?? "?";
             }
           }
         }
@@ -182,19 +176,23 @@
         </div>
       `;
 
+      // OPTIONS section
+      let optionsHTML = `\n###\nOPTIONS\n###\n`;
+      for (const book of foundGame.bookmakers || []) {
+        optionsHTML += `\n📚 Bookmaker: ${book.title}\n`;
+        for (const market of book.markets || []) {
+          optionsHTML += `\n→ Market: ${market.key}\n`;
+          for (const o of market.outcomes || []) {
+            optionsHTML += `   • ${o.name}: ${o.price > 0 ? '+' + o.price : o.price}\n`;
+          }
+        }
+      }
+
       const extraDetails = `
         <div class="details">
           <strong>VENUE:</strong> ${venue} - ${city}${state ? ", " + state : ""} - ${country}
           <br><strong>TEAM RECORD:</strong> ${win}-${loss}${draw !== "?" ? "-" + draw : ""}
-          <br><br>###
-          OPTIONS
-          ###<br>
-          sport_key: ${foundGame.sport_key}
-          <br>commence_time: ${foundGame.commence_time}
-          <br>id: ${foundGame.id}
-          <br>home_team: ${foundGame.home_team}
-          <br>away_team: ${foundGame.away_team}
-          <br>bookmakers: ${foundGame.bookmakers.length} available
+          <pre>${optionsHTML}</pre>
         </div>
       `;
 
