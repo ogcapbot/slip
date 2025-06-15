@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Bet Slip + Venue & Records</title>
+  <title>OG Capper Bets – Live Ticket</title>
   <style>
     body { font-family: monospace; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
     input, button { font-size: 1.2rem; padding: 0.5rem; margin-bottom: 1rem; }
@@ -13,9 +13,9 @@
   </style>
 </head>
 <body>
-  <h2>Live Bet Slip + Venue & Records</h2>
+  <h2>OG Capper Bets – Live Ticket</h2>
   <input id="inputBet" placeholder="e.g. Louisville ML 1u" />
-  <button onclick="runAll()">Submit</button>
+  <button onclick="runAll()">Generate Ticket</button>
   <div id="ticket"></div>
   <div id="error" class="error"></div>
   <div id="dataPreview" class="section"></div>
@@ -23,7 +23,7 @@
 
 <script>
 const oddsKey = '5b3cb0e7293b7d6217e6e99fa768fd0b';
-const sportsDbKey = ''; // Optional: use a key if needed
+const sportsDbKey = '123'; // Free public key from TheSportsDB
 
 async function runAll() {
   document.getElementById('error').textContent = '';
@@ -86,27 +86,32 @@ async function runAll() {
     city = tInfo?.strStadiumLocation || tInfo?.strCity || '?';
     state = tInfo?.strState || '';
     country = tInfo?.strCountry || '';
-    const sdL = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${encodeURIComponent(tInfo?.idLeague)}&s=${encodeURIComponent(tInfo?.strSeason)}`);
-    const tbl = await sdL.json();
-    const me = tbl.table?.find(r=>r.idTeam===teamId);
-    if (me) win=me.intWin, loss=me.intLoss, draw=me.intDraw;
+
+    const leagueId = tInfo?.idLeague;
+    const season = tInfo?.strSeason || '2024-2025';
+    if (leagueId) {
+      const tbl = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${encodeURIComponent(leagueId)}&s=${encodeURIComponent(season)}`);
+      const standings = await tbl.json();
+      const me = standings.table?.find(r=>r.idTeam===teamId);
+      if (me) win=me.intWin, loss=me.intLoss, draw=me.intDraw;
+    }
   }
 
   // 3️⃣ Render ticket
   document.getElementById('ticket').innerHTML = `
     <div class="ticket">
-      📍 <strong>Venue:</strong> ${venue} - ${city}${state?`, ${state}`:''} - ${country}<br>
-      🏈 ${teamName} vs ${opp}<br>
-      🎲 Odds avg: ${avg>0?`+${avg}`:avg}, DK: ${dko>0?`+${dko}`:dko} for ${units}u<br>
-      📊 Record: ${win}-${loss}${draw?`-${draw}`:''}
+      <strong>🏟️ Venue:</strong><br> ${venue} – ${city}${state ? ', ' + state : ''} – ${country}<br><br>
+      <strong>🎯 Matchup:</strong> ${teamName} vs ${opp}<br>
+      <strong>💵 Odds:</strong> Avg ${avg > 0 ? '+' + avg : avg}, DK ${dko ? (dko > 0 ? '+' + dko : dko) : 'N/A'}<br>
+      <strong>🧾 Bet:</strong> ${units}u on ${teamName} ML<br>
+      <strong>📊 Record:</strong> ${win}-${loss}${draw ? '-' + draw : ''}
     </div>
   `;
 
-  document.getElementById('dataPreview').innerHTML = `
-    <b>Game JSON preview (trimmed):</b><br>
+  document.getElementById('dataPreview').innerHTML = `<b>Game JSON preview (trimmed):</b><br>
     sport_key: ${found.sport_key}<br>
-    commence_time: ${new Date(found.commence_time).toLocaleString()}
-  `;
+    commence_time: ${new Date(found.commence_time).toLocaleString()}`;
+
   document.getElementById('options').textContent = JSON.stringify(found, null, 2);
 }
 </script>
