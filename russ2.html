@@ -23,7 +23,7 @@
 
 <script>
 const oddsKey = '5b3cb0e7293b7d6217e6e99fa768fd0b';
-const sportsDbKey = ''; // Optional: add your TheSportsDB key if rate‐limit issues arise
+const sportsDbKey = ''; // Optional: use a key if needed
 
 async function runAll() {
   document.getElementById('error').textContent = '';
@@ -43,9 +43,11 @@ async function runAll() {
   for (const s of sports.filter(s=>s.active)) {
     const or = await fetch(`https://api.the-odds-api.com/v4/sports/${s.key}/odds/?apiKey=${oddsKey}&regions=us&oddsFormat=american`);
     if (!or.ok) continue;
-    const game = (await or.json()).find(g=>
-      g.home_team.toLowerCase().includes(teamQuery)||
-      g.away_team.toLowerCase().includes(teamQuery));
+    const game = (await or.json()).find(g =>
+      g.home_team && g.away_team &&
+      (g.home_team.toLowerCase().includes(teamQuery) ||
+       g.away_team.toLowerCase().includes(teamQuery))
+    );
     if (!game) continue;
 
     const prices = [];
@@ -80,11 +82,11 @@ async function runAll() {
     const t2 = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookupteam.php?id=${teamId}`);
     const t2j = await t2.json();
     const tInfo = t2j.teams?.[0];
-    venue = tInfo.strStadium || tInfo.strVenue || '?';
-    city = tInfo.strStadiumLocation || tInfo.strCity || '?';
-    state = tInfo.strState || '';
-    country = tInfo.strCountry || '';
-    const sdL = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${encodeURIComponent(tInfo.idLeague)}&s=${encodeURIComponent(tInfo.strSeason)}`);
+    venue = tInfo?.strStadium || tInfo?.strVenue || '?';
+    city = tInfo?.strStadiumLocation || tInfo?.strCity || '?';
+    state = tInfo?.strState || '';
+    country = tInfo?.strCountry || '';
+    const sdL = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${encodeURIComponent(tInfo?.idLeague)}&s=${encodeURIComponent(tInfo?.strSeason)}`);
     const tbl = await sdL.json();
     const me = tbl.table?.find(r=>r.idTeam===teamId);
     if (me) win=me.intWin, loss=me.intLoss, draw=me.intDraw;
