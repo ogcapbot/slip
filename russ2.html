@@ -2,116 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OG Capper Bets - Field Discovery</title>
+  <title>Live Bet Slip + Venue & Records</title>
   <style>
-    body {
-      font-family: monospace;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-    }
-    input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      width: 300px;
-      margin-bottom: 1rem;
-    }
-    button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-    }
-    .error {
-      color: red;
-      margin-top: 1rem;
-    }
-    pre {
-      color: white;
-      background-color: #222;
-      padding: 1rem;
-      margin-top: 2rem;
-      max-width: 90%;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
+    body { font-family: monospace; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+    input, button { font-size: 1.2rem; padding: 0.5rem; margin-bottom: 1rem; }
+    .ticket { background: #222; padding: 1.5rem; border: 2px solid #444; width: 400px; margin-bottom: 1rem; }
+    .section { background: #333; padding: 1rem; margin-top: 0.5rem; width: 400px; }
+    .error { color: red; margin-top: 1rem; }
+    pre { background: #222; color: #ccc; padding: 1rem; max-width: 400px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h2>OG Capper Bets - Field Discovery</h2>
-  <input id="betInput" type="text" placeholder="e.g. Dodgers ML 1.5u" />
-  <button onclick="createTicket()">Scan Fields</button>
+  <h2>Live Bet Slip + Venue & Records</h2>
+  <input id="inputBet" placeholder="e.g. Louisville ML 1u" />
+  <button onclick="runAll()">Submit</button>
+  <div id="ticket"></div>
   <div id="error" class="error"></div>
-  <pre id="optionsOutput"></pre>
+  <div id="dataPreview" class="section"></div>
+  <pre id="options"></pre>
 
-  <script>
-    const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
+<script>
+const oddsKey = '5b3cb0e7293b7d6217e6e99fa768fd0b';
+const sportsDbKey = ''; // Optional: add your TheSportsDB key if rate‐limit issues arise
 
-    function collectFields(obj, prefix = '', fields = new Set()) {
-      if (Array.isArray(obj)) {
-        obj.forEach((item) => collectFields(item, prefix, fields));
-      } else if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
-          const path = prefix ? `${prefix}.${key}` : key;
-          fields.add(path);
-          collectFields(obj[key], path, fields);
-        }
-      }
-      return fields;
-    }
+async function runAll() {
+  document.getElementById('error').textContent = '';
+  document.getElementById('ticket').innerHTML = '';
+  document.getElementById('dataPreview').innerHTML = '';
+  document.getElementById('options').textContent = '';
 
-    async function createTicket() {
-      document.getElementById('error').textContent = "";
-      document.getElementById('optionsOutput').textContent = "";
+  const match = document.getElementById('inputBet').value.trim().match(/^(.*?)\s+ml\s+([\d.]+)(u?)$/i);
+  if (!match) return (document.getElementById('error').textContent = 'Use format: TeamName ML 1u');
 
-      const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
+  const teamQuery = match[1].toLowerCase(), units = match[2];
 
-      if (!match) {
-        document.getElementById('error').textContent = "Invalid format. Use: TeamName ML 1.5u";
-        return;
-      }
+  // 1️⃣ Fetch odds
+  const gamesRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${oddsKey}`);
+  const sports = await gamesRes.json();
+  let found = null, avg = null, dko = null;
+  for (const s of sports.filter(s=>s.active)) {
+    const or = await fetch(`https://api.the-odds-api.com/v4/sports/${s.key}/odds/?apiKey=${oddsKey}&regions=us&oddsFormat=american`);
+    if (!or.ok) continue;
+    const game = (await or.json()).find(g=>
+      g.home_team.toLowerCase().includes(teamQuery)||
+      g.away_team.toLowerCase().includes(teamQuery));
+    if (!game) continue;
 
-      const teamQuery = match[1].toLowerCase();
-
-      try {
-        const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${apiKey}`);
-        const sportsList = await sportsRes.json();
-        const activeSports = sportsList.filter(s => s.active);
-
-        let foundGame = null;
-
-        for (const sport of activeSports) {
-          const oddsRes = await fetch(
-            `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=all&oddsFormat=american`
-          );
-          if (!oddsRes.ok) continue;
-
-          const games = await oddsRes.json();
-          foundGame = games.find(
-            g =>
-              g.home_team.toLowerCase().includes(teamQuery) ||
-              g.away_team.toLowerCase().includes(teamQuery)
-          );
-          if (foundGame) break;
-        }
-
-        if (!foundGame) {
-          document.getElementById('error').textContent = "Team not found across live games.";
-          return;
-        }
-
-        const fields = Array.from(collectFields(foundGame)).sort();
-        const outputText = "###\nAVAILABLE FIELDS\n###\n\n" + fields.map(f => `- ${f}`).join('\n');
-
-        document.getElementById('optionsOutput').textContent = outputText;
-      } catch (e) {
-        document.getElementById('error').textContent = "Something went wrong. Check console.";
-        console.error(e);
+    const prices = [];
+    for (const b of game.bookmakers) {
+      const mk = b.markets?.find(m=>m.key==='h2h');
+      const out = mk?.outcomes.find(o=>o.name.toLowerCase().includes(teamQuery));
+      if (out) {
+        prices.push(out.price);
+        if (b.title.toLowerCase().includes('draftkings'))
+          dko = out.price;
       }
     }
-  </script>
+    if (prices.length) {
+      found = game;
+      avg = Math.round(prices.reduce((a,v)=>a+v,0)/prices.length);
+      break;
+    }
+  }
+
+  if (!found) return (document.getElementById('error').textContent = 'Game not found or odds unavailable.');
+  const isHome = found.home_team.toLowerCase().includes(teamQuery);
+  const teamName = isHome ? found.home_team : found.away_team;
+  const opp = isHome ? found.away_team : found.home_team;
+
+  // 2️⃣ Fetch venue & records via TheSportsDB
+  const sdTeam = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/searchteams.php?t=${encodeURIComponent(teamName)}`);
+  const tjson = await sdTeam.json();
+  const teamId = tjson.teams?.[0]?.idTeam;
+  let venue='?', city='?', state='', country='?', win='?', loss='?', draw='?';
+
+  if (teamId) {
+    const t2 = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookupteam.php?id=${teamId}`);
+    const t2j = await t2.json();
+    const tInfo = t2j.teams?.[0];
+    venue = tInfo.strStadium || tInfo.strVenue || '?';
+    city = tInfo.strStadiumLocation || tInfo.strCity || '?';
+    state = tInfo.strState || '';
+    country = tInfo.strCountry || '';
+    const sdL = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsDbKey}/lookuptable.php?l=${encodeURIComponent(tInfo.idLeague)}&s=${encodeURIComponent(tInfo.strSeason)}`);
+    const tbl = await sdL.json();
+    const me = tbl.table?.find(r=>r.idTeam===teamId);
+    if (me) win=me.intWin, loss=me.intLoss, draw=me.intDraw;
+  }
+
+  // 3️⃣ Render ticket
+  document.getElementById('ticket').innerHTML = `
+    <div class="ticket">
+      📍 <strong>Venue:</strong> ${venue} - ${city}${state?`, ${state}`:''} - ${country}<br>
+      🏈 ${teamName} vs ${opp}<br>
+      🎲 Odds avg: ${avg>0?`+${avg}`:avg}, DK: ${dko>0?`+${dko}`:dko} for ${units}u<br>
+      📊 Record: ${win}-${loss}${draw?`-${draw}`:''}
+    </div>
+  `;
+
+  document.getElementById('dataPreview').innerHTML = `
+    <b>Game JSON preview (trimmed):</b><br>
+    sport_key: ${found.sport_key}<br>
+    commence_time: ${new Date(found.commence_time).toLocaleString()}
+  `;
+  document.getElementById('options').textContent = JSON.stringify(found, null, 2);
+}
+</script>
 </body>
 </html>
