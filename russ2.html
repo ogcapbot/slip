@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OG Capper Bets - Ticket</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      width: 300px;
+      margin-bottom: 1rem;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+    }
+    .ticket {
+      background: #fff;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border: 2px dashed #000;
+      width: 350px;
+    }
+    .ticket-title {
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
+    pre {
+      color: white;
+      background-color: #222;
+      padding: 1rem;
+      margin-top: 2rem;
+      max-width: 90%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="color: white;">OG Capper Bets Ticket</h2>
+  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
+  <button onclick="createTicket()">Generate Ticket</button>
+  <div id="ticket"></div>
+  <div id="error" class="error"></div>
+  <pre id="optionsOutput"></pre>
+
+  <script>
+    const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
+
+    function formatDeep(obj, prefix = '') {
+      let output = '';
+      if (Array.isArray(obj)) {
+        obj.forEach((item, index) => {
+          output += formatDeep(item, `${prefix}[${index}]`);
+        });
+      } else if (typeof obj === 'object' && obj !== null) {
+        for (const key in obj) {
+          const newPrefix = prefix ? `${prefix}.${key}` : key;
+          output += formatDeep(obj[key], newPrefix);
+        }
+      } else {
+        output += `[[${prefix}]]: ${obj}\n`;
+      }
+      return output;
+    }
+
+    function averageOdds(oddsArray) {
+      if (oddsArray.length === 0) return null;
+      const sum = oddsArray.reduce((acc, val) => acc + val, 0);
+      return Math.round(sum / oddsArray.length);
+    }
+
+    async function createTicket() {
+      document.getElementById('error').textContent = "";
+      document.getElementById('optionsOutput').textContent = "";
+      document.getElementById('ticket').innerHTML = "";
+
+      const input = document.getElementById('betInput').value.trim();
+      const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
+
+      if (!match) {
+        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
+        return;
+      }
+
+      const teamQuery = match[1].toLowerCase();
+      const units = match[3];
+
+      try {
+        const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${apiKey}`);
+        const sportsList = await sportsRes.json();
+        const activeSports = sportsList.filter(s => s.active);
+
+        let foundGame = null;
+        let sportUsed = null;
+        let averagePrice = null;
+
+        for (const sport of activeSports) {
+          const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`);
+          if (!oddsRes.ok) continue;
+
+          const games = await oddsRes.json();
+
+          for (const game of games) {
+            const isMatch = game.home_team.toLowerCase().includes(teamQuery) ||
+                            game.away_team.toLowerCase().includes(teamQuery);
+
+            if (!isMatch || !game.bookmakers || game.bookmakers.length === 0) continue;
+
+            const prices = [];
+
+            game.bookmakers.forEach(bookmaker => {
+              const market = bookmaker.markets?.find(m => m.key === "h2h");
+              if (!market) return;
+              const outcome = market.outcomes.find(o => o.name.toLowerCase().includes(teamQuery));
+              if (outcome && typeof outcome.price === "number") {
+                prices.push(outcome.price);
+              }
+            });
+
+            if (prices.length > 0) {
+              foundGame = game;
+              sportUsed = sport.title;
+              averagePrice = averageOdds(prices);
+              break;
+            }
+          }
+
+          if (foundGame) break;
+        }
+
+        if (!foundGame || averagePrice === null) {
+          document.getElementById('error').textContent = "Could not find valid odds for that team.";
+          return;
+        }
+
+        const isHome = foundGame.home_team.toLowerCase().includes(teamQuery);
+        const team = isHome ? foundGame.home_team : foundGame.away_team;
+        const opponent = isHome ? foundGame.away_team : foundGame.home_team;
+
+        const ticketHTML = `
+          <div class='ticket'>
+            <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+            <hr>
+            <p><strong>SPORT:</strong> ${sportUsed}</p>
+            <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+            <p><strong>DATE:</strong> ${new Date(foundGame.commence_time).toLocaleString()}</p>
+            <hr>
+            <p><strong>SELECTION:</strong> ${team} ML</p>
+            <p><strong>WAGER:</strong> ${units} unit(s)</p>
+            <p><strong>ODDS (Avg):</strong> ${averagePrice > 0 ? '+' + averagePrice : averagePrice}</p>
+            <hr>
+            <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+          </div>
+        `;
+        document.getElementById('ticket').innerHTML = ticketHTML;
+
+        const readableOutput = "###\nOPTIONS\n###\n\n" + formatDeep(foundGame);
+        document.getElementById('optionsOutput').textContent = readableOutput;
+
+      } catch (e) {
+        document.getElementById('error').textContent = "Something went wrong. Check console.";
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
