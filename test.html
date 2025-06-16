@@ -19,6 +19,7 @@
       margin: 10px 0;
       font-size: 16px;
       border-radius: 8px;
+      box-sizing: border-box;
     }
     button {
       background: #0f0;
@@ -56,12 +57,17 @@
     .team-option:hover {
       background: #666;
     }
+    @media (max-width: 480px) {
+      input, button {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="access">
     <h2>Enter Access Code</h2>
-    <input id="codeInput" placeholder="Access Code" />
+    <input id="codeInput" type="number" inputmode="numeric" pattern="\\d*" minlength="3" maxlength="8" placeholder="Access Code" />
     <button onclick="validateCode()">Submit</button>
     <p id="authMessage"></p>
   </div>
@@ -87,12 +93,16 @@
 
     function validateCode() {
       const code = document.getElementById('codeInput').value.trim();
-      if (code === '1069') {
-        document.getElementById('access').style.display = 'none';
-        document.getElementById('loader').style.display = 'block';
-        loadGames();
+      if (/^\d{3,8}$/.test(code)) {
+        if (code === '1069') {
+          document.getElementById('access').style.display = 'none';
+          document.getElementById('loader').style.display = 'block';
+          loadGames();
+        } else {
+          document.getElementById('authMessage').innerText = 'The Access Code Entered is Invalid. Please Try Again.';
+        }
       } else {
-        document.getElementById('authMessage').innerText = 'Incorrect code. Try again.';
+        document.getElementById('authMessage').innerText = 'The Access Code Entered is Invalid. Please Try Again.';
       }
     }
 
@@ -102,7 +112,19 @@
       try {
         const res = await fetch(WEBAPP_URL);
         const data = await res.json();
-        cachedGames = data;
+        cachedGames = data.map(game => ({
+          date: game.fixture?.date || game.date,
+          teams: [
+            {
+              id: game.teams?.home?.id || game.home_id,
+              name: game.teams?.home?.name || game.home_team_name
+            },
+            {
+              id: game.teams?.away?.id || game.away_id,
+              name: game.teams?.away?.name || game.away_team_name
+            }
+          ]
+        }));
         log.innerText += `\nLoaded ${cachedGames.length} games.`;
         document.getElementById('loader').style.display = 'none';
         document.getElementById('betInput').style.display = 'block';
