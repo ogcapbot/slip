@@ -51,92 +51,107 @@
 
   <script>
     const apiKey = "5b3cb0e7293b7d6217e6e99fa768fd0b";
-    const sportsApi = "https://api.the-odds-api.com/v4/sports";
-    const sportsDBKey = "1";
-    const sportsDBUrl = "https://www.thesportsdb.com/api/v1/json/1";
 
     async function createTicket() {
-      document.getElementById('ticket').innerHTML = "";
+      const ticketEl = document.getElementById('ticket');
+      ticketEl.innerHTML = '';
       document.getElementById('error').textContent = "";
-
       const input = document.getElementById('betInput').value.trim();
+
       const match = input.match(/^(.*?)\s+(ml)\s+(\d+(\.\d+)?)(u?)$/i);
       if (!match) {
         document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
         return;
       }
 
-      const queryTeam = match[1].toLowerCase();
+      const teamQuery = match[1].toLowerCase();
       const units = match[3];
-      const sportsRes = await fetch(`${sportsApi}/?apiKey=${apiKey}`);
+
+      const sportsRes = await fetch("https://api.the-odds-api.com/v4/sports/?apiKey=" + apiKey);
       const sportsList = await sportsRes.json();
+      const activeSports = sportsList.filter(s => !s.group.includes("winner"));
 
-      for (let sport of sportsList) {
-        try {
-          const oddsRes = await fetch(`${sportsApi}/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`);
-          if (!oddsRes.ok) continue;
-          const games = await oddsRes.json();
-          for (let game of games) {
-            const home = game.home_team.toLowerCase();
-            const away = game.away_team.toLowerCase();
-            if (!home.includes(queryTeam) && !away.includes(queryTeam)) continue;
+      let foundGame = null;
+      let usedSportKey = null;
 
-            const selected = home.includes(queryTeam) ? game.home_team : game.away_team;
-            const opponent = home.includes(queryTeam) ? game.away_team : game.home_team;
+      for (const sport of activeSports) {
+        const oddsURL = `https://api.the-odds-api.com/v4/sports/${sport.key}/odds/?apiKey=${apiKey}&regions=us&markets=h2h&oddsFormat=american`;
+        const res = await fetch(oddsURL);
+        if (!res.ok) continue;
 
-            // Fetch venue/record
-            const sportsDBRes = await fetch(`${sportsDBUrl}/searchteams.php?t=${encodeURIComponent(selected)}`);
-            let venue = "Venue lookup failed";
-            let record = "";
-            if (sportsDBRes.ok) {
-              const data = await sportsDBRes.json();
-              const team = data.teams?.[0];
-              if (team) {
-                venue = `${team.strStadium} - ${team.strStadiumLocation} - ${team.strCountry}`;
-                record = `${team.intWins || 0}-${team.intLosses || 0}-${team.intDraws || 0}`;
-              }
-            }
+        const games = await res.json();
+        const game = games.find(g =>
+          g.home_team.toLowerCase().includes(teamQuery) ||
+          g.away_team.toLowerCase().includes(teamQuery)
+        );
 
-            // Odds handling
-            let prices = [], draftKingsOdds = "N/A";
-            for (let b of game.bookmakers) {
-              const market = b.markets.find(m => m.key === "h2h");
-              if (!market) continue;
-              const outcome = market.outcomes.find(o => o.name.toLowerCase() === selected.toLowerCase());
-              if (!outcome) continue;
-              prices.push(outcome.price);
-              if (b.key === "draftkings") draftKingsOdds = outcome.price > 0 ? "+" + outcome.price : outcome.price;
-            }
-            const avgOdds = prices.length ? (prices.reduce((a,b) => a+b,0)/prices.length).toFixed(0) : "N/A";
-
-            // Output
-            const ticketHTML = `
-              <div class='ticket'>
-                <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-                <hr>
-                <p><strong>BOOK:</strong> Avg Across Books</p>
-                <p><strong>EVENT:</strong> ${game.home_team} vs ${game.away_team}</p>
-                <p><strong>DATE:</strong> ${new Date(game.commence_time).toLocaleString()}</p>
-                <hr>
-                <p><strong>SELECTION:</strong> ${selected} ML</p>
-                <p><strong>WAGER:</strong> ${units} unit(s)</p>
-                <p><strong>ODDS:</strong> ${avgOdds > 0 ? "+" + avgOdds : avgOdds}</p>
-                <p><strong>DRAFTKINGS:</strong> ${draftKingsOdds}</p>
-                <hr>
-                <p><strong>LOCATION:</strong><br>${venue}</p>
-                <p><strong>RECORDS:</strong> ${record}</p>
-                <hr>
-                <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-              </div>
-            `;
-            document.getElementById('ticket').innerHTML = ticketHTML;
-            return;
-          }
-        } catch(e) {
-          continue;
+        if (game) {
+          foundGame = game;
+          usedSportKey = sport.key;
+          break;
         }
       }
-      document.getElementById('error').textContent = "Game not found. Try a different team.";
+
+      if (!foundGame) {
+        document.getElementById('error').textContent = "Game not found. Try a different team.";
+        return;
+      }
+
+      const isHome = foundGame.home_team.toLowerCase().includes(teamQuery);
+      const team = isHome ? foundGame.home_team : foundGame.away_team;
+      const opponent = isHome ? foundGame.away_team : foundGame.home_team;
+      const gameTime = new Date(foundGame.commence_time).toLocaleString();
+
+      // Calculate average odds
+      let allPrices = [];
+      let dkPrice = 'N/A';
+
+      foundGame.bookmakers.forEach(book => {
+        const h2h = book.markets.find(m => m.key === 'h2h');
+        if (h2h) {
+          const outcome = h2h.outcomes.find(o => o.name.toLowerCase() === team.toLowerCase());
+          if (outcome) allPrices.push(outcome.price);
+          if (book.key === 'draftkings' && outcome) dkPrice = outcome.price > 0 ? `+${outcome.price}` : outcome.price;
+        }
+      });
+
+      const avgPriceRaw = allPrices.length ? allPrices.reduce((a, b) => a + b) / allPrices.length : null;
+      const avgPrice = avgPriceRaw !== null ? (avgPriceRaw > 0 ? `+${Math.round(avgPriceRaw)}` : Math.round(avgPriceRaw)) : 'N/A';
+
+      // Fetch location + records from TheSportsDB
+      const sportsdbRes = await fetch(`https://www.thesportsdb.com/api/v1/json/1/searchteams.php?t=${encodeURIComponent(team)}`);
+      const sportsdbData = await sportsdbRes.json();
+
+      let locationHTML = '<p><strong>LOCATION:</strong> Venue lookup failed</p>';
+      let recordsHTML = '<p><strong>RECORDS:</strong> Not available</p>';
+
+      if (sportsdbData.teams && sportsdbData.teams.length > 0) {
+        const teamInfo = sportsdbData.teams[0];
+        locationHTML = `<p><strong>LOCATION:</strong> ${teamInfo.strStadium} - ${teamInfo.strStadiumLocation}</p>`;
+        recordsHTML = `<p><strong>RECORDS:</strong> W: ${teamInfo.intWin} / L: ${teamInfo.intLoss} / D: ${teamInfo.intDraw}</p>`;
+      }
+
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>BOOK:</strong> Avg Across Books</p>
+          <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+          <p><strong>DATE:</strong> ${gameTime}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${team} ML</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>ODDS:</strong> ${avgPrice}</p>
+          <p><strong>DRAFTKINGS:</strong> ${dkPrice}</p>
+          <hr>
+          ${locationHTML}
+          ${recordsHTML}
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+
+      ticketEl.innerHTML = ticketHTML;
     }
   </script>
 </body>
