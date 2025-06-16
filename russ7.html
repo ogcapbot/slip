@@ -5,49 +5,48 @@
   <title>OG Capper Bets Ticket</title>
   <style>
     body {
-      background: #0c0c0c;
       font-family: monospace;
+      background: #0a0a0a;
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      padding: 2rem;
     }
-    #loaderWrapper {
+    .loader-container {
       display: flex;
       flex-direction: column;
       align-items: center;
+      margin-top: 2rem;
     }
-    .circular-loader {
-      width: 120px;
-      height: 120px;
+    .circle {
       border-radius: 50%;
-      border: 10px solid #1f1f1f;
-      border-top: 10px solid #00ff99;
+      border: 12px solid #333;
+      border-top: 12px solid #00ff99;
+      width: 100px;
+      height: 100px;
       animation: spin 1s linear infinite;
       margin-bottom: 1rem;
     }
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    #progressLog {
-      width: 320px;
-      height: 4.5em;
-      overflow-y: auto;
-      border: 2px solid #00ff99;
-      padding: 0.5em;
-      font-size: 0.9rem;
+    .log-box {
+      height: 3.5rem;
+      width: 300px;
+      overflow-y: scroll;
       background: #111;
-      color: #00ffcc;
+      border: 2px solid #00ff99;
+      padding: 0.5rem;
+      color: #00ff99;
+      font-size: 0.9rem;
+      font-family: monospace;
     }
-    #inputSection {
-      display: none;
+    #input-container {
       margin-top: 2rem;
-      text-align: center;
+      display: none;
     }
     input {
       font-size: 1.2rem;
@@ -57,11 +56,7 @@
     button {
       font-size: 1rem;
       padding: 0.5rem 1rem;
-      margin-left: 1rem;
-    }
-    .error {
-      color: red;
-      margin-top: 1rem;
+      margin-left: 0.5rem;
     }
     .ticket {
       background: #fff;
@@ -77,102 +72,100 @@
       font-size: 1.2rem;
       margin-bottom: 1rem;
     }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
-  <div id="loaderWrapper">
-    <div class="circular-loader" id="circularLoader"></div>
-    <div id="progressLog"></div>
+  <h2>OG Capper Bets Ticket</h2>
+  <div class="loader-container" id="loader">
+    <div class="circle" id="circle"></div>
+    <div class="log-box" id="logBox"></div>
   </div>
 
-  <div id="inputSection">
-    <h2>OG Capper Bets Ticket</h2>
+  <div id="input-container">
     <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
     <button onclick="createTicket()">Generate Ticket</button>
-    <div id="error" class="error"></div>
     <div id="ticket"></div>
+    <div id="error" class="error"></div>
   </div>
 
   <script>
-    let allEvents = [];
+    const logBox = document.getElementById('logBox');
+    const loader = document.getElementById('loader');
+    const inputContainer = document.getElementById('input-container');
 
-    async function fetchJSON(url) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed: ${url}`);
-      return res.json();
+    let teams = [];
+    let matches = [];
+
+    function log(text) {
+      const p = document.createElement('div');
+      p.textContent = text;
+      logBox.appendChild(p);
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
     async function loadData() {
-      const log = document.getElementById('progressLog');
-      const logLine = txt => {
-        log.innerHTML += `<div>${txt}</div>`;
-        log.scrollTop = log.scrollHeight;
-      };
+      const dateRange = ['2025-06-15', '2025-06-16', '2025-06-17'];
+      const leagueIds = [4328, 4331, 4387, 4391, 4424];
 
-      try {
-        logLine('🔄 Fetching all sports from SportsDB...');
-        const sports = await fetchJSON('https://www.thesportsdb.com/api/v1/json/123/all_sports.php');
-
-        const sportKeys = sports.sports.map(s => s.strSport);
-
-        for (let sport of sportKeys) {
-          logLine(`📡 Pulling events for: ${sport}...`);
-          const url = `https://www.thesportsdb.com/api/v1/json/123/eventspastleague.php?id=${sport}`;
+      for (const leagueId of leagueIds) {
+        for (const date of dateRange) {
           try {
-            const events = await fetchJSON(url);
-            if (events && events.events) allEvents.push(...events.events);
+            log(`Loading matches for league ${leagueId} on ${date}`);
+            const res = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d=${date}&l=${leagueId}`);
+            const data = await res.json();
+            if (data.events) matches.push(...data.events);
           } catch (e) {
-            logLine(`⚠️ Failed loading events for ${sport}`);
+            log(`❌ Failed loading league ${leagueId} on ${date}`);
           }
         }
-
-        logLine('✅ All event data stored in memory.');
-        document.getElementById('loaderWrapper').style.display = 'none';
-        document.getElementById('inputSection').style.display = 'block';
-
-      } catch (e) {
-        logLine('❌ Critical error loading sports or events.');
-        console.error(e);
       }
+
+      log('✅ All data loaded. Ready.');
+      loader.style.display = 'none';
+      inputContainer.style.display = 'flex';
     }
 
-    function createTicket() {
+    async function createTicket() {
+      document.getElementById('error').textContent = "";
       const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\s+(ml|spread|total|tt|f5)\s+(\d+(\.\d+)?)(u?)$/i);
-      const err = document.getElementById('error');
-      err.textContent = "";
-
-      if (!match) {
-        err.textContent = "Invalid format. Try: Yankees ML 1.5u";
+      const matchInput = input.match(/^(.*?)\s+(\w+)\s+(\d+(\.\d+)?)(u?)$/i);
+      if (!matchInput) {
+        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
         return;
       }
+      const teamQuery = matchInput[1].toLowerCase();
+      const betType = matchInput[2];
+      const units = matchInput[3];
 
-      const teamQuery = match[1].toLowerCase();
-      const type = match[2];
-      const wager = match[3];
-
-      const found = allEvents.find(ev =>
-        ev.strHomeTeam?.toLowerCase().includes(teamQuery) ||
-        ev.strAwayTeam?.toLowerCase().includes(teamQuery)
+      const match = matches.find(m =>
+        m.strHomeTeam.toLowerCase().includes(teamQuery) ||
+        m.strAwayTeam.toLowerCase().includes(teamQuery)
       );
 
-      if (!found) {
-        err.textContent = "No game found matching that team.";
+      if (!match) {
+        document.getElementById('error').textContent = "No game found matching that team.";
         return;
       }
 
-      const team = found.strHomeTeam.toLowerCase().includes(teamQuery) ? found.strHomeTeam : found.strAwayTeam;
-      const opponent = found.strHomeTeam === team ? found.strAwayTeam : found.strHomeTeam;
+      const isHome = match.strHomeTeam.toLowerCase().includes(teamQuery);
+      const team = isHome ? match.strHomeTeam : match.strAwayTeam;
+      const opponent = isHome ? match.strAwayTeam : match.strHomeTeam;
 
       const ticketHTML = `
         <div class='ticket'>
           <div class='ticket-title'>🏁 OG CAPPER BETS</div>
           <hr>
-          <p><strong>EVENT:</strong> ${found.strEvent}</p>
-          <p><strong>DATE:</strong> ${found.dateEvent} ${found.strTime || ''}</p>
+          <p><strong>LEAGUE:</strong> ${match.strLeague}</p>
+          <p><strong>EVENT:</strong> ${team} vs ${opponent}</p>
+          <p><strong>DATE:</strong> ${match.dateEvent} ${match.strTime || ''}</p>
           <hr>
-          <p><strong>SELECTION:</strong> ${team} ${type.toUpperCase()}</p>
-          <p><strong>WAGER:</strong> ${wager} unit(s)</p>
+          <p><strong>SELECTION:</strong> ${team} ${betType.toUpperCase()}</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>LOCATION:</strong> ${match.strVenue || 'Unknown'}</p>
           <hr>
           <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
         </div>
@@ -180,7 +173,7 @@
       document.getElementById('ticket').innerHTML = ticketHTML;
     }
 
-    window.onload = loadData;
+    loadData();
   </script>
 </body>
 </html>
