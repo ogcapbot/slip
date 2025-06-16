@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OG Capper Bets - Ticket Generator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #0e0e0e;
+      color: white;
+      text-align: center;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 1.2em;
+    }
+    button {
+      background-color: #21c77c;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #loader {
+      display: none;
+    }
+    #logArea {
+      max-height: 200px;
+      overflow-y: scroll;
+      background: #1a1a1a;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 8px;
+      font-family: monospace;
+    }
+    #percentage {
+      margin-top: 10px;
+      font-size: 1.2em;
+    }
+    #results {
+      margin-top: 20px;
+      text-align: left;
+      background: #222;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="auth">
+      <h2>Enter Access Code</h2>
+      <input type="text" id="accessCode" placeholder="Access Code" />
+      <button onclick="validateCode()">Submit</button>
+      <p id="authMessage"></p>
+    </div>
+
+    <div id="loader">
+      <h3>Loading Sports Data...</h3>
+      <div class="spinner">🔄</div>
+      <div id="percentage">0%</div>
+      <div id="logArea"></div>
+    </div>
+
+    <div id="inputBox" style="display:none">
+      <h3>Create Bet Ticket</h3>
+      <input type="text" id="userBet" placeholder="e.g. cubs ml 1u" />
+      <button onclick="processBet()">Create</button>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    let capperName = "";
+    let memoryData = [];
+
+    function validateCode() {
+      const code = document.getElementById("accessCode").value;
+      if (code === "1069") {
+        capperName = "OG Capper";
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("loader").style.display = "block";
+        loadSportsData();
+      } else {
+        document.getElementById("authMessage").innerText = "Access Code Entered is Incorrect. Please try again.";
+      }
+    }
+
+    async function loadSportsData() {
+      const log = document.getElementById("logArea");
+      const percent = document.getElementById("percentage");
+      const now = new Date();
+      const end = new Date(now);
+      end.setDate(now.getDate() + 2);
+
+      const dateRange = [];
+      for (let d = new Date(now); d <= end; d.setDate(d.getDate() + 1)) {
+        dateRange.push(new Date(d));
+      }
+
+      let totalSteps = dateRange.length * 3; // e.g., 3 sport types per day
+      let complete = 0;
+
+      for (let day of dateRange) {
+        const dateStr = day.toISOString().split("T")[0];
+        for (let sport of ["mlb", "nba", "nfl"]) {
+          const url = `https://api.sportradar.us/${sport}/trial/v7/en/games/${dateStr}/schedule.json?api_key=4qv751EsB4GHR6Fjg7kE0gYL2AFvc4vDrPPy4Ngd`;
+          log.innerHTML += `Loading ${sport.toUpperCase()} schedule for ${dateStr}...\n`;
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              const json = await res.json();
+              memoryData.push(...(json.games || []));
+            } else {
+              log.innerHTML += `Failed to load ${sport} data for ${dateStr}\n`;
+            }
+          } catch (e) {
+            log.innerHTML += `Error loading ${sport} on ${dateStr}\n`;
+          }
+          complete++;
+          percent.innerText = `${Math.round((complete / totalSteps) * 100)}%`;
+        }
+      }
+
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("inputBox").style.display = "block";
+    }
+
+    function processBet() {
+      const input = document.getElementById("userBet").value.toLowerCase();
+      const [teamQuery, betType, units] = input.split(" ");
+      const matches = memoryData.filter(g => g.competitors?.some(c => c.name.toLowerCase().includes(teamQuery)));
+
+      const results = document.getElementById("results");
+      if (matches.length === 0) {
+        results.innerHTML = `<p>No games were found matching: <strong>${teamQuery}</strong></p>`;
+        return;
+      }
+
+      if (matches.length > 1) {
+        let options = matches.map(m => {
+          const matchTeam = m.competitors.find(c => c.name.toLowerCase().includes(teamQuery));
+          return `<li>${matchTeam.name} vs ${m.competitors.find(c => c.id !== matchTeam.id).name} on ${new Date(m.scheduled).toLocaleString()}</li>`;
+        }).join("");
+        results.innerHTML = `<p>Multiple matches found. Please be more specific:</p><ul>${options}</ul>`;
+        return;
+      }
+
+      const game = matches[0];
+      const team = game.competitors.find(c => c.name.toLowerCase().includes(teamQuery));
+      const opponent = game.competitors.find(c => c.id !== team.id);
+      const gameTime = new Date(game.scheduled);
+
+      const title = `${units.toUpperCase()} - 🔥 Lock It In 🔥 - ${game.sport.name} - Starts @ ${gameTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      const pickID = `${Math.floor((new Date() - new Date('1981-07-25T12:00:00Z')) / 1000)}-${gameTime.toLocaleDateString().replaceAll('/', '')}`;
+
+      results.innerHTML = `
+        <h3>${title}</h3>
+        <pre>
+═══════════════
+OG Capper Bets
+OFFICIAL PICK
+═══════════════
+
+Pick: ${team.name}
+Bet Type: ${betType.toUpperCase()}
+Wager: ${units.toUpperCase()}
+Odds: TBD - Low: TBD - High: TBD
+Opponent: ${opponent.name}
+Game Time: ${gameTime.toLocaleString()}
+
+═══════════════
+THANK YOU FOR TRUSTING OG CAPPER BETS
+═══════════════
+Pick ID: ${pickID}
+Pick by: ${capperName}
+═══════════════
+
+══ STRICT CONFIDENTIALITY NOTICE ══
+All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
+        </pre>`;
+    }
+  </script>
+</body>
+</html>
