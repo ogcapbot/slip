@@ -40,8 +40,13 @@
       padding: 10px;
       font-family: monospace;
       font-size: 14px;
-      max-height: 150px;
+      max-height: 200px;
       overflow-y: scroll;
+      white-space: pre-wrap;
+    }
+    #continueButton {
+      display: none;
+      margin-top: 10px;
     }
     .ticket {
       background: #000;
@@ -81,6 +86,7 @@
   <div id="loader">
     <h3>Loading Games...</h3>
     <div id="log"></div>
+    <button id="continueButton" onclick="showBetInput()">Continue</button>
   </div>
 
   <div id="betInput">
@@ -90,13 +96,21 @@
   </div>
 
   <div id="multiSelect"></div>
-
   <div id="results"></div>
 
   <script>
     const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxW55MrRuwPX87F_oCMJpof7HMIKHbyY1evseVm-eEYHEPOSkoHbVD1VUN_rg-vDsQw_Q/exec';
     let cachedGames = [];
     let capperName = "OG Capper";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('codeInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') validateCode();
+      });
+      document.getElementById('userInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') processInput();
+      });
+    });
 
     function validateCode() {
       const code = document.getElementById('codeInput').value.trim();
@@ -115,29 +129,32 @@
 
     async function loadGames() {
       const log = document.getElementById('log');
-      log.innerText = 'Fetching games from server...';
+      log.innerText = 'Fetching games from server...\n';
       try {
         const res = await fetch(WEBAPP_URL);
         const data = await res.json();
-        cachedGames = data.map(game => ({
-          date: game.fixture?.date || game.date,
-          teams: [
-            {
-              id: game.teams?.home?.id || game.home_id,
-              name: game.teams?.home?.name || game.home_team_name
-            },
-            {
-              id: game.teams?.away?.id || game.away_id,
-              name: game.teams?.away?.name || game.away_team_name
-            }
-          ]
-        }));
-        log.innerText += `\nLoaded ${cachedGames.length} games.`;
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('betInput').style.display = 'block';
+        cachedGames = data.map(game => {
+          const home = game.teams?.home?.name || game.home_team || "";
+          const away = game.teams?.away?.name || game.away_team || "";
+          log.innerText += `Loaded: ${home}\nLoaded: ${away}\n`;
+          return {
+            date: game.fixture?.date || game.date,
+            teams: [
+              { id: game.teams?.home?.id || game.home_id, name: home },
+              { id: game.teams?.away?.id || game.away_id, name: away }
+            ]
+          };
+        });
+        log.innerText += `\nTotal games loaded: ${cachedGames.length}`;
+        document.getElementById('continueButton').style.display = 'block';
       } catch (err) {
         log.innerText += '\nError loading data.';
       }
+    }
+
+    function showBetInput() {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('betInput').style.display = 'block';
     }
 
     function processInput() {
