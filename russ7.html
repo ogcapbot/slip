@@ -2,134 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OG Capper Bets - Ticket</title>
+  <title>OG Capper Bets - Loading</title>
   <style>
     body {
-      font-family: monospace;
       background: #111;
-      color: #000;
+      color: white;
+      font-family: monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      width: 300px;
-      margin-bottom: 1rem;
+
+    .loader {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 10px solid #333;
+      border-top: 10px solid lime;
+      animation: spin 1s linear infinite;
     }
-    button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
-    .ticket {
-      background: #fff;
-      padding: 1.5rem;
+
+    .log-box {
       margin-top: 2rem;
-      border: 2px dashed #000;
-      width: 350px;
-    }
-    .ticket-title {
-      font-weight: bold;
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-    .error {
-      color: red;
-      margin-top: 1rem;
+      width: 80%;
+      max-width: 500px;
+      height: 3.6em;
+      background: black;
+      color: lime;
+      font-size: 0.9rem;
+      border: 1px solid lime;
+      padding: 0.5rem;
+      overflow-y: hidden;
+      line-height: 1.2em;
+      display: flex;
+      flex-direction: column-reverse;
     }
   </style>
 </head>
 <body>
-  <h2 style="color: white;">OG Capper Bets Ticket</h2>
-  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
-  <button onclick="createTicket()">Generate Ticket</button>
-  <div id="ticket"></div>
-  <div id="error" class="error"></div>
+  <div class="loader" id="loader"></div>
+  <div class="log-box" id="logBox"></div>
 
   <script>
-    async function createTicket() {
-      document.getElementById('error').textContent = "";
-      document.getElementById('ticket').innerHTML = "";
+    const logBox = document.getElementById("logBox");
 
-      const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\s+(.*?)\s+(\d+(\.\d+)?)(u?)$/i);
-
-      if (!match) {
-        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
-        return;
+    function logMessage(msg) {
+      const line = document.createElement("div");
+      line.textContent = msg;
+      logBox.prepend(line);
+      if (logBox.children.length > 3) {
+        logBox.removeChild(logBox.lastChild);
       }
+    }
 
-      const teamQuery = match[1].toLowerCase();
-      const betType = match[2].toUpperCase();
-      const units = match[3];
+    async function loadData() {
+      const start = Date.now();
+      const now = new Date();
+      const past = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+      const future = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+      const pastIso = past.toISOString();
+      const futureIso = future.toISOString();
 
-      const sportsUrls = await fetch("https://site.api.espn.com/apis/site/v2/sports/")
-        .then(r => r.json())
-        .then(data => data.sports.flatMap(s => s.leagues.map(l => `${s.slug}/${l.slug}`)))
-        .catch(() => []);
+      try {
+        logMessage("Fetching sports from ESPN...");
+        const res = await fetch("https://site.api.espn.com/apis/site/v2/sports");
+        const data = await res.json();
+        const sports = data.sports || [];
 
-      const matches = [];
-      for (const path of sportsUrls) {
-        try {
-          const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${path}/scoreboard`);
-          const data = await res.json();
-          if (!data.events) continue;
+        for (const sport of sports) {
+          const leagues = sport.leagues || [];
+          for (const league of leagues) {
+            const leagueSlug = league.slug;
+            logMessage(`Loading: ${leagueSlug}`);
+            const url = `https://site.api.espn.com/apis/site/v2/sports/${sport.slug}/${leagueSlug}/scoreboard`;
 
-          for (const event of data.events) {
-            const comp = event.competitions?.[0];
-            if (!comp) continue;
-            const [home, away] = comp.competitors || [];
-            const homeName = home?.team?.displayName?.toLowerCase();
-            const awayName = away?.team?.displayName?.toLowerCase();
+            try {
+              const resp = await fetch(url);
+              const gamesData = await resp.json();
+              const events = gamesData.events || [];
 
-            if (homeName?.includes(teamQuery) || awayName?.includes(teamQuery)) {
-              matches.push({ event, comp, path });
+              for (const game of events) {
+                const date = new Date(game.date);
+                if (date >= past && date <= future) {
+                  logMessage(`Game: ${game.name} on ${date.toLocaleString()}`);
+                }
+              }
+            } catch (err) {
+              logMessage(`Failed: ${leagueSlug}`);
             }
           }
-
-          if (matches.length > 5) break;
-        } catch (e) {
-          console.warn(`Error loading ${path}`);
         }
+
+        logMessage("✅ All data loaded");
+      } catch (e) {
+        logMessage("❌ Failed to load sports");
+        console.error(e);
       }
-
-      if (matches.length === 0) {
-        document.getElementById('error').textContent = "No matching events found.";
-        return;
-      }
-
-      const match = matches[0];
-      const t1 = match.comp.competitors[0];
-      const t2 = match.comp.competitors[1];
-      const home = t1.homeAway === "home" ? t1 : t2;
-      const away = t1.homeAway === "away" ? t1 : t2;
-      const date = new Date(match.event.date).toLocaleString();
-
-      const ticketHTML = `
-        <div class='ticket'>
-          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-          <hr>
-          <p><strong>BOOK:</strong> ESPN Live Feed</p>
-          <p><strong>EVENT:</strong> ${home.team.displayName} vs ${away.team.displayName}</p>
-          <p><strong>DATE:</strong> ${date}</p>
-          <hr>
-          <p><strong>SELECTION:</strong> ${teamQuery.toUpperCase()} ${betType}</p>
-          <p><strong>WAGER:</strong> ${units} unit(s)</p>
-          <p><strong>ODDS:</strong> N/A (not available via ESPN)</p>
-          <hr>
-          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-
-          <br>
-          <hr>
-          <p><strong>### OPTIONS ###</strong></p>
-          <pre style='font-size: 0.7rem;'>${JSON.stringify(match, null, 2)}</pre>
-        </div>
-      `;
-      document.getElementById('ticket').innerHTML = ticketHTML;
     }
+
+    loadData();
   </script>
 </body>
 </html>
