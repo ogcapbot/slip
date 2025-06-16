@@ -1,172 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>OG Capper Bets - Ticket</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OG Capper Bets Ticket</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background: #111;
-      color: white;
+      background-color: #0e0e0e;
+      color: #00ff90;
       font-family: monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
     }
-
-    h2 {
-      margin-bottom: 2rem;
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 20px;
     }
-
-    .loader-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .circle-loader {
+    .loader-container {
+      position: relative;
       width: 100px;
       height: 100px;
-      border: 10px solid #333;
-      border-top: 10px solid lime;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
+      margin-bottom: 30px;
     }
-
+    .circle {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #333;
+      border-top: 8px solid #00ff90;
+      animation: spin 1s linear infinite;
+    }
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    #load-log {
+    .log-box {
       width: 400px;
-      height: 4.5em;
-      border: 2px solid lime;
-      background: #111;
-      color: lime;
-      padding: 1em;
-      overflow-y: auto;
-      font-family: monospace;
-      white-space: pre-line;
+      height: 60px;
+      overflow: hidden;
+      border: 2px solid #00ff90;
+      padding: 10px;
+      box-sizing: border-box;
+      background-color: #1a1a1a;
+      font-size: 0.9rem;
     }
-
-    #main-ui {
-      display: none;
-      flex-direction: column;
-      align-items: center;
+    .log-line {
+      animation: scroll-up 0.4s ease-in-out;
     }
-
-    input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      width: 300px;
-      margin-bottom: 1rem;
-    }
-
-    button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-    }
-
-    .ticket {
-      background: #fff;
-      color: #000;
-      padding: 1.5rem;
-      margin-top: 2rem;
-      border: 2px dashed #000;
-      width: 350px;
-    }
-
-    .ticket-title {
-      font-weight: bold;
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    .error {
-      color: red;
-      margin-top: 1rem;
+    @keyframes scroll-up {
+      from { opacity: 0; transform: translateY(20%); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h2>OG Capper Bets Ticket</h2>
-
-  <div id="loader" class="loader-wrapper">
-    <div class="circle-loader"></div>
-    <div id="load-log"></div>
+  <div class="logo">OG Capper Bets Ticket</div>
+  <div class="loader-container">
+    <div class="circle"></div>
   </div>
-
-  <div id="main-ui">
-    <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
-    <button onclick="createTicket()">Generate Ticket</button>
-    <div id="ticket"></div>
-    <div id="error" class="error"></div>
-  </div>
+  <div class="log-box" id="logBox"></div>
 
   <script>
-    const SPORTSDB_API_KEY = "123";
-    let allSports = [];
+    const logBox = document.getElementById('logBox');
+    const loadingSteps = [
+      "Fetching list of sports...",
+      "Pulling teams data...",
+      "Retrieving active games...",
+      "Indexing match schedule...",
+      "Caching results locally...",
+      "Finalizing memory store..."
+    ];
 
-    function logStatus(msg) {
-      const logBox = document.getElementById("load-log");
-      logBox.textContent += msg + "\n";
-      logBox.scrollTop = logBox.scrollHeight;
+    let current = 0;
+    const maxLines = 3;
+    const displayedLines = [];
+
+    function logStep(msg) {
+      if (displayedLines.length >= maxLines) {
+        displayedLines.shift();
+      }
+      displayedLines.push(`<div class='log-line'>${msg}</div>`);
+      logBox.innerHTML = displayedLines.join('');
     }
 
-    async function fetchSportsFromSportsDB() {
-      const url = `https://www.thesportsdb.com/api/v1/json/${SPORTSDB_API_KEY}/all_sports.php`;
-
-      try {
-        logStatus("Fetching sports from SportsDB...");
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data || !data.sports) {
-          throw new Error("No sports data found");
-        }
-
-        logStatus(`✅ Loaded ${data.sports.length} sports`);
-        return data.sports;
-      } catch (err) {
-        logStatus("❌ Failed to load sports");
-        console.error(err);
-        return [];
+    function simulateLoading() {
+      if (current < loadingSteps.length) {
+        logStep(loadingSteps[current]);
+        current++;
+        setTimeout(simulateLoading, 1200);
+      } else {
+        logStep("✅ Done. Ready to start!");
+        document.querySelector('.circle').style.borderTop = "8px solid #333";
       }
     }
 
-    async function loadData() {
-      allSports = await fetchSportsFromSportsDB();
-
-      // Add additional fetches (leagues, events, etc.) if needed here
-
-      document.getElementById("loader").style.display = "none";
-      document.getElementById("main-ui").style.display = "flex";
-    }
-
-    // Dummy function for placeholder ticket generation
-    function createTicket() {
-      const input = document.getElementById('betInput').value.trim();
-      const ticketHTML = `
-        <div class='ticket'>
-          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-          <hr>
-          <p><strong>INPUT:</strong> ${input}</p>
-          <p><strong>NOTE:</strong> Live ticket builder not wired to SportsDB yet.</p>
-          <hr>
-          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-        </div>
-      `;
-      document.getElementById('ticket').innerHTML = ticketHTML;
-    }
-
-    // Begin loading process
-    loadData();
+    simulateLoading();
   </script>
 </body>
 </html>
