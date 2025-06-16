@@ -2,100 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OG Capper Bets Ticket</title>
+  <title>OG Capper Bets - Real-Time Loader</title>
   <style>
     body {
-      background-color: #0e0e0e;
-      color: #00ff90;
-      font-family: monospace;
+      background: #0c0c0c;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
       margin: 0;
     }
-    .logo {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    .loader-container {
+    .loader-wrapper {
       position: relative;
-      width: 100px;
-      height: 100px;
-      margin-bottom: 30px;
+      width: 150px;
+      height: 150px;
     }
     .circle {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 8px solid #333;
-      border-top: 8px solid #00ff90;
-      animation: spin 1s linear infinite;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      stroke-linecap: round;
+      animation: progress 1s ease-out forwards;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    @keyframes progress {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    .percent-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.8rem;
+      font-weight: bold;
     }
     .log-box {
-      width: 400px;
-      height: 60px;
-      overflow: hidden;
-      border: 2px solid #00ff90;
-      padding: 10px;
-      box-sizing: border-box;
-      background-color: #1a1a1a;
+      margin-top: 2rem;
+      width: 350px;
+      height: 4.5rem;
+      background: #1a1a1a;
+      overflow-y: scroll;
+      padding: 0.5rem;
       font-size: 0.9rem;
+      border: 1px solid #333;
+      border-radius: 6px;
+      line-height: 1.3;
     }
-    .log-line {
-      animation: scroll-up 0.4s ease-in-out;
-    }
-    @keyframes scroll-up {
-      from { opacity: 0; transform: translateY(20%); }
-      to { opacity: 1; transform: translateY(0); }
+    .log-entry {
+      margin-bottom: 0.3rem;
+      color: #80ffcc;
     }
   </style>
 </head>
 <body>
-  <div class="logo">OG Capper Bets Ticket</div>
-  <div class="loader-container">
-    <div class="circle"></div>
+  <div class="loader-wrapper">
+    <svg width="150" height="150">
+      <circle cx="75" cy="75" r="70" stroke="#333" stroke-width="10" fill="none" />
+      <circle id="progressCircle" cx="75" cy="75" r="70" stroke="#00ff88" stroke-width="10" fill="none" class="circle" />
+    </svg>
+    <div id="percentText" class="percent-text">0%</div>
   </div>
-  <div class="log-box" id="logBox"></div>
+
+  <div id="logBox" class="log-box"></div>
 
   <script>
+    const progressCircle = document.getElementById('progressCircle');
+    const percentText = document.getElementById('percentText');
     const logBox = document.getElementById('logBox');
-    const loadingSteps = [
-      "Fetching list of sports...",
-      "Pulling teams data...",
-      "Retrieving active games...",
-      "Indexing match schedule...",
-      "Caching results locally...",
-      "Finalizing memory store..."
-    ];
 
-    let current = 0;
-    const maxLines = 3;
-    const displayedLines = [];
+    let progress = 0;
+    const totalSteps = 6; // this will update dynamically in production
 
-    function logStep(msg) {
-      if (displayedLines.length >= maxLines) {
-        displayedLines.shift();
-      }
-      displayedLines.push(`<div class='log-line'>${msg}</div>`);
-      logBox.innerHTML = displayedLines.join('');
+    function updateProgress(currentStep, total) {
+      progress = Math.round((currentStep / total) * 100);
+      const offset = 440 - (440 * progress) / 100;
+      progressCircle.style.strokeDashoffset = offset;
+      percentText.textContent = `${progress}%`;
     }
 
-    function simulateLoading() {
-      if (current < loadingSteps.length) {
-        logStep(loadingSteps[current]);
-        current++;
-        setTimeout(simulateLoading, 1200);
-      } else {
-        logStep("✅ Done. Ready to start!");
-        document.querySelector('.circle').style.borderTop = "8px solid #333";
+    function logMessage(message) {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.textContent = message;
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // DEMO ONLY: simulate dynamic loading
+    async function simulateLoading() {
+      const steps = [
+        'Fetching list of sports from SportsDB...',
+        'Pulling teams for each sport...',
+        'Retrieving recent and upcoming games...',
+        'Indexing live and pregame matches...',
+        'Storing all data in local memory...',
+        'Finishing setup...'
+      ];
+      for (let i = 0; i < steps.length; i++) {
+        logMessage(steps[i]);
+        updateProgress(i + 1, steps.length);
+        await new Promise(r => setTimeout(r, 800));
       }
     }
 
