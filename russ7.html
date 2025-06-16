@@ -1,162 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>OG Capper Bets Ticket</title>
   <style>
     body {
-      font-family: monospace;
       background: #000;
-      color: #0fffcf;
+      color: #0f0;
+      font-family: monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      padding: 2rem;
     }
-    .circle {
-      width: 120px;
-      height: 120px;
+    .circle-loader {
+      border: 10px solid #333;
+      border-top: 10px solid #00ff90;
       border-radius: 50%;
-      border: 10px solid #222;
-      border-top-color: #00ff95;
+      width: 100px;
+      height: 100px;
       animation: spin 1s linear infinite;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
       font-weight: bold;
-      margin-bottom: 2rem;
+      color: #fff;
+      margin: 1rem;
     }
     @keyframes spin {
-      0% { transform: rotate(0); }
+      0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    #log {
+    .log-box {
       width: 350px;
-      height: 4.5em;
+      height: 70px;
       overflow-y: auto;
+      border: 2px solid #0f0;
+      padding: 1rem;
       background: #111;
-      border: 2px solid #00ff95;
-      padding: 0.5rem;
+      color: #0ff;
       font-size: 0.9rem;
-      color: #fff;
-      margin-top: 1rem;
     }
-    #inputSection {
-      display: none;
-      flex-direction: row;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
+    .hidden { display: none; }
     input {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       padding: 0.5rem;
       width: 300px;
+      margin: 0.5rem;
     }
     button {
-      font-size: 1rem;
       padding: 0.5rem 1rem;
+      font-size: 1rem;
     }
-    #error {
+    .error {
       color: red;
       margin-top: 1rem;
+    }
+    .ticket {
+      background: #fff;
+      color: #000;
+      border: 2px dashed #000;
+      padding: 1.5rem;
+      width: 350px;
+      margin-top: 2rem;
+    }
+    .ticket-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
   <h2>OG Capper Bets Ticket</h2>
-  <div class="circle" id="progress">0%</div>
-  <div id="log"></div>
 
-  <div id="inputSection">
-    <input id="betInput" type="text" placeholder="e.g. Seattle ML 1u" />
-    <button onclick="createTicket()">Generate Ticket</button>
+  <div id="loader">
+    <div class="circle-loader" id="progressText">0%</div>
+    <div class="log-box" id="logBox"></div>
   </div>
-  <div id="error"></div>
+
+  <div id="inputArea" class="hidden">
+    <input id="betInput" placeholder="e.g. Seattle ML 1u" />
+    <button onclick="createTicket()">Generate Ticket</button>
+    <div id="error" class="error"></div>
+    <div id="ticket"></div>
+  </div>
 
   <script>
-    const apiKey = '123';
-    const logEl = document.getElementById("log");
-    const progressEl = document.getElementById("progress");
     const allTeams = [];
+    const progressText = document.getElementById('progressText');
+    const logBox = document.getElementById('logBox');
 
-    async function appendLog(msg, isError = false) {
-      logEl.innerHTML += `<div style="color:${isError ? 'red' : 'inherit'}">${msg}</div>`;
-      logEl.scrollTop = logEl.scrollHeight;
+    async function log(message, error = false) {
+      const entry = document.createElement('div');
+      entry.textContent = message;
+      if (error) entry.style.color = 'red';
+      logBox.appendChild(entry);
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
     async function loadData() {
       try {
-        appendLog("• Fetching all sports from SportsDB...");
-        const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${apiKey}/all_sports.php`);
-        const data = await res.json();
-        const sports = data.sports || [];
+        let percent = 0;
+        progressText.textContent = `${percent}%`;
+        await log("Fetching all sports from SportsDB...");
+        const sportsRes = await fetch("https://www.thesportsdb.com/api/v1/json/123/all_sports.php");
+        const sportsData = await sportsRes.json();
+        const sports = sportsData.sports || [];
 
         for (let i = 0; i < sports.length; i++) {
           const sport = sports[i];
-          const sportName = sport.strSport;
+          const name = sport.strSport;
+          await log(`Fetching teams for: ${name}...`);
+          const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?s=${encodeURIComponent(name)}`);
+          const teamData = await teamRes.json();
 
-          appendLog(`• Fetching teams for: ${sportName}...`);
-          try {
-            const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${apiKey}/search_all_teams.php?s=${encodeURIComponent(sportName)}`);
-            const teamData = await teamRes.json();
-            const teams = teamData.teams || [];
-            teams.forEach(team => {
-              allTeams.push({
-                name: team.strTeam,
-                idTeam: team.idTeam,
-                league: team.strLeague,
-                sport: sportName
-              });
-            });
-          } catch (err) {
-            appendLog(`❌ Failed to load data for ${sportName}`, true);
+          if (teamData.teams) {
+            teamData.teams.forEach(t => allTeams.push({
+              name: t.strTeam,
+              sport: name,
+              id: t.idTeam
+            }));
+          } else {
+            await log(`❌ Failed to load data for ${name}`, true);
           }
-
-          const percent = Math.floor(((i + 1) / sports.length) * 100);
-          progressEl.textContent = `${percent}%`;
+          percent = Math.floor((i + 1) / sports.length * 100);
+          progressText.textContent = `${percent}%`;
         }
-
-        appendLog("✔️ Done loading all data.");
-        document.getElementById("inputSection").style.display = "flex";
-        progressEl.textContent = "100%";
-        progressEl.style.animation = "none";
-        progressEl.style.backgroundColor = "#00ff95";
-        progressEl.style.color = "#000";
-      } catch (err) {
-        appendLog("❌ Failed to load initial sports.", true);
-        console.error(err);
+        await log("✓ Done loading all data.");
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('inputArea').classList.remove('hidden');
+      } catch (e) {
+        await log("❌ Failed to load data.", true);
+        console.error(e);
       }
     }
 
-    function createTicket() {
-      const input = document.getElementById("betInput").value.trim();
-      const match = input.match(/^(.*?)\s+(\w+)\s+(\d+(\.\d+)?)(u)?$/i);
-      const errorEl = document.getElementById("error");
-      errorEl.textContent = "";
+    async function createTicket() {
+      const input = document.getElementById('betInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      const ticketDiv = document.getElementById('ticket');
+      errorDiv.textContent = "";
+      ticketDiv.innerHTML = "";
 
+      const match = input.match(/^(.*?)\s+(\S+)\s+(\d+(\.\d+)?)(u?)$/i);
       if (!match) {
-        errorEl.textContent = "Invalid format. Try: Seattle ML 1u";
+        errorDiv.textContent = "Invalid format. Use: Team BetType Units";
         return;
       }
 
       const query = match[1].toLowerCase();
-      const teamMatches = allTeams.filter(t => t.name.toLowerCase().includes(query));
+      const betType = match[2];
+      const units = match[3];
 
-      if (teamMatches.length === 0) {
-        errorEl.textContent = "No team found matching that name.";
+      const matched = allTeams.filter(t => t.name.toLowerCase().includes(query));
+      if (matched.length === 0) {
+        errorDiv.textContent = "No game found matching that team.";
         return;
       }
 
-      if (teamMatches.length > 1) {
-        errorEl.innerHTML = `⚠️ Multiple teams match that name:<br>${teamMatches.map(t => t.name).join("<br>")}`;
-        return;
-      }
+      const team = matched[0];
 
-      const selected = teamMatches[0];
-      alert(`✅ Ticket generated for ${selected.name} in ${selected.sport} / ${selected.league}`);
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>TEAM:</strong> ${team.name}</p>
+          <p><strong>SPORT:</strong> ${team.sport}</p>
+          <p><strong>SELECTION:</strong> ${team.name} ${betType.toUpperCase()}</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+      ticketDiv.innerHTML = ticketHTML;
     }
 
     window.onload = loadData;
