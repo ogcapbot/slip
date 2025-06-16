@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OG Capper Bets - Ticket</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    input {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      width: 300px;
+      margin-bottom: 1rem;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+    }
+    .ticket {
+      background: #fff;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border: 2px dashed #000;
+      width: 350px;
+    }
+    .ticket-title {
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="color: white;">OG Capper Bets Ticket</h2>
+  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
+  <button onclick="createTicket()">Generate Ticket</button>
+  <div id="ticket"></div>
+  <div id="error" class="error"></div>
+
+  <script>
+    async function createTicket() {
+      document.getElementById('error').textContent = "";
+      document.getElementById('ticket').innerHTML = "";
+
+      const input = document.getElementById('betInput').value.trim();
+      const match = input.match(/^(.*?)\s+(.*?)\s+(\d+(\.\d+)?)(u?)$/i);
+
+      if (!match) {
+        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
+        return;
+      }
+
+      const teamQuery = match[1].toLowerCase();
+      const betType = match[2].toUpperCase();
+      const units = match[3];
+
+      const sportsUrls = await fetch("https://site.api.espn.com/apis/site/v2/sports/")
+        .then(r => r.json())
+        .then(data => data.sports.flatMap(s => s.leagues.map(l => `${s.slug}/${l.slug}`)))
+        .catch(() => []);
+
+      const matches = [];
+      for (const path of sportsUrls) {
+        try {
+          const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${path}/scoreboard`);
+          const data = await res.json();
+          if (!data.events) continue;
+
+          for (const event of data.events) {
+            const comp = event.competitions?.[0];
+            if (!comp) continue;
+            const [home, away] = comp.competitors || [];
+            const homeName = home?.team?.displayName?.toLowerCase();
+            const awayName = away?.team?.displayName?.toLowerCase();
+
+            if (homeName?.includes(teamQuery) || awayName?.includes(teamQuery)) {
+              matches.push({ event, comp, path });
+            }
+          }
+
+          if (matches.length > 5) break;
+        } catch (e) {
+          console.warn(`Error loading ${path}`);
+        }
+      }
+
+      if (matches.length === 0) {
+        document.getElementById('error').textContent = "No matching events found.";
+        return;
+      }
+
+      const match = matches[0];
+      const t1 = match.comp.competitors[0];
+      const t2 = match.comp.competitors[1];
+      const home = t1.homeAway === "home" ? t1 : t2;
+      const away = t1.homeAway === "away" ? t1 : t2;
+      const date = new Date(match.event.date).toLocaleString();
+
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>BOOK:</strong> ESPN Live Feed</p>
+          <p><strong>EVENT:</strong> ${home.team.displayName} vs ${away.team.displayName}</p>
+          <p><strong>DATE:</strong> ${date}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${teamQuery.toUpperCase()} ${betType}</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>ODDS:</strong> N/A (not available via ESPN)</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+
+          <br>
+          <hr>
+          <p><strong>### OPTIONS ###</strong></p>
+          <pre style='font-size: 0.7rem;'>${JSON.stringify(match, null, 2)}</pre>
+        </div>
+      `;
+      document.getElementById('ticket').innerHTML = ticketHTML;
+    }
+  </script>
+</body>
+</html>
