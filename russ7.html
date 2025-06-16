@@ -2,26 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OG Capper Bets Ticket</title>
+  <title>OG Capper Bets - Ticket</title>
   <style>
     body {
       font-family: monospace;
-      background: #111;
+      background: #000;
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 2rem;
     }
-    input {
-      font-size: 1.2rem;
-      padding: 0.5rem;
-      width: 300px;
-      margin: 1rem 1rem 1rem 0;
+    .loader {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 10px solid #222;
+      border-top: 10px solid #00ff90;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
     }
-    button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #logBox {
+      width: 500px;
+      height: 4rem;
+      overflow-y: scroll;
+      background: #111;
+      border: 1px solid #00ff90;
+      padding: 1rem;
+      font-size: 0.9rem;
     }
     .ticket {
       background: #fff;
@@ -37,101 +50,106 @@
       font-size: 1.2rem;
       margin-bottom: 1rem;
     }
-    .error {
-      color: red;
-      margin-top: 1rem;
+    input, button {
+      font-size: 1.2rem;
+      margin: 0.5rem;
     }
-    .prompt {
-      color: yellow;
-      margin-top: 1rem;
-    }
+    .error { color: red; margin-top: 1rem; }
   </style>
 </head>
 <body>
   <h2>OG Capper Bets Ticket</h2>
-  <div style="display: flex; align-items: center;">
+  <div class="loader" id="loader"></div>
+  <div id="logBox"></div>
+
+  <div id="mainApp" style="display:none; flex-direction:column; align-items:center;">
     <input id="betInput" type="text" placeholder="e.g. Seattle ML 1u" />
     <button onclick="createTicket()">Generate Ticket</button>
+    <div id="ticket"></div>
+    <div id="error" class="error"></div>
   </div>
-  <div id="prompt" class="prompt"></div>
-  <div id="ticket"></div>
-  <div id="error" class="error"></div>
 
   <script>
-    let teamsList = [];
-    let lastInput = "";
+    const sportsdbKey = "123";
+    const logBox = document.getElementById("logBox");
+    const teamMap = new Map();
+    
+    function log(message) {
+      logBox.innerHTML += `• ${message}<br>`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
 
-    async function fetchTeams() {
+    async function fetchAllSports() {
+      log("Fetching all sports from SportsDB...");
+      const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/all_sports.php`);
+      const data = await res.json();
+      return data.sports || [];
+    }
+
+    async function fetchTeamsForSport(sportName) {
+      log(`Fetching teams for: ${sportName}...`);
+      const url = `https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/search_all_teams.php?s=${encodeURIComponent(sportName)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.teams || [];
+    }
+
+    async function loadData() {
       try {
-        const res = await fetch("https://www.thesportsdb.com/api/v1/json/123/all_teams.php");
-        const data = await res.json();
-        teamsList = data.teams.map(t => t.strTeam);
-      } catch (e) {
-        document.getElementById("error").textContent = "Failed to load team data.";
+        const sports = await fetchAllSports();
+        for (const sport of sports) {
+          const teams = await fetchTeamsForSport(sport.strSport);
+          for (const team of teams) {
+            teamMap.set(team.strTeam.toLowerCase(), { ...team, sport: sport.strSport });
+          }
+        }
+        log("✅ All teams loaded into memory.");
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("mainApp").style.display = "flex";
+      } catch (err) {
+        log("❌ Failed to load data");
+        console.error(err);
       }
     }
 
-    function fuzzyMatchTeam(query) {
-      query = query.toLowerCase();
-      const matches = teamsList.filter(name => name.toLowerCase().includes(query));
-      return matches;
-    }
-
-    function promptAmbiguity(matches) {
-      const promptDiv = document.getElementById("prompt");
-      promptDiv.innerHTML = `⚠️ Did you mean:<br><ul>` +
-        matches.map(m => `<li><button onclick="selectTeam('${m.replace(/'/g, "\\'")}')">${m}</button></li>`).join('') +
-        `</ul>`;
-    }
-
-    function selectTeam(teamName) {
-      document.getElementById("prompt").innerHTML = "";
-      createTicket(teamName);
-    }
-
-    async function createTicket(forcedTeam = null) {
+    async function createTicket() {
       document.getElementById("error").textContent = "";
-      document.getElementById("ticket").innerHTML = "";
-
       const input = document.getElementById('betInput').value.trim();
-      if (!forcedTeam) lastInput = input;
-
-      const match = lastInput.match(/^(.*?)\s+(ml|spread|tt|f5|total|under|over)\s+(\d+(\.\d+)?)(u)?$/i);
+      const match = input.match(/^(.*?)\s+(ml|spread|total|tt|f5|o\d+(\.\d+)?|u\d+(\.\d+)?|\+\d+|\-\d+)\s+(\d+(\.\d+)?)(u?)$/i);
       if (!match) {
-        document.getElementById('error').textContent = "Invalid format. Try: Seattle ML 1u";
+        document.getElementById('error').textContent = "Invalid format. Try: Team ML 1u";
         return;
       }
 
-      const teamQuery = forcedTeam || match[1].trim();
-      const matches = fuzzyMatchTeam(teamQuery);
+      const teamQuery = match[1].toLowerCase();
+      const teamMatch = [...teamMap.entries()].filter(([key]) => key.includes(teamQuery));
 
-      if (!forcedTeam && matches.length > 1) {
-        promptAmbiguity(matches);
+      if (teamMatch.length === 0) {
+        document.getElementById("error").textContent = "No team found matching that input.";
         return;
       }
 
-      if (matches.length === 0) {
-        document.getElementById('error').textContent = "No game found matching that team.";
-        return;
-      }
-
-      // Render dummy ticket for now (replace with real SportsDB data)
-      const selected = forcedTeam || matches[0];
+      const bestTeam = teamMatch[0][1];
       const ticketHTML = `
         <div class='ticket'>
           <div class='ticket-title'>🏁 OG CAPPER BETS</div>
           <hr>
-          <p><strong>TEAM:</strong> ${selected}</p>
-          <p><strong>INPUT:</strong> ${input}</p>
-          <p><strong>STATUS:</strong> Lookup successful (stub)</p>
+          <p><strong>TEAM:</strong> ${bestTeam.strTeam}</p>
+          <p><strong>SPORT:</strong> ${bestTeam.sport}</p>
+          <p><strong>LEAGUE:</strong> ${bestTeam.strLeague}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${match[2].toUpperCase()}</p>
+          <p><strong>WAGER:</strong> ${match[3]} unit(s)</p>
+          <p><strong>COUNTRY:</strong> ${bestTeam.strCountry}</p>
+          <p><strong>STADIUM:</strong> ${bestTeam.strStadium || "N/A"}</p>
           <hr>
           <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
         </div>
       `;
-      document.getElementById('ticket').innerHTML = ticketHTML;
+      document.getElementById("ticket").innerHTML = ticketHTML;
     }
 
-    fetchTeams();
+    window.onload = loadData;
   </script>
 </body>
 </html>
