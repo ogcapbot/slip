@@ -10,8 +10,7 @@
       color: #fff;
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 600px;
-      margin: auto;
+      margin: 0 auto;
     }
     input, button {
       width: 100%;
@@ -20,12 +19,18 @@
       font-size: 16px;
       border-radius: 8px;
       box-sizing: border-box;
+      max-width: 100%;
+    }
+    button:active {
+      transform: scale(0.98);
+      background-color: #0c0;
     }
     button {
       background: #0f0;
       color: #000;
       font-weight: bold;
       cursor: pointer;
+      transition: transform 0.1s ease-in-out;
     }
     #loader, #betInput, #results, #multiSelect {
       display: none;
@@ -60,6 +65,7 @@
     @media (max-width: 480px) {
       input, button {
         font-size: 14px;
+        width: 100%;
       }
     }
   </style>
@@ -67,7 +73,7 @@
 <body>
   <div id="access">
     <h2>Enter Access Code</h2>
-    <input id="codeInput" type="number" inputmode="numeric" pattern="\\d*" minlength="3" maxlength="8" placeholder="Access Code" />
+    <input id="codeInput" type="number" inputmode="numeric" pattern="\d*" minlength="3" maxlength="8" placeholder="Access Code" />
     <button onclick="validateCode()">Submit</button>
     <p id="authMessage"></p>
   </div>
@@ -80,6 +86,7 @@
   <div id="betInput">
     <input id="userInput" placeholder="e.g. cubs ml 1u" />
     <button onclick="processInput()">Create</button>
+    <p id="inputError" style="color: red; white-space: pre-wrap;"></p>
   </div>
 
   <div id="multiSelect"></div>
@@ -99,10 +106,10 @@
           document.getElementById('loader').style.display = 'block';
           loadGames();
         } else {
-          document.getElementById('authMessage').innerText = 'The Access Code Entered is Invalid. Please Try Again.';
+          document.getElementById('authMessage').innerText = `The Access Code ${code} is Invalid. Please Enter a Valid Access Code to Continue.`;
         }
       } else {
-        document.getElementById('authMessage').innerText = 'The Access Code Entered is Invalid. Please Try Again.';
+        document.getElementById('authMessage').innerText = `The Access Code ${code} is Invalid. Please Enter a Valid Access Code to Continue.`;
       }
     }
 
@@ -134,10 +141,17 @@
     }
 
     function processInput() {
+      document.getElementById('inputError').innerText = '';
       const input = document.getElementById('userInput').value.trim().toLowerCase();
-      if (!input) return;
+      if (!input) {
+        document.getElementById('inputError').innerText = 'Input cannot be empty.';
+        return;
+      }
       const parts = input.split(' ');
-      if (parts.length < 3) return;
+      if (parts.length < 3) {
+        document.getElementById('inputError').innerText = 'Input must include a team, bet type, and wager (e.g. "cubs ml 1u").';
+        return;
+      }
       const teamQuery = parts[0];
       const betType = parts[1];
       const wager = parts[2];
@@ -147,7 +161,7 @@
       );
 
       if (matches.length === 0) {
-        document.getElementById('results').innerText = 'No games found matching your input.';
+        document.getElementById('inputError').innerText = `No games found matching: "${teamQuery}"`;
         return;
       } else if (matches.length === 1) {
         renderTicket(matches[0], teamQuery, betType, wager);
