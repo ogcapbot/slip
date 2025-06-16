@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>OG Capper Bets Ticket</title>
   <style>
     body {
@@ -13,167 +13,155 @@
       align-items: center;
       padding: 2rem;
     }
-    .loader {
-      position: relative;
+    #loaderBox {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    #log {
+      background: #111;
+      border: 2px solid #0f0;
+      padding: 1rem;
+      width: 300px;
+      height: 100px;
+      overflow-y: scroll;
+      margin: 1rem auto;
+      color: cyan;
+      font-size: 0.9rem;
+    }
+    #progress {
       width: 100px;
       height: 100px;
       border-radius: 50%;
       border: 10px solid #333;
-      border-top-color: #00ff88;
+      border-top: 10px solid #0f0;
       animation: spin 1s linear infinite;
+      margin: 0 auto;
     }
-    .loader-text {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      top: 0;
-      left: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    #progressLabel {
+      margin-top: 1rem;
+      font-size: 1.2rem;
       font-weight: bold;
-      color: white;
     }
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    #logBox {
-      margin-top: 1rem;
-      border: 2px solid #0f0;
-      padding: 0.5rem;
-      background: #111;
-      color: #0ff;
-      width: 300px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
-    input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      width: 300px;
+    .hidden { display: none; }
+    #ticketBox {
       margin-top: 2rem;
+      text-align: center;
     }
-    button {
-      padding: 0.5rem 1rem;
-      margin-left: 1rem;
+    input, button {
       font-size: 1rem;
+      padding: 0.5rem;
+      margin: 0.5rem;
     }
-    #ticket {
-      margin-top: 2rem;
-      color: #fff;
-    }
-    .error {
-      color: red;
-      margin-top: 1rem;
-    }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h2>OG Capper Bets Ticket</h2>
-  <div id="loaderContainer">
-    <div class="loader" id="circle"></div>
-    <div class="loader-text" id="loaderPercent">0%</div>
+  <h1>OG Capper Bets Ticket</h1>
+  <div id="loaderBox">
+    <div id="progress"></div>
+    <div id="progressLabel">Loading...</div>
+    <div id="log"></div>
   </div>
-  <div id="logBox"></div>
 
-  <div id="inputContainer" style="display:none;">
-    <input id="betInput" placeholder="e.g. Seattle ML 1u">
+  <div id="ticketBox" class="hidden">
+    <input id="betInput" type="text" placeholder="e.g. Seattle ML 1u" />
     <button onclick="generateTicket()">Generate Ticket</button>
     <div id="error" class="error"></div>
+    <div id="output"></div>
   </div>
 
-  <div id="ticket"></div>
-
   <script>
-    let teams = [];
+    const API_BASE = 'https://www.thesportsdb.com/api/v1/json/123';
+    const logEl = document.getElementById('log');
+    const loaderBox = document.getElementById('loaderBox');
+    const ticketBox = document.getElementById('ticketBox');
+    const progressLabel = document.getElementById('progressLabel');
 
-    async function logStep(text, isError = false) {
-      const box = document.getElementById("logBox");
-      const line = document.createElement("div");
-      line.textContent = (isError ? "\u274C " : "\u2022 ") + text;
-      line.style.color = isError ? "red" : "#0ff";
-      box.appendChild(line);
-      box.scrollTop = box.scrollHeight;
+    let teamsIndex = [];
+
+    function log(msg, isError = false) {
+      const line = document.createElement('div');
+      line.textContent = `${isError ? '✖' : '•'} ${msg}`;
+      line.style.color = isError ? 'red' : 'cyan';
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
     }
 
     async function loadData() {
-      const loaderPercent = document.getElementById("loaderPercent");
-      let percent = 0;
-
-      const updateProgress = (p) => {
-        percent = p;
-        loaderPercent.textContent = `${percent}%`;
+      log('Fetching all sports from SportsDB...');
+      let sportsResp = await fetch(`${API_BASE}/all_sports.php`).then(r => r.json()).catch(() => null);
+      if (!sportsResp || !sportsResp.sports) {
+        log('Failed to load sports.', true);
+        return;
       }
 
-      updateProgress(10);
-      await logStep("Fetching all sports from SportsDB...");
-      const sportRes = await fetch("https://www.thesportsdb.com/api/v1/json/123/all_sports.php");
-      const sportData = await sportRes.json();
-      const sportList = sportData.sports || [];
-
-      updateProgress(25);
-      await logStep("Fetching teams for each sport...");
-
-      for (const sport of sportList) {
-        const sportName = sport.strSport;
-        await logStep(`Fetching teams for: ${sportName}...`);
+      let sports = sportsResp.sports;
+      for (let sport of sports) {
+        let name = sport.strSport;
+        log(`Fetching teams for: ${name}...`);
         try {
-          const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?s=${encodeURIComponent(sportName)}`);
-          const teamData = await teamRes.json();
-          if (teamData && teamData.teams) {
-            teams.push(...teamData.teams);
+          let teamResp = await fetch(`${API_BASE}/search_all_teams.php?s=${encodeURIComponent(name)}`).then(r => r.json());
+          if (teamResp && Array.isArray(teamResp.teams)) {
+            teamsIndex.push(...teamResp.teams.map(t => ({ name: t.strTeam, sport: name, id: t.idTeam })));
+          } else {
+            log(`No teams found for: ${name}`, true);
           }
-        } catch (err) {
-          await logStep(`Failed to load data for ${sportName}`, true);
+        } catch (e) {
+          log(`Failed to load data for ${name}`, true);
         }
       }
-
-      updateProgress(90);
-      await logStep("Indexing teams...");
-      teams = teams.filter(t => t && t.strTeam);
-      await logStep(`Indexed ${teams.length} teams.`);
-
-      updateProgress(100);
-      await logStep("Live lookup is ready");
-      document.getElementById("loaderContainer").style.display = "none";
-      document.getElementById("inputContainer").style.display = "block";
+      log(`Indexed ${teamsIndex.length} teams.`);
+      progressLabel.textContent = '✅ Done';
+      loaderBox.classList.add('hidden');
+      ticketBox.classList.remove('hidden');
     }
 
-    async function generateTicket() {
-      const input = document.getElementById("betInput").value.trim();
-      const match = input.match(/^(.*?)\s+(\S+)\s+(\d+(\.\d+)?)(u)?$/i);
-      const errorBox = document.getElementById("error");
-      errorBox.textContent = "";
+    function generateTicket() {
+      const input = document.getElementById('betInput').value.trim();
+      const match = input.match(/^(.*?)\s+(ml|spread|total|tt)\s+(\d+(\.\d+)?)(u)$/i);
+      const errorEl = document.getElementById('error');
+      const output = document.getElementById('output');
+      errorEl.textContent = '';
+      output.textContent = '';
+
       if (!match) {
-        errorBox.textContent = "Invalid format. Try: Seattle ML 1u";
-        return;
-      }
-      const [_, teamRaw, betType, units] = match;
-
-      const matches = teams.filter(t =>
-        t.strTeam && t.strTeam.toLowerCase().includes(teamRaw.toLowerCase())
-      );
-
-      if (matches.length === 0) {
-        errorBox.textContent = "No team found.";
+        errorEl.textContent = 'Invalid format. Try: Seattle ML 1u';
         return;
       }
 
-      const team = matches[0];
-      const ticket = `
-        <pre>
+      const queryTeam = match[1].toLowerCase();
+      const betType = match[2].toUpperCase();
+      const units = match[3];
+
+      const matched = teamsIndex.filter(t => t.name && t.name.toLowerCase().includes(queryTeam));
+
+      if (matched.length === 0) {
+        errorEl.textContent = 'No team found.';
+        return;
+      } else if (matched.length > 1) {
+        errorEl.textContent = `Multiple matches found: ${matched.map(m => m.name).join(', ')}`;
+        return;
+      }
+
+      const team = matched[0];
+      const now = new Date().toLocaleString();
+
+      output.innerHTML = `
+        <pre style="text-align:left; background:#fff; color:#000; padding:1rem; border:2px dashed #000; width: 300px;">
 🏁 OG CAPPER BETS
------------------------
-TEAM: ${team.strTeam}
-BET: ${betType.toUpperCase()} - ${units} unit(s)
-SPORT: ${team.strSport}
-LEAGUE: ${team.strLeague || 'N/A'}
-COUNTRY: ${team.strCountry || 'N/A'}
------------------------
+----------------------------
+TEAM: ${team.name}
+SPORT: ${team.sport}
+BET: ${betType} ${units}u
+DATE: ${now}
+----------------------------
 ALL SALES FINAL – NO CANCELLATION
         </pre>
       `;
-      document.getElementById("ticket").innerHTML = ticket;
     }
 
     loadData();
