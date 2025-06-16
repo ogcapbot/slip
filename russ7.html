@@ -5,148 +5,168 @@
   <title>OG Capper Bets - Ticket</title>
   <style>
     body {
-      font-family: monospace;
+      margin: 0;
+      padding: 0;
       background: #111;
-      color: #000;
+      color: white;
+      font-family: monospace;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
+      justify-content: center;
+      height: 100vh;
     }
-    input, button {
-      font-size: 1.2rem;
-      padding: 0.5rem;
+
+    h2 {
+      margin-bottom: 2rem;
+    }
+
+    .loader-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .circle-loader {
+      width: 100px;
+      height: 100px;
+      border: 10px solid #333;
+      border-top: 10px solid lime;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
       margin-bottom: 1rem;
     }
-    input {
-      width: 300px;
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
+
+    #load-log {
+      width: 400px;
+      height: 4.5em;
+      border: 2px solid lime;
+      background: #111;
+      color: lime;
+      padding: 1em;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre-line;
+    }
+
+    #main-ui {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      width: 300px;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+    }
+
     .ticket {
       background: #fff;
+      color: #000;
       padding: 1.5rem;
       margin-top: 2rem;
       border: 2px dashed #000;
       width: 350px;
     }
+
     .ticket-title {
       font-weight: bold;
       text-align: center;
       font-size: 1.2rem;
       margin-bottom: 1rem;
     }
+
     .error {
       color: red;
       margin-top: 1rem;
     }
-    #loaderCircle {
-      width: 100px;
-      height: 100px;
-      border: 10px solid #444;
-      border-top: 10px solid #0f0;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
-    }
-    #loadTextBox {
-      background: #222;
-      color: #0f0;
-      font-size: 0.9rem;
-      width: 320px;
-      height: 3.5em;
-      overflow-y: auto;
-      padding: 0.5em;
-      line-height: 1.2em;
-      white-space: pre-line;
-      border: 1px solid #0f0;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
   </style>
 </head>
 <body>
-  <h2 style="color: white;">OG Capper Bets Ticket</h2>
-  <div id="loaderCircle"></div>
-  <div id="loadTextBox"></div>
-  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" style="display:none" />
-  <button onclick="createTicket()" style="display:none">Generate Ticket</button>
-  <div id="ticket"></div>
-  <div id="error" class="error"></div>
+  <h2>OG Capper Bets Ticket</h2>
+
+  <div id="loader" class="loader-wrapper">
+    <div class="circle-loader"></div>
+    <div id="load-log"></div>
+  </div>
+
+  <div id="main-ui">
+    <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
+    <button onclick="createTicket()">Generate Ticket</button>
+    <div id="ticket"></div>
+    <div id="error" class="error"></div>
+  </div>
 
   <script>
-    const sportsdbKey = "123";
-    let cachedGames = [];
+    const SPORTSDB_API_KEY = "123";
+    let allSports = [];
 
-    async function logLoadingStep(msg) {
-      const box = document.getElementById("loadTextBox");
-      box.textContent += `${msg}\n`;
-      box.scrollTop = box.scrollHeight;
+    function logStatus(msg) {
+      const logBox = document.getElementById("load-log");
+      logBox.textContent += msg + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
-    async function fetchGamesFromSportsDB() {
-      const now = new Date();
-      const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-      const fortyEightHoursLater = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    async function fetchSportsFromSportsDB() {
+      const url = `https://www.thesportsdb.com/api/v1/json/${SPORTSDB_API_KEY}/all_sports.php`;
 
-      const allLeaguesURL = `https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/all_leagues.php`;
-      const leagueRes = await fetch(allLeaguesURL);
-      const leagueData = await leagueRes.json();
-      const leagues = leagueData.leagues || [];
+      try {
+        logStatus("Fetching sports from SportsDB...");
+        const res = await fetch(url);
+        const data = await res.json();
 
-      for (const league of leagues.slice(0, 50)) {
-        await logLoadingStep(`Loading: ${league.strLeague}`);
-        try {
-          const eventsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/eventsnextleague.php?id=${league.idLeague}`);
-          const eventsData = await eventsRes.json();
-          const events = eventsData.events || [];
-
-          const filtered = events.filter(e => {
-            const dt = new Date(`${e.dateEvent}T${e.strTime || '00:00:00'}Z`);
-            return dt >= twelveHoursAgo && dt <= fortyEightHoursLater;
-          });
-
-          cachedGames.push(...filtered);
-        } catch (err) {
-          continue;
+        if (!data || !data.sports) {
+          throw new Error("No sports data found");
         }
+
+        logStatus(`✅ Loaded ${data.sports.length} sports`);
+        return data.sports;
+      } catch (err) {
+        logStatus("❌ Failed to load sports");
+        console.error(err);
+        return [];
       }
     }
 
     async function loadData() {
-      await logLoadingStep("Fetching games from SportsDB...");
-      await fetchGamesFromSportsDB();
-      document.getElementById("loaderCircle").style.display = "none";
-      document.getElementById("loadTextBox").style.display = "none";
-      document.getElementById("betInput").style.display = "block";
-      document.querySelector("button").style.display = "block";
+      allSports = await fetchSportsFromSportsDB();
+
+      // Add additional fetches (leagues, events, etc.) if needed here
+
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("main-ui").style.display = "flex";
     }
 
-    async function createTicket() {
-      const input = document.getElementById("betInput").value.trim();
-      const matchParts = input.match(/^(.*?)\s+(\S+)\s+(\d+(\.\d+)?)(u?)$/i);
-
-      if (!matchParts) {
-        document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
-        return;
-      }
-
-      const teamQuery = matchParts[1].toLowerCase();
-      const betType = matchParts[2];
-      const units = matchParts[3];
-
-      const matchedGame = cachedGames.find(game =>
-        (game.strHomeTeam && game.strHomeTeam.toLowerCase().includes(teamQuery)) ||
-        (game.strAwayTeam && game.strAwayTeam.toLowerCase().includes(teamQuery))
-      );
-
-      if (!matchedGame) {
-        document.getElementById('error').textContent = "Game not found. Try a different team.";
-        return;
-      }
-
-      const team = matchedGame.strHomeTeam.toLowerCase().includes(teamQuery) ? matchedGame.strHomeTeam : matchedGame.strAwayTeam;
-      const opponent = matchedGame.strHomeTeam.toLowerCase().includes(teamQuery) ? matchedGame.strAwayTeam : matchedGame.strHomeTeam;
-
+    // Dummy function for placeholder ticket generation
+    function createTicket() {
+      const input = document.getElementById('betInput').value.trim();
       const ticketHTML = `
         <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>INPUT:</strong> ${input}</p>
+          <p><strong>NOTE:</strong> Live ticket builder not wired to SportsDB yet.</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+      document.getElementById('ticket').innerHTML = ticketHTML;
+    }
+
+    // Begin loading process
+    loadData();
+  </script>
+</body>
+</html>
