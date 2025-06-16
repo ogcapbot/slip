@@ -1,114 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>OG Capper Bets - Real-Time Loader</title>
+  <meta charset="UTF-8">
+  <title>OG Capper Bets - Ticket</title>
   <style>
     body {
-      background: #0c0c0c;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: monospace;
+      background: #000;
+      color: #0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    .loader-wrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      margin: 0;
-    }
-    .loader-wrapper {
-      position: relative;
-      width: 150px;
-      height: 150px;
     }
     .circle {
-      stroke-dasharray: 440;
-      stroke-dashoffset: 440;
-      stroke-linecap: round;
-      animation: progress 1s ease-out forwards;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 10px solid #333;
+      border-top: 10px solid #00ff88;
+      animation: spin 2s linear infinite;
+      position: relative;
     }
-    @keyframes progress {
-      to {
-        stroke-dashoffset: 0;
-      }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .percent-text {
+    .progress-text {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1.8rem;
-      font-weight: bold;
+      top: 45px;
+      left: 36px;
+      font-size: 1.4rem;
+      color: #fff;
     }
     .log-box {
-      margin-top: 2rem;
-      width: 350px;
+      background: #111;
+      border: 2px solid #00ff88;
+      color: #88ffc8;
+      width: 400px;
       height: 4.5rem;
-      background: #1a1a1a;
       overflow-y: scroll;
+      font-size: 1rem;
       padding: 0.5rem;
-      font-size: 0.9rem;
-      border: 1px solid #333;
-      border-radius: 6px;
-      line-height: 1.3;
+      margin-top: 2rem;
     }
-    .log-entry {
-      margin-bottom: 0.3rem;
-      color: #80ffcc;
+    .hidden { display: none; }
+    input, button {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin: 0.5rem;
+    }
+    .ticket {
+      background: #fff;
+      color: #000;
+      padding: 1.5rem;
+      border: 2px dashed #000;
+      width: 350px;
+      margin-top: 2rem;
+    }
+    .ticket-title {
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="loader-wrapper">
-    <svg width="150" height="150">
-      <circle cx="75" cy="75" r="70" stroke="#333" stroke-width="10" fill="none" />
-      <circle id="progressCircle" cx="75" cy="75" r="70" stroke="#00ff88" stroke-width="10" fill="none" class="circle" />
-    </svg>
-    <div id="percentText" class="percent-text">0%</div>
+  <div class="loader-wrapper" id="loaderWrapper">
+    <div class="circle" id="circleLoader">
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+    <div class="log-box" id="logBox"></div>
   </div>
 
-  <div id="logBox" class="log-box"></div>
+  <div id="mainApp" class="hidden">
+    <h2 style="color: white;">OG Capper Bets Ticket</h2>
+    <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
+    <button onclick="createTicket()">Generate Ticket</button>
+    <div id="ticket"></div>
+    <div id="error" class="error"></div>
+  </div>
 
   <script>
-    const progressCircle = document.getElementById('progressCircle');
-    const percentText = document.getElementById('percentText');
-    const logBox = document.getElementById('logBox');
+    let allMatches = [];
 
-    let progress = 0;
-    const totalSteps = 6; // this will update dynamically in production
-
-    function updateProgress(currentStep, total) {
-      progress = Math.round((currentStep / total) * 100);
-      const offset = 440 - (440 * progress) / 100;
-      progressCircle.style.strokeDashoffset = offset;
-      percentText.textContent = `${progress}%`;
+    function updateProgress(percent) {
+      document.getElementById("progressText").innerText = percent + "%";
+      document.getElementById("circleLoader").style.borderTopColor = `hsl(${percent}, 100%, 60%)`;
     }
 
-    function logMessage(message) {
-      const div = document.createElement('div');
-      div.className = 'log-entry';
-      div.textContent = message;
-      logBox.appendChild(div);
-      logBox.scrollTop = logBox.scrollHeight;
+    function logMessage(msg) {
+      const box = document.getElementById("logBox");
+      box.innerHTML += `<div>${msg}</div>`;
+      box.scrollTop = box.scrollHeight;
     }
 
-    // DEMO ONLY: simulate dynamic loading
-    async function simulateLoading() {
-      const steps = [
-        'Fetching list of sports from SportsDB...',
-        'Pulling teams for each sport...',
-        'Retrieving recent and upcoming games...',
-        'Indexing live and pregame matches...',
-        'Storing all data in local memory...',
-        'Finishing setup...'
-      ];
-      for (let i = 0; i < steps.length; i++) {
-        logMessage(steps[i]);
-        updateProgress(i + 1, steps.length);
-        await new Promise(r => setTimeout(r, 800));
+    async function loadData() {
+      try {
+        updateProgress(10);
+        logMessage("Loading all leagues...");
+        const leaguesRes = await fetch("https://www.thesportsdb.com/api/v1/json/123/all_leagues.php");
+        const leagues = (await leaguesRes.json()).leagues;
+
+        const filtered = leagues.filter(l => l.strSport && !l.strLeague.includes("Virtual"));
+        const sliceSize = Math.ceil(filtered.length / 8);
+
+        for (let i = 0; i < filtered.length; i++) {
+          const league = filtered[i];
+          logMessage(`Fetching events for: ${league.strLeague}`);
+          const eventsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventsnextleague.php?id=${league.idLeague}`);
+          const pastRes = await fetch(`https://www.thesportsdb.com/api/v1/json/123/eventspastleague.php?id=${league.idLeague}`);
+
+          const events = (await eventsRes.json()).events || [];
+          const past = (await pastRes.json()).events || [];
+
+          allMatches.push(...events, ...past);
+          updateProgress(Math.min(100, Math.floor((i + 1) / filtered.length * 100)));
+        }
+
+        logMessage("Storing all data in local memory...");
+        document.getElementById("loaderWrapper").classList.add("hidden");
+        document.getElementById("mainApp").classList.remove("hidden");
+      } catch (e) {
+        logMessage("❌ Failed to load data.");
+        console.error(e);
       }
     }
 
-    simulateLoading();
+    async function createTicket() {
+      const input = document.getElementById('betInput').value.trim();
+      const match = input.match(/^(.*?)\s+(ml|spread|total|tt)\s+(\d+(\.\d+)?)(u?)$/i);
+      document.getElementById('ticket').innerHTML = '';
+      document.getElementById('error').textContent = '';
+
+      if (!match) {
+        document.getElementById('error').textContent = "Invalid format. Example: USA ML 1.5u";
+        return;
+      }
+
+      const teamQuery = match[1].toLowerCase();
+      const type = match[2].toUpperCase();
+      const units = match[3];
+
+      const found = allMatches.find(ev =>
+        (ev.strHomeTeam && ev.strHomeTeam.toLowerCase().includes(teamQuery)) ||
+        (ev.strAwayTeam && ev.strAwayTeam.toLowerCase().includes(teamQuery))
+      );
+
+      if (!found) {
+        document.getElementById('error').textContent = "No game found matching that team.";
+        return;
+      }
+
+      const team = found.strHomeTeam.toLowerCase().includes(teamQuery) ? found.strHomeTeam : found.strAwayTeam;
+      const opponent = found.strHomeTeam.toLowerCase().includes(teamQuery) ? found.strAwayTeam : found.strHomeTeam;
+      const eventDate = `${found.dateEvent} ${found.strTime}`;
+
+      const ticketHTML = `
+        <div class='ticket'>
+          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
+          <hr>
+          <p><strong>BOOK:</strong> N/A</p>
+          <p><strong>EVENT:</strong> ${found.strEvent || team + " vs " + opponent}</p>
+          <p><strong>DATE:</strong> ${eventDate}</p>
+          <hr>
+          <p><strong>SELECTION:</strong> ${team} ${type}</p>
+          <p><strong>WAGER:</strong> ${units} unit(s)</p>
+          <p><strong>ODDS:</strong> N/A</p>
+          <hr>
+          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
+        </div>
+      `;
+      document.getElementById('ticket').innerHTML = ticketHTML;
+    }
+
+    loadData();
   </script>
 </body>
 </html>
