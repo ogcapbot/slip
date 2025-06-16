@@ -1,172 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>OG Capper Bets - Ticket</title>
   <style>
     body {
-      background: #111;
-      color: #0f0;
       font-family: monospace;
+      background: #111;
+      color: #000;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      padding: 2rem;
     }
-    .loader {
-      width: 120px;
-      height: 120px;
-      border: 10px solid #333;
-      border-top: 10px solid lime;
+    input, button {
+      font-size: 1.2rem;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    input {
+      width: 300px;
+    }
+    .ticket {
+      background: #fff;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border: 2px dashed #000;
+      width: 350px;
+    }
+    .ticket-title {
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
+    #loaderCircle {
+      width: 100px;
+      height: 100px;
+      border: 10px solid #444;
+      border-top: 10px solid #0f0;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+    #loadTextBox {
+      background: #222;
+      color: #0f0;
+      font-size: 0.9rem;
+      width: 320px;
+      height: 3.5em;
+      overflow-y: auto;
+      padding: 0.5em;
+      line-height: 1.2em;
+      white-space: pre-line;
+      border: 1px solid #0f0;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .status-box {
-      border: 2px solid lime;
-      margin-top: 20px;
-      padding: 10px;
-      width: 360px;
-      height: 60px;
-      overflow: hidden;
-    }
-    .scrolling {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      height: 100%;
-      overflow-y: auto;
-      white-space: pre-line;
-      color: #0f0;
-    }
-    #mainUI {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 2rem;
-    }
-    input, button {
-      font-size: 1rem;
-      padding: 0.5rem;
-      margin: 0.5rem;
-    }
   </style>
 </head>
 <body>
-  <div class="loader"></div>
-  <div class="status-box">
-    <div class="scrolling" id="logBox"></div>
-  </div>
-
-  <div id="mainUI">
-    <h2 style="color:white;">OG Capper Bets Ticket</h2>
-    <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" />
-    <button onclick="createTicket()">Generate Ticket</button>
-    <div id="ticket"></div>
-    <div id="error" style="color:red;"></div>
-  </div>
+  <h2 style="color: white;">OG Capper Bets Ticket</h2>
+  <div id="loaderCircle"></div>
+  <div id="loadTextBox"></div>
+  <input id="betInput" type="text" placeholder="e.g. Yankees ML 1.5u" style="display:none" />
+  <button onclick="createTicket()" style="display:none">Generate Ticket</button>
+  <div id="ticket"></div>
+  <div id="error" class="error"></div>
 
   <script>
-    const log = (msg) => {
-      const el = document.getElementById('logBox');
-      el.innerText += `\n${msg}`;
-      el.scrollTop = el.scrollHeight;
+    const sportsdbKey = "123";
+    let cachedGames = [];
+
+    async function logLoadingStep(msg) {
+      const box = document.getElementById("loadTextBox");
+      box.textContent += `${msg}\n`;
+      box.scrollTop = box.scrollHeight;
     }
 
-    async function fetchTeamsFromSportsDB() {
-      log('Fetching sports list from TheSportsDB...');
-      const sportsUrl = 'https://www.thesportsdb.com/api/v1/json/1/all_sports.php';
-      const sportsRes = await fetch(sportsUrl);
-      const sportsData = await sportsRes.json();
-      const sports = sportsData.sports;
-      let teamCache = [];
+    async function fetchGamesFromSportsDB() {
+      const now = new Date();
+      const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+      const fortyEightHoursLater = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
-      for (const sport of sports) {
-        const sportName = sport.strSport;
-        log(`Loading teams for ${sportName}...`);
-        const leaguesUrl = `https://www.thesportsdb.com/api/v1/json/1/search_all_leagues.php?s=${encodeURIComponent(sportName)}`;
+      const allLeaguesURL = `https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/all_leagues.php`;
+      const leagueRes = await fetch(allLeaguesURL);
+      const leagueData = await leagueRes.json();
+      const leagues = leagueData.leagues || [];
+
+      for (const league of leagues.slice(0, 50)) {
+        await logLoadingStep(`Loading: ${league.strLeague}`);
         try {
-          const leaguesRes = await fetch(leaguesUrl);
-          const leagues = (await leaguesRes.json()).countrys || [];
-          for (const league of leagues) {
-            const leagueId = league.idLeague;
-            const teamsUrl = `https://www.thesportsdb.com/api/v1/json/1/lookup_all_teams.php?id=${leagueId}`;
-            try {
-              const teamRes = await fetch(teamsUrl);
-              const teamsData = await teamRes.json();
-              if (teamsData.teams) teamCache.push(...teamsData.teams);
-              log(`Loaded ${teamsData.teams?.length || 0} teams from ${league.strLeague}`);
-            } catch (err) {
-              log(`⚠️ Failed to load teams for league ${league.strLeague}`);
-            }
-          }
+          const eventsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${sportsdbKey}/eventsnextleague.php?id=${league.idLeague}`);
+          const eventsData = await eventsRes.json();
+          const events = eventsData.events || [];
+
+          const filtered = events.filter(e => {
+            const dt = new Date(`${e.dateEvent}T${e.strTime || '00:00:00'}Z`);
+            return dt >= twelveHoursAgo && dt <= fortyEightHoursLater;
+          });
+
+          cachedGames.push(...filtered);
         } catch (err) {
-          log(`⚠️ Failed to load leagues for ${sportName}`);
+          continue;
         }
       }
-
-      log('✅ Finished loading all teams.');
-      return teamCache;
     }
 
     async function loadData() {
-      try {
-        window.allTeams = await fetchTeamsFromSportsDB();
-        document.querySelector('.loader').style.display = 'none';
-        document.querySelector('.status-box').style.display = 'none';
-        document.getElementById('mainUI').style.display = 'flex';
-      } catch (e) {
-        log('❌ Error loading data.');
-        console.error(e);
-      }
+      await logLoadingStep("Fetching games from SportsDB...");
+      await fetchGamesFromSportsDB();
+      document.getElementById("loaderCircle").style.display = "none";
+      document.getElementById("loadTextBox").style.display = "none";
+      document.getElementById("betInput").style.display = "block";
+      document.querySelector("button").style.display = "block";
     }
 
-    loadData();
+    async function createTicket() {
+      const input = document.getElementById("betInput").value.trim();
+      const matchParts = input.match(/^(.*?)\s+(\S+)\s+(\d+(\.\d+)?)(u?)$/i);
 
-    function createTicket() {
-      const input = document.getElementById('betInput').value.trim();
-      const match = input.match(/^(.*?)\s+(\S+)\s+(\d+(\.\d+)?)(u?)$/i);
-
-      if (!match) {
+      if (!matchParts) {
         document.getElementById('error').textContent = "Invalid format. Try: Yankees ML 1.5u";
         return;
       }
 
-      const teamQuery = match[1].toLowerCase();
-      const betType = match[2];
-      const units = match[3];
+      const teamQuery = matchParts[1].toLowerCase();
+      const betType = matchParts[2];
+      const units = matchParts[3];
 
-      const matched = window.allTeams.find(t => t.strTeam.toLowerCase().includes(teamQuery));
+      const matchedGame = cachedGames.find(game =>
+        (game.strHomeTeam && game.strHomeTeam.toLowerCase().includes(teamQuery)) ||
+        (game.strAwayTeam && game.strAwayTeam.toLowerCase().includes(teamQuery))
+      );
 
-      if (!matched) {
-        document.getElementById('error').textContent = "Team not found.";
+      if (!matchedGame) {
+        document.getElementById('error').textContent = "Game not found. Try a different team.";
         return;
       }
 
+      const team = matchedGame.strHomeTeam.toLowerCase().includes(teamQuery) ? matchedGame.strHomeTeam : matchedGame.strAwayTeam;
+      const opponent = matchedGame.strHomeTeam.toLowerCase().includes(teamQuery) ? matchedGame.strAwayTeam : matchedGame.strHomeTeam;
+
       const ticketHTML = `
         <div class='ticket'>
-          <div class='ticket-title'>🏁 OG CAPPER BETS</div>
-          <hr>
-          <p><strong>TEAM:</strong> ${matched.strTeam}</p>
-          <p><strong>LEAGUE:</strong> ${matched.strLeague}</p>
-          <hr>
-          <p><strong>SELECTION:</strong> ${matched.strTeam} ${betType.toUpperCase()}</p>
-          <p><strong>WAGER:</strong> ${units} unit(s)</p>
-          <hr>
-          <p style='text-align:center;'>ALL SALES FINAL – NO CANCELLATION</p>
-          <hr>
-          <p><strong>###\nOPTIONS\n###</strong></p>
-          <pre>${JSON.stringify(matched, null, 2)}</pre>
-        </div>
-      `;
-
-      document.getElementById('ticket').innerHTML = ticketHTML;
-      document.getElementById('error').textContent = "";
-    }
-  </script>
-</body>
-</html>
