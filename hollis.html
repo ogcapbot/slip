@@ -414,11 +414,11 @@ const PRESENTATION_ID = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
 
 gapi.load("client:auth2", () => {
   gapi.client.init({
-    apiKey: "AIzaSyAtC4uHOovwG0MIeGXkU8bSLejxPQwh6kU",
-    clientId: "146618491180-03q0m2hnsi0v39vyjfdqhm0sbhtrbdiq.apps.googleusercontent.com",
-    discoveryDocs: ["https://slides.googleapis.com/$discovery/rest?version=v1"],
-    scope: "https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/drive.file"
-  }).then(() => {
+  apiKey: "AIzaSyAtC4uHOovwG0MIeGXkU8bSLejxPQwh6kU",
+  clientId: "146618491180-03q0m2hnsi0v39vyjfdqhm0sbhtrbdiq.apps.googleusercontent.com",
+  discoveryDocs: ["https://slides.googleapis.com/$discovery/rest?version=v1"],
+  scope: "https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/drive.file"
+}).then(() => {
     return gapi.auth2.getAuthInstance().signIn();
   }).then(() => {
     const request = {
