@@ -433,6 +433,7 @@ gapi.load("client:auth2", () => {
         }
       }]
     };
+console.log("🔐 Google Account signed in as:", gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail());
     return gapi.client.slides.presentations.batchUpdate(request);
   }).then((response) => {
     console.log("✅ Slide updated:", response);
