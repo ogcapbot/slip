@@ -3,215 +3,464 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OG Capper Bets</title>
+  <title>Capper Sports Access</title>
   <style>
     body {
-      background: #111;
-      color: #fff;
       font-family: Arial, sans-serif;
-      padding: 20px;
-      margin: 0 auto;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
     }
-    input, button {
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
       width: 100%;
       padding: 12px;
-      margin: 10px 0;
       font-size: 16px;
-      border-radius: 8px;
-      box-sizing: border-box;
-      max-width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
     }
-    button:active {
-      transform: scale(0.98);
-      background-color: #0c0;
-    }
+
     button {
-      background: #0f0;
-      color: #000;
-      font-weight: bold;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #2a9fd6;
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-      transition: transform 0.1s ease-in-out;
     }
-    #loader, #betInput, #results, #multiSelect {
+
+    button:hover {
+      background-color: #2179a5;
+    }
+
+    .hidden {
       display: none;
     }
-    #log {
-      background: #222;
-      padding: 10px;
-      font-family: monospace;
+
+    .error {
+      color: red;
       font-size: 14px;
-      max-height: 200px;
-      overflow-y: scroll;
-      white-space: pre-wrap;
-    }
-    #continueButton {
-      display: none;
       margin-top: 10px;
     }
-    .ticket {
-      background: #000;
-      border: 1px solid #fff;
-      padding: 20px;
+
+    #loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #2a9fd6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #confirmOutput {
       white-space: pre-wrap;
       font-family: monospace;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      resize: none;
+      overflow: hidden;
+      min-height: 200px;
+      height: auto;
+    }
+
+    #resetBtn {
+      float: right;
+      font-size: 12px;
+      width: auto;
+      margin-top: -12px;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+    }
+
+    #copyBtn {
+      margin-bottom: 10px;
+    }
+
+    #loginNotice {
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    #inputLabel {
+      color: #666;
       font-size: 14px;
-      margin-top: 20px;
+      margin-bottom: 5px;
     }
-    .team-option {
-      padding: 10px;
-      background: #444;
-      margin: 5px 0;
-      cursor: pointer;
-      border-radius: 5px;
+
+    #gameSuggestion {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 15px;
+      background: #fff;
+      margin-bottom: 20px;
     }
-    .team-option:hover {
-      background: #666;
+
+    #gameSuggestion p {
+      margin: 6px 0;
     }
-    @media (max-width: 480px) {
-      input, button {
-        font-size: 14px;
-        width: 100%;
-      }
+
+    #gameSuggestion strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    #gameTable,
+    #sportDropdown {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div id="access">
+  <div class="container" id="access-screen">
     <h2>Enter Access Code</h2>
-    <input id="codeInput" type="number" inputmode="numeric" pattern="\d*" minlength="3" maxlength="8" placeholder="Access Code" />
-    <button onclick="validateCode()">Submit</button>
-    <p id="authMessage"></p>
+    <input type="number" id="accessCode" placeholder="Enter Access Code" maxlength="10" />
+    <button id="accessBtn" onclick="validateAccess()">Submit</button>
+    <div class="error" id="error"></div>
   </div>
 
-  <div id="loader">
-    <h3>Loading Games...</h3>
-    <div id="log"></div>
-    <button id="continueButton" onclick="showBetInput()">Continue</button>
-  </div>
+  <div class="container hidden" id="sports-screen">
+    <div id="loader"></div>
+    <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
-  <div id="betInput">
-    <input id="userInput" placeholder="e.g. cubs ml 1u" />
-    <button onclick="processInput()">Create</button>
-    <p id="inputError" style="color: red; white-space: pre-wrap;"></p>
-  </div>
+    <div id="loggedInInfo" class="hidden">
+      <div id="loginNotice"></div>
+      <button id="resetBtn" onclick="resetSearch()">Reset</button>
 
-  <div id="multiSelect"></div>
-  <div id="results"></div>
+      <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
+      <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
+      <button id="searchBtn" onclick="searchGames()">Submit</button>
+      <div class="error" id="searchError"></div>
+
+      <div id="gameSuggestion" class="hidden"></div>
+
+      <div id="customInputSection" class="hidden">
+        <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type (e.g. 'ML' or 'F5' or 'TT OVER 5')</label>
+        <input type="text" id="wagerType" />
+        <button onclick="submitWagerType()">Submit</button>
+        <div class="error" id="wagerError"></div>
+      </div>
+
+      <div id="unitAmountSection" class="hidden">
+        <label for="unitAmount" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
+          Enter Unit Amount: (e.g. '.2' or '.75' or '2' or '3.5')
+        </label>
+        <input type="text" id="unitAmount" value="1" inputmode="decimal" pattern="^\d*(\.\d*)?$" />
+        <button onclick="submitUnitAmount()">Submit</button>
+        <div class="error" id="unitAmountError"></div>
+      </div>
+
+      <button id="copyBtn" class="hidden" onclick="copyToClipboard()">Copy to Clipboard</button>
+     <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
+
+    </div>
+  </div>
 
   <script>
-    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxW55MrRuwPX87F_oCMJpof7HMIKHbyY1evseVm-eEYHEPOSkoHbVD1VUN_rg-vDsQw_Q/exec';
-    let cachedGames = [];
-    let capperName = "OG Capper";
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbxWIWdVcwGybqclC3GJAFQh_EIMCVo_73TMDTLlbn46oOFpvw5BpggQk4eQPLKFvgwgsg/exec";
+    let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('codeInput').addEventListener('keypress', e => {
-        if (e.key === 'Enter') validateCode();
-      });
-      document.getElementById('userInput').addEventListener('keypress', e => {
-        if (e.key === 'Enter') processInput();
-      });
+    window.onload = async () => {
+      document.getElementById("accessCode").focus();
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        const result = await res.json();
+        capperInfo = result.capperInfo;
+      } catch {
+        document.getElementById("error").textContent = "Failed to load access codes.";
+      }
+    };
+
+    function validateAccess() {
+      const code = document.getElementById("accessCode").value.trim();
+      const match = capperInfo.find(row => row["Access Code"] == code);
+      if (!match) {
+        document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
+        return;
+      }
+
+      capperName = match["Display Name"];
+      document.getElementById("access-screen").classList.add("hidden");
+      document.getElementById("sports-screen").classList.remove("hidden");
+      loadAllData();
+    }
+
+    async function loadAllData() {
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        allData = await res.json();
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("loadingMsg").style.display = "none";
+        document.getElementById("loggedInInfo").classList.remove("hidden");
+        document.getElementById("teamSearch").focus();
+        document.getElementById("loginNotice").textContent = `You are logged in as: ${capperName}`;
+      } catch {
+        alert("Failed to load sports data.");
+      }
+    }
+
+    document.getElementById("teamSearch").addEventListener("keydown", e => {
+      if (e.key === "Enter") searchGames();
+    });
+    document.getElementById("wagerType").addEventListener("keydown", e => {
+      if (e.key === "Enter") submitWagerType();
+    });
+    document.getElementById("accessCode").addEventListener("keydown", e => {
+      if (e.key === "Enter") validateAccess();
+    });
+    document.getElementById("unitAmount").addEventListener("keydown", e => {
+      if (e.key === "Enter") submitUnitAmount();
     });
 
-    function validateCode() {
-      const code = document.getElementById('codeInput').value.trim();
-      if (/^\d{3,8}$/.test(code)) {
-        if (code === '1069') {
-          document.getElementById('access').style.display = 'none';
-          document.getElementById('loader').style.display = 'block';
-          loadGames();
-        } else {
-          document.getElementById('authMessage').innerText = `The Access Code ${code} is Invalid. Please Enter a Valid Access Code to Continue.`;
+    function searchGames() {
+      const input = document.getElementById("teamSearch").value.trim().toLowerCase();
+      const rows = allData.gameCache || [];
+      const resultSet = [];
+
+      for (let row of rows) {
+        const home = (row["Home Team"] || "").toLowerCase();
+        const away = (row["Away Team"] || "").toLowerCase();
+        const date = new Date(row["Commence Time (UTC)"]);
+
+        if (input === home || input === away ||
+            home.split(" ").includes(input) || away.split(" ").includes(input) ||
+            (input.length >= 3 && (home.includes(input) || away.includes(input)))) {
+          resultSet.push({ row, date });
         }
-      } else {
-        document.getElementById('authMessage').innerText = `The Access Code ${code} is Invalid. Please Enter a Valid Access Code to Continue.`;
       }
+
+      matches = resultSet.sort((a, b) => a.date - b.date);
+      currentMatchIndex = 0;
+      showGameOption();
     }
 
-    async function loadGames() {
-      const log = document.getElementById('log');
-      log.innerText = 'Fetching games from server...\n';
-      try {
-        const res = await fetch(WEBAPP_URL);
-        const data = await res.json();
-        cachedGames = data.map(game => {
-          const home = game.teams?.home?.name || game.home_team || "";
-          const away = game.teams?.away?.name || game.away_team || "";
-          log.innerText += `Loaded: ${home}\nLoaded: ${away}\n`;
-          return {
-            date: game.fixture?.date || game.date,
-            teams: [
-              { id: game.teams?.home?.id || game.home_id, name: home },
-              { id: game.teams?.away?.id || game.away_id, name: away }
-            ]
-          };
-        });
-        log.innerText += `\nTotal games loaded: ${cachedGames.length}`;
-        document.getElementById('continueButton').style.display = 'block';
-      } catch (err) {
-        log.innerText += '\nError loading data.';
-      }
-    }
+    function showGameOption() {
+      const container = document.getElementById("gameSuggestion");
+      const searchError = document.getElementById("searchError");
 
-    function showBetInput() {
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('betInput').style.display = 'block';
-    }
-
-    function processInput() {
-      document.getElementById('inputError').innerText = '';
-      const input = document.getElementById('userInput').value.trim().toLowerCase();
-      if (!input) {
-        document.getElementById('inputError').innerText = 'Input cannot be empty.';
-        return;
-      }
-      const parts = input.split(' ');
-      if (parts.length < 3) {
-        document.getElementById('inputError').innerText = 'Input must include a team, bet type, and wager (e.g. "cubs ml 1u").';
-        return;
-      }
-      const teamQuery = parts[0];
-      const betType = parts[1];
-      const wager = parts[2];
-
-      const matches = cachedGames.filter(game =>
-        game.teams && game.teams.some(t => t.name.toLowerCase().includes(teamQuery))
-      );
+      container.classList.add("hidden");
+      searchError.textContent = "";
 
       if (matches.length === 0) {
-        document.getElementById('inputError').innerText = `No games found matching: "${teamQuery}"`;
+        searchError.textContent = "No matching games found. Please be more specific and try again.";
         return;
-      } else if (matches.length === 1) {
-        renderTicket(matches[0], teamQuery, betType, wager);
-      } else {
-        const selectDiv = document.getElementById('multiSelect');
-        selectDiv.innerHTML = '<p>Multiple teams found. Please select:</p>';
-        matches.forEach(game => {
-          const team = game.teams.find(t => t.name.toLowerCase().includes(teamQuery));
-          const opponent = game.teams.find(t => t.id !== team.id);
-          const el = document.createElement('div');
-          el.className = 'team-option';
-          el.innerText = `${team.name} vs ${opponent.name} on ${new Date(game.date).toLocaleString()}`;
-          el.onclick = () => {
-            selectDiv.innerHTML = '';
-            renderTicket(game, teamQuery, betType, wager);
-          };
-          selectDiv.appendChild(el);
-        });
-        selectDiv.style.display = 'block';
       }
+
+      if (currentMatchIndex >= matches.length) {
+        searchError.textContent = "No more matches. Please be more specific and try again.";
+        return;
+      }
+
+      const { row, date } = matches[currentMatchIndex];
+      selectedMatch = row;
+      const daysDiff = Math.floor((date - new Date()) / (1000 * 60 * 60 * 24));
+      const c_date = daysDiff === 0 ? "Today" : daysDiff === 1 ? "Tomorrow" : `${daysDiff} Days Away`;
+
+      container.innerHTML = `
+        <strong>${matches.length} Games Found</strong>
+        <p>Did you mean:</p>
+        <p>${row["Away Team"]} @ ${row["Home Team"]}</p>
+        <p>Scheduled for: ${c_date}</p>
+        <button onclick="nextOption()">Next Option</button>
+        <button onclick="useThisGame()">Use This Game</button>
+      `;
+      container.classList.remove("hidden");
     }
 
-    function renderTicket(game, teamQuery, betType, wager) {
-      const team = game.teams.find(t => t.name.toLowerCase().includes(teamQuery));
-      const opponent = game.teams.find(t => t.id !== team.id);
-      const gameTime = new Date(game.date);
-      const secondsSince = Math.floor((Date.now() - new Date('1981-07-25T12:00:00-04:00')) / 1000);
-      const pickID = `${secondsSince}-${String(gameTime.getMonth()+1).padStart(2,'0')}${String(gameTime.getDate()).padStart(2,'0')}${String(gameTime.getFullYear()).slice(-2)}`;
-
-      const slip = `═══════════════\nOG Capper Bets\nOFFICIAL PICK\n═══════════════\n\nPick: ${team.name}\nBet Type: ${betType.toUpperCase()}\nWager: ${wager.toUpperCase()}\nOpponent: ${opponent.name}\nGame Time: ${gameTime.toLocaleString()}\n\n═══════════════\nTHANK YOU FOR TRUSTING OG CAPPER BETS\n═══════════════\nPick ID: ${pickID}\nPick by: ${capperName}\n═══════════════\n\n══ STRICT CONFIDENTIALITY NOTICE ══\nAll OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-
-      document.getElementById('results').innerHTML = `<div class='ticket'>${slip}</div>`;
+    function nextOption() {
+      currentMatchIndex++;
+      showGameOption();
     }
+
+    function useThisGame() {
+      document.getElementById("gameSuggestion").classList.add("hidden");
+
+      document.getElementById("inputLabel").classList.add("hidden");
+      document.getElementById("teamSearch").classList.add("hidden");
+      document.getElementById("searchBtn").classList.add("hidden");
+
+      document.getElementById("customInputSection").classList.remove("hidden");
+      document.getElementById("wagerType").focus();
+    }
+
+    function submitWagerType() {
+      const wager = document.getElementById("wagerType").value.trim();
+      const errorBox = document.getElementById("wagerError");
+
+      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+      if (!valid) {
+        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+        return;
+      }
+
+      errorBox.textContent = "";
+
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+
+      document.getElementById("unitAmountSection").classList.remove("hidden");
+      document.getElementById("unitAmount").focus();
+    }
+
+    function submitUnitAmount() {
+      const input = document.getElementById("unitAmount").value.trim();
+      const errorDiv = document.getElementById("unitAmountError");
+      const box = document.getElementById("confirmOutput");
+
+      const isValid = /^\d*(\.\d*)?$/.test(input) && input !== "";
+
+      if (!isValid) {
+        errorDiv.textContent = "Invalid unit amount. Please enter a valid number with at most one decimal.";
+        return;
+      }
+
+      errorDiv.textContent = "";
+      document.getElementById("unitAmountSection").classList.add("hidden");
+
+      const wagerRaw = document.getElementById("wagerType").value.trim();
+      const wager = wagerRaw.toUpperCase();
+      const teamSearchInput = document.getElementById("teamSearch").value.trim();
+      const unitInput = input;
+      const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
+
+      const home = selectedMatch["Home Team"];
+      const away = selectedMatch["Away Team"];
+      const teamSearchLower = teamSearchInput.toLowerCase();
+      const matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+
+      const date = new Date(selectedMatch["Commence Time (UTC)"]);
+      const formattedTime = date.toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        weekday: "short", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true
+      }) + " ET";
+
+      const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nowNY);
+      const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
+
+      const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
+      const today = new Date();
+      const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+      const pickId = `${secondsSinceEpoch}-${mmddyy}`;
+
+      const output = [
+  "═══════════════════════",
+  "######## OFFICIAL PICK",
+  "═══════════════════════",
+  `Wager Type: STRAIGHT WAGER`,
+  `Official Pick: ${matchedTeam}`,
+  `Official Type: ${wager}`,
+  `Official Wager: ${unitInput} Unit(s)`,
+  "To Win: [[PICK_DESC]]",
+  "",
+  "═══════════════════════",
+  "######## GAME DETAILS",
+  "═══════════════════════",
+  `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+  `League: ${selectedMatch["Sport Name"]}`,
+  `Home Team: ${selectedMatch["Home Team"]}`,
+  `Away Team: ${selectedMatch["Away Team"]}`,
+  `Game Time: ${formattedTime}`,
+  "",
+  "═══════════════════════",
+  "######## THANK YOU FOR TRUSTING OGCB",
+  "═══════════════════════",
+  "",
+  "Title: [[TITLE]]",
+  `Pick ID: ${pickId}`,
+  `Pick by: ${capperName}`,
+  `Input Value: ${allInputsRaw}`,
+  "",
+  "═══════════════════════",
+  "######## STRICT CONFIDENTIALITY NOTICE",
+  "═══════════════════════",
+  "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+  "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+  "",
+  `Created: ${estString}`
+].join("\n");
+
+      const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+      box.innerText = cleanedOutput;
+
+      box.classList.remove("hidden");
+
+      setTimeout(() => {
+        
+        box.style.overflow = "hidden";
+        box.style.height = box.scrollHeight + "px";
+      }, 0);
+
+      document.getElementById("copyBtn").classList.remove("hidden");
+    }
+
+    function resetSearch() {
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("wagerType").value = "";
+      document.getElementById("unitAmount").value = "1";
+
+      document.getElementById("searchError").textContent = "";
+      document.getElementById("wagerError").textContent = "";
+      document.getElementById("unitAmountError").textContent = "";
+
+      document.getElementById("gameSuggestion").classList.add("hidden");
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitAmountSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+      document.getElementById("copyBtn").classList.add("hidden");
+
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("teamSearch").focus();
+    }
+
+    function copyToClipboard() {
+  const output = document.getElementById("confirmOutput");
+  const range = document.createRange();
+  range.selectNodeContents(output);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  try {
+    document.execCommand("copy");
+    alert("Copied to clipboard!");
+  } catch (err) {
+    alert("Failed to copy text");
+  }
+
+  selection.removeAllRanges(); // optional cleanup
+}
+
+
+    document.getElementById("confirmOutput").addEventListener("click", () => {
+      copyToClipboard();
+    });
   </script>
 </body>
 </html>
