@@ -408,41 +408,30 @@
 
       const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
       box.innerText = cleanedOutput;
-// Google Slides API Update
-const SLIDE_ID = "p";
-const PRESENTATION_ID = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
+// Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
+const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxWIWdVcwGybqclC3GJAFQh_EIMCVo_73TMDTLlbn46oOFpvw5BpggQk4eQPLKFvgwgsg/exec";
+const presentationId = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
+const placeholderText = "[[OUTPUT_HERE]]";
 
-gapi.load("client:auth2", () => {
-  gapi.client.init({
-  apiKey: "AIzaSyAtC4uHOovwG0MIeGXkU8bSLejxPQwh6kU",
-  clientId: "146618491180-03q0m2hnsi0v39vyjfdqhm0sbhtrbdiq.apps.googleusercontent.com",
-  discoveryDocs: ["https://slides.googleapis.com/$discovery/rest?version=v1"],
-  scope: "https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/drive.file"
-}).then(() => {
-    return gapi.auth2.getAuthInstance().signIn();
-  }).then(() => {
-    const request = {
-      presentationId: PRESENTATION_ID,
-      requests: [{
-        replaceAllText: {
-          containsText: {
-            text: "[[OUTPUT_HERE]]",
-            matchCase: true
-          },
-          replaceText: cleanedOutput
-        }
-      }]
-    };
-console.log("🔐 Google Account signed in as:", gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getEmail());
-    return gapi.client.slides.presentations.batchUpdate(request);
-  }).then((response) => {
-    console.log("✅ Slide updated:", response);
-    alert("✅ Google Slide updated successfully!");
-  }, (error) => {
-    console.error("❌ Error updating slide:", error);
-    alert("❌ Failed to update Google Slide. See console.");
-  });
+fetch(SLIDES_WEBHOOK_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    presentationId,
+    placeholderText,
+    newText: cleanedOutput
+  })
+})
+.then(res => res.text())
+.then(msg => {
+  console.log("✅ GAS response:", msg);
+  alert(msg.includes("✅") ? "✅ Slide updated!" : msg);
+})
+.catch(err => {
+  console.error("❌ Slide update error:", err);
+  alert("❌ Failed to update Google Slide.");
 });
+
 
       box.classList.remove("hidden");
 
