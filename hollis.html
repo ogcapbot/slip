@@ -188,24 +188,14 @@
 
     window.onload = async () => {
   document.getElementById("accessCode").focus();
-
   try {
-    // ✅ Preload Slide template (important!)
-    const preload = await fetch(BASE_URL);
-    const preloadText = await preload.text();
-    if (preloadText !== "READY") {
-      console.warn("Slide preload failed or returned unexpected value.");
-    }
-
-    // Existing logic to load access codes
     const res = await fetch(BASE_URL + "?action=data");
     const result = await res.json();
     capperInfo = result.capperInfo;
   } catch {
-    document.getElementById("error").textContent = "Failed to load access codes or slide template.";
+    document.getElementById("error").textContent = "Failed to load access codes.";
   }
 };
-
     function validateAccess() {
       const code = document.getElementById("accessCode").value.trim();
       const match = capperInfo.find(row => row["Access Code"] == code);
