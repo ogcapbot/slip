@@ -1,1 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capper Sports Access</title>
+<script src="https://apis.google.com/js/api.js"></script>
 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #2a9fd6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2179a5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    #loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #2a9fd6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #confirmOutput {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      resize: none;
+      overflow: hidden;
+      min-height: 200px;
+      height: auto;
+    }
+
+    #resetBtn {
+      float: right;
+      font-size: 12px;
+      width: auto;
+      margin-top: -12px;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+    }
+
+    #copyBtn {
+      margin-bottom: 10px;
+    }
+
+    #loginNotice {
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    #inputLabel {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    #gameSuggestion {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 15px;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+
+    #gameSuggestion p {
+      margin: 6px 0;
+    }
+
+    #gameSuggestion strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    #gameTable,
+    #sportDropdown {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="access-screen">
+    <h2>Enter Access Code</h2>
+    <input type="number" id="accessCode" placeholder="Enter Access Code" maxlength="10" />
+    <button id="accessBtn" onclick="validateAccess()">Submit</button>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div class="container hidden" id="sports-screen">
+    <div id="loader"></div>
+    <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
+
+    <div id="loggedInInfo" class="hidden">
+      <div id="loginNotice"></div>
+      <button id="resetBtn" onclick="resetSearch()">Reset</button>
+
+      <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
+      <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
+      <button id="searchBtn" onclick="searchGames()">Submit</button>
+      <div class="error" id="searchError"></div>
+
+      <div id="gameSuggestion" class="hidden"></div>
+
+      <div id="customInputSection" class="hidden">
+        <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type (e.g. 'ML' or 'F5' or 'TT OVER 5')</label>
+        <input type="text" id="wagerType" />
+        <button onclick="submitWagerType()">Submit</button>
+        <div class="error" id="wagerError"></div>
+      </div>
+
+      <div id="unitAmountSection" class="hidden">
+        <label for="unitAmount" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
+          Enter Unit Amount: (e.g. '.2' or '.75' or '2' or '3.5')
+        </label>
+        <input type="text" id="unitAmount" value="1" inputmode="decimal" pattern="^\d*(\.\d*)?$" />
+        <button onclick="submitUnitAmount()">Submit</button>
+        <div class="error" id="unitAmountError"></div>
+      </div>
+
+      <button id="copyBtn" class="hidden" onclick="copyToClipboard()">Copy to Clipboard</button>
+     <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
+<button id="generateImageBtn" class="hidden" onclick="openImageGenerator()">Generate Image</button>
+
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
+    let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
+
+    window.onload = async () => {
+      document.getElementById("accessCode").focus();
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        const result = await res.json();
+        capperInfo = result.capperInfo;
+      } catch {
+        document.getElementById("error").textContent = "Failed to load access codes.";
+      }
+    };
+
+    function validateAccess() {
+      const code = document.getElementById("accessCode").value.trim();
+      const match = capperInfo.find(row => row["Access Code"] == code);
+      if (!match) {
+        document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
+        return;
+      }
+
+      capperName = match["Display Name"];
+      document.getElementById("access-screen").classList.add("hidden");
+      document.getElementById("sports-screen").classList.remove("hidden");
+      loadAllData();
+    }
+
+    async function loadAllData() {
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        allData = await res.json();
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("loadingMsg").style.display = "none";
+        document.getElementById("loggedInInfo").classList.remove("hidden");
+        document.getElementById("teamSearch").focus();
+        document.getElementById("loginNotice").textContent = `You are logged in as: ${capperName}`;
+      } catch {
+        alert("Failed to load sports data.");
+      }
+    }
+
+    document.getElementById("teamSearch").addEventListener("keydown", e => {
+      if (e.key === "Enter") searchGames();
+    });
+    document.getElementById("wagerType").addEventListener("keydown", e => {
+      if (e.key === "Enter") submitWagerType();
+    });
+    document.getElementById("accessCode").addEventListener("keydown", e => {
+      if (e.key === "Enter") validateAccess();
+    });
+    document.getElementById("unitAmount").addEventListener("keydown", e => {
+      if (e.key === "Enter") submitUnitAmount();
+    });
+
+    function searchGames() {
+      const input = document.getElementById("teamSearch").value.trim().toLowerCase();
+      const rows = allData.gameCache || [];
+      const resultSet = [];
+
+      for (let row of rows) {
+        const home = (row["Home Team"] || "").toLowerCase();
+        const away = (row["Away Team"] || "").toLowerCase();
+        const date = new Date(row["Commence Time (UTC)"]);
+
+        if (input === home || input === away ||
+            home.split(" ").includes(input) || away.split(" ").includes(input) ||
+            (input.length >= 3 && (home.includes(input) || away.includes(input)))) {
+          resultSet.push({ row, date });
+        }
+      }
+
+      matches = resultSet.sort((a, b) => a.date - b.date);
+      currentMatchIndex = 0;
+      showGameOption();
+    }
+
+    function showGameOption() {
+      const container = document.getElementById("gameSuggestion");
+      const searchError = document.getElementById("searchError");
+
+      container.classList.add("hidden");
+      searchError.textContent = "";
+
+      if (matches.length === 0) {
+        searchError.textContent = "No matching games found. Please be more specific and try again.";
+        return;
+      }
+
+      if (currentMatchIndex >= matches.length) {
+        searchError.textContent = "No more matches. Please be more specific and try again.";
+        return;
+      }
+
+      const { row, date } = matches[currentMatchIndex];
+      selectedMatch = row;
+      const daysDiff = Math.floor((date - new Date()) / (1000 * 60 * 60 * 24));
+      const c_date = daysDiff === 0 ? "Today" : daysDiff === 1 ? "Tomorrow" : `${daysDiff} Days Away`;
+
+      container.innerHTML = `
+        <strong>${matches.length} Games Found</strong>
+        <p>Did you mean:</p>
+        <p>${row["Away Team"]} @ ${row["Home Team"]}</p>
+        <p>Scheduled for: ${c_date}</p>
+        <button onclick="nextOption()">Next Option</button>
+        <button onclick="useThisGame()">Use This Game</button>
+      `;
+      container.classList.remove("hidden");
+    }
+
+    function nextOption() {
+      currentMatchIndex++;
+      showGameOption();
+    }
+
+    function useThisGame() {
+      document.getElementById("gameSuggestion").classList.add("hidden");
+
+      document.getElementById("inputLabel").classList.add("hidden");
+      document.getElementById("teamSearch").classList.add("hidden");
+      document.getElementById("searchBtn").classList.add("hidden");
+
+      document.getElementById("customInputSection").classList.remove("hidden");
+      document.getElementById("wagerType").focus();
+    }
+
+    function submitWagerType() {
+      const wager = document.getElementById("wagerType").value.trim();
+      const errorBox = document.getElementById("wagerError");
+
+      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+      if (!valid) {
+        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+        return;
+      }
+
+      errorBox.textContent = "";
+
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+
+      document.getElementById("unitAmountSection").classList.remove("hidden");
+      document.getElementById("unitAmount").focus();
+    }
+
+    function submitUnitAmount() {
+      const input = document.getElementById("unitAmount").value.trim();
+      const errorDiv = document.getElementById("unitAmountError");
+      const box = document.getElementById("confirmOutput");
+
+      const isValid = /^\d*(\.\d*)?$/.test(input) && input !== "";
+
+      if (!isValid) {
+        errorDiv.textContent = "Invalid unit amount. Please enter a valid number with at most one decimal.";
+        return;
+      }
+
+      errorDiv.textContent = "";
+      document.getElementById("unitAmountSection").classList.add("hidden");
+
+      const wagerRaw = document.getElementById("wagerType").value.trim();
+      const wager = wagerRaw.toUpperCase();
+      const teamSearchInput = document.getElementById("teamSearch").value.trim();
+      const unitInput = input;
+      const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
+
+      const home = selectedMatch["Home Team"];
+      const away = selectedMatch["Away Team"];
+      const teamSearchLower = teamSearchInput.toLowerCase();
+      const matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+
+      const date = new Date(selectedMatch["Commence Time (UTC)"]);
+      const formattedTime = date.toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        weekday: "short", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true
+      }) + " ET";
+
+      const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nowNY);
+      const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
+
+      const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
+      const today = new Date();
+      const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+      const pickId = `${secondsSinceEpoch}-${mmddyy}`;
+
+      const output = [
+  "═══════════════════════",
+  "######## OFFICIAL PICK",
+  "═══════════════════════",
+  `Wager Type: STRAIGHT WAGER`,
+  `Official Pick: ${matchedTeam}`,
+  `Official Type: ${wager}`,
+  `Official Wager: ${unitInput} Unit(s)`,
+  "To Win: [[PICK_DESC]]",
+  "",
+  "═══════════════════════",
+  "######## GAME DETAILS",
+  "═══════════════════════",
+  `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+  `League: ${selectedMatch["Sport Name"]}`,
+  `Home Team: ${selectedMatch["Home Team"]}`,
+  `Away Team: ${selectedMatch["Away Team"]}`,
+  `Game Time: ${formattedTime}`,
+  "",
+  "═══════════════════════",
+  "######## THANK YOU FOR TRUSTING OGCB",
+  "═══════════════════════",
+  "",
+  "Title: [[TITLE]]",
+  `Pick ID: ${pickId}`,
+  `Pick by: ${capperName}`,
+  `Input Value: ${allInputsRaw}`,
+  "",
+  "═══════════════════════",
+  "######## STRICT CONFIDENTIALITY NOTICE",
+  "═══════════════════════",
+  "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+  "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+  "",
+  `Created: ${estString}`
+].join("\n");
+
+      const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+      box.innerText = cleanedOutput;
+// Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
+const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
+const presentationId = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
+const placeholderText = "[[OUTPUT_HERE]]";
+
+// ✅ Trigger Google Slides update in a new tab
+const encodedOutput = encodeURIComponent(cleanedOutput);
+window.open(`${SLIDES_WEBHOOK_URL}?text=${encodedOutput}`, '_blank');
+
+// ✅ Show the result output on screen
+box.classList.remove("hidden");
+
+setTimeout(() => {
+  box.style.overflow = "hidden";
+  box.style.height = box.scrollHeight + "px";
+}, 0);
+
+// ✅ Reveal additional action buttons
+document.getElementById("copyBtn").classList.remove("hidden");
+document.getElementById("generateImageBtn").classList.remove("hidden");
+    }
+    function resetSearch() {
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("wagerType").value = "";
+      document.getElementById("unitAmount").value = "1";
+
+      document.getElementById("searchError").textContent = "";
+      document.getElementById("wagerError").textContent = "";
+      document.getElementById("unitAmountError").textContent = "";
+
+      document.getElementById("gameSuggestion").classList.add("hidden");
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitAmountSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+      document.getElementById("copyBtn").classList.add("hidden");
+      document.getElementById("generateImageBtn").classList.add("hidden");
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("teamSearch").focus();
+    }
+
+    function copyToClipboard() {
+  const output = document.getElementById("confirmOutput");
+  const range = document.createRange();
+  range.selectNodeContents(output);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  try {
+    document.execCommand("copy");
+    alert("Copied to clipboard!");
+  } catch (err) {
+    alert("Failed to copy text");
+  }
+
+  selection.removeAllRanges(); // optional cleanup
+}
+
+
+    document.getElementById("confirmOutput").addEventListener("click", () => {
+      copyToClipboard();
+    });
+  
+  function openImageGenerator() {
+  const slipText = document.getElementById("confirmOutput").innerText;
+  const encodedText = encodeURIComponent(cleanedOutput);
+window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
+
+}
+
+  </script>
+</body>
+</html>
