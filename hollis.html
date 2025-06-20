@@ -291,9 +291,13 @@ currentMatchIndex = 0;
 
 if (matches.length > 0) {
   // Hide input + button + label
-  document.getElementById("teamSearch").classList.add("hidden");
-  document.getElementById("searchBtn").classList.add("hidden");
-  document.getElementById("inputLabel").classList.add("hidden");
+  const input = document.getElementById("teamSearch");
+const label = document.getElementById("inputLabel");
+const button = document.getElementById("searchBtn");
+
+input.classList.add("hidden");
+label.classList.add("hidden");
+button.classList.add("hidden");
 }
 
 showGameOption();
