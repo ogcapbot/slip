@@ -409,13 +409,45 @@
       const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
       box.innerText = cleanedOutput;
 // Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
-const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
-const presentationId = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
-const placeholderText = "[[OUTPUT_HERE]]";
-
-// ✅ Trigger Google Slides update in a new tab
 const encodedOutput = encodeURIComponent(cleanedOutput);
-window.open(`${SLIDES_WEBHOOK_URL}?text=${encodedOutput}`, '_blank');
+
+// ✅ POST to the Apps Script to get the final image URL
+fetch(BASE_URL, {
+  method: "POST",
+  body: `text=${encodedOutput}`,
+  headers: { "Content-Type": "application/x-www-form-urlencoded" }
+})
+.then(res => res.text())
+.then(imageUrl => {
+  if (!imageUrl.startsWith("http")) {
+    alert("Error generating image.");
+    console.error("Unexpected response:", imageUrl);
+    return;
+  }
+
+  // ✅ Create image + download link elements
+  const img = document.createElement("img");
+  img.src = imageUrl;
+  img.alt = "Slip Image";
+  img.style.maxWidth = "100%";
+  img.style.border = "1px solid #ccc";
+  img.style.marginTop = "20px";
+
+  const link = document.createElement("a");
+  link.href = imageUrl;
+  link.textContent = "🖼 Download Image";
+  link.target = "_blank";
+  link.style.display = "block";
+  link.style.marginTop = "10px";
+
+  // ✅ Add to the DOM
+  const outputContainer = document.getElementById("confirmOutput");
+  outputContainer.innerHTML = "";
+  outputContainer.appendChild(img);
+  outputContainer.appendChild(link);
+  outputContainer.classList.remove("hidden");
+});
+
 
 // ✅ Show the result output on screen
 box.classList.remove("hidden");
