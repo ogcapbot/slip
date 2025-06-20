@@ -411,42 +411,25 @@
 // Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
 const encodedOutput = encodeURIComponent(cleanedOutput);
 
-// ✅ POST to the Apps Script to get the final image URL
-fetch(BASE_URL, {
-  method: "POST",
-  body: `text=${encodedOutput}`,
-  headers: { "Content-Type": "application/x-www-form-urlencoded" }
-})
-.then(res => res.text())
-.then(imageUrl => {
-  if (!imageUrl.startsWith("http")) {
-    alert("Error generating image.");
-    console.error("Unexpected response:", imageUrl);
-    return;
-  }
+// Remove previous iframe if any
+const existingFrame = document.getElementById("slipFrame");
+if (existingFrame) existingFrame.remove();
 
-  // ✅ Create image + download link elements
-  const img = document.createElement("img");
-  img.src = imageUrl;
-  img.alt = "Slip Image";
-  img.style.maxWidth = "100%";
-  img.style.border = "1px solid #ccc";
-  img.style.marginTop = "20px";
+// Create a new iframe that loads the Google Script (it returns just the image now)
+const iframe = document.createElement("iframe");
+iframe.id = "slipFrame";
+iframe.src = `${BASE_URL}?text=${encodedOutput}`;
+iframe.style.width = "100%";
+iframe.style.maxWidth = "400px";
+iframe.style.border = "none";
+iframe.style.height = "1000px"; // adjust as needed
 
-  const link = document.createElement("a");
-  link.href = imageUrl;
-  link.textContent = "🖼 Download Image";
-  link.target = "_blank";
-  link.style.display = "block";
-  link.style.marginTop = "10px";
+// Clear and append to the output container
+const outputContainer = document.getElementById("confirmOutput");
+outputContainer.innerHTML = "";
+outputContainer.appendChild(iframe);
+outputContainer.classList.remove("hidden");
 
-  // ✅ Add to the DOM
-  const outputContainer = document.getElementById("confirmOutput");
-  outputContainer.innerHTML = "";
-  outputContainer.appendChild(img);
-  outputContainer.appendChild(link);
-  outputContainer.classList.remove("hidden");
-});
 
 
 // ✅ Show the result output on screen
