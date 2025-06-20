@@ -177,6 +177,7 @@
 
       <button id="copyBtn" class="hidden" onclick="copyToClipboard()">Copy to Clipboard</button>
      <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
+<button id="generateImageBtn" class="hidden" onclick="openImageGenerator()">Generate Image</button>
 
     </div>
   </div>
@@ -442,6 +443,8 @@ fetch(SLIDES_WEBHOOK_URL, {
       }, 0);
 
       document.getElementById("copyBtn").classList.remove("hidden");
+      document.getElementById("generateImageBtn").classList.remove("hidden");
+
     }
 
     function resetSearch() {
@@ -458,7 +461,7 @@ fetch(SLIDES_WEBHOOK_URL, {
       document.getElementById("unitAmountSection").classList.add("hidden");
       document.getElementById("confirmOutput").classList.add("hidden");
       document.getElementById("copyBtn").classList.add("hidden");
-
+      document.getElementById("generateImageBtn").classList.add("hidden");
       document.getElementById("inputLabel").classList.remove("hidden");
       document.getElementById("teamSearch").classList.remove("hidden");
       document.getElementById("searchBtn").classList.remove("hidden");
@@ -487,6 +490,14 @@ fetch(SLIDES_WEBHOOK_URL, {
     document.getElementById("confirmOutput").addEventListener("click", () => {
       copyToClipboard();
     });
+  
+  function openImageGenerator() {
+  const slipText = document.getElementById("confirmOutput").innerText;
+  const encodedText = encodeURIComponent(slipText);
+  const newTabUrl = `https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`;
+  window.open(newTabUrl, "_blank");
+}
+
   </script>
 </body>
 </html>
