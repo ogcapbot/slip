@@ -414,38 +414,22 @@ const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDv
 const presentationId = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
 const placeholderText = "[[OUTPUT_HERE]]";
 
-fetch(SLIDES_WEBHOOK_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    presentationId,
-    placeholderText,
-    newText: cleanedOutput
-  })
-})
-.then(res => res.text())
-.then(msg => {
-  console.log("✅ GAS response:", msg);
-  alert(msg.includes("✅") ? "✅ Slide updated!" : msg);
-})
-.catch(err => {
-  console.error("❌ Slide update error:", err);
-  alert("❌ Failed to update Google Slide.");
-});
+// ✅ Trigger Google Slides update in a new tab
+const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
+const encodedOutput = encodeURIComponent(cleanedOutput);
+window.open(`${SLIDES_WEBHOOK_URL}?text=${encodedOutput}`, '_blank');
 
+// ✅ Show the result output on screen
+box.classList.remove("hidden");
 
-      box.classList.remove("hidden");
+setTimeout(() => {
+  box.style.overflow = "hidden";
+  box.style.height = box.scrollHeight + "px";
+}, 0);
 
-      setTimeout(() => {
-        
-        box.style.overflow = "hidden";
-        box.style.height = box.scrollHeight + "px";
-      }, 0);
-
-      document.getElementById("copyBtn").classList.remove("hidden");
-      document.getElementById("generateImageBtn").classList.remove("hidden");
-
-    }
+// ✅ Reveal additional action buttons
+document.getElementById("copyBtn").classList.remove("hidden");
+document.getElementById("generateImageBtn").classList.remove("hidden");
 
     function resetSearch() {
       document.getElementById("teamSearch").value = "";
