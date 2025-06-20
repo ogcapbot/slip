@@ -415,7 +415,6 @@ const presentationId = "1uOD-7cbOV1pHWtPOBSYoQEQnFgr5PyJ6L8a-Z-yAhOY";
 const placeholderText = "[[OUTPUT_HERE]]";
 
 // ✅ Trigger Google Slides update in a new tab
-const SLIDES_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
 const encodedOutput = encodeURIComponent(cleanedOutput);
 window.open(`${SLIDES_WEBHOOK_URL}?text=${encodedOutput}`, '_blank');
 
