@@ -286,9 +286,17 @@ document.getElementById("accessCode").addEventListener("input", (e) => {
         }
       }
 
-      matches = resultSet.sort((a, b) => a.date - b.date);
-      currentMatchIndex = 0;
-      showGameOption();
+     matches = resultSet.sort((a, b) => a.date - b.date);
+currentMatchIndex = 0;
+
+if (matches.length > 0) {
+  // Hide input + button + label
+  document.getElementById("teamSearch").classList.add("hidden");
+  document.getElementById("searchBtn").classList.add("hidden");
+  document.getElementById("inputLabel").classList.add("hidden");
+}
+
+showGameOption();
     }
 
     function showGameOption() {
