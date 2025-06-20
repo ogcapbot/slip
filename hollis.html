@@ -148,8 +148,8 @@ textarea {
 </head>
 <body>
   <div class="container" id="access-screen">
-    <h2>Enter Access Code</h2>
-    <input type="number" id="accessCode" placeholder="Enter Access Code" maxlength="10" />
+    <h2>Enter Capper Access Code</h2>
+<input type="tel" id="accessCode" placeholder="Enter Code Here" pattern="[0-9]*" inputmode="numeric" maxlength="10" />
     <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
   </div>
@@ -207,18 +207,28 @@ textarea {
       }
     };
     function validateAccess() {
-      const code = document.getElementById("accessCode").value.trim();
-      const match = capperInfo.find(row => row["Access Code"] == code);
-      if (!match) {
-        document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
-        return;
-      }
+  const code = document.getElementById("accessCode").value.trim();
+  const match = capperInfo.find(row => row["Access Code"] == code);
+  if (code.length < 4 || code.length > 10 || !match) {
+  document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
+  return;
+}
 
-      capperName = match["Display Name"];
-      document.getElementById("access-screen").classList.add("hidden");
-      document.getElementById("sports-screen").classList.remove("hidden");
-      loadAllData();
-    }
+
+  capperName = match["Display Name"];
+  document.getElementById("access-screen").classList.add("hidden");
+  document.getElementById("sports-screen").classList.remove("hidden");
+  loadAllData();
+}
+
+// 🔹 Add this below validateAccess()
+document.getElementById("accessCode").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/\D/g, "");
+  if (e.target.value.length > 10) {
+    e.target.value = e.target.value.slice(0, 10);
+  }
+});
+
 
     async function loadAllData() {
       try {
