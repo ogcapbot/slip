@@ -149,7 +149,15 @@ textarea {
 <body>
   <div class="container" id="access-screen">
     <h2>Enter Capper Access Code</h2>
-<input type="tel" id="accessCode" placeholder="Enter Code Here" pattern="[0-9]*" inputmode="numeric" maxlength="10" />
+<input
+  type="text"
+  id="accessCode"
+  placeholder="Enter Code Here"
+  pattern="[0-9]*"
+  inputmode="numeric"
+  maxlength="10"
+  style="width: 100%; max-width: 400px; box-sizing: border-box; display: block; margin: 0 auto 12px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;"
+/>
     <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
   </div>
