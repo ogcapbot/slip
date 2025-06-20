@@ -187,15 +187,15 @@
     let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
 
     window.onload = async () => {
-  document.getElementById("accessCode").focus();
-  try {
-    const res = await fetch(BASE_URL + "?action=data");
-    const result = await res.json();
-    capperInfo = result.capperInfo;
-  } catch {
-    document.getElementById("error").textContent = "Failed to load access codes.";
-  }
-};
+      document.getElementById("accessCode").focus();
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        const result = await res.json();
+        capperInfo = result.capperInfo;
+      } catch {
+        document.getElementById("error").textContent = "Failed to load access codes.";
+      }
+    };
     function validateAccess() {
       const code = document.getElementById("accessCode").value.trim();
       const match = capperInfo.find(row => row["Access Code"] == code);
