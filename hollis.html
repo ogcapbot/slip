@@ -418,12 +418,14 @@ container.innerHTML = `
     Successfully Found ${matches.length} Result${matches.length > 1 ? 's' : ''} Matching '${teamInputRaw}'
   </div>
   <p style="margin-top:10px;">Did you mean:</p>
-  <p style="text-align: center; font-size: 36px; margin: 5px 0 15px;"><strong>${matchedTeam}</strong></p>
+  <p style="text-align: center; margin: 5px 0 15px;">
+  <strong style="font-size: 24px;">${matchedTeam}</strong>
+  </p>
   <p>Sport: ${row["League (Group)"]}</p>
   <p>League: ${row["Sport Name"]}</p>
   <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
   <p>When: ${c_date} @ ${timeFormatted} EST</p>
-  <p></p>
+  <p> </p>
   ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
   <button onclick="useThisGame()">Use This Game</button>
 `;
