@@ -862,40 +862,78 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   "FULL_TEAM_ENTERED": matchedTeam,
   "FULL_BET_TYPE": wager,
   "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-  "PICK_DESC": "[[PICK_DESC]]", // Replace with real description if you have one
+  "PICK_DESC": "[[PICK_DESC]]",
   "NOTES": notes,
   "FULL_LEAGUE_NAME": selectedMatch["League (Group)"],
   "FULL_SPORT_NAME": selectedMatch["Sport Name"],
   "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
   "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
   "DATE and TIME OF GAME START": formattedTime,
-  "TITLE": "[[TITLE]]", // Replace with a real title later if needed
+  "TITLE": "[[TITLE]]",
   "PICKID": pickId,
   "CAPPERS NAME": capperName,
   "USER_INPUT_VALUE": allInputsRaw,
   "24HR_LONG_DATE_SECONDS": estString
 };
 
-iframe.src = `${BASE_URL}?json=${encodeURIComponent(JSON.stringify(payload))}`;
+const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+const box = document.getElementById("confirmOutput");
+box.innerHTML = ""; // Clear old
 
+// Create both iframes
+const createIframe = (slideNum, visible) => {
+  const iframe = document.createElement("iframe");
+  iframe.className = "slipFrame";
+  iframe.dataset.slide = slideNum;
+  iframe.style.display = visible ? "block" : "none";
+  iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
   iframe.style.width = "100%";
   iframe.style.maxWidth = "400px";
   iframe.style.border = "none";
   iframe.style.height = "1000px";
+  return iframe;
+};
 
-  box.innerHTML = "";
-  box.appendChild(iframe);
-  box.classList.remove("hidden");
+const iframe1 = createIframe("1", true);  // Normal (default shown)
+const iframe2 = createIframe("2", false); // Paid (hidden initially)
 
-  setTimeout(() => {
-    box.style.overflow = "hidden";
-    box.style.height = box.scrollHeight + "px";
-  }, 0);
+box.appendChild(iframe1);
+box.appendChild(iframe2);
 
-//  document.getElementById("copyBtn").classList.remove("hidden");
-//  document.getElementById("generateImageBtn").classList.remove("hidden");
-}
+// Add toggle button
+const toggleBtn = document.createElement("button");
+toggleBtn.textContent = "Switch to Paid Image";
+toggleBtn.id = "toggleImageBtn";
+toggleBtn.style.marginTop = "10px";
+toggleBtn.style.width = "100%";
+toggleBtn.style.maxWidth = "400px";
+toggleBtn.style.boxSizing = "border-box";
+toggleBtn.style.padding = "12px";
+toggleBtn.style.fontSize = "16px";
+toggleBtn.style.backgroundColor = "#2a9fd6";
+toggleBtn.style.color = "white";
+toggleBtn.style.border = "none";
+toggleBtn.style.borderRadius = "6px";
+toggleBtn.style.cursor = "pointer";
 
+toggleBtn.onclick = () => {
+  const frames = document.querySelectorAll(".slipFrame");
+  frames.forEach(frame => {
+    frame.style.display = frame.style.display === "none" ? "block" : "none";
+    toggleBtn.textContent = frame.dataset.slide === "1" && frame.style.display === "block"
+      ? "Switch to Paid Image"
+      : frame.dataset.slide === "2" && frame.style.display === "block"
+        ? "Switch to Regular Image"
+        : toggleBtn.textContent;
+  });
+};
+
+box.appendChild(toggleBtn);
+
+setTimeout(() => {
+  box.style.overflow = "hidden";
+  box.style.height = box.scrollHeight + "px";
+}, 0);
 
   </script>
 </body>
