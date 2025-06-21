@@ -498,17 +498,22 @@ document.getElementById("copyBtn").classList.remove("hidden");
 document.getElementById("generateImageBtn").classList.remove("hidden");
     }
     function resetSearch() {
-  // Clear input values
+  // Clear all inputs
   document.getElementById("teamSearch").value = "";
   document.getElementById("wagerType").value = "";
   document.getElementById("unitAmount").value = "1";
 
-  // Clear error messages
+  // Clear all error messages
   document.getElementById("searchError").textContent = "";
   document.getElementById("wagerError").textContent = "";
   document.getElementById("unitAmountError").textContent = "";
 
-  // Reset view visibility
+  // Reset state variables
+  matches = [];
+  currentMatchIndex = 0;
+  selectedMatch = null;
+
+  // Hide all steps
   document.getElementById("gameSuggestion").classList.add("hidden");
   document.getElementById("customInputSection").classList.add("hidden");
   document.getElementById("unitAmountSection").classList.add("hidden");
@@ -516,19 +521,15 @@ document.getElementById("generateImageBtn").classList.remove("hidden");
   document.getElementById("copyBtn").classList.add("hidden");
   document.getElementById("generateImageBtn").classList.add("hidden");
 
-  // Show search input and label again
+  // Show initial search interface
   document.getElementById("inputLabel").classList.remove("hidden");
   document.getElementById("teamSearch").classList.remove("hidden");
   document.getElementById("searchBtn").classList.remove("hidden");
 
-  // Focus the input
+  // Focus team input again
   document.getElementById("teamSearch").focus();
-
-  // 🔁 Reset search-related variables
-  matches = [];
-  currentMatchIndex = 0;
-  selectedMatch = null;
 }
+
 
     function copyToClipboard() {
   const output = document.getElementById("confirmOutput");
