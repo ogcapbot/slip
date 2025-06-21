@@ -563,7 +563,7 @@ container.innerHTML = `
     }
 
     function submitUnitAmount() {
-
+console.log("submitUnitAmount() triggered");
 
 //ARE YOU SAYING HERE????
 
@@ -581,7 +581,9 @@ container.innerHTML = `
 
       errorDiv.textContent = "";
       document.getElementById("unitAmountSection").classList.add("hidden");
-document.getElementById("notesChoiceSection").classList.remove("hidden");
+console.log("About to show notesChoiceSection");
+      document.getElementById("notesChoiceSection").classList.remove("hidden");
+
 
       const wagerRaw = document.getElementById("wagerType").value.trim();
       const wager = wagerRaw.toUpperCase();
