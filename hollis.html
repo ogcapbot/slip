@@ -635,7 +635,8 @@ if (
   `Created: ${estString}`
 ].join("\n");
 
-      const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+const cleanedOutput = window._cleanedOutput;
       box.innerText = cleanedOutput;
 // Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
 const encodedOutput = encodeURIComponent(cleanedOutput);
@@ -743,11 +744,10 @@ document.getElementById("generateImageBtn").classList.remove("hidden");
     });
   
   function openImageGenerator() {
-  const slipText = document.getElementById("confirmOutput").innerText;
-  const encodedText = encodeURIComponent(cleanedOutput);
-window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
-
+  const encodedText = encodeURIComponent(window._cleanedOutput || '');
+  window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
 }
+
 
   </script>
 </body>
