@@ -848,35 +848,6 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   ].join("\n");
 
   const box = document.getElementById("confirmOutput");
-  const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
-  window._cleanedOutput = cleanedOutput;
-
-  const encodedOutput = encodeURIComponent(cleanedOutput);
-
-  const existingFrame = document.getElementById("slipFrame");
-  if (existingFrame) existingFrame.remove();
-
-  const iframe = document.createElement("iframe");
-  iframe.id = "slipFrame";
- const payload = {
-  "FULL_TEAM_ENTERED": matchedTeam,
-  "FULL_BET_TYPE": wager,
-  "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-  "PICK_DESC": "[[PICK_DESC]]",
-  "NOTES": notes,
-  "FULL_LEAGUE_NAME": selectedMatch["League (Group)"],
-  "FULL_SPORT_NAME": selectedMatch["Sport Name"],
-  "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-  "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-  "DATE and TIME OF GAME START": formattedTime,
-  "TITLE": "[[TITLE]]",
-  "PICKID": pickId,
-  "CAPPERS NAME": capperName,
-  "USER_INPUT_VALUE": allInputsRaw,
-  "24HR_LONG_DATE_SECONDS": estString
-};
-
-const box = document.getElementById("confirmOutput");
 const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
 window._cleanedOutput = cleanedOutput;
 
@@ -959,6 +930,7 @@ setTimeout(() => {
   box.style.overflow = "hidden";
   box.style.height = box.scrollHeight + "px";
 }, 0);
+
 
   </script>
 </body>
