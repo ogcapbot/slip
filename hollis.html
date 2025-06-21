@@ -735,11 +735,19 @@ if (selectedMatch["Commence Time (UTC)"]) {
   window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
 }
 
-    document.getElementById("yesNoteBtn").addEventListener("click", () => {
+ document.getElementById("yesNoteBtn").addEventListener("click", () => {
   document.getElementById("notesChoiceSection").classList.add("hidden");
   document.getElementById("notesInputSection").classList.remove("hidden");
+
+  document.getElementById("notesHeaderRow").style.display = "flex";
+  document.getElementById("submitNoteBtn").classList.remove("hidden");
+
+  document.getElementById("notesInput").value = "";
+  document.getElementById("charCount").textContent = "Remaining: 100";
+
   document.getElementById("notesInput").focus();
 });
+
 
 document.getElementById("noNoteBtn").addEventListener("click", () => {
   document.getElementById("notesChoiceSection").classList.add("hidden");
