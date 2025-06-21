@@ -252,15 +252,16 @@ textarea {
   <button id="noNoteBtn">No, Proceed to Image Creation</button>
 </div>
 
-<div id="notesHeaderRow" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-  <label for="notesInput" style="color: #666; font-size: 14px;">
-    Enter Your Comment/Note Below:
-  </label>
-  <div id="charCount" style="color: #666; font-size: 14px;">
-    Remaining: 100
+<!-- Note Entry Section -->
+<div id="notesInputSection" class="hidden" style="margin-top: 20px;">
+  <div id="notesHeaderRow" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+    <label for="notesInput" style="color: #666; font-size: 14px;">
+      Enter Your Comment/Note Below:
+    </label>
+    <div id="charCount" style="color: #666; font-size: 14px;">
+      Remaining: 100
+    </div>
   </div>
-</div>
-
 
   <textarea 
     id="notesInput" 
@@ -269,9 +270,10 @@ textarea {
     placeholder="Enter Comment/Note Here"
     style="font-family: 'Oswald', Arial, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box;"
   ></textarea>
-  
-  <button id="submitNoteBtn">Submit</button>
+
+  <button id="submitNoteBtn" class="hidden">Submit</button>
 </div>
+
 
 
         
