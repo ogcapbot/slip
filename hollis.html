@@ -252,8 +252,7 @@ textarea {
   <button id="noNoteBtn">No, Proceed to Image Creation</button>
 </div>
 
-<div id="notesInputSection" class="hidden" style="margin-top: 20px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+<div id="notesHeaderRow" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
   <label for="notesInput" style="color: #666; font-size: 14px;">
     Enter Your Comment/Note Below:
   </label>
@@ -261,6 +260,7 @@ textarea {
     Remaining: 100
   </div>
 </div>
+
 
   <textarea 
     id="notesInput" 
@@ -649,47 +649,58 @@ if (selectedMatch["Commence Time (UTC)"]) {
       document.getElementById("notesChoiceSection").classList.remove("hidden");
     }
     function resetSearch() {
-  // Clear all inputs
+  // Clear inputs
   document.getElementById("teamSearch").value = "";
   document.getElementById("wagerType").value = "";
   document.getElementById("unitAmount").value = "1";
+  document.getElementById("notesInput").value = "";
 
-  // Clear all error messages
+  // Clear errors
   document.getElementById("searchError").textContent = "";
   document.getElementById("wagerError").textContent = "";
   document.getElementById("unitAmountError").textContent = "";
 
-  // Reset state variables
+  // Reset state
   matches = [];
   currentMatchIndex = 0;
   selectedMatch = null;
+  window.overrideTeamName = null;
 
-  // Hide all dynamic content
-  document.getElementById("gameSuggestion").classList.add("hidden");
-  document.getElementById("customInputSection").classList.add("hidden");
-  document.getElementById("unitAmountSection").classList.add("hidden");
-  document.getElementById("confirmOutput").classList.add("hidden");
-  document.getElementById("copyBtn").classList.add("hidden");
-  document.getElementById("generateImageBtn").classList.add("hidden");
+  // Hide everything that could be shown
+  const toHide = [
+    "gameSuggestion",
+    "customInputSection",
+    "unitAmountSection",
+    "notesChoiceSection",
+    "notesInputSection",
+    "confirmOutput",
+    "copyBtn",
+    "generateImageBtn",
+    "submitNoteBtn"
+  ];
+  toHide.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
 
-  // Optional: clear previous slip/output contents
-  document.getElementById("confirmOutput").innerHTML = "";
+  // Reset counter
+  const charCount = document.getElementById("charCount");
+  if (charCount) charCount.textContent = "Remaining: 100";
 
-  // Show only the base input flow
+  // Ensure character counter line and label are also hidden (if shown)
+  const noteLabelLine = charCount.closest("div");
+  if (noteLabelLine) noteLabelLine.style.display = "none";
+
+  // Restore the team search section
   document.getElementById("inputLabel").classList.remove("hidden");
   document.getElementById("teamSearch").classList.remove("hidden");
   document.getElementById("searchBtn").classList.remove("hidden");
 
-  // Reset style visibility in case anything was hidden with inline display:none
   document.getElementById("inputLabel").style.display = "";
   document.getElementById("teamSearch").style.display = "";
   document.getElementById("searchBtn").style.display = "";
 
-  // Hide loader/message just in case
-  document.getElementById("loader").style.display = "none";
-  document.getElementById("loadingMsg").style.display = "none";
-
-  // Focus back to team input
+  // Focus user back to team input
   document.getElementById("teamSearch").focus();
 }
 
