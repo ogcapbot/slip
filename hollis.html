@@ -415,7 +415,7 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 
 container.innerHTML = `
   <div style="color: green; font-weight: bold; white-space: nowrap;">
-    Successfully Found ${matches.length} Result${matches.length > 1 ? 's' : ''} Matching '${teamInputRaw}'
+    Successfully Found <strong style="font-size: 20px; color: red;">${matches.length}</strong> Result${matches.length > 1 ? 's' : ''} Matching: '${teamInputRaw}'
   </div>
   <p style="margin-top:10px;">Did you mean:</p>
   <p style="text-align: center; margin: 5px 0 15px;">
