@@ -252,13 +252,23 @@ textarea {
   <button id="noNoteBtn">No, Proceed to Image Creation</button>
 </div>
 
-<div id="notesInputSection" class="hidden">
+<div id="notesInputSection" class="hidden" style="margin-top: 20px;">
   <label for="notesInput" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
     Enter Your Comment/Note Below: (Max 100 Chars)
   </label>
-  <textarea id="notesInput" rows="3" maxlength="100" placeholder="Enter Comment/Note Here"></textarea>
+  <textarea 
+    id="notesInput" 
+    rows="2" 
+    maxlength="100" 
+    placeholder="Enter Comment/Note Here"
+    style="font-family: 'Oswald', Arial, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box;"
+  ></textarea>
+  <div id="charCount" style="color: #666; font-size: 14px; margin-top: 5px; text-align: right;">
+    Remaining: 100
+  </div>
   <button id="submitNoteBtn">Submit</button>
 </div>
+
 
         
       
@@ -721,8 +731,15 @@ document.getElementById("noNoteBtn").addEventListener("click", () => {
 
 document.getElementById("submitNoteBtn").addEventListener("click", () => {
   const note = document.getElementById("notesInput").value.trim();
+  document.getElementById("notesInputSection").classList.add("hidden"); // hide note section
   generateFinalOutput(note || "N/A");
 });
+
+    document.getElementById("notesInput").addEventListener("input", (e) => {
+  const remaining = 100 - e.target.value.length;
+  document.getElementById("noteCharCount").textContent = `Remaining: ${remaining}`;
+});
+
 
     function generateFinalOutput(notes) {
   const wagerRaw = document.getElementById("wagerType").value.trim();
