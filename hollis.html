@@ -243,11 +243,43 @@ textarea {
         <input type="text" id="unitAmount" value="1" inputmode="decimal" pattern="^\d*(\.\d*)?$" />
         <button onclick="submitUnitAmount()">Submit</button>
         <div class="error" id="unitAmountError"></div>
+
+        <div id="notesChoiceSection" class="hidden">
+  <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">
+    Do You Want to Include any Comments/Notes?
+  </label>
+  <button id="yesNoteBtn">Yes, Enter Comment/Note</button>
+  <button id="noNoteBtn">No, Proceed to Image Creation</button>
+</div>
+
+<div id="notesInputSection" class="hidden">
+  <label for="notesInput" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
+    Enter Your Comment/Note Below: (Max 100 Chars)
+  </label>
+  <textarea id="notesInput" rows="3" maxlength="100" placeholder="Enter Comment/Note Here"></textarea>
+  <button id="submitNoteBtn">Submit</button>
+</div>
+
+        
       </div>
 
       <button id="copyBtn" class="hidden" onclick="copyToClipboard()">Copy to Clipboard</button>
      <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
 <button id="generateImageBtn" class="hidden" onclick="openImageGenerator()">Generate Image</button>
+<!-- Step 6: Notes Prompt Section -->
+<div id="notesChoiceSection" class="hidden" style="text-align:center; margin-top:20px;">
+  <p style="font-weight: bold;">Do You Want to Include any Comments/Notes?</p>
+  <button id="yesNoteBtn">Yes, Enter Comment/Note</button>
+  <button id="noNoteBtn">No, Proceed to Image Creation</button>
+</div>
+
+<div id="notesInputSection" class="hidden" style="margin-top:20px;">
+  <label for="notesInput" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
+    Enter Your Comment/Note Below: (Max 100 Chars)
+  </label>
+  <textarea id="notesInput" rows="3" maxlength="100" placeholder="Enter Comment/Note Here"></textarea>
+  <button id="submitNoteBtn">Submit</button>
+</div>
 
     </div>
   </div>
@@ -545,6 +577,11 @@ container.innerHTML = `
     }
 
     function submitUnitAmount() {
+
+
+//ARE YOU SAYING HERE????
+
+      
       const input = document.getElementById("unitAmount").value.trim();
       const errorDiv = document.getElementById("unitAmountError");
       const box = document.getElementById("confirmOutput");
@@ -558,6 +595,7 @@ container.innerHTML = `
 
       errorDiv.textContent = "";
       document.getElementById("unitAmountSection").classList.add("hidden");
+document.getElementById("notesChoiceSection").classList.remove("hidden");
 
       const wagerRaw = document.getElementById("wagerType").value.trim();
       const wager = wagerRaw.toUpperCase();
@@ -606,81 +644,7 @@ if (selectedMatch["Commence Time (UTC)"]) {
       const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
       const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
-      const output = [
-  "═══════════════════════",
-  "######## OFFICIAL PICK",
-  "═══════════════════════",
-  `Wager Type: STRAIGHT WAGER`,
-  `Official Pick: ${matchedTeam}`,
-  `Official Type: ${wager}`,
-  `Official Wager: ${unitInput} Unit(s)`,
-  "To Win: [[PICK_DESC]]",
-  "",
-  "═══════════════════════",
-  "######## GAME DETAILS",
-  "═══════════════════════",
-  `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
-  `League: ${selectedMatch["Sport Name"]}`,
-  `Home Team: ${selectedMatch["Home Team"]}`,
-  `Away Team: ${selectedMatch["Away Team"]}`,
-  `Game Time: ${formattedTime}`,
-  "",
-  "═══════════════════════",
-  "######## THANK YOU FOR TRUSTING OGCB",
-  "═══════════════════════",
-  "",
-  "Title: [[TITLE]]",
-  `Pick ID: ${pickId}`,
-  `Pick by: ${capperName}`,
-  `Input Value: ${allInputsRaw}`,
-  "",
-  "═══════════════════════",
-  "######## STRICT CONFIDENTIALITY NOTICE",
-  "═══════════════════════",
-  "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
-  "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
-  "",
-  `Created: ${estString}`
-].join("\n");
-
-window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
-const cleanedOutput = window._cleanedOutput;
-      box.innerText = cleanedOutput;
-// Google Slides API Update// 🔁 Replace [[OUTPUT_HERE]] in Google Slide via Apps Script
-const encodedOutput = encodeURIComponent(cleanedOutput);
-
-// Remove previous iframe if any
-const existingFrame = document.getElementById("slipFrame");
-if (existingFrame) existingFrame.remove();
-
-// Create a new iframe that loads the Google Script (it returns just the image now)
-const iframe = document.createElement("iframe");
-iframe.id = "slipFrame";
-iframe.src = `${BASE_URL}?text=${encodedOutput}`;
-iframe.style.width = "100%";
-iframe.style.maxWidth = "400px";
-iframe.style.border = "none";
-iframe.style.height = "1000px"; // adjust as needed
-
-// Clear and append to the output container
-const outputContainer = document.getElementById("confirmOutput");
-outputContainer.innerHTML = "";
-outputContainer.appendChild(iframe);
-outputContainer.classList.remove("hidden");
-
-
-
-// ✅ Show the result output on screen
-box.classList.remove("hidden");
-
-setTimeout(() => {
-  box.style.overflow = "hidden";
-  box.style.height = box.scrollHeight + "px";
-}, 0);
-
-// ✅ Reveal additional action buttons
-document.getElementById("copyBtn").classList.remove("hidden");
-document.getElementById("generateImageBtn").classList.remove("hidden");
+      document.getElementById("notesChoiceSection").classList.remove("hidden");
     }
     function resetSearch() {
   // Clear all inputs
@@ -754,6 +718,133 @@ document.getElementById("generateImageBtn").classList.remove("hidden");
   function openImageGenerator() {
   const encodedText = encodeURIComponent(window._cleanedOutput || '');
   window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
+}
+
+    document.getElementById("yesNoteBtn").addEventListener("click", () => {
+  document.getElementById("notesChoiceSection").classList.add("hidden");
+  document.getElementById("notesInputSection").classList.remove("hidden");
+  document.getElementById("notesInput").focus();
+});
+
+document.getElementById("noNoteBtn").addEventListener("click", () => {
+  document.getElementById("notesChoiceSection").classList.add("hidden");
+  generateFinalOutput("N/A");
+});
+
+document.getElementById("submitNoteBtn").addEventListener("click", () => {
+  const note = document.getElementById("notesInput").value.trim();
+  generateFinalOutput(note || "N/A");
+});
+
+    function generateFinalOutput(notes) {
+  const wagerRaw = document.getElementById("wagerType").value.trim();
+  const wager = wagerRaw.toUpperCase();
+  const teamSearchInput = window.overrideTeamName || document.getElementById("teamSearch").value.trim();
+  const unitInput = document.getElementById("unitAmount").value.trim();
+  const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
+
+  let matchedTeam = "";
+  const teamSearchLower = teamSearchInput.toLowerCase();
+
+  if (window.overrideTeamName) {
+    matchedTeam = window.overrideTeamName;
+  } else if (
+    selectedMatch &&
+    selectedMatch["Home Team"] !== "Unavailable" &&
+    selectedMatch["Away Team"] !== "Unavailable"
+  ) {
+    const home = selectedMatch["Home Team"];
+    const away = selectedMatch["Away Team"];
+    matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+  } else {
+    matchedTeam = teamSearchInput;
+  }
+
+  let formattedTime = "Unavailable";
+  if (selectedMatch["Commence Time (UTC)"]) {
+    const date = new Date(selectedMatch["Commence Time (UTC)"]);
+    formattedTime = date.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit", hour12: true
+    }) + " ET";
+  }
+
+  const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+  const nyDate = new Date(nowNY);
+  const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
+
+  const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
+  const today = new Date();
+  const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+  const pickId = `${secondsSinceEpoch}-${mmddyy}`;
+
+  const output = [
+    "═══════════════════════",
+    "######## OFFICIAL PICK",
+    "═══════════════════════",
+    `Wager Type: STRAIGHT WAGER`,
+    `Official Pick: ${matchedTeam}`,
+    `Official Type: ${wager}`,
+    `Official Wager: ${unitInput} Unit(s)`,
+    "To Win: [[PICK_DESC]]",
+    "",
+    "═══════════════════════",
+    "######## GAME DETAILS",
+    "═══════════════════════",
+    `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+    `League: ${selectedMatch["Sport Name"]}`,
+    `Home Team: ${selectedMatch["Home Team"]}`,
+    `Away Team: ${selectedMatch["Away Team"]}`,
+    `Game Time: ${formattedTime}`,
+    "",
+    "═══════════════════════",
+    "######## THANK YOU FOR TRUSTING OGCB",
+    "═══════════════════════",
+    "",
+    "Title: [[TITLE]]",
+    `Pick ID: ${pickId}`,
+    `Pick by: ${capperName}`,
+    `Input Value: ${allInputsRaw}`,
+    `Notes: ${notes}`,
+    "",
+    "═══════════════════════",
+    "######## STRICT CONFIDENTIALITY NOTICE",
+    "═══════════════════════",
+    "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+    "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+    "",
+    `Created: ${estString}`
+  ].join("\n");
+
+  const box = document.getElementById("confirmOutput");
+  const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+  window._cleanedOutput = cleanedOutput;
+
+  const encodedOutput = encodeURIComponent(cleanedOutput);
+
+  const existingFrame = document.getElementById("slipFrame");
+  if (existingFrame) existingFrame.remove();
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "slipFrame";
+  iframe.src = `${BASE_URL}?text=${encodedOutput}`;
+  iframe.style.width = "100%";
+  iframe.style.maxWidth = "400px";
+  iframe.style.border = "none";
+  iframe.style.height = "1000px";
+
+  box.innerHTML = "";
+  box.appendChild(iframe);
+  box.classList.remove("hidden");
+
+  setTimeout(() => {
+    box.style.overflow = "hidden";
+    box.style.height = box.scrollHeight + "px";
+  }, 0);
+
+  document.getElementById("copyBtn").classList.remove("hidden");
+  document.getElementById("generateImageBtn").classList.remove("hidden");
 }
 
 
