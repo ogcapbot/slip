@@ -411,23 +411,29 @@ showGameOption();
   `;
 
   // Attach button functionality
-  document.getElementById("overrideBtn").onclick = function () {
+ document.getElementById("overrideBtn").onclick = function () {
   const overrideValue = teamInputRaw;
-
-  // Store the override globally if needed later
   window.overrideTeamName = overrideValue;
   selectedMatch = null;
 
-  // Hide the team input and error section
-  document.getElementById("teamSearch").classList.add("hidden");
-  document.getElementById("inputLabel").classList.add("hidden");
-  document.getElementById("searchBtn").classList.add("hidden");
-  document.getElementById("searchError").innerHTML = "";
+  // Hide team input elements
+  const input = document.getElementById("teamSearch");
+  const label = document.getElementById("inputLabel");
+  const button = document.getElementById("searchBtn");
 
-  // Hide game suggestion if it was visible
+  input.classList.add("hidden");
+  label.classList.add("hidden");
+  button.classList.add("hidden");
+
+  input.style.display = "none";
+  label.style.display = "none";
+  button.style.display = "none";
+
+  // Clear error + suggestions
+  document.getElementById("searchError").innerHTML = "";
   document.getElementById("gameSuggestion").classList.add("hidden");
 
-  // Show the next step: wager input
+  // Show next section
   document.getElementById("customInputSection").classList.remove("hidden");
   document.getElementById("wagerType").focus();
 };
