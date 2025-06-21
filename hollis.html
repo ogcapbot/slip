@@ -99,13 +99,14 @@ textarea {
     }
 
     #resetBtn {
-      float: right;
-      font-size: 12px;
-      width: auto;
-      margin-top: -12px;
-      margin-bottom: 10px;
-      padding: 6px 10px;
-    }
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 12px;
+  padding: 6px 10px;
+  z-index: 100;
+}
+
 
     #copyBtn {
       margin-bottom: 10px;
@@ -123,12 +124,17 @@ textarea {
     }
 
     #gameSuggestion {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 15px;
-      background: #fff;
-      margin-bottom: 20px;
-    }
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 15px;
+  background: #fff;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 
     #gameSuggestion p {
       margin: 6px 0;
@@ -170,9 +176,10 @@ textarea {
   <div id="loginNotice"></div>
 
   <!-- FLEX WRAPPER TO HOLD RESET + GAME BOX -->
-  <div style="display: flex; flex-direction: column; align-items: flex-start;">
-    <button id="resetBtn" onclick="resetSearch()">Reset</button>
-    <div id="gameSuggestion" class="hidden"></div>
+  <!-- Reset floating independently -->
+<button id="resetBtn" onclick="resetSearch()">Reset</button>
+<div id="gameSuggestion" class="hidden"></div>
+
   </div>
       <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
       <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
