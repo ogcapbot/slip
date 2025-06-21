@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Capper Sports Access</title>
 <script src="https://apis.google.com/js/api.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet">
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-    }
+  font-family: 'Oswald', sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
 
     .container {
       width: 100%;
@@ -110,17 +111,18 @@ textarea {
   position: absolute;
   top: -16px;
   right: 0;
-  padding: 2px 8px;
   font-size: 12px;
+  padding: 2px 10px;
   background-color: #2a9fd6;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  width: auto;
   height: auto;
-  line-height: 1;
+  width: auto;
+  white-space: nowrap;
 }
+
 
 
 
@@ -151,7 +153,9 @@ textarea {
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
+  box-sizing: border-box;
 }
+
 
 
     #gameSuggestion p {
@@ -382,14 +386,25 @@ showGameOption();
       const daysDiff = Math.floor((date - new Date()) / (1000 * 60 * 60 * 24));
       const c_date = daysDiff === 0 ? "Today" : daysDiff === 1 ? "Tomorrow" : `${daysDiff} Days Away`;
 
-      container.innerHTML = `
-        <strong>${matches.length} Games Found</strong>
-        <p>Did you mean:</p>
-        <p>${row["Away Team"]} @ ${row["Home Team"]}</p>
-        <p>Scheduled for: ${c_date}</p>
-        <button onclick="nextOption()">Next Option</button>
-        <button onclick="useThisGame()">Use This Game</button>
-      `;
+      const teamInputRaw = document.getElementById("teamSearch").value.trim();
+const timeFormatted = date.toLocaleString("en-US", {
+  timeZone: "America/New_York",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+const timeString = `${c_date} @ ${timeFormatted} EST`;
+
+container.innerHTML = `
+  <strong>Successfully Found ${matches.length} Result${matches.length > 1 ? 's' : ''} Matching '${teamInputRaw}'</strong>
+  <p style="margin-top:10px;">Did you mean: <strong>${teamInputRaw}</strong>?</p>
+  <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
+  <p>When: ${timeString}</p>
+  ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
+  <button onclick="useThisGame()">Use This Game</button>
+`;
+
       container.classList.remove("hidden");
     }
 
