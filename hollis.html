@@ -858,7 +858,26 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
 
   const iframe = document.createElement("iframe");
   iframe.id = "slipFrame";
-  iframe.src = `${BASE_URL}?text=${encodedOutput}`;
+ const payload = {
+  "FULL_TEAM_ENTERED": matchedTeam,
+  "FULL_BET_TYPE": wager,
+  "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+  "PICK_DESC": "[[PICK_DESC]]", // Replace with real description if you have one
+  "NOTES": notes,
+  "FULL_LEAGUE_NAME": selectedMatch["League (Group)"],
+  "FULL_SPORT_NAME": selectedMatch["Sport Name"],
+  "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+  "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+  "DATE and TIME OF GAME START": formattedTime,
+  "TITLE": "[[TITLE]]", // Replace with a real title later if needed
+  "PICKID": pickId,
+  "CAPPERS NAME": capperName,
+  "USER_INPUT_VALUE": allInputsRaw,
+  "24HR_LONG_DATE_SECONDS": estString
+};
+
+iframe.src = `${BASE_URL}?json=${encodeURIComponent(JSON.stringify(payload))}`;
+
   iframe.style.width = "100%";
   iframe.style.maxWidth = "400px";
   iframe.style.border = "none";
