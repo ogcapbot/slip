@@ -178,13 +178,12 @@ textarea {
 <body>
 
   <body>
-  <!-- 🔹 GLOBAL HEADER (Always Visible) -->
-  <div style="width: 100%; text-align: center; padding: 20px 10px;">
-  <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator</h3>
-</div>
+  
   
   <div class="container" id="access-screen">
-    
+    <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
+  <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator</h3>
+</div>
     <h2>Enter Capper Access Code</h2>
 <input
   type="text"
@@ -204,7 +203,12 @@ textarea {
     <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
     <div id="loggedInInfo" class="hidden">
-  <div id="loginNotice"></div>
+  
+      <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
+  <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator</h3>
+</div>
+      
+      <div id="loginNotice"></div>
 
   <div id="resetWrapper">
   <button id="resetBtn" onclick="resetSearch()">Reset</button>
