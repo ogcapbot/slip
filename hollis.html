@@ -561,7 +561,7 @@ container.innerHTML = `
 
       const wagerRaw = document.getElementById("wagerType").value.trim();
       const wager = wagerRaw.toUpperCase();
-      const teamSearchInput = document.getElementById("teamSearch").value.trim();
+const teamSearchInput = window.overrideTeamName || document.getElementById("teamSearch").value.trim();
       const unitInput = input;
       const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
