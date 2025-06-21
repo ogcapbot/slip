@@ -876,9 +876,35 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   "24HR_LONG_DATE_SECONDS": estString
 };
 
-const encodedPayload = encodeURIComponent(JSON.stringify(payload));
 const box = document.getElementById("confirmOutput");
-box.innerHTML = ""; // Clear old
+const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+window._cleanedOutput = cleanedOutput;
+
+const encodedOutput = encodeURIComponent(cleanedOutput);
+
+const existingFrame = document.getElementById("slipFrame");
+if (existingFrame) existingFrame.remove();
+
+const payload = {
+  "FULL_TEAM_ENTERED": matchedTeam,
+  "FULL_BET_TYPE": wager,
+  "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+  "PICK_DESC": "[[PICK_DESC]]",
+  "NOTES": notes,
+  "FULL_LEAGUE_NAME": selectedMatch["League (Group)"],
+  "FULL_SPORT_NAME": selectedMatch["Sport Name"],
+  "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+  "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+  "DATE and TIME OF GAME START": formattedTime,
+  "TITLE": "[[TITLE]]",
+  "PICKID": pickId,
+  "CAPPERS NAME": capperName,
+  "USER_INPUT_VALUE": allInputsRaw,
+  "24HR_LONG_DATE_SECONDS": estString
+};
+
+const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+box.innerHTML = ""; // Clear previous content
 
 // Create both iframes
 const createIframe = (slideNum, visible) => {
@@ -894,8 +920,8 @@ const createIframe = (slideNum, visible) => {
   return iframe;
 };
 
-const iframe1 = createIframe("1", true);  // Normal (default shown)
-const iframe2 = createIframe("2", false); // Paid (hidden initially)
+const iframe1 = createIframe("1", true);  // Show Normal Image first
+const iframe2 = createIframe("2", false); // Hide Paid Image initially
 
 box.appendChild(iframe1);
 box.appendChild(iframe2);
@@ -919,13 +945,12 @@ toggleBtn.style.cursor = "pointer";
 toggleBtn.onclick = () => {
   const frames = document.querySelectorAll(".slipFrame");
   frames.forEach(frame => {
-    frame.style.display = frame.style.display === "none" ? "block" : "none";
-    toggleBtn.textContent = frame.dataset.slide === "1" && frame.style.display === "block"
-      ? "Switch to Paid Image"
-      : frame.dataset.slide === "2" && frame.style.display === "block"
-        ? "Switch to Regular Image"
-        : toggleBtn.textContent;
+    const isVisible = frame.style.display !== "none";
+    frame.style.display = isVisible ? "none" : "block";
   });
+
+  const showingSlide2 = iframe2.style.display === "block";
+  toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
 };
 
 box.appendChild(toggleBtn);
