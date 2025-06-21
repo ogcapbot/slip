@@ -569,14 +569,18 @@ container.innerHTML = `
 let matchedTeam = "";
 const teamSearchLower = teamSearchInput.toLowerCase();
 
-if (selectedMatch) {
+if (
+  selectedMatch &&
+  selectedMatch["Home Team"] !== "Unavailable" &&
+  selectedMatch["Away Team"] !== "Unavailable"
+) {
   home = selectedMatch["Home Team"];
   away = selectedMatch["Away Team"];
   matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
 } else {
-  // override case
   matchedTeam = window.overrideTeamName || teamSearchInput;
 }
+
 
       const date = new Date(selectedMatch["Commence Time (UTC)"]);
       const formattedTime = date.toLocaleString("en-US", {
