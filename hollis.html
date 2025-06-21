@@ -98,19 +98,29 @@ textarea {
       height: auto;
     }
 
-    #resetBtn {
+    #resetWrapper {
+  position: relative;
   width: 100%;
   max-width: 400px;
-  font-size: 14px;
-  margin: 0 auto 12px;
-  display: block;
-  padding: 12px;
+  margin: 0 auto;
+  height: 0;
+}
+
+#resetBtn {
+  position: absolute;
+  top: -16px;
+  right: 0;
+  height: 12px;
+  width: 30px;
+  font-size: 10px;
+  padding: 0;
   background-color: #2a9fd6;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
 }
+
 
 
 
@@ -181,7 +191,10 @@ textarea {
     <div id="loggedInInfo" class="hidden">
   <div id="loginNotice"></div>
 
-  <button id="resetBtn" onclick="resetSearch()">Reset</button>
+  <div id="resetWrapper">
+  <button id="resetBtn" onclick="resetSearch()">↺</button>
+</div>
+
 
   <div id="gameSuggestion" class="hidden"></div>
 
@@ -235,18 +248,26 @@ textarea {
   }
 };
 
-    function validateAccess() {
+   function validateAccess() {
   const code = document.getElementById("accessCode").value.trim();
   const match = capperInfo.find(row => row["Access Code"] == code);
   if (code.length < 4 || code.length > 10 || !match) {
-  document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
-  return;
-}
-
+    document.getElementById("error").textContent = "Access Code Invalid. Please Enter a Valid Access Code.";
+    return;
+  }
 
   capperName = match["Display Name"];
   document.getElementById("access-screen").classList.add("hidden");
   document.getElementById("sports-screen").classList.remove("hidden");
+
+  // 🔽 Hide all children of sports-screen except loader and loadingMsg
+  Array.from(document.querySelectorAll("#sports-screen > *"))
+    .forEach(el => {
+      if (el.id !== "loader" && el.id !== "loadingMsg") {
+        el.style.display = "none";
+      }
+    });
+
   loadAllData();
 }
 
@@ -264,10 +285,16 @@ document.getElementById("accessCode").addEventListener("input", (e) => {
         const res = await fetch(BASE_URL + "?action=data");
         allData = await res.json();
         document.getElementById("loader").style.display = "none";
-        document.getElementById("loadingMsg").style.display = "none";
-        document.getElementById("loggedInInfo").classList.remove("hidden");
-        document.getElementById("teamSearch").focus();
-        document.getElementById("loginNotice").textContent = `You are logged in as: ${capperName}`;
+document.getElementById("loadingMsg").style.display = "none";
+
+// 🔽 Show all elements again once data is loaded
+Array.from(document.querySelectorAll("#sports-screen > *"))
+  .forEach(el => el.style.display = "");
+
+document.getElementById("loggedInInfo").classList.remove("hidden");
+document.getElementById("teamSearch").focus();
+document.getElementById("loginNotice").textContent = `Capper Code Used for: ${capperName}`;
+
       } catch {
         alert("Failed to load sports data.");
       }
