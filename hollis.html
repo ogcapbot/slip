@@ -418,6 +418,7 @@ container.innerHTML = `
     Successfully Found ${matches.length} Result${matches.length > 1 ? 's' : ''} Matching '${teamInputRaw}'
   </div>
   <p style="margin-top:10px;">Did you mean:</p>
+<p style="text-align: center; font-size: 20px; margin: 5px 0 15px;"><strong>Sport: ${row["League (Group)"]} - League: ${row["Sport Name"]}</strong></p>
 <p style="text-align: center; font-size: 24px; margin: 5px 0 15px;"><strong>${matchedTeam}</strong></p>
 
   <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
