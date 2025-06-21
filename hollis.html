@@ -173,6 +173,34 @@ textarea {
     #sportDropdown {
       display: none;
     }
+
+    #imageLoaderWrapper {
+  display: none;
+  text-align: center;
+  margin-top: 20px;
+}
+#imageLoader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2a9fd6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+#imageLoaderText {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2a9fd6;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+
+    
   </style>
 </head>
 <body>
@@ -198,6 +226,10 @@ textarea {
     <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
   </div>
+<div id="imageLoaderWrapper">
+  <div id="imageLoader"></div>
+  <div id="imageLoaderText">Creating Images... Please Wait...</div>
+</div>
 
   <div class="container hidden" id="sports-screen">
     <div id="loader"></div>
@@ -767,6 +799,8 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
 
 
     function generateFinalOutput(notes) {
+      document.getElementById("imageLoaderWrapper").style.display = "block";
+
   const wagerRaw = document.getElementById("wagerType").value.trim();
   const wager = wagerRaw.toUpperCase();
   const teamSearchInput = window.overrideTeamName || document.getElementById("teamSearch").value.trim();
@@ -928,12 +962,16 @@ toggleBtn.onclick = () => {
   toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
 };
 
-box.appendChild(toggleBtn);
+box.parentNode.insertBefore(toggleBtn, box);
 
 setTimeout(() => {
   box.style.overflow = "hidden";
   box.style.height = box.scrollHeight + "px";
 }, 0);
+    
+
+      document.getElementById("imageLoaderWrapper").style.display = "none";
+
     }
   
 
