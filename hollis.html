@@ -414,7 +414,14 @@ showGameOption();
  document.getElementById("overrideBtn").onclick = function () {
   const overrideValue = teamInputRaw;
   window.overrideTeamName = overrideValue;
-  selectedMatch = null;
+  selectedMatch = {
+  "League (Group)": "Unavailable",
+  "Sport Name": "Unavailable",
+  "Home Team": "Unavailable",
+  "Away Team": "Unavailable",
+  "Commence Time (UTC)": null
+};
+
 
   // Hide team input elements
   const input = document.getElementById("teamSearch");
@@ -558,10 +565,19 @@ container.innerHTML = `
       const unitInput = input;
       const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
-      const home = selectedMatch["Home Team"];
-      const away = selectedMatch["Away Team"];
-      const teamSearchLower = teamSearchInput.toLowerCase();
-      const matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+      let home = "", away = "";
+let matchedTeam = "";
+const teamSearchInput = document.getElementById("teamSearch").value.trim();
+const teamSearchLower = teamSearchInput.toLowerCase();
+
+if (selectedMatch) {
+  home = selectedMatch["Home Team"];
+  away = selectedMatch["Away Team"];
+  matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+} else {
+  // override case
+  matchedTeam = window.overrideTeamName || teamSearchInput;
+}
 
       const date = new Date(selectedMatch["Commence Time (UTC)"]);
       const formattedTime = date.toLocaleString("en-US", {
