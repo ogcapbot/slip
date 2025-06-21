@@ -167,9 +167,13 @@ textarea {
     <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
     <div id="loggedInInfo" class="hidden">
-      <div id="loginNotice"></div>
-      <button id="resetBtn" onclick="resetSearch()">Reset</button>
-      <div id="gameSuggestion" class="hidden"></div>
+  <div id="loginNotice"></div>
+
+  <!-- FLEX WRAPPER TO HOLD RESET + GAME BOX -->
+  <div style="display: flex; flex-direction: column; align-items: flex-start;">
+    <button id="resetBtn" onclick="resetSearch()">Reset</button>
+    <div id="gameSuggestion" class="hidden"></div>
+  </div>
       <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
       <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
       <button id="searchBtn" onclick="searchGames()">Submit</button>
