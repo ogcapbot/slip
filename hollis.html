@@ -110,16 +110,18 @@ textarea {
   position: absolute;
   top: -16px;
   right: 0;
-  height: 12px;
-  width: 30px;
-  font-size: 10px;
-  padding: 0;
+  padding: 2px 8px;
+  font-size: 12px;
   background-color: #2a9fd6;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  width: auto;
+  height: auto;
+  line-height: 1;
 }
+
 
 
 
@@ -284,12 +286,18 @@ document.getElementById("accessCode").addEventListener("input", (e) => {
       try {
         const res = await fetch(BASE_URL + "?action=data");
         allData = await res.json();
-        document.getElementById("loader").style.display = "none";
+       // Hide loader and message
+document.getElementById("loader").style.display = "none";
 document.getElementById("loadingMsg").style.display = "none";
 
-// 🔽 Show all elements again once data is loaded
+// Show all other elements again (excluding loader and loadingMsg)
 Array.from(document.querySelectorAll("#sports-screen > *"))
-  .forEach(el => el.style.display = "");
+  .forEach(el => {
+    if (el.id !== "loader" && el.id !== "loadingMsg") {
+      el.style.display = "";
+    }
+  });
+
 
 document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
