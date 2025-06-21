@@ -388,9 +388,44 @@ showGameOption();
       searchError.textContent = "";
 
       if (matches.length === 0) {
-        searchError.textContent = "No matching games found. Please be more specific and try again.";
-        return;
-      }
+  const teamInputRaw = document.getElementById("teamSearch").value.trim();
+  
+  searchError.innerHTML = `
+    <div style="color: red; font-weight: bold;">No matching games found for '${teamInputRaw}'.</div>
+    <p style="margin-top: 10px;">
+      If you have tried being more specific and checked for spelling errors and are still receiving 0 results, you can manually override the lookup function and use your input value of <strong>'${teamInputRaw}'</strong> instead.
+      Please double check the spelling and use the complete name before Overriding.
+      Your Input Value: <strong>'${teamInputRaw}'</strong>
+    </p>
+    <button id="overrideBtn" style="margin-top: 10px; padding: 10px; background-color: #d9534f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+      Override – Use Value Above
+    </button>
+  `;
+
+  // Attach button functionality
+  document.getElementById("overrideBtn").onclick = function () {
+    const overrideValue = teamInputRaw;
+
+    // 👇 simulate the normal flow using override value
+    selectedMatch = null; // no actual match
+    document.getElementById("gameSuggestion").classList.add("hidden");
+
+    // hide inputs
+    document.getElementById("inputLabel").classList.add("hidden");
+    document.getElementById("teamSearch").classList.add("hidden");
+    document.getElementById("searchBtn").classList.add("hidden");
+
+    // show next section
+    document.getElementById("customInputSection").classList.remove("hidden");
+    document.getElementById("wagerType").focus();
+
+    // store override in a backup place if needed
+    window.overrideTeamName = overrideValue;
+  };
+
+  return;
+}
+
 
       if (currentMatchIndex >= matches.length) {
         searchError.textContent = "No more matches. Please be more specific and try again.";
