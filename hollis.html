@@ -569,17 +569,21 @@ const teamSearchInput = window.overrideTeamName || document.getElementById("team
 let matchedTeam = "";
 const teamSearchLower = teamSearchInput.toLowerCase();
 
-if (
+// If using override, use that directly
+if (window.overrideTeamName) {
+  matchedTeam = window.overrideTeamName;
+} else if (
   selectedMatch &&
   selectedMatch["Home Team"] !== "Unavailable" &&
   selectedMatch["Away Team"] !== "Unavailable"
 ) {
-  home = selectedMatch["Home Team"];
-  away = selectedMatch["Away Team"];
+  const home = selectedMatch["Home Team"];
+  const away = selectedMatch["Away Team"];
   matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
 } else {
-  matchedTeam = window.overrideTeamName || teamSearchInput;
+  matchedTeam = teamSearchInput;
 }
+
 
 
       const date = new Date(selectedMatch["Commence Time (UTC)"]);
