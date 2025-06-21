@@ -415,7 +415,7 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 
 container.innerHTML = `
   <div style="color: green; font-weight: bold; white-space: nowrap;">
-    Successfully Found <strong style="font-size: 20px; color: red;">${matches.length}</strong> Result${matches.length > 1 ? 's' : ''} Matching: '${teamInputRaw}'
+    Successfully Found <p style="font-size: 20px; color: red;">${matches.length}</p> Result${matches.length > 1 ? 's' : ''} Matching: '${teamInputRaw}'
   </div>
   <p style="margin-top:10px;">Did you mean:</p>
   <p style="text-align: center; margin: 5px 0 15px;">
@@ -425,7 +425,7 @@ container.innerHTML = `
   <p>League: ${row["Sport Name"]}</p>
   <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
   <p>When: ${c_date} @ ${timeFormatted} EST</p>
-  <p> </p>
+  <BR>
   ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
   <button onclick="useThisGame()">Use This Game</button>
 `;
