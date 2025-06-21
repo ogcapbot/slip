@@ -391,14 +391,20 @@ showGameOption();
   const teamInputRaw = document.getElementById("teamSearch").value.trim();
   
   searchError.innerHTML = `
-    <div style="color: red; font-weight: bold;">No matching games found for '${teamInputRaw}'. Please be more specific and try again.</div>
-    <p style="margin-top: 10px; color: black;"><h3>Manual Override Option:</h3>
-      If you have tried being more specific and checked for spelling errors and are still receiving 0 results, you can manually override the lookup function and use your input value of '${teamInputRaw}' instead.
-      <br>
-      Please double check the spelling and use the complete name before Overriding.
-      <br>
-      Your Input Value: <h3>'${teamInputRaw}'</h3>
-    </p>
+  <div style="color: red; font-weight: bold;">
+  No matching games found for '${teamInputRaw}'.
+  <br>
+  Please be more specific and try again.
+  </div>
+
+<h3 style="margin-top: 10px; color: black;">Manual Override Option:</h3>
+<p style="color: black;">
+  If you have tried being more specific and checked for spelling errors and are still receiving 0 results,
+  you can manually override the lookup function and use your input value of <strong>'${teamInputRaw}'</strong> instead.
+  <br><br>
+  Please double check the spelling and use the complete name before Overriding.
+</p>
+<h3 style="color: black;">Your Input Value: '${teamInputRaw}'</h3>
     <button id="overrideBtn" style="margin-top: 10px; padding: 10px; background-color: #d9534f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
       Override – Use Value Above
     </button>
