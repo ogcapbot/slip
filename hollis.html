@@ -498,25 +498,37 @@ document.getElementById("copyBtn").classList.remove("hidden");
 document.getElementById("generateImageBtn").classList.remove("hidden");
     }
     function resetSearch() {
-      document.getElementById("teamSearch").value = "";
-      document.getElementById("wagerType").value = "";
-      document.getElementById("unitAmount").value = "1";
+  // Clear input values
+  document.getElementById("teamSearch").value = "";
+  document.getElementById("wagerType").value = "";
+  document.getElementById("unitAmount").value = "1";
 
-      document.getElementById("searchError").textContent = "";
-      document.getElementById("wagerError").textContent = "";
-      document.getElementById("unitAmountError").textContent = "";
+  // Clear error messages
+  document.getElementById("searchError").textContent = "";
+  document.getElementById("wagerError").textContent = "";
+  document.getElementById("unitAmountError").textContent = "";
 
-      document.getElementById("gameSuggestion").classList.add("hidden");
-      document.getElementById("customInputSection").classList.add("hidden");
-      document.getElementById("unitAmountSection").classList.add("hidden");
-      document.getElementById("confirmOutput").classList.add("hidden");
-      document.getElementById("copyBtn").classList.add("hidden");
-      document.getElementById("generateImageBtn").classList.add("hidden");
-      document.getElementById("inputLabel").classList.remove("hidden");
-      document.getElementById("teamSearch").classList.remove("hidden");
-      document.getElementById("searchBtn").classList.remove("hidden");
-      document.getElementById("teamSearch").focus();
-    }
+  // Reset view visibility
+  document.getElementById("gameSuggestion").classList.add("hidden");
+  document.getElementById("customInputSection").classList.add("hidden");
+  document.getElementById("unitAmountSection").classList.add("hidden");
+  document.getElementById("confirmOutput").classList.add("hidden");
+  document.getElementById("copyBtn").classList.add("hidden");
+  document.getElementById("generateImageBtn").classList.add("hidden");
+
+  // Show search input and label again
+  document.getElementById("inputLabel").classList.remove("hidden");
+  document.getElementById("teamSearch").classList.remove("hidden");
+  document.getElementById("searchBtn").classList.remove("hidden");
+
+  // Focus the input
+  document.getElementById("teamSearch").focus();
+
+  // 🔁 Reset search-related variables
+  matches = [];
+  currentMatchIndex = 0;
+  selectedMatch = null;
+}
 
     function copyToClipboard() {
   const output = document.getElementById("confirmOutput");
