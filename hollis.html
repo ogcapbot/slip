@@ -99,13 +99,19 @@ textarea {
     }
 
     #resetBtn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 12px;
-  padding: 6px 10px;
-  z-index: 100;
+  width: 100%;
+  max-width: 400px;
+  font-size: 14px;
+  margin: 0 auto 12px;
+  display: block;
+  padding: 12px;
+  background-color: #2a9fd6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
+
 
 
     #copyBtn {
@@ -175,10 +181,10 @@ textarea {
     <div id="loggedInInfo" class="hidden">
   <div id="loginNotice"></div>
 
-  <!-- FLEX WRAPPER TO HOLD RESET + GAME BOX -->
-  <!-- Reset floating independently -->
-<button id="resetBtn" onclick="resetSearch()">Reset</button>
-<div id="gameSuggestion" class="hidden"></div>
+  <button id="resetBtn" onclick="resetSearch()">Reset</button>
+
+  <div id="gameSuggestion" class="hidden"></div>
+
 
   </div>
       <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
