@@ -176,6 +176,11 @@ textarea {
   </style>
 </head>
 <body>
+
+  <p style="text-align: center; margin: 5px 0 5px;">
+  <strong style="font-size: 24px;">OG Cap Official Bet Slip Creator</strong>
+  </p>
+  
   <div class="container" id="access-screen">
     <h2>Enter Capper Access Code</h2>
 <input
@@ -306,7 +311,7 @@ Array.from(document.querySelectorAll("#sports-screen > *"))
 
 document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
-document.getElementById("loginNotice").textContent = `Capper Code Used for: ${capperName}`;
+document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
 
       } catch {
         alert("Failed to load sports data.");
@@ -414,10 +419,10 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 ) || teamInputRaw;
 
 container.innerHTML = `
-  <div style="color: green; font-weight: bold; white-space: nowrap; font-size: 20px;">
+  <div font-weight: bold; white-space: nowrap; font-size: 20px;">
     Results Found for '${teamInputRaw}': <FONT style="color: red;>${matches.length}</FONT> ${matches.length > 1 ? 's' : ''}
   </div>
-  <!-- ${matches.length > 1 ? 's' : ''} -->
+  
   <p style="margin-top:10px;">Did you mean:</p>
   <p style="text-align: center; margin: 5px 0 15px;">
   <strong style="font-size: 24px;">${matchedTeam}</strong>
