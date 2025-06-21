@@ -417,7 +417,9 @@ container.innerHTML = `
   <div style="color: green; font-weight: bold; white-space: nowrap;">
     Successfully Found ${matches.length} Result${matches.length > 1 ? 's' : ''} Matching '${teamInputRaw}'
   </div>
-  <p style="margin-top:10px;">Did you mean: <strong>${matchedTeam}</strong>?</p>
+  <p style="margin-top:10px;">Did you mean:</p>
+<p style="text-align: center; font-size: 18px; margin: 5px 0 15px;"><strong>${matchedTeam}</strong></p>
+
   <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
   <p>When: ${c_date} @ ${timeFormatted} EST</p>
   ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
@@ -596,7 +598,7 @@ document.getElementById("generateImageBtn").classList.remove("hidden");
   currentMatchIndex = 0;
   selectedMatch = null;
 
-  // Hide all steps
+  // Hide all dynamic content
   document.getElementById("gameSuggestion").classList.add("hidden");
   document.getElementById("customInputSection").classList.add("hidden");
   document.getElementById("unitAmountSection").classList.add("hidden");
@@ -604,12 +606,24 @@ document.getElementById("generateImageBtn").classList.remove("hidden");
   document.getElementById("copyBtn").classList.add("hidden");
   document.getElementById("generateImageBtn").classList.add("hidden");
 
-  // Show initial search interface
+  // Optional: clear previous slip/output contents
+  document.getElementById("confirmOutput").innerHTML = "";
+
+  // Show only the base input flow
   document.getElementById("inputLabel").classList.remove("hidden");
   document.getElementById("teamSearch").classList.remove("hidden");
   document.getElementById("searchBtn").classList.remove("hidden");
 
-  // Focus team input again
+  // Reset style visibility in case anything was hidden with inline display:none
+  document.getElementById("inputLabel").style.display = "";
+  document.getElementById("teamSearch").style.display = "";
+  document.getElementById("searchBtn").style.display = "";
+
+  // Hide loader/message just in case
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("loadingMsg").style.display = "none";
+
+  // Focus back to team input
   document.getElementById("teamSearch").focus();
 }
 
