@@ -291,11 +291,16 @@ textarea {
     let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
 
     window.onload = async () => {
+  // 🔒 Disable until data is ready
+  document.getElementById("accessCode").disabled = true;
+  document.getElementById("accessBtn").disabled = true;
+
   try {
     const res = await fetch(BASE_URL + "?action=capperOnly");
     const result = await res.json();
     capperInfo = result.capperInfo;
 
+    // ✅ Enable only after data is fetched
     document.getElementById("accessCode").disabled = false;
     document.getElementById("accessBtn").disabled = false;
     document.getElementById("accessCode").focus();
@@ -303,6 +308,7 @@ textarea {
     document.getElementById("error").textContent = "Failed to load access codes.";
   }
 };
+
 
    function validateAccess() {
   const code = document.getElementById("accessCode").value.trim();
