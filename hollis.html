@@ -414,9 +414,10 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 ) || teamInputRaw;
 
 container.innerHTML = `
-  <div style="color: green; font-weight: bold; white-space: nowrap;">
-    Successfully Found <FONT SIZE="20px" COLOR="red">${matches.length}</FONT> Result${matches.length > 1 ? 's' : ''} Matching: '${teamInputRaw}'
+  <div style="color: green; font-weight: bold; white-space: nowrap; font-size: 20px;">
+    Results Found for '${teamInputRaw}': <FONT SIZE="14" COLOR="red">${matches.length}</FONT> 
   </div>
+  <!-- ${matches.length > 1 ? 's' : ''} -->
   <p style="margin-top:10px;">Did you mean:</p>
   <p style="text-align: center; margin: 5px 0 15px;">
   <strong style="font-size: 24px;">${matchedTeam}</strong>
