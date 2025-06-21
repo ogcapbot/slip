@@ -848,6 +848,9 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   ].join("\n");
 
   const box = document.getElementById("confirmOutput");
+box.classList.remove("hidden"); // ✅ Make sure the box is shown
+box.innerHTML = ""; // ✅ Clear any previous content
+
 const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
 window._cleanedOutput = cleanedOutput;
 
@@ -855,6 +858,7 @@ const encodedOutput = encodeURIComponent(cleanedOutput);
 
 const existingFrame = document.getElementById("slipFrame");
 if (existingFrame) existingFrame.remove();
+
 
 const payload = {
   "FULL_TEAM_ENTERED": matchedTeam,
