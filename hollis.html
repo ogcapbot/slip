@@ -430,9 +430,9 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 
 container.innerHTML = `
   <div font-weight: bold; white-space: nowrap; font-size: 20px;">
-    Results Found for '${teamInputRaw}': <strong style="color: red;">${matches.length} ${matches.length > 1 ? 's' : ''}</strong>
+    Results Found for '${teamInputRaw}': <strong style="color: red;">${matches.length}</strong>
   </div>
-  
+  <!-- ${matches.length > 1 ? 's' : ''} -->
   <p style="margin-top:10px;">Did you mean:</p>
   <p style="text-align: center; margin: 5px 0 15px;">
   <strong style="font-size: 24px;">${matchedTeam}</strong>
