@@ -358,10 +358,22 @@ Array.from(document.querySelectorAll("#sports-screen > *"))
     }
   });
 
+        async function prepareSlideEarly() {
+  try {
+    const res = await fetch(BASE_URL + "?action=prepSlide");
+    const result = await res.json();
+    window._slideId = result.slideId;
+    console.log("Slide prepared early with ID:", window._slideId);
+  } catch (e) {
+    console.error("Slide preparation failed", e);
+  }
+}
+
 
 document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
 document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+prepareSlideEarly();
 
       } catch {
         alert("Failed to load sports data.");
@@ -862,13 +874,36 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   const existingFrame = document.getElementById("slipFrame");
   if (existingFrame) existingFrame.remove();
 
-  const iframe = document.createElement("iframe");
-  iframe.id = "slipFrame";
-  iframe.src = `${BASE_URL}?text=${encodedOutput}`;
-  iframe.style.width = "100%";
-  iframe.style.maxWidth = "400px";
-  iframe.style.border = "none";
-  iframe.style.height = "1000px";
+    if (!window._slideId) {
+    alert("Error: Slide was not prepared. Please refresh and try again.");
+    return;
+  }
+
+  fetch(`${BASE_URL}?action=renderSlide&slideId=${window._slideId}&text=${encodedOutput}`)
+    .then(res => res.text())
+    .then(url => {
+      const iframe = document.createElement("iframe");
+      iframe.id = "slipFrame";
+      iframe.src = url;
+      iframe.style.width = "100%";
+      iframe.style.maxWidth = "400px";
+      iframe.style.border = "none";
+      iframe.style.height = "1000px";
+
+      box.innerHTML = "";
+      box.appendChild(iframe);
+      box.classList.remove("hidden");
+
+      setTimeout(() => {
+        box.style.overflow = "hidden";
+        box.style.height = box.scrollHeight + "px";
+      }, 0);
+    })
+    .catch(err => {
+      alert("Failed to render image.");
+      console.error("Render failed:", err);
+    });
+
 
   box.innerHTML = "";
   box.appendChild(iframe);
