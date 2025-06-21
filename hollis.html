@@ -429,9 +429,12 @@ const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
 ) || teamInputRaw;
 
 container.innerHTML = `
-  <div style="font-weight: bold; white-space: nowrap; font-size: 20px; display: block; width: 100%; text-align: left;">
-  Results Found for '${teamInputRaw}': <strong style="color: red;">${matches.length}</strong>
+  <div style="font-weight: bold; font-size: 20px;">
+  <span style="white-space: nowrap;">
+    Results Found for '${teamInputRaw}': <strong style="color: red;">${matches.length}</strong>
+  </span>
 </div>
+
 
 
   <!-- ${matches.length > 1 ? 's' : ''} -->
