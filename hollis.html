@@ -858,6 +858,20 @@ const unitInput = dropdown ? dropdown.value.trim() : "";
   const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
   const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
+let pickDescValue = "Unavailable";
+
+if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
+  const selectedWager = document.getElementById("wagerDropdown").value;
+  const wagerRow = (allData.wagers || []).find(row => 
+    row.wager_label_template === selectedWager
+  );
+
+  if (wagerRow && wagerRow.pick_desc_template) {
+    pickDescValue = wagerRow.pick_desc_template;
+  }
+}
+
+      
   const output = [
     "═══════════════════════",
     "######## OFFICIAL PICK",
@@ -866,7 +880,7 @@ const unitInput = dropdown ? dropdown.value.trim() : "";
     `Official Pick: ${matchedTeam}`,
     `Official Type: ${wager}`,
     `Official Wager: ${unitInput} Unit(s)`,
-    "To Win: [[PICK_DESC]]",
+    'To Win: ${pickDescValue}',
     "",
     "═══════════════════════",
     "######## GAME DETAILS",
@@ -913,7 +927,7 @@ const payload = {
   "FULL_TEAM_ENTERED": matchedTeam,
   "FULL_BET_TYPE": wager,
   "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-  "PICK_DESC": "[[PICK_DESC]]",
+  "PICK_DESC": ${pickDescValue},
   "NOTES": notes,
   "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
   "FULL_SPORT_NAME": selectedMatch["League (Group)"],
