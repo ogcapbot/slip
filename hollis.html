@@ -1042,16 +1042,13 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
 });
 
     } else {
-      // Auto-progress based on if number is needed
       document.getElementById("customInputSection").classList.add("hidden");
-      const needsNumber = dropdown.options[dropdown.selectedIndex].dataset.requiresNumber === "yes";
-      if (needsNumber) {
-        document.getElementById("unitAmountSection").classList.remove("hidden");
-        document.getElementById("unitAmount").focus();
+
+      if (requiresNumber) {
+        buildUnitDropdown();
       } else {
-        // Skip unit entry — use default 1 and go to notes
         document.getElementById("unitAmountSection").classList.add("hidden");
-        submitUnitAmount(true); // new param: bypass
+        submitUnitAmount(true);
       }
     }
   });
