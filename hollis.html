@@ -862,14 +862,27 @@ let pickDescValue = "Unavailable";
 
 if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
   const selectedWager = document.getElementById("wagerDropdown").value;
-  const wagerRow = (allData.wagers || []).find(row => 
+  const wagerRow = (allData.wagers || []).find(row =>
     row.wager_label_template === selectedWager
   );
 
   if (wagerRow && wagerRow.pick_desc_template) {
     pickDescValue = wagerRow.pick_desc_template;
+
+    // 🔁 Replace [[TEAM]] with actual matched team
+    pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
+
+    // 🔁 Try to extract a number from the wager text, if available
+    const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
+    if (numberMatch) {
+      const numericValue = numberMatch[0];
+      pickDescValue = pickDescValue
+        .replace(/\[\[NUM\]\]/g, numericValue)
+        .replace(/\[\[NUMBER\]\]/g, numericValue);
+    }
   }
 }
+
 
       
   const output = [
