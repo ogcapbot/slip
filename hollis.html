@@ -1032,22 +1032,26 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
 
   if (selected === "__other") {
     document.getElementById("customInputSection").innerHTML = `
-  <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type</label>
-  <input type="text" id="wagerType" />
-  <button onclick="submitWagerType()">Submit</button>
-  <div class="error" id="wagerError"></div>
-`;
+      <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type</label>
+      <input type="text" id="wagerType" />
+      <button onclick="submitWagerType()">Submit</button>
+      <div class="error" id="wagerError"></div>
+    `;
+    document.getElementById("customInputSection").classList.remove("hidden");
+    document.getElementById("unitDropdownSection").classList.add("hidden");
   } else {
     document.getElementById("customInputSection").classList.add("hidden");
 
     if (requiresNumber) {
-      buildUnitDropdown(); // ✅ Only now
+      buildUnitDropdown();
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
     } else {
-document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
-      submitUnitAmount(true); // Proceed automatically
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+      submitUnitAmount(true); // auto-proceed
     }
   }
 });
+
 
 }
 
