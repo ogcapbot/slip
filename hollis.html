@@ -978,7 +978,10 @@ const createIframe = (slideNum, visible) => {
   iframe.className = "slipFrame";
   iframe.dataset.slide = slideNum;
   iframe.style.display = visible ? "block" : "none";
-  iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+iframe.onload = () => {
+  document.getElementById("imageLoaderWrapper").classList.add("hidden");
+};
   iframe.style.width = "100%";
   iframe.style.maxWidth = "400px";
   iframe.style.border = "none";
@@ -1027,7 +1030,9 @@ setTimeout(() => {
 }, 0);
     
 
-document.getElementById("imageLoaderWrapper").classList.add("hidden");
+setTimeout(() => {
+  document.getElementById("imageLoaderWrapper").classList.add("hidden");
+}, 1000); // wait 1 second
 
     }
   
