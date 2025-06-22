@@ -995,6 +995,8 @@ setTimeout(() => {
 // Insert after loadAllData success
 function buildWagerDropdown() {
   const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+  const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
+
   const inputDiv = document.getElementById("customInputSection");
 
   inputDiv.innerHTML = `
@@ -1014,8 +1016,14 @@ function buildWagerDropdown() {
   defaultOpt.selected = true;
   dropdown.appendChild(defaultOpt);
 
-  // Populate wager options
-  wagerData.forEach(row => {
+  // 🔽 Filter wagers by Sport match or global (blank Sport column)
+  const filteredWagerData = wagerData.filter(row => {
+    const rowSport = (row.Sport || "").trim();
+    return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
+  });
+
+  // Populate filtered wager options
+  filteredWagerData.forEach(row => {
     const opt = document.createElement("option");
     opt.textContent = row.wager_label_template;
     opt.value = row.wager_label_template;
@@ -1047,19 +1055,15 @@ function buildWagerDropdown() {
     } else {
       document.getElementById("customInputSection").classList.add("hidden");
       if (!requiresNumber) {
-  buildUnitDropdown();
-  document.getElementById("unitDropdownSection").classList.remove("hidden");
-} else {
-  console.log("⚠️ Wager requires [[NUMBER]] — skipping for now.");
-  // Do nothing, because we're not handling [[NUMBER]] wagers yet
-}
-
+        buildUnitDropdown();
+        document.getElementById("unitDropdownSection").classList.remove("hidden");
+      } else {
+        console.log("⚠️ Wager requires [[NUMBER]] — skipping for now.");
+        // Do nothing, because we're not handling [[NUMBER]] wagers yet
+      }
     }
   });
 }
-
-
-
 
 function buildUnitDropdown() {
   const unitData = allData.units || [];
