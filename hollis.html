@@ -407,9 +407,10 @@ buildWagerDropdown();
     document.getElementById("accessCode").addEventListener("keydown", e => {
       if (e.key === "Enter") validateAccess();
     });
-    document.getElementById("unitAmount").addEventListener("keydown", e => {
-      if (e.key === "Enter") submitUnitAmount();
-    });
+    document.getElementById("unitDropdown").addEventListener("change", () => {
+  submitUnitAmount();
+});
+
 
     function searchGames() {
       const input = document.getElementById("teamSearch").value.trim().toLowerCase();
