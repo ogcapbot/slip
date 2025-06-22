@@ -629,7 +629,7 @@ if (dropdown) dropdown.focus();
 
   const dropdown = document.getElementById("unitDropdown");
   const input = dropdown ? dropdown.value : "";
-  const errorDiv = document.getElementById("unitAmountError");
+  const errorDiv = document.getElementById("unitDropdownError");
 
   if (!input || input === "Select Unit(s)") {
     errorDiv.textContent = "Please select a valid unit amount.";
@@ -714,7 +714,7 @@ document.getElementById("unitDropdown").selectedIndex = 0;
   const toHide = [
     "gameSuggestion",
     "customInputSection",
-    "unitAmountSection",
+    "unitDropdownSection",
     "notesChoiceSection",
     "notesInputSection",
     "confirmOutput",
