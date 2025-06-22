@@ -178,16 +178,19 @@ textarea {
 }
 
     #imageLoaderWrapper {
-  position: fixed;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
+  position: fixed; /* instead of absolute */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8); /* subtle white overlay */
   z-index: 9999;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 20px;
-  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
+
 #imageLoader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #2a9fd6;
