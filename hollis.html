@@ -982,7 +982,7 @@ toggleBtn.onclick = () => {
 };
 
 box.parentNode.insertBefore(toggleBtn, box);
-
+box.parentNode.insertBefore("Please Wait...", box);
 setTimeout(() => {
   box.style.overflow = "hidden";
   box.style.height = box.scrollHeight + "px";
