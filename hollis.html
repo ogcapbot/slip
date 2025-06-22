@@ -374,7 +374,7 @@ document.getElementById("accessCode").addEventListener("input", (e) => {
         const res = await fetch(BASE_URL + "?action=data");
         allData = await res.json();
         console.log("Loaded allData:", allData);
-
+console.log("Units data:", allData.units); // ✅ Add this
        // Hide loader and message
 document.getElementById("loader").style.display = "none";
 document.getElementById("loadingMsg").style.display = "none";
@@ -1059,6 +1059,8 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
 
 function buildUnitDropdown() {
   const unitData = allData.units || [];
+    console.log("buildUnitDropdown called, unitData:", unitData); // ✅ ADD THIS LINE
+
   const dropdown = document.getElementById("unitDropdown");
   // ✅ SHOW the dropdown wrapper
   document.getElementById("unitAmountSection").classList.remove("hidden");
