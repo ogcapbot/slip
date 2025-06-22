@@ -372,6 +372,8 @@ document.getElementById("accessCode").addEventListener("input", (e) => {
       try {
         const res = await fetch(BASE_URL + "?action=data");
         allData = await res.json();
+        console.log("Loaded allData:", allData);
+
        // Hide loader and message
 document.getElementById("loader").style.display = "none";
 document.getElementById("loadingMsg").style.display = "none";
@@ -383,6 +385,7 @@ Array.from(document.querySelectorAll("#sports-screen > *"))
       el.style.display = "";
     }
   });
+console.log("Wagers Data:", allData.Wagers);
 
 
 document.getElementById("loggedInInfo").classList.remove("hidden");
@@ -980,9 +983,8 @@ setTimeout(() => {
 
 // Insert after loadAllData success
 function buildWagerDropdown() {
-const wagerData = (allData.Wagers || []).filter(row => 
-  (row.active_status || '').trim().toLowerCase() === 'active'
-);
+const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+
   const dropdown = document.createElement("select");
   dropdown.id = "wagerDropdown";
 
