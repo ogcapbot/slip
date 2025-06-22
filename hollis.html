@@ -980,7 +980,9 @@ setTimeout(() => {
 
 // Insert after loadAllData success
 function buildWagerDropdown() {
-  const wagerData = (allData.Wagers || []).filter(row => row.active_status === 'active');
+const wagerData = (allData.Wagers || []).filter(row => 
+  (row.active_status || '').trim().toLowerCase() === 'active'
+);
   const dropdown = document.createElement("select");
   dropdown.id = "wagerDropdown";
 
