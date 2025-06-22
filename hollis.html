@@ -178,15 +178,12 @@ textarea {
 }
 
    #imageLoaderWrapper {
-  display: none !important;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.85);
-  z-index: 999999 !important;
+  /* REMOVE: display: none !important; */
   display: flex;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  z-index: 999999;
   justify-content: center;
   align-items: center;
   flex-direction: column;
@@ -1137,11 +1134,11 @@ function buildUnitDropdown() {
 
   </script>
 
- </div> <!-- This closes #sports-screen --> 
   <div id="imageLoaderWrapper" class="hidden">
     <div id="imageLoader"></div>
     <div id="imageLoaderText">Creating Images... Please Wait...</div>
   </div>
+ </div> <!-- This closes #sports-screen --> 
 
 
   
