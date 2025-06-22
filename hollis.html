@@ -329,9 +329,10 @@ textarea {
     </div>
 
   
- <div id="imageLoaderWrapper" class="hidden">
+ <div id="imageLoaderWrapper">
+   <div id="imageLoaderText">Creating Images... Please Wait...</div>
     <div id="imageLoader"></div>
-    <div id="imageLoaderText">Creating Images... Please Wait...</div>
+    
   </div>
   </div> <!-- This closes #sports-screen --> 
 </div>
@@ -782,28 +783,6 @@ if (unitDropdown) unitDropdown.selectedIndex = 0;
   document.getElementById("teamSearch").focus();
 }
 
-
-    function copyToClipboard() {
-  const output = document.getElementById("confirmOutput");
-  const range = document.createRange();
-  range.selectNodeContents(output);
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-
-  try {
-    document.execCommand("copy");
-    alert("Copied to clipboard!");
-  } catch (err) {
-    alert("Failed to copy text");
-  }
-
-  selection.removeAllRanges(); // optional cleanup
-}
-
-
-    document.getElementById("confirmOutput").addEventListener("click", () => {
-      copyToClipboard();
     });
   
   function openImageGenerator() {
