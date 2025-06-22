@@ -178,18 +178,7 @@ textarea {
   overflow: hidden;
 }
 
-   #imageLoaderWrapper {
-  /* REMOVE: display: none !important; */
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255, 255, 255, 0.85);
-  z-index: 999999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-
+  
 
 
 #imageLoader {
@@ -815,7 +804,6 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
 
 
     function generateFinalOutput(notes) {
-document.getElementById("imageLoaderWrapper").classList.remove("hidden");
 
   let wagerRaw = "";
 const wagerInput = document.getElementById("wagerType");
@@ -963,19 +951,7 @@ const iframe2 = createIframe("2", false); // Hide Paid Image initially
 box.appendChild(iframe1);
 box.appendChild(iframe2);
 
-      const checkImageLoaded = setInterval(() => {
-  try {
-    if (
-      iframe1.contentWindow.length ||
-      iframe2.contentWindow.length
-    ) {
-      document.getElementById("imageLoaderWrapper").classList.add("hidden");
-      clearInterval(checkImageLoaded);
-    }
-  } catch (e) {
-    // cross-origin access, just wait
-  }
-}, 300);
+      
 
 
 // Add toggle button
