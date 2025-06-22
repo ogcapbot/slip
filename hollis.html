@@ -1032,14 +1032,14 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
 
   if (selected === "__other") {
     document.getElementById("customInputSection").classList.remove("hidden");
-    document.getElementById("unitAmountSection").classList.add("hidden");
+document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
   } else {
     document.getElementById("customInputSection").classList.add("hidden");
 
     if (requiresNumber) {
       buildUnitDropdown(); // ✅ Only now
     } else {
-      document.getElementById("unitDropdownSection").classList.add("hidden");
+document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
       submitUnitAmount(true); // Proceed automatically
     }
   }
@@ -1053,7 +1053,7 @@ function buildUnitDropdown() {
 
   const dropdown = document.getElementById("unitDropdown");
   // ✅ SHOW the dropdown wrapper
-  document.getElementById("unitAmountSection").classList.remove("hidden");
+document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
 
   dropdown.innerHTML = ""; // Clear previous options
 
