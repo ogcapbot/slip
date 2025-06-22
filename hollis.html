@@ -269,13 +269,11 @@ textarea {
       </div>
 
       <div id="unitAmountSection" class="hidden">
-        <label for="unitAmount" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
-          Enter Unit Amount: (e.g. '.2' or '.75' or '2' or '3.5')
-        </label>
-        <input type="text" id="unitAmount" value="1" inputmode="decimal" pattern="^\d*(\.\d*)?$" />
-        <button onclick="submitUnitAmount()">Submit</button>
-        <div class="error" id="unitAmountError"></div>
-      </div>
+  <label for="unitDropdown">Select Unit(s):</label>
+  <select id="unitDropdown"></select>
+  <div class="error" id="unitAmountError"></div>
+</div>
+
         <div id="notesChoiceSection" class="hidden">
   <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">
     Do You Want to Include any Comments/Notes?
@@ -392,6 +390,8 @@ document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
 document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
 buildWagerDropdown();
+        buildUnitDropdown();
+
 
       } catch {
         alert("Failed to load sports data.");
@@ -616,25 +616,21 @@ if (dropdown) dropdown.focus();
       document.getElementById("unitAmount").focus();
     }
 
-    function submitUnitAmount() {
-console.log("submitUnitAmount() triggered");
+ function submitUnitAmount(bypass = false) {
+  console.log("submitUnitAmount() triggered");
 
-//ARE YOU SAYING HERE????
+  const dropdown = document.getElementById("unitDropdown");
+  const input = dropdown ? dropdown.value : "";
+  const errorDiv = document.getElementById("unitAmountError");
 
-      
-      const input = document.getElementById("unitAmount").value.trim();
-      const errorDiv = document.getElementById("unitAmountError");
-      const box = document.getElementById("confirmOutput");
+  if (!input || input === "Select Unit(s)") {
+    errorDiv.textContent = "Please select a valid unit amount.";
+    return;
+  }
 
-      const isValid = /^\d*(\.\d*)?$/.test(input) && input !== "";
+  errorDiv.textContent = "";
+  document.getElementById("unitAmountSection").classList.add("hidden");
 
-      if (!isValid) {
-        errorDiv.textContent = "Invalid unit amount. Please enter a valid number with at most one decimal.";
-        return;
-      }
-
-      errorDiv.textContent = "";
-      document.getElementById("unitAmountSection").classList.add("hidden");
 console.log("About to show notesChoiceSection");
       document.getElementById("notesChoiceSection").classList.remove("hidden");
 
@@ -1044,6 +1040,29 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
       }
     }
   });
+
+function buildUnitDropdown() {
+  const unitData = allData.units || [];
+  const dropdown = document.getElementById("unitDropdown");
+  dropdown.innerHTML = "";
+
+  // Default option
+  const defaultOpt = document.createElement("option");
+  defaultOpt.textContent = "Select Unit(s)";
+  defaultOpt.disabled = true;
+  defaultOpt.selected = true;
+  dropdown.appendChild(defaultOpt);
+
+  unitData.forEach(row => {
+    const opt = document.createElement("option");
+    opt.textContent = row.display_unit;
+    opt.value = row.display_unit;
+    dropdown.appendChild(opt);
+  });
+}
+
+
+  
 }
 
 
