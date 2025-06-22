@@ -262,19 +262,23 @@ textarea {
       
 
       <div id="customInputSection" class="hidden">
-        <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type (e.g. 'ML' or 'F5' or 'TT OVER 5')</label>
-        <input type="text" id="wagerType" />
-        <button onclick="submitWagerType()">Submit</button>
-        <div class="error" id="wagerError"></div>
-      </div>
-
-      <div id="unitDropdownSection" class="hidden">
-  <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-    Select Unit(s):
+  <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
+    Enter Wager Type (e.g. 'ML' or 'F5' or 'TT OVER 5')
   </label>
-  <select id="unitDropdown"></select>
-  <div class="error" id="unitDropdownError"></div>
+  <input type="text" id="wagerType" />
+  <button onclick="submitWagerType()">Submit</button>
+  <div class="error" id="wagerError"></div>
+
+  <!-- ✅ Move unitDropdownSection inside here -->
+  <div id="unitDropdownSection" class="hidden">
+    <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+      Select Unit(s):
+    </label>
+    <select id="unitDropdown"></select>
+    <div class="error" id="unitDropdownError"></div>
+  </div>
 </div>
+
 
 
         <div id="notesChoiceSection" class="hidden">
