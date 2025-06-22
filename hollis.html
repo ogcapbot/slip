@@ -1044,13 +1044,14 @@ function buildWagerDropdown() {
       document.getElementById("unitDropdownSection").classList.add("hidden");
     } else {
       document.getElementById("customInputSection").classList.add("hidden");
-      if (requiresNumber) {
-        buildUnitDropdown();
-        document.getElementById("unitDropdownSection").classList.remove("hidden");
-      } else {
-        document.getElementById("unitDropdownSection").classList.add("hidden");
-        submitUnitAmount(true); // auto proceed
-      }
+      if (!requiresNumber) {
+  buildUnitDropdown();
+  document.getElementById("unitDropdownSection").classList.remove("hidden");
+} else {
+  console.log("⚠️ Wager requires [[NUMBER]] — skipping for now.");
+  // Do nothing, because we're not handling [[NUMBER]] wagers yet
+}
+
     }
   });
 }
