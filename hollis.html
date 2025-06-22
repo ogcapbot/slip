@@ -393,7 +393,7 @@ document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
 document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
 buildWagerDropdown();
-        buildUnitDropdown();
+       
 
 
       } catch {
@@ -1022,14 +1022,25 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
   inputDiv.appendChild(dropdown);
 
   dropdown.addEventListener("change", () => {
-    if (dropdown.value === "__other") {
-      // Show manual entry fallback
-      inputDiv.innerHTML = `
-        <label style="color:#666;font-size:14px;margin-bottom:5px;display:block;">Enter Wager Type (e.g. 'ML' or 'F5')</label>
-        <input type="text" id="wagerType" />
-        <button onclick="submitWagerType()">Submit</button>
-        <div class="error" id="wagerError"></div>
-      `;
+  const selected = dropdown.value;
+  const selectedOption = dropdown.options[dropdown.selectedIndex];
+  const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
+
+  if (selected === "__other") {
+    document.getElementById("customInputSection").classList.remove("hidden");
+    document.getElementById("unitAmountSection").classList.add("hidden");
+  } else {
+    document.getElementById("customInputSection").classList.add("hidden");
+
+    if (requiresNumber) {
+      buildUnitDropdown(); // ✅ Only now
+    } else {
+      document.getElementById("unitAmountSection").classList.add("hidden");
+      submitUnitAmount(true); // Proceed automatically
+    }
+  }
+});
+
     } else {
       // Auto-progress based on if number is needed
       document.getElementById("customInputSection").classList.add("hidden");
