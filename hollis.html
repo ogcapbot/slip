@@ -637,7 +637,7 @@ if (dropdown) dropdown.focus();
   }
 
   errorDiv.textContent = "";
-  document.getElementById("unitAmountSection").classList.add("hidden");
+document.getElementById("unitDropdownSection").classList.add("hidden");
 
 console.log("About to show notesChoiceSection");
       document.getElementById("notesChoiceSection").classList.remove("hidden");
@@ -1039,7 +1039,7 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
     if (requiresNumber) {
       buildUnitDropdown(); // ✅ Only now
     } else {
-      document.getElementById("unitAmountSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.add("hidden");
       submitUnitAmount(true); // Proceed automatically
     }
   }
