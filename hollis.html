@@ -388,6 +388,7 @@ Array.from(document.querySelectorAll("#sports-screen > *"))
 document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
 document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+buildWagerDropdown();
 
       } catch {
         alert("Failed to load sports data.");
@@ -974,6 +975,71 @@ setTimeout(() => {
 
     }
   
+<script>
+// Insert after loadAllData success
+function buildWagerDropdown() {
+  const wagerData = (allData.Wagers || []).filter(row => row.active_status === 'active');
+  const dropdown = document.createElement("select");
+  dropdown.id = "wagerDropdown";
+
+  // First disabled default option
+  const defaultOpt = document.createElement("option");
+  defaultOpt.textContent = "Select Item Below";
+  defaultOpt.disabled = true;
+  defaultOpt.selected = true;
+  dropdown.appendChild(defaultOpt);
+
+  // Add wager options
+  wagerData.forEach(row => {
+    const opt = document.createElement("option");
+    opt.textContent = row.wager_label_template;
+    opt.value = row.wager_label_template;
+    opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUMBER]]") ? "yes" : "no";
+    dropdown.appendChild(opt);
+  });
+
+  // Last 'Other' option
+  const otherOpt = document.createElement("option");
+  otherOpt.textContent = "Other (Manual Entry Override)";
+  otherOpt.value = "__other";
+  dropdown.appendChild(otherOpt);
+
+  // Replace text input with dropdown
+  const inputDiv = document.getElementById("customInputSection");
+  inputDiv.innerHTML = "";
+  const label = document.createElement("label");
+  label.textContent = "Select Wager Type Below:";
+  label.style.color = "#666";
+  label.style.fontSize = "14px";
+  label.style.marginBottom = "5px";
+  inputDiv.appendChild(label);
+  inputDiv.appendChild(dropdown);
+
+  dropdown.addEventListener("change", () => {
+    if (dropdown.value === "__other") {
+      // Show manual entry fallback
+      inputDiv.innerHTML = `
+        <label style="color:#666;font-size:14px;margin-bottom:5px;display:block;">Enter Wager Type (e.g. 'ML' or 'F5')</label>
+        <input type="text" id="wagerType" />
+        <button onclick="submitWagerType()">Submit</button>
+        <div class="error" id="wagerError"></div>
+      `;
+    } else {
+      // Auto-progress based on if number is needed
+      document.getElementById("customInputSection").classList.add("hidden");
+      const needsNumber = dropdown.options[dropdown.selectedIndex].dataset.requiresNumber === "yes";
+      if (needsNumber) {
+        document.getElementById("unitAmountSection").classList.remove("hidden");
+        document.getElementById("unitAmount").focus();
+      } else {
+        // Skip unit entry — use default 1 and go to notes
+        document.getElementById("unitAmountSection").classList.add("hidden");
+        submitUnitAmount(true); // new param: bypass
+      }
+    }
+  });
+}
+</script>
 
 
   </script>
