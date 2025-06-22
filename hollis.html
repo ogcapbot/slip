@@ -614,7 +614,7 @@ if (dropdown) dropdown.focus();
   errorBox.textContent = "";
 
   document.getElementById("customInputSection").classList.add("hidden");
-  document.getElementById("confirmOutput").classList.add("hidden");
+document.getElementById("unitDropdownSection").classList.remove("hidden");
 
   // ✅ Add this line to ensure dropdown is populated and shown
   buildUnitDropdown();
@@ -814,7 +814,7 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   const wagerRaw = document.getElementById("wagerType").value.trim();
   const wager = wagerRaw.toUpperCase();
   const teamSearchInput = window.overrideTeamName || document.getElementById("teamSearch").value.trim();
-  const unitInput = document.getElementById("unitAmount").value.trim();
+const unitInput = document.getElementById("unitDropdown").value.trim();
   const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
   let matchedTeam = "";
@@ -1031,8 +1031,12 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
   const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
 
   if (selected === "__other") {
-    document.getElementById("customInputSection").classList.remove("hidden");
-document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
+    document.getElementById("customInputSection").innerHTML = `
+  <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type</label>
+  <input type="text" id="wagerType" />
+  <button onclick="submitWagerType()">Submit</button>
+  <div class="error" id="wagerError"></div>
+`;
   } else {
     document.getElementById("customInputSection").classList.add("hidden");
 
