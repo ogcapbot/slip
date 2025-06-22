@@ -649,8 +649,16 @@ document.getElementById("unitDropdownSection").classList.add("hidden");
 document.getElementById("notesChoiceSection").classList.remove("hidden");
 
 
-      const wagerRaw = document.getElementById("wagerType").value.trim();
-      const wager = wagerRaw.toUpperCase();
+      let wagerRaw = "";
+const wagerInput = document.getElementById("wagerType");
+const wagerDropdown = document.getElementById("wagerDropdown");
+
+if (wagerInput) {
+  wagerRaw = wagerInput.value.trim();
+} else if (wagerDropdown) {
+  wagerRaw = wagerDropdown.value.trim();
+}
+
 let teamSearchInput = "";
 if (window.overrideTeamName) {
   teamSearchInput = window.overrideTeamName;
