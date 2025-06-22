@@ -1041,7 +1041,7 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
       }
     }
   });
-
+}
 function buildUnitDropdown() {
   const unitData = allData.units || [];
   const dropdown = document.getElementById("unitDropdown");
@@ -1061,8 +1061,6 @@ function buildUnitDropdown() {
     dropdown.appendChild(opt);
   });
 }
-}
-
   </script>
 </body>
 </html>
