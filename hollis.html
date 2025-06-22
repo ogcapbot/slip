@@ -173,12 +173,20 @@ textarea {
     #sportDropdown {
       display: none;
     }
+#sports-screen {
+  position: relative;
+}
 
     #imageLoaderWrapper {
-  display: none;
+  position: absolute;
+  top: 100px; /* adjust as needed */
+  left: 0;
+  right: 0;
+  margin: auto;
   text-align: center;
-  margin-top: 20px;
+  z-index: 9999;
 }
+
 #imageLoader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #2a9fd6;
