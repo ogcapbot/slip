@@ -823,7 +823,8 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
   const wager = wagerRaw.toUpperCase();
 const teamSearchEl = document.getElementById("teamSearch");
 const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
-const unitInput = document.getElementById("unitDropdown").value.trim();
+const dropdown = document.getElementById("unitDropdown");
+const unitInput = dropdown ? dropdown.value.trim() : "";
   const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
   let matchedTeam = "";
