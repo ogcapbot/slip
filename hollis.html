@@ -175,6 +175,7 @@ textarea {
     }
 #sports-screen {
   position: relative;
+  overflow: hidden;
 }
 
    #imageLoaderWrapper {
@@ -319,12 +320,7 @@ textarea {
   ></textarea>
 
   <button id="submitNoteBtn" class="hidden">Submit</button>
-</div>
-
-
-
-        
-      
+</div>     
 
   <!--    <button id="copyBtn" class="hidden" onclick="copyToClipboard()">Copy to Clipboard</button> -->
      <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
@@ -332,7 +328,12 @@ textarea {
 
     </div>
 
-  
+  </div> <!-- This closes #sports-screen --> 
+
+ <div id="imageLoaderWrapper" class="hidden">
+    <div id="imageLoader"></div>
+    <div id="imageLoaderText">Creating Images... Please Wait...</div>
+  </div>
   
   </div>
 
@@ -1134,11 +1135,8 @@ function buildUnitDropdown() {
 
   </script>
 
-  <div id="imageLoaderWrapper" class="hidden">
-    <div id="imageLoader"></div>
-    <div id="imageLoaderText">Creating Images... Please Wait...</div>
-  </div>
- </div> <!-- This closes #sports-screen --> 
+ 
+ 
 
 
   
