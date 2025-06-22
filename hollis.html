@@ -915,8 +915,8 @@ const payload = {
   "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
   "PICK_DESC": "[[PICK_DESC]]",
   "NOTES": notes,
-  "FULL_LEAGUE_NAME": selectedMatch["League (Group)"],
-  "FULL_SPORT_NAME": selectedMatch["Sport Name"],
+  "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+  "FULL_SPORT_NAME": selectedMatch["League (Group)"],
   "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
   "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
   "DATE and TIME OF GAME START": formattedTime,
@@ -942,6 +942,7 @@ const createIframe = (slideNum, visible) => {
   iframe.style.border = "none";
   iframe.style.height = "600px";
   iframe.style.zIndex = "1"; // ✅ this line forces it below the loader
+  iframe.srcdoc="<p><code>Creating Images...</code> element:</p>";
   return iframe;
 };
 
@@ -982,7 +983,6 @@ toggleBtn.onclick = () => {
 };
 
 box.parentNode.insertBefore(toggleBtn, box);
-box.parentNode.insertBefore("Please Wait...", box);
 setTimeout(() => {
   box.style.overflow = "hidden";
   box.style.height = box.scrollHeight + "px";
