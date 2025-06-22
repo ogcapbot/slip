@@ -637,7 +637,7 @@ if (dropdown) dropdown.focus();
   }
 
   errorDiv.textContent = "";
-document.getElementById("unitDropdownSection").classList.add("hidden");
+document.getElementById("unitDropdownSection").classList.remove("hidden");
 
 console.log("About to show notesChoiceSection");
       document.getElementById("notesChoiceSection").classList.remove("hidden");
@@ -1053,7 +1053,7 @@ function buildUnitDropdown() {
 
   const dropdown = document.getElementById("unitDropdown");
   // ✅ SHOW the dropdown wrapper
-document.getElementById("unitDropdownSection").classList.add("hidden"); // ✅ Correct
+document.getElementById("unitDropdownSection").classList.remove("hidden");
 
   dropdown.innerHTML = ""; // Clear previous options
 
