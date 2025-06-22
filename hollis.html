@@ -645,7 +645,8 @@ document.getElementById("unitDropdownSection").classList.remove("hidden");
 document.getElementById("unitDropdownSection").classList.remove("hidden");
 
 console.log("About to show notesChoiceSection");
-      document.getElementById("notesChoiceSection").classList.remove("hidden");
+document.getElementById("unitDropdownSection").classList.add("hidden");
+document.getElementById("notesChoiceSection").classList.remove("hidden");
 
 
       const wagerRaw = document.getElementById("wagerType").value.trim();
@@ -695,7 +696,7 @@ if (selectedMatch["Commence Time (UTC)"]) {
       const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
       const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
-      document.getElementById("notesChoiceSection").classList.remove("hidden");
+    //  document.getElementById("notesChoiceSection").classList.remove("hidden");
     }
     function resetSearch() {
   // Clear inputs
