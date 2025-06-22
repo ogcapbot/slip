@@ -269,7 +269,8 @@ textarea {
   <button onclick="submitWagerType()">Submit</button>
   <div class="error" id="wagerError"></div>
 </div>
-<!-- ✅ Unit Dropdown moved OUTSIDE of #customInputSection -->
+
+    <!-- ✅ Unit Dropdown moved OUTSIDE of #customInputSection -->
 <div id="unitDropdownSection" class="hidden">
   <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
     Select Unit(s):
@@ -991,19 +992,27 @@ setTimeout(() => {
 
 // Insert after loadAllData success
 function buildWagerDropdown() {
-const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+  const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+  const inputDiv = document.getElementById("customInputSection");
 
-  const dropdown = document.createElement("select");
-  dropdown.id = "wagerDropdown";
+  inputDiv.innerHTML = `
+    <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+      Select Wager Type Below:
+    </label>
+    <select id="wagerDropdown"></select>
+    <div class="error" id="wagerError"></div>
+  `;
 
-  // First disabled default option
+  const dropdown = document.getElementById("wagerDropdown");
+
+  // Default option
   const defaultOpt = document.createElement("option");
   defaultOpt.textContent = "Select Item Below";
   defaultOpt.disabled = true;
   defaultOpt.selected = true;
   dropdown.appendChild(defaultOpt);
 
-  // Add wager options
+  // Populate wager options
   wagerData.forEach(row => {
     const opt = document.createElement("option");
     opt.textContent = row.wager_label_template;
@@ -1012,71 +1021,60 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
     dropdown.appendChild(opt);
   });
 
-  // Last 'Other' option
+  // Manual entry override
   const otherOpt = document.createElement("option");
   otherOpt.textContent = "Other (Manual Entry Override)";
   otherOpt.value = "__other";
   dropdown.appendChild(otherOpt);
 
-  // Replace text input with dropdown
-  const inputDiv = document.getElementById("customInputSection");
-  inputDiv.innerHTML = "";
-  const label = document.createElement("label");
-  label.textContent = "Select Wager Type Below:";
-  label.style.color = "#666";
-  label.style.fontSize = "14px";
-  label.style.marginBottom = "5px";
-  inputDiv.appendChild(label);
-  inputDiv.appendChild(dropdown);
-
   dropdown.addEventListener("change", () => {
-  const selected = dropdown.value;
-  const selectedOption = dropdown.options[dropdown.selectedIndex];
-  const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
+    const selected = dropdown.value;
+    const selectedOption = dropdown.options[dropdown.selectedIndex];
+    const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
 
-  if (selected === "__other") {
-    document.getElementById("customInputSection").innerHTML = `
-      <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">Enter Wager Type</label>
-      <input type="text" id="wagerType" />
-      <button onclick="submitWagerType()">Submit</button>
-      <div class="error" id="wagerError"></div>
-    `;
-    document.getElementById("customInputSection").classList.remove("hidden");
-    document.getElementById("unitDropdownSection").classList.add("hidden");
-  } else {
-    document.getElementById("customInputSection").classList.add("hidden");
-
-    if (requiresNumber) {
-      buildUnitDropdown();
-      document.getElementById("unitDropdownSection").classList.remove("hidden");
-    } else {
+    if (selected === "__other") {
+      inputDiv.innerHTML = `
+        <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+          Enter Wager Type (e.g. 'ML' or 'F5')
+        </label>
+        <input type="text" id="wagerType" />
+        <button onclick="submitWagerType()">Submit</button>
+        <div class="error" id="wagerError"></div>
+      `;
       document.getElementById("unitDropdownSection").classList.add("hidden");
-      submitUnitAmount(true); // auto-proceed
+    } else {
+      document.getElementById("customInputSection").classList.add("hidden");
+      if (requiresNumber) {
+        buildUnitDropdown();
+        document.getElementById("unitDropdownSection").classList.remove("hidden");
+      } else {
+        document.getElementById("unitDropdownSection").classList.add("hidden");
+        submitUnitAmount(true); // auto proceed
+      }
     }
-  }
-});
+  });
+}
 
 
 }
 
 function buildUnitDropdown() {
   const unitData = allData.units || [];
-    console.log("buildUnitDropdown called, unitData:", unitData); // ✅ ADD THIS LINE
+  console.log("buildUnitDropdown called, unitData:", unitData);
 
   const dropdown = document.getElementById("unitDropdown");
-  // ✅ SHOW the dropdown wrapper
-document.getElementById("unitDropdownSection").classList.remove("hidden");
+  const section = document.getElementById("unitDropdownSection");
 
-  dropdown.innerHTML = ""; // Clear previous options
+  dropdown.innerHTML = "";
 
-  // Add default option
+  // Default option
   const defaultOpt = document.createElement("option");
   defaultOpt.textContent = "Select Unit(s)";
   defaultOpt.disabled = true;
   defaultOpt.selected = true;
   dropdown.appendChild(defaultOpt);
 
-  // Add each unit from the data
+  // Add each unit
   unitData.forEach(row => {
     const opt = document.createElement("option");
     opt.textContent = row.display_unit;
@@ -1084,12 +1082,12 @@ document.getElementById("unitDropdownSection").classList.remove("hidden");
     dropdown.appendChild(opt);
   });
 
-  // ✅ Make sure the dropdown section is shown
-  const section = document.getElementById("unitDropdownSection");
+  // Show section
   if (section.classList.contains("hidden")) {
     section.classList.remove("hidden");
   }
 }
+
 
   </script>
 </body>
