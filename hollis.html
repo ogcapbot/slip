@@ -991,9 +991,20 @@ const iframe2 = createIframe("2", false); // Hide Paid Image initially
 box.appendChild(iframe1);
 box.appendChild(iframe2);
 
-      iframe1.onload = iframe2.onload = () => {
-  document.getElementById("imageLoaderWrapper").classList.add("hidden");
-};
+      const checkImageLoaded = setInterval(() => {
+  try {
+    if (
+      iframe1.contentWindow.length ||
+      iframe2.contentWindow.length
+    ) {
+      document.getElementById("imageLoaderWrapper").classList.add("hidden");
+      clearInterval(checkImageLoaded);
+    }
+  } catch (e) {
+    // cross-origin access, just wait
+  }
+}, 300);
+
 
 // Add toggle button
 const toggleBtn = document.createElement("button");
