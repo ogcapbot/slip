@@ -602,14 +602,27 @@ if (dropdown) dropdown.focus();
     }
 
     function submitWagerType() {
-      const wager = document.getElementById("wagerType").value.trim();
-      const errorBox = document.getElementById("wagerError");
+  const wager = document.getElementById("wagerType").value.trim();
+  const errorBox = document.getElementById("wagerError");
 
-      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
-      if (!valid) {
-        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
-        return;
-      }
+  const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+  if (!valid) {
+    errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+    return;
+  }
+
+  errorBox.textContent = "";
+
+  document.getElementById("customInputSection").classList.add("hidden");
+  document.getElementById("confirmOutput").classList.add("hidden");
+
+  // ✅ Add this line to ensure dropdown is populated and shown
+  buildUnitDropdown();
+
+  document.getElementById("unitAmountSection").classList.remove("hidden");
+  document.getElementById("unitDropdown").focus();
+}
+
 
       errorBox.textContent = "";
 
