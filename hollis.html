@@ -651,8 +651,13 @@ document.getElementById("notesChoiceSection").classList.remove("hidden");
 
       const wagerRaw = document.getElementById("wagerType").value.trim();
       const wager = wagerRaw.toUpperCase();
-const teamSearchEl = document.getElementById("teamSearch");
-const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
+let teamSearchInput = "";
+if (window.overrideTeamName) {
+  teamSearchInput = window.overrideTeamName;
+} else {
+  const teamSearchEl = document.getElementById("teamSearch");
+  teamSearchInput = teamSearchEl ? teamSearchEl.value.trim() : "";
+}
       const unitInput = input;
       const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
