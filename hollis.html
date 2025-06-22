@@ -396,7 +396,6 @@ console.log("Wagers Data:", allData.wagers);
 document.getElementById("loggedInInfo").classList.remove("hidden");
 document.getElementById("teamSearch").focus();
 document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
-buildWagerDropdown();
        
 
 
@@ -602,6 +601,7 @@ container.innerHTML = `
       document.getElementById("customInputSection").classList.remove("hidden");
       const dropdown = document.getElementById("wagerDropdown");
 if (dropdown) dropdown.focus();
+      buildWagerDropdown(); // ✅ add this here
 
     }
 
