@@ -1041,18 +1041,8 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
   }
 });
 
-    } else {
-      document.getElementById("customInputSection").classList.add("hidden");
-
-      if (requiresNumber) {
-        buildUnitDropdown();
-      } else {
-        document.getElementById("unitAmountSection").classList.add("hidden");
-        submitUnitAmount(true);
-      }
-    }
-  });
 }
+
 function buildUnitDropdown() {
   const unitData = allData.units || [];
   const dropdown = document.getElementById("unitDropdown");
