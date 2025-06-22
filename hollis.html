@@ -978,14 +978,12 @@ const createIframe = (slideNum, visible) => {
   iframe.className = "slipFrame";
   iframe.dataset.slide = slideNum;
   iframe.style.display = visible ? "block" : "none";
-iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-iframe.onload = () => {
-  document.getElementById("imageLoaderWrapper").classList.add("hidden");
-};
+  iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
   iframe.style.width = "100%";
   iframe.style.maxWidth = "400px";
   iframe.style.border = "none";
-  iframe.style.height = "600px"; // Try 500–600 for mobile comfort
+  iframe.style.height = "600px";
+  iframe.style.zIndex = "1"; // ✅ this line forces it below the loader
   return iframe;
 };
 
