@@ -833,7 +833,7 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
 
 
     function generateFinalOutput(notes) {
-      document.getElementById("imageLoaderWrapper").style.display = "block";
+document.getElementById("imageLoaderWrapper").classList.remove("hidden");
 
   let wagerRaw = "";
 const wagerInput = document.getElementById("wagerType");
@@ -970,7 +970,7 @@ const createIframe = (slideNum, visible) => {
   iframe.style.width = "100%";
   iframe.style.maxWidth = "400px";
   iframe.style.border = "none";
-  iframe.style.height = "500px"; // Try 500–600 for mobile comfort
+  iframe.style.height = "600px"; // Try 500–600 for mobile comfort
   return iframe;
 };
 
@@ -1015,7 +1015,7 @@ setTimeout(() => {
 }, 0);
     
 
-      document.getElementById("imageLoaderWrapper").style.display = "none";
+document.getElementById("imageLoaderWrapper").classList.add("hidden");
 
     }
   
