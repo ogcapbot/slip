@@ -942,13 +942,13 @@ const createIframe = (slideNum, visible) => {
   iframe.style.border = "none";
   iframe.style.height = "600px";
   iframe.style.zIndex = "1"; // ✅ this line forces it below the loader
-  iframe.srcdoc="<p><code>Creating Images...</code> element:</p>";
   return iframe;
 };
-
+const iframeloading = "Creating Images";
 const iframe1 = createIframe("1", true);  // Show Normal Image first
 const iframe2 = createIframe("2", false); // Hide Paid Image initially
 
+box.appendChild(iframeloading);      
 box.appendChild(iframe1);
 box.appendChild(iframe2);
 
