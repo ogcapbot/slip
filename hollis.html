@@ -991,6 +991,10 @@ const iframe2 = createIframe("2", false); // Hide Paid Image initially
 box.appendChild(iframe1);
 box.appendChild(iframe2);
 
+      iframe1.onload = iframe2.onload = () => {
+  document.getElementById("imageLoaderWrapper").classList.add("hidden");
+};
+
 // Add toggle button
 const toggleBtn = document.createElement("button");
 toggleBtn.textContent = "Switch to Paid Image";
@@ -1025,10 +1029,6 @@ setTimeout(() => {
   box.style.height = box.scrollHeight + "px";
 }, 0);
     
-
-setTimeout(() => {
-  document.getElementById("imageLoaderWrapper").classList.add("hidden");
-}, 1000); // wait 1 second
 
     }
   
