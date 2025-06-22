@@ -1046,6 +1046,9 @@ const wagerData = (allData.wagers || []).filter(row => row.active_status === 'ac
 function buildUnitDropdown() {
   const unitData = allData.units || [];
   const dropdown = document.getElementById("unitDropdown");
+  // ✅ SHOW the dropdown wrapper
+  document.getElementById("unitAmountSection").classList.remove("hidden");
+
   dropdown.innerHTML = ""; // Clear previous options
 
   // Add default option
