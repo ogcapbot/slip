@@ -524,7 +524,6 @@
         hour12: true,
       });
 
-      const timeString = `${c_date} @ ${timeFormatted} EST`;
       const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
         team.toLowerCase().includes(teamInputRaw.toLowerCase())
       ) || teamInputRaw;
