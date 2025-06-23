@@ -1174,14 +1174,15 @@ document.getElementById("submitNoteBtn").addEventListener("click", () => {
 });
 
 // Populate first dropdown with unique Column A values
+// Populate first dropdown with unique Type values from active rows
 function populateHypeACategories() {
   const selectA = document.getElementById("hypeASelect");
   selectA.innerHTML = '<option value="">-- Select Category --</option>';
 
   const categories = new Set();
   (allData.hypePhrases || []).forEach(row => {
-    if (row.A && !categories.has(row.A)) {
-      categories.add(row.A);
+    if (row.active_status === "active" && row.Type && !categories.has(row.Type)) {
+      categories.add(row.Type);
     }
   });
 
@@ -1192,7 +1193,6 @@ function populateHypeACategories() {
     selectA.appendChild(option);
   });
 
-  // Reset second dropdown and outputs
   const selectB = document.getElementById("hypeBSelect");
   selectB.innerHTML = '<option value="">-- Select Phrase --</option>';
   selectB.disabled = true;
@@ -1200,7 +1200,7 @@ function populateHypeACategories() {
   document.getElementById("hypePhraseOutputs").innerHTML = "";
 }
 
-// Populate second dropdown based on first dropdown selection
+// Populate second dropdown based on selected Type, filtered by active rows
 document.getElementById("hypeASelect").addEventListener("change", function () {
   const selectedCategory = this.value;
   const selectB = document.getElementById("hypeBSelect");
@@ -1214,8 +1214,8 @@ document.getElementById("hypeASelect").addEventListener("change", function () {
 
   const filteredBs = new Set();
   (allData.hypePhrases || []).forEach(row => {
-    if (row.A === selectedCategory && row.B) {
-      filteredBs.add(row.B);
+    if (row.active_status === "active" && row.Type === selectedCategory && row.Energy) {
+      filteredBs.add(row.Energy);
     }
   });
 
@@ -1230,7 +1230,7 @@ document.getElementById("hypeASelect").addEventListener("change", function () {
   document.getElementById("hypePhraseOutputs").innerHTML = "";
 });
 
-// Show randomized outputs based on selections from A and B dropdowns
+// Show randomized outputs and handle click to finalize
 document.getElementById("hypeBSelect").addEventListener("change", function () {
   const selectedCategory = document.getElementById("hypeASelect").value;
   const selectedPhrase = this.value;
@@ -1241,7 +1241,11 @@ document.getElementById("hypeBSelect").addEventListener("change", function () {
     return;
   }
 
-  const matches = (allData.hypePhrases || []).filter(row => row.A === selectedCategory && row.B === selectedPhrase);
+  const matches = (allData.hypePhrases || []).filter(row =>
+    row.active_status === "active" &&
+    row.Type === selectedCategory &&
+    row.Energy === selectedPhrase
+  );
 
   const shuffled = matches.slice().sort(() => Math.random() - 0.5);
 
@@ -1257,9 +1261,9 @@ document.getElementById("hypeBSelect").addEventListener("change", function () {
 
   let html = "";
   shuffled.forEach(row => {
-    const sport = row.C || "N/A";
-    const phrase = row.D || "";
-    const promo = row.E || "";
+    const sport = row.Sport || "N/A";
+    const phrase = row.Phrase || "";
+    const promo = row.Promo || "";
 
     const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
 
@@ -1277,13 +1281,12 @@ document.getElementById("hypeBSelect").addEventListener("change", function () {
   Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
     block.onclick = () => {
       const selectedRow = shuffled[i];
-      window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.D} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+      window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
       window.selectedHypeRow = selectedRow;
       window.selectedHypeNote = window.latestNote || "N/A";
 
       document.getElementById("hypePhraseStep").classList.add("hidden");
 
-      // Proceed to final output with updated title and notes
       generateFinalOutput(window.selectedHypeNote, window.selectedHypePostTitle);
     };
     block.onkeydown = (e) => {
@@ -1294,6 +1297,7 @@ document.getElementById("hypeBSelect").addEventListener("change", function () {
     }
   });
 });
+
 
 // -------------------- PATCH generateFinalOutput --------------------
 // Patch must come AFTER original generateFinalOutput is defined
