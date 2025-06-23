@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>OG Capper Bets - Official Pick Image Creator v7.25</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
 
   <style>
     body {
-  font-family: 'Oswald', sans-serif;
-  background: #f9f9f9;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-}
+      font-family: 'Oswald', sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
 
     .container {
       width: 100%;
@@ -23,38 +23,35 @@
       padding: 20px;
     }
 
-   input[type="number"],
-input[type="text"],
-select,
-textarea {
-  width: 100%;
-  max-width: 400px;
-  box-sizing: border-box;
-  margin: 0 auto 12px;
-  display: block;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-
-
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      margin: 0 auto 12px;
+      display: block;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
 
     button {
-  width: 100%;
-  max-width: 400px;
-  box-sizing: border-box;
-  margin: 0 auto 12px;
-  display: block;
-  padding: 12px;
-  font-size: 16px;
-  background-color: #2a9fd6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      margin: 0 auto 12px;
+      display: block;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #2a9fd6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
     button:hover {
       background-color: #2179a5;
@@ -100,34 +97,28 @@ textarea {
     }
 
     #resetWrapper {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  height: 0;
-}
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      height: 0;
+    }
 
-#resetBtn {
-  position: absolute;
-  top: -35px; /* Move it higher above inputs */
-  right: 0;
-  font-size: 14px;
-  padding: 4px 12px;
-  background-color: #2a9fd6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  height: auto;
-  width: auto;
-  white-space: nowrap;
-}
-
-
-
-
-
-
+    #resetBtn {
+      position: absolute;
+      top: -35px;
+      right: 0;
+      font-size: 14px;
+      padding: 4px 12px;
+      background-color: #2a9fd6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      height: auto;
+      width: auto;
+      white-space: nowrap;
+    }
 
     #copyBtn {
       margin-bottom: 10px;
@@ -136,6 +127,8 @@ textarea {
     #loginNotice {
       margin-bottom: 20px;
       font-weight: bold;
+      color: gray;
+      text-align: center;
     }
 
     #inputLabel {
@@ -145,19 +138,17 @@ textarea {
     }
 
     #gameSuggestion {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 15px;
-  background: #fff;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 15px;
+      background: #fff;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
 
     #gameSuggestion p {
       margin: 6px 0;
@@ -173,191 +164,149 @@ textarea {
     #sportDropdown {
       display: none;
     }
-#sports-screen {
-  position: relative;
-  overflow: hidden;
-}
 
-  
+    #sports-screen {
+      position: relative;
+      overflow: hidden;
+    }
 
+    #imageLoader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #2a9fd6;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
 
-#imageLoader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #2a9fd6;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
-#imageLoaderText {
-  font-size: 16px;
-  font-weight: bold;
-  color: #2a9fd6;
-  animation: blink 1.5s infinite;
-}
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
+    #imageLoaderText {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2a9fd6;
+      animation: blink 1.5s infinite;
+    }
 
-/* NEW Hype Phrase Step Styling */
-#hypePhraseStep {
-  margin-top: 20px;
-  font-family: monospace;
-  background: #fff;
-  border: 1px solid #ccc;
-  padding: 15px;
-  border-radius: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-}
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
 
-.hypeOutputBlock {
-  border: 1px solid #2a9fd6;
-  padding: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  border-radius: 6px;
-  user-select: none;
-  background-color: #f0faff;
-}
-.hypeOutputBlock:hover {
-  background-color: #d0eaff;
-}
-
+    .hypeOutputBlock {
+      border: 1px solid #2a9fd6;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      background-color: #eaf6ff;
+      user-select: none;
+    }
+    .hypeOutputBlock:focus {
+      outline: 2px solid #2179a5;
+      outline-offset: 2px;
+    }
   </style>
 </head>
 <body>
 
-
   <div class="container" id="access-screen">
-  
-  <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
-    <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
-    <h5 style="margin: 0; color: red;">Official Use Only</h5>
-  </div>
-        
+    <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
+      <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
+      <h5 style="margin: 0; color: red;">Official Use Only</h5>
+    </div>
+
     <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">Enter Access Code</label>
-<input
-  type="text"
-  id="accessCode"
-  placeholder="Enter Code Here"
-  pattern="[0-9]*"
-  inputmode="numeric"
-  maxlength="10"
-  style="width: 100%; max-width: 400px; box-sizing: border-box; display: block; margin: 0 auto 12px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;"
-/>
+    <input
+      type="text"
+      id="accessCode"
+      placeholder="Enter Code Here"
+      pattern="[0-9]*"
+      inputmode="numeric"
+      maxlength="10"
+      style="width: 100%; max-width: 400px; box-sizing: border-box; display: block; margin: 0 auto 12px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;"
+    />
     <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
   </div>
-
 
   <div class="container hidden" id="sports-screen">
     <div id="loader"></div>
     <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
     <div id="loggedInInfo" class="hidden">
-  
-  <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
-    <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
-    <h5 style="margin: 0; color: red;">Official Use Only</h5>
-    <h5 id="loginNotice" style="margin: 0; color: gray;"></h5>
-  </div>
-    
-    
+      <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
+        <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
+        <h5 style="margin: 0; color: red;">Official Use Only</h5>
+        <h5 id="loginNotice"></h5>
+      </div>
 
-  <div id="resetWrapper">
-  <button id="resetBtn" onclick="resetSearch()">Reset</button>
-</div>
+      <div id="resetWrapper">
+        <button id="resetBtn" onclick="resetSearch()">Reset</button>
+      </div>
 
-
-  <div id="gameSuggestion" class="hidden"></div>
-
-
-  </div>
-      <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
-      <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
-      <button id="searchBtn" onclick="searchGames()">Submit</button>
-      <div class="error" id="searchError"></div>
-
-      
-
-      <div id="customInputSection" class="hidden">
-  <label for="wagerType" style="color: #666; font-size: 14px; margin-bottom: 5px; display: block;">
-    Enter Wager Type (e.g. 'ML' or 'F5' or 'TT OVER 5')
-  </label>
-  <input type="text" id="wagerType" />
-  <button onclick="submitWagerType()">Submit</button>
-  <div class="error" id="wagerError"></div>
-</div>
-
-    <!-- ✅ Unit Dropdown moved OUTSIDE of #customInputSection -->
-<div id="unitDropdownSection" class="hidden">
-  <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-    Select Unit(s):
-  </label>
-  <select id="unitDropdown"></select>
-  <div class="error" id="unitDropdownError"></div>
-</div>
-
-
-
-
-        <div id="notesChoiceSection" class="hidden">
-  <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">
-    Do You Want to Include any Comments/Notes?
-  </label>
-  <button id="yesNoteBtn">Yes, Enter Comment/Note</button>
-  <button id="noNoteBtn">No, Proceed to Image Creation</button>
-</div>
-
-<!-- Note Entry Section -->
-<div id="notesInputSection" class="hidden" style="margin-top: 20px;">
-  <div id="notesHeaderRow" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-    <label for="notesInput" style="color: #666; font-size: 14px;">
-      Enter Your Comment/Note Below:
-    </label>
-    <div id="charCount" style="color: #666; font-size: 14px;">
-      Remaining: 100
+      <div id="gameSuggestion" class="hidden"></div>
     </div>
-  </div>
 
-  <textarea 
-    id="notesInput" 
-    rows="2" 
-    maxlength="100" 
-    placeholder="Enter Comment/Note Here"
-    style="font-family: 'Oswald', Arial, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box;"
-  ></textarea>
+    <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
+    <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
+    <button id="searchBtn" onclick="searchGames()">Submit</button>
+    <div class="error" id="searchError"></div>
 
-  <button id="submitNoteBtn" class="hidden">Submit</button>
-</div>     
+    <div id="customInputSection" class="hidden"></div>
 
-<!-- NEW Hype Phrase Step -->
-<div id="hypePhraseStep" class="hidden container">
-  <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
-    Select Hype Phrase Category:
-  </label>
-  <select id="hypeASelect">
-    <option value="">-- Select Category --</option>
-  </select>
+    <div id="unitDropdownSection" class="hidden">
+      <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+        Select Unit(s):
+      </label>
+      <select id="unitDropdown"></select>
+      <div class="error" id="unitDropdownError"></div>
+    </div>
 
-  <label for="hypeBSelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block; margin-top:15px;">
-    Select Specific Phrase:
-  </label>
-  <select id="hypeBSelect" disabled>
-    <option value="">-- Select Phrase --</option>
-  </select>
+    <div id="notesChoiceSection" class="hidden">
+      <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">
+        Do You Want to Include any Comments/Notes?
+      </label>
+      <button id="yesNoteBtn">Yes, Enter Comment/Note</button>
+      <button id="noNoteBtn">No, Proceed to Next Step</button>
+    </div>
 
-  <div id="hypePhraseOutputs" style="margin-top:20px;">
-    <!-- Outputs appear here -->
-  </div>
-</div>
+    <div id="notesInputSection" class="hidden" style="margin-top: 20px;">
+      <div id="notesHeaderRow" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <label for="notesInput" style="color: #666; font-size: 14px;">
+          Enter Your Comment/Note Below:
+        </label>
+        <div id="charCount" style="color: #666; font-size: 14px;">
+          Remaining: 100
+        </div>
+      </div>
 
-     <pre id="confirmOutput" class="hidden" style="white-space:pre-wrap; word-wrap:break-word; background:#fff; border:1px solid #ccc; padding:15px; border-radius:6px; margin-top:10px; min-height:200px;"></pre>
+      <textarea
+        id="notesInput"
+        rows="2"
+        maxlength="100"
+        placeholder="Enter Comment/Note Here"
+        style="font-family: 'Oswald', Arial, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box;"
+      ></textarea>
 
-    </div> <!-- closes #sports-screen -->
+      <button id="submitNoteBtn" class="hidden">Submit</button>
+    </div>
+
+    <!-- New Hype Phrase Step -->
+    <div id="hypePhraseStep" class="hidden" style="margin-top: 20px;">
+      <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
+        Select Type of Hype Phrase:
+      </label>
+      <select id="hypeASelect"></select>
+
+      <label for="hypeBSelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block; margin-top: 15px;">
+        Select Energy of Hype Phrase:
+      </label>
+      <select id="hypeBSelect" disabled></select>
+
+      <div id="hypePhraseOutputs" style="margin-top: 15px;"></div>
+    </div>
+
+    <pre id="confirmOutput" class="hidden"></pre>
   </div>
 
   <script>
@@ -390,7 +339,6 @@ textarea {
       document.getElementById("access-screen").classList.add("hidden");
       document.getElementById("sports-screen").classList.remove("hidden");
 
-      // Hide all children of sports-screen except loader and loadingMsg
       Array.from(document.querySelectorAll("#sports-screen > *"))
         .forEach(el => {
           if (el.id !== "loader" && el.id !== "loadingMsg") {
@@ -412,23 +360,21 @@ textarea {
       try {
         const res = await fetch(BASE_URL + "?action=data");
         allData = await res.json();
-        console.log("Loaded allData:", allData);
-        console.log("Units data:", allData.units);
+
         document.getElementById("loader").style.display = "none";
         document.getElementById("loadingMsg").style.display = "none";
 
-        // Show all other elements again (excluding loader and loadingMsg)
         Array.from(document.querySelectorAll("#sports-screen > *"))
           .forEach(el => {
             if (el.id !== "loader" && el.id !== "loadingMsg") {
               el.style.display = "";
             }
           });
-        console.log("Wagers Data:", allData.wagers);
 
         document.getElementById("loggedInInfo").classList.remove("hidden");
         document.getElementById("teamSearch").focus();
         document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+
       } catch {
         alert("Failed to load sports data.");
       }
@@ -437,16 +383,15 @@ textarea {
     document.getElementById("teamSearch").addEventListener("keydown", e => {
       if (e.key === "Enter") searchGames();
     });
-    document.getElementById("wagerType").addEventListener("keydown", e => {
+    document.getElementById("wagerType")?.addEventListener("keydown", e => {
       if (e.key === "Enter") submitWagerType();
     });
     document.getElementById("accessCode").addEventListener("keydown", e => {
       if (e.key === "Enter") validateAccess();
     });
     document.getElementById("unitDropdown").addEventListener("change", () => {
-  submitUnitAmount();
-});
-
+      submitUnitAmount();
+    });
 
     function searchGames() {
       const input = document.getElementById("teamSearch").value.trim().toLowerCase();
@@ -459,32 +404,30 @@ textarea {
         const date = new Date(row["Commence Time (UTC)"]);
 
         if (input === home || input === away ||
-            home.split(" ").includes(input) || away.split(" ").includes(input) ||
-            (input.length >= 3 && (home.includes(input) || away.includes(input)))) {
+          home.split(" ").includes(input) || away.split(" ").includes(input) ||
+          (input.length >= 3 && (home.includes(input) || away.includes(input)))) {
           resultSet.push({ row, date });
         }
       }
 
-     matches = resultSet.sort((a, b) => a.date - b.date);
-currentMatchIndex = 0;
+      matches = resultSet.sort((a, b) => a.date - b.date);
+      currentMatchIndex = 0;
 
-if (matches.length > 0) {
-  // Hide input + button + label
-  const input = document.getElementById("teamSearch");
-const label = document.getElementById("inputLabel");
-const button = document.getElementById("searchBtn");
+      if (matches.length > 0) {
+        const input = document.getElementById("teamSearch");
+        const label = document.getElementById("inputLabel");
+        const button = document.getElementById("searchBtn");
 
-input.classList.add("hidden");
-label.classList.add("hidden");
-button.classList.add("hidden");
+        input.classList.add("hidden");
+        label.classList.add("hidden");
+        button.classList.add("hidden");
 
-input.style.display = "none";
-label.style.display = "none";
-button.style.display = "none";
+        input.style.display = "none";
+        label.style.display = "none";
+        button.style.display = "none";
+      }
 
-}
-
-showGameOption();
+      showGameOption();
     }
 
     function showGameOption() {
@@ -495,67 +438,60 @@ showGameOption();
       searchError.textContent = "";
 
       if (matches.length === 0) {
-  const teamInputRaw = document.getElementById("teamSearch").value.trim();
-  
-  searchError.innerHTML = `
-  <div style="color: red; font-weight: bold;">
-  No matching games found for '${teamInputRaw}'.
-  <br>
-  Please be more specific and try again.
-  </div>
+        const teamInputRaw = document.getElementById("teamSearch").value.trim();
 
-<h3 style="margin-top: 10px; color: black;">Manual Override Option:</h3>
-<p style="color: black;">
-  If you have tried being more specific and checked for spelling errors and are still receiving 0 results,
-  you can manually override the lookup function and use your input value of <strong>'${teamInputRaw}'</strong> instead.
-  <br><br>
-  Please double check the spelling and use the complete name before Overriding.
-</p>
-<h3 style="color: black;">Your Input Value: '${teamInputRaw}'</h3>
-    <button id="overrideBtn" style="margin-top: 10px; padding: 10px; background-color: #d9534f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
-      Override – Use Value Above
-    </button>
-  `;
+        searchError.innerHTML = `
+          <div style="color: red; font-weight: bold;">
+            No matching games found for '${teamInputRaw}'.
+            <br>
+            Please be more specific and try again.
+          </div>
 
-  // Attach button functionality
- document.getElementById("overrideBtn").onclick = function () {
-  const overrideValue = teamInputRaw;
-  window.overrideTeamName = overrideValue;
-  selectedMatch = {
-  "League (Group)": "Unavailable",
-  "Sport Name": "Unavailable",
-  "Home Team": "Unavailable",
-  "Away Team": "Unavailable",
-  "Commence Time (UTC)": null
-};
+          <h3 style="margin-top: 10px; color: black;">Manual Override Option:</h3>
+          <p style="color: black;">
+            If you have tried being more specific and checked for spelling errors and are still receiving 0 results,
+            you can manually override the lookup function and use your input value of <strong>'${teamInputRaw}'</strong> instead.
+            <br><br>
+            Please double check the spelling and use the complete name before Overriding.
+          </p>
+          <h3 style="color: black;">Your Input Value: '${teamInputRaw}'</h3>
+          <button id="overrideBtn" style="margin-top: 10px; padding: 10px; background-color: #d9534f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            Override – Use Value Above
+          </button>
+        `;
 
+        document.getElementById("overrideBtn").onclick = function () {
+          const overrideValue = teamInputRaw;
+          window.overrideTeamName = overrideValue;
+          selectedMatch = {
+            "League (Group)": "Unavailable",
+            "Sport Name": "Unavailable",
+            "Home Team": "Unavailable",
+            "Away Team": "Unavailable",
+            "Commence Time (UTC)": null
+          };
 
-  // Hide team input elements
-  const input = document.getElementById("teamSearch");
-  const label = document.getElementById("inputLabel");
-  const button = document.getElementById("searchBtn");
+          const input = document.getElementById("teamSearch");
+          const label = document.getElementById("inputLabel");
+          const button = document.getElementById("searchBtn");
 
-  input.classList.add("hidden");
-  label.classList.add("hidden");
-  button.classList.add("hidden");
+          input.classList.add("hidden");
+          label.classList.add("hidden");
+          button.classList.add("hidden");
 
-  input.style.display = "none";
-  label.style.display = "none";
-  button.style.display = "none";
+          input.style.display = "none";
+          label.style.display = "none";
+          button.style.display = "none";
 
-  // Clear error + suggestions
-  document.getElementById("searchError").innerHTML = "";
-  document.getElementById("gameSuggestion").classList.add("hidden");
+          document.getElementById("searchError").innerHTML = "";
+          document.getElementById("gameSuggestion").classList.add("hidden");
 
-  // Show next section
-  document.getElementById("customInputSection").classList.remove("hidden");
-  document.getElementById("wagerType").focus();
-};
+          document.getElementById("customInputSection").classList.remove("hidden");
+          document.getElementById("wagerType")?.focus();
+        };
 
-
-  return;
-}
-
+        return;
+      }
 
       if (currentMatchIndex >= matches.length) {
         searchError.textContent = "No more matches. Please be more specific and try again.";
@@ -565,53 +501,50 @@ showGameOption();
       const { row, date } = matches[currentMatchIndex];
       selectedMatch = row;
       const now = new Date();
-const dateMidnight = new Date(date);
-dateMidnight.setHours(0, 0, 0, 0);
-const nowMidnight = new Date(now);
-nowMidnight.setHours(0, 0, 0, 0);
-const daysDiff = Math.floor((dateMidnight - nowMidnight) / (1000 * 60 * 60 * 24));
+      const dateMidnight = new Date(date);
+      dateMidnight.setHours(0, 0, 0, 0);
+      const nowMidnight = new Date(now);
+      nowMidnight.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((dateMidnight - nowMidnight) / (1000 * 60 * 60 * 24));
 
-let c_date = "";
-if (daysDiff === 0 || (daysDiff < 0 && now.toDateString() === date.toDateString())) {
-  c_date = "Today";
-} else if (daysDiff === 1) {
-  c_date = "Tomorrow";
-} else {
-  c_date = `${Math.abs(daysDiff)} Days ${daysDiff < 0 ? "Ago" : "Away"}`;
-}
+      let c_date = "";
+      if (daysDiff === 0 || (daysDiff < 0 && now.toDateString() === date.toDateString())) {
+        c_date = "Today";
+      } else if (daysDiff === 1) {
+        c_date = "Tomorrow";
+      } else {
+        c_date = `${Math.abs(daysDiff)} Days ${daysDiff < 0 ? "Ago" : "Away"}`;
+      }
 
       const teamInputRaw = document.getElementById("teamSearch").value.trim();
-const timeFormatted = date.toLocaleString("en-US", {
-  timeZone: "America/New_York",
-  hour: "numeric",
-  minute: "2-digit",
-  hour12: true,
-});
+      const timeFormatted = date.toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
 
-const timeString = `${c_date} @ ${timeFormatted} EST`;
-const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
-  team.toLowerCase().includes(teamInputRaw.toLowerCase())
-) || teamInputRaw;
+      const timeString = `${c_date} @ ${timeFormatted} EST`;
+      const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
+        team.toLowerCase().includes(teamInputRaw.toLowerCase())
+      ) || teamInputRaw;
 
-container.innerHTML = `
-  <div style="font-weight: bold; font-size: 20px; white-space: nowrap;">
-  Results Found for '${teamInputRaw}': <span style="color: red;">${matches.length}</span>
-</div>
-
-  <!-- ${matches.length > 1 ? 's' : ''} -->
-  <p style="margin-top:10px;">Did you mean:</p>
-  <p style="text-align: center; margin: 5px 0 15px;">
-  <strong style="font-size: 24px;">${matchedTeam}</strong>
-  </p>
-  <p>Sport: ${row["League (Group)"]}</p>
-  <p>League: ${row["Sport Name"]}</p>
-  <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
-  <p>When: ${c_date} @ ${timeFormatted} EST</p>
-  <BR>
-  ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
-  <button onclick="useThisGame()">Use This Game</button>
-`;
-
+      container.innerHTML = `
+        <div style="font-weight: bold; font-size: 20px; white-space: nowrap;">
+          Results Found for '${teamInputRaw}': <span style="color: red;">${matches.length}</span>
+        </div>
+        <p style="margin-top:10px;">Did you mean:</p>
+        <p style="text-align: center; margin: 5px 0 15px;">
+          <strong style="font-size: 24px;">${matchedTeam}</strong>
+        </p>
+        <p>Sport: ${row["League (Group)"]}</p>
+        <p>League: ${row["Sport Name"]}</p>
+        <p>Next Event: ${row["Away Team"]} @ ${row["Home Team"]}</p>
+        <p>When: ${c_date} @ ${timeFormatted} EST</p>
+        <br />
+        ${matches.length > 1 ? '<button onclick="nextOption()">Next Option</button>' : ''}
+        <button onclick="useThisGame()">Use This Game</button>
+      `;
 
       container.classList.remove("hidden");
     }
@@ -629,106 +562,310 @@ container.innerHTML = `
       document.getElementById("searchBtn").classList.add("hidden");
 
       document.getElementById("customInputSection").classList.remove("hidden");
-      const dropdown = document.getElementById("wagerDropdown");
-if (dropdown) dropdown.focus();
-  buildWagerDropdown();  // ✅ Correct: runs AFTER a game is selected
-
+      buildWagerDropdown();
     }
 
     function submitWagerType() {
-  const wager = document.getElementById("wagerType").value.trim();
-  const errorBox = document.getElementById("wagerError");
+      const wager = document.getElementById("wagerType").value.trim();
+      const errorBox = document.getElementById("wagerError");
 
-  const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
-  if (!valid) {
-    errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
-    return;
-  }
+      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+      if (!valid) {
+        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+        return;
+      }
 
-  errorBox.textContent = "";
+      errorBox.textContent = "";
 
-  document.getElementById("customInputSection").classList.add("hidden");
-document.getElementById("unitDropdownSection").classList.remove("hidden");
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
 
-  // ✅ Add this line to ensure dropdown is populated and shown
-  buildUnitDropdown();
+      buildUnitDropdown();
 
-  document.getElementById("unitDropdownSection").classList.remove("hidden");
-  document.getElementById("unitDropdown").focus();
-
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
+      document.getElementById("unitDropdown").focus();
     }
 
- function submitUnitAmount(bypass = false) {
-  console.log("submitUnitAmount() triggered");
+    function submitUnitAmount(bypass = false) {
+      const dropdown = document.getElementById("unitDropdown");
+      const input = dropdown ? dropdown.value : "";
+      const errorDiv = document.getElementById("unitDropdownError");
 
-  const dropdown = document.getElementById("unitDropdown");
-  const input = dropdown ? dropdown.value : "";
-  const errorDiv = document.getElementById("unitDropdownError");
+      if (!input || input === "Select Unit(s)") {
+        errorDiv.textContent = "Please select a valid unit amount.";
+        return;
+      }
 
-  if (!input || input === "Select Unit(s)") {
-    errorDiv.textContent = "Please select a valid unit amount.";
-    return;
-  }
+      errorDiv.textContent = "";
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
 
-  errorDiv.textContent = "";
-document.getElementById("unitDropdownSection").classList.remove("hidden");
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+      document.getElementById("notesChoiceSection").classList.remove("hidden");
+    }
 
-console.log("About to show notesChoiceSection");
-document.getElementById("unitDropdownSection").classList.add("hidden");
-document.getElementById("notesChoiceSection").classList.remove("hidden");
+    function resetSearch() {
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("wagerType")?.value = "";
+      const unitDropdown = document.getElementById("unitDropdown");
+      if (unitDropdown) unitDropdown.selectedIndex = 0;
+      document.getElementById("notesInput").value = "";
 
+      document.getElementById("searchError").textContent = "";
+      document.getElementById("wagerError").textContent = "";
+
+      matches = [];
+      currentMatchIndex = 0;
+      selectedMatch = null;
+      window.overrideTeamName = null;
+
+      const toHide = [
+        "gameSuggestion",
+        "customInputSection",
+        "unitDropdownSection",
+        "notesChoiceSection",
+        "notesInputSection",
+        "confirmOutput",
+        "submitNoteBtn"
+      ];
+      toHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+
+      const charCount = document.getElementById("charCount");
+      if (charCount) charCount.textContent = "Remaining: 100";
+
+      const noteLabelLine = charCount?.closest("div");
+      if (noteLabelLine) noteLabelLine.style.display = "none";
+
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("searchBtn").classList.remove("hidden");
+
+      document.getElementById("inputLabel").style.display = "";
+      document.getElementById("teamSearch").style.display = "";
+      document.getElementById("searchBtn").style.display = "";
+
+      document.getElementById("teamSearch").focus();
+    }
+
+    function openImageGenerator() {
+      const encodedText = encodeURIComponent(window._cleanedOutput || '');
+      window.open(`${BASE_URL}?text=${encodedText}`, '_blank');
+    }
+
+    document.getElementById("yesNoteBtn").addEventListener("click", () => {
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+      document.getElementById("notesInputSection").classList.remove("hidden");
+
+      document.getElementById("notesHeaderRow").style.display = "flex";
+      document.getElementById("submitNoteBtn").classList.remove("hidden");
+
+      document.getElementById("notesInput").value = "";
+      document.getElementById("charCount").textContent = "Remaining: 100";
+
+      document.getElementById("notesInput").focus();
+    });
+
+    document.getElementById("noNoteBtn").addEventListener("click", () => {
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+      // Show Hype Phrase step here instead of image creation
+      showHypePhraseStep();
+    });
+
+    document.getElementById("submitNoteBtn").addEventListener("click", () => {
+      const note = document.getElementById("notesInput").value.trim();
+      document.getElementById("notesInputSection").classList.add("hidden");
+
+      // Save latest note for hype step
+      window.latestNote = note || "N/A";
+
+      // Show Hype Phrase step instead of image creation
+      showHypePhraseStep();
+    });
+
+    document.getElementById("notesInput").addEventListener("input", (e) => {
+      const remaining = 100 - e.target.value.length;
+      document.getElementById("charCount").textContent = `Remaining: ${remaining}`;
+    });
+
+    function showHypePhraseStep() {
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+      document.getElementById("notesInputSection").classList.add("hidden");
+      document.getElementById("hypePhraseStep").classList.remove("hidden");
+
+      populateHypeACategories();
+    }
+
+    // Hype phrase dropdown population & event handlers
+    function populateHypeACategories() {
+      const selectA = document.getElementById("hypeASelect");
+      selectA.innerHTML = '<option value="">-- Select Type of Hype Phrase --</option>';
+
+      const categories = new Set();
+      (allData.hypePhrases || []).forEach(row => {
+        if (row.active_status === "active" && row.Type && !categories.has(row.Type)) {
+          categories.add(row.Type);
+        }
+      });
+
+      [...categories].sort().forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        selectA.appendChild(option);
+      });
+
+      const selectB = document.getElementById("hypeBSelect");
+      selectB.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
+      selectB.disabled = true;
+
+      document.getElementById("hypePhraseOutputs").innerHTML = "";
+    }
+
+    document.getElementById("hypeASelect").addEventListener("change", function () {
+      const selectedType = this.value;
+      const selectB = document.getElementById("hypeBSelect");
+      selectB.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
+
+      if (!selectedType) {
+        selectB.disabled = true;
+        document.getElementById("hypePhraseOutputs").innerHTML = "";
+        return;
+      }
+
+      const energies = new Set();
+      (allData.hypePhrases || []).forEach(row => {
+        if (row.active_status === "active" && row.Type === selectedType && row.Energy) {
+          energies.add(row.Energy);
+        }
+      });
+
+      [...energies].sort().forEach(energy => {
+        const option = document.createElement("option");
+        option.value = energy;
+        option.textContent = energy;
+        selectB.appendChild(option);
+      });
+
+      selectB.disabled = false;
+      document.getElementById("hypePhraseOutputs").innerHTML = "";
+    });
+
+    document.getElementById("hypeBSelect").addEventListener("change", function () {
+      const selectedType = document.getElementById("hypeASelect").value;
+      const selectedEnergy = this.value;
+      const outputDiv = document.getElementById("hypePhraseOutputs");
+
+      if (!selectedEnergy) {
+        outputDiv.innerHTML = "";
+        return;
+      }
+
+      const matches = (allData.hypePhrases || []).filter(row =>
+        row.active_status === "active" &&
+        row.Type === selectedType &&
+        row.Energy === selectedEnergy
+      );
+
+      const shuffled = matches.slice().sort(() => Math.random() - 0.5);
+
+      const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
+
+      const gameTime = (() => {
+        if (!selectedMatch || !selectedMatch["Commence Time (UTC)"]) return "N/A";
+        const dt = new Date(selectedMatch["Commence Time (UTC)"]);
+        return dt.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", hour12: true }) + " EST";
+      })();
+
+      const sportFromInput = selectedMatch ? (selectedMatch["Sport Name"] || "N/A") : "N/A";
+
+      let html = "";
+      shuffled.forEach(row => {
+        const sport = row.Sport || "N/A";
+        const phrase = row.Phrase || "";
+        const promo = row.Promo || "";
+
+        const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+
+        html += `
+          <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px;">
+            <div><strong>Related Sport:</strong> ${sport}</div>
+            <div><strong>Post Title:</strong> ${postTitle}</div>
+            <div><strong>Post Description:</strong> ${promo}</div>
+          </div>
+        `;
+      });
+
+      outputDiv.innerHTML = html;
+
+      Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
+        block.onclick = () => {
+          const selectedRow = shuffled[i];
+          window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+          window.selectedHypeRow = selectedRow;
+          window.selectedHypeNote = window.latestNote || "N/A";
+
+          document.getElementById("hypePhraseStep").classList.add("hidden");
+
+          generateFinalOutput(window.selectedHypeNote, window.selectedHypePostTitle);
+        };
+        block.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            block.click();
+          }
+        };
+      });
+    });
+
+    function generateFinalOutput(notes, newTitle) {
+      notes = notes || "N/A";
+      if (newTitle) window.overrideTitle = newTitle;
 
       let wagerRaw = "";
-const wagerInput = document.getElementById("wagerType");
-const wagerDropdown = document.getElementById("wagerDropdown");
+      const wagerInput = document.getElementById("wagerType");
+      const wagerDropdown = document.getElementById("wagerDropdown");
 
-if (wagerInput) {
-  wagerRaw = wagerInput.value.trim();
-} else if (wagerDropdown) {
-  wagerRaw = wagerDropdown.value.trim();
-}
+      if (wagerInput) {
+        wagerRaw = wagerInput.value.trim();
+      } else if (wagerDropdown) {
+        wagerRaw = wagerDropdown.value.trim();
+      }
+      const wager = wagerRaw.toUpperCase();
 
-let teamSearchInput = "";
-if (window.overrideTeamName) {
-  teamSearchInput = window.overrideTeamName;
-} else {
-  const teamSearchEl = document.getElementById("teamSearch");
-  teamSearchInput = teamSearchEl ? teamSearchEl.value.trim() : "";
-}
-      const unitInput = input;
+      const teamSearchEl = document.getElementById("teamSearch");
+      const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
+      const dropdown = document.getElementById("unitDropdown");
+      const unitInput = dropdown ? dropdown.value.trim() : "";
       const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
-      let home = "", away = "";
-let matchedTeam = "";
-const teamSearchLower = teamSearchInput.toLowerCase();
+      let matchedTeam = "";
+      const teamSearchLower = teamSearchInput.toLowerCase();
 
-// If using override, use that directly
-if (window.overrideTeamName) {
-  matchedTeam = window.overrideTeamName;
-} else if (
-  selectedMatch &&
-  selectedMatch["Home Team"] !== "Unavailable" &&
-  selectedMatch["Away Team"] !== "Unavailable"
-) {
-  const home = selectedMatch["Home Team"];
-  const away = selectedMatch["Away Team"];
-  matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
-} else {
-  matchedTeam = teamSearchInput;
-}
-
-
+      if (window.overrideTeamName) {
+        matchedTeam = window.overrideTeamName;
+      } else if (
+        selectedMatch &&
+        selectedMatch["Home Team"] !== "Unavailable" &&
+        selectedMatch["Away Team"] !== "Unavailable"
+      ) {
+        const home = selectedMatch["Home Team"];
+        const away = selectedMatch["Away Team"];
+        matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+      } else {
+        matchedTeam = teamSearchInput;
+      }
 
       let formattedTime = "Unavailable";
-if (selectedMatch["Commence Time (UTC)"]) {
-  const date = new Date(selectedMatch["Commence Time (UTC)"]);
-  formattedTime = date.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    weekday: "short", month: "short", day: "numeric",
-    hour: "numeric", minute: "2-digit", hour12: true
-  }) + " ET";
-}
-
+      if (selectedMatch["Commence Time (UTC)"]) {
+        const date = new Date(selectedMatch["Commence Time (UTC)"]);
+        formattedTime = date.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          weekday: "short", month: "short", day: "numeric",
+          hour: "numeric", minute: "2-digit", hour12: true
+        }) + " ET";
+      }
 
       const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
       const nyDate = new Date(nowNY);
@@ -739,246 +876,80 @@ if (selectedMatch["Commence Time (UTC)"]) {
       const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
       const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
-    //  document.getElementById("notesChoiceSection").classList.remove("hidden");
-    }
-    function resetSearch() {
-  // Clear inputs
-  document.getElementById("teamSearch").value = "";
-  document.getElementById("wagerDropdown").value = "";
-const unitDropdown = document.getElementById("unitDropdown");
-if (unitDropdown) unitDropdown.selectedIndex = 0;
-  document.getElementById("notesInput").value = "";
+      let pickDescValue = "Unavailable";
 
-  // Clear errors
-  document.getElementById("searchError").textContent = "";
-  document.getElementById("wagerError").textContent = "";
-//  document.getElementById("unitAmountError").textContent = "";
+      if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
+        const selectedWager = document.getElementById("wagerDropdown").value;
+        const wagerRow = (allData.wagers || []).find(row =>
+          row.wager_label_template === selectedWager
+        );
 
-  // Reset state
-  matches = [];
-  currentMatchIndex = 0;
-  selectedMatch = null;
-  window.overrideTeamName = null;
+        if (wagerRow && wagerRow.pick_desc_template) {
+          pickDescValue = wagerRow.pick_desc_template;
 
-  // Hide everything that could be shown
-  const toHide = [
-    "gameSuggestion",
-    "customInputSection",
-    "unitDropdownSection",
-    "notesChoiceSection",
-    "notesInputSection",
-    "confirmOutput",
-    "copyBtn",
-    "generateImageBtn",
-    "submitNoteBtn",
-    "hypePhraseStep"
-  ];
-  toHide.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add("hidden");
-  });
+          pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
 
-  // Reset counter
-  const charCount = document.getElementById("charCount");
-  if (charCount) charCount.textContent = "Remaining: 100";
+          const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
+          if (numberMatch) {
+            const numericValue = numberMatch[0];
+            pickDescValue = pickDescValue
+              .replace(/\[\[NUM\]\]/g, numericValue)
+              .replace(/\[\[NUMBER\]\]/g, numericValue);
+          }
+        }
+      }
 
-  // Ensure character counter line and label are also hidden (if shown)
-  const noteLabelLine = charCount.closest("div");
-  if (noteLabelLine) noteLabelLine.style.display = "none";
+      const output = [
+        "═══════════════════════",
+        "######## OFFICIAL PICK",
+        "═══════════════════════",
+        `Wager Type: STRAIGHT WAGER`,
+        `Official Pick: ${matchedTeam}`,
+        `Official Type: ${wager}`,
+        `Official Wager: ${unitInput} Unit(s)`,
+        `To Win: ${pickDescValue}`,
+        "",
+        "═══════════════════════",
+        "######## GAME DETAILS",
+        "═══════════════════════",
+        `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+        `League: ${selectedMatch["Sport Name"]}`,
+        `Home Team: ${selectedMatch["Home Team"]}`,
+        `Away Team: ${selectedMatch["Away Team"]}`,
+        `Game Time: ${formattedTime}`,
+        "",
+        "═══════════════════════",
+        "######## THANK YOU FOR TRUSTING OGCB",
+        "═══════════════════════",
+        "",
+        `Title: ${window.overrideTitle || "[[TITLE]]"}`,
+        `Pick ID: ${pickId}`,
+        `Pick by: ${capperName}`,
+        `Input Value: ${allInputsRaw}`,
+        `Notes: ${notes}`,
+        "",
+        "═══════════════════════",
+        "######## STRICT CONFIDENTIALITY NOTICE",
+        "═══════════════════════",
+        "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+        "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+        "",
+        `Created: ${estString}`
+      ].join("\n");
 
-  // Restore the team search section
-  document.getElementById("inputLabel").classList.remove("hidden");
-  document.getElementById("teamSearch").classList.remove("hidden");
-  document.getElementById("searchBtn").classList.remove("hidden");
+      const box = document.getElementById("confirmOutput");
+      box.classList.remove("hidden");
+      box.innerHTML = "";
 
-  document.getElementById("inputLabel").style.display = "";
-  document.getElementById("teamSearch").style.display = "";
-  document.getElementById("searchBtn").style.display = "";
+      const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+      window._cleanedOutput = cleanedOutput;
 
-  // Focus user back to team input
-  document.getElementById("teamSearch").focus();
-    }
-    
-  function openImageGenerator() {
-  const encodedText = encodeURIComponent(window._cleanedOutput || '');
-  window.open(`https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec?text=${encodedText}`, '_blank');
-}
+      const encodedOutput = encodeURIComponent(cleanedOutput);
 
- document.getElementById("yesNoteBtn").addEventListener("click", () => {
-  document.getElementById("notesChoiceSection").classList.add("hidden");
-  document.getElementById("notesInputSection").classList.remove("hidden");
+      const existingFrame = document.getElementById("slipFrame");
+      if (existingFrame) existingFrame.remove();
 
-  document.getElementById("notesHeaderRow").style.display = "flex";
-  document.getElementById("submitNoteBtn").classList.remove("hidden");
-
-  document.getElementById("notesInput").value = "";
-  document.getElementById("charCount").textContent = "Remaining: 100";
-
-  document.getElementById("notesInput").focus();
-});
-
-
-document.getElementById("noNoteBtn").addEventListener("click", () => {
-  document.getElementById("notesChoiceSection").classList.add("hidden");
-  document.getElementById("hypePhraseStep").classList.remove("hidden");
-  populateHypeACategories();
-});
-
-document.getElementById("submitNoteBtn").addEventListener("click", () => {
-  const note = document.getElementById("notesInput").value.trim();
-  document.getElementById("notesInputSection").classList.add("hidden");
-  document.getElementById("hypePhraseStep").classList.remove("hidden");
-  populateHypeACategories();
-  window.latestNote = note || "N/A"; // save note for later use
-});
-
-    document.getElementById("notesInput").addEventListener("input", (e) => {
-  const remaining = 100 - e.target.value.length;
-  document.getElementById("charCount").textContent = `Remaining: ${remaining}`;
-});
-
-    function generateFinalOutput(notes) {
-
-  let wagerRaw = "";
-const wagerInput = document.getElementById("wagerType");
-const wagerDropdown = document.getElementById("wagerDropdown");
-
-if (wagerInput) {
-  wagerRaw = wagerInput.value.trim();
-} else if (wagerDropdown) {
-  wagerRaw = wagerDropdown.value.trim();
-}
-const wager = wagerRaw.toUpperCase();
-
-const teamSearchEl = document.getElementById("teamSearch");
-const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
-const dropdown = document.getElementById("unitDropdown");
-const unitInput = dropdown ? dropdown.value.trim() : "";
-  const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
-
-  let matchedTeam = "";
-  const teamSearchLower = teamSearchInput.toLowerCase();
-
-  if (window.overrideTeamName) {
-    matchedTeam = window.overrideTeamName;
-  } else if (
-    selectedMatch &&
-    selectedMatch["Home Team"] !== "Unavailable" &&
-    selectedMatch["Away Team"] !== "Unavailable"
-  ) {
-    const home = selectedMatch["Home Team"];
-    const away = selectedMatch["Away Team"];
-    matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
-  } else {
-    matchedTeam = teamSearchInput;
-  }
-
-  let formattedTime = "Unavailable";
-  if (selectedMatch["Commence Time (UTC)"]) {
-    const date = new Date(selectedMatch["Commence Time (UTC)"]);
-    formattedTime = date.toLocaleString("en-US", {
-      timeZone: "America/New_York",
-      weekday: "short", month: "short", day: "numeric",
-      hour: "numeric", minute: "2-digit", hour12: true
-    }) + " ET";
-  }
-
-  const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-  const nyDate = new Date(nowNY);
-  const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
-
-  const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
-  const today = new Date();
-  const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
-  const pickId = `${secondsSinceEpoch}-${mmddyy}`;
-
-let pickDescValue = "Unavailable";
-
-if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
-  const selectedWager = document.getElementById("wagerDropdown").value;
-  const wagerRow = (allData.wagers || []).find(row =>
-    row.wager_label_template === selectedWager
-  );
-
-  if (wagerRow && wagerRow.pick_desc_template) {
-    pickDescValue = wagerRow.pick_desc_template;
-
-    // 🔁 Replace [[TEAM]] with actual matched team
-    pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
-
-    // 🔁 Try to extract a number from the wager text, if available
-    const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
-    if (numberMatch) {
-      const numericValue = numberMatch[0];
-      pickDescValue = pickDescValue
-        .replace(/\[\[NUM\]\]/g, numericValue)
-        .replace(/\[\[NUMBER\]\]/g, numericValue);
-    }
-  }
-}
-
-  
-  // Use overrideTitle if set, else default [[TITLE]]
-  const titleToUse = window.overrideTitle || "[[TITLE]]";
-
-  const output = [
-    "═══════════════════════",
-    "######## OFFICIAL PICK",
-    "═══════════════════════",
-    `Wager Type: STRAIGHT WAGER`,
-    `Official Pick: ${matchedTeam}`,
-    `Official Type: ${wager}`,
-    `Official Wager: ${unitInput} Unit(s)`,
-    `To Win: ${pickDescValue}`,
-    "",
-    "═══════════════════════",
-    "######## GAME DETAILS",
-    "═══════════════════════",
-    `Sport: ${selectedMatch["League (Group)"]?.toUpperCase() || "N/A"}`,
-    `League: ${selectedMatch["Sport Name"] || "N/A"}`,
-    `Home Team: ${selectedMatch["Home Team"] || "N/A"}`,
-    `Away Team: ${selectedMatch["Away Team"] || "N/A"}`,
-    `Game Time: ${formattedTime}`,
-    "",
-    "═══════════════════════",
-    "######## THANK YOU FOR TRUSTING OGCB",
-    "═══════════════════════",
-    "",
-    `Title: ${titleToUse}`,
-    `Pick ID: ${pickId}`,
-    `Pick by: ${capperName}`,
-    `Input Value: ${allInputsRaw}`,
-    `Notes: ${notes}`,
-    "",
-    "═══════════════════════",
-    "######## STRICT CONFIDENTIALITY NOTICE",
-    "═══════════════════════",
-    "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
-    "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
-    "",
-    `Created: ${estString}`
-  ].join("\n");
-
-  const box = document.getElementById("confirmOutput");
-  box.classList.remove("hidden");
-  box.innerHTML = "";
-
-  const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
-  window._cleanedOutput = cleanedOutput;
-
-  const encodedOutput = encodeURIComponent(cleanedOutput);
-
-  const existingFrame = document.getElementById("slipFrame");
-  if (existingFrame) existingFrame.remove();
-
-  // Create both iframes
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodeURIComponent(JSON.stringify({
-      ...{
+      const payload = {
         "FULL_TEAM_ENTERED": matchedTeam,
         "FULL_BET_TYPE": wager,
         "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
@@ -989,328 +960,164 @@ if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
         "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
         "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
         "DATE and TIME OF GAME START": formattedTime,
-        "TITLE": titleToUse,
+        "TITLE": window.overrideTitle || "[[TITLE]]",
         "PICKID": pickId,
         "CAPPERS NAME": capperName,
         "USER_INPUT_VALUE": allInputsRaw,
         "24HR_LONG_DATE_SECONDS": estString
-      }
-    }))}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-    iframe.style.height = "600px";
-    iframe.style.zIndex = "1";
-    return iframe;
-  };
+      };
 
-  const iframe1 = createIframe("1", true);
-  const iframe2 = createIframe("2", false);
+      const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+      box.innerHTML = "";
 
-  box.appendChild(iframe1);
-  box.appendChild(iframe2);
+      const createIframe = (slideNum, visible) => {
+        const iframe = document.createElement("iframe");
+        iframe.className = "slipFrame";
+        iframe.dataset.slide = slideNum;
+        iframe.style.display = visible ? "block" : "none";
+        iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+        iframe.style.width = "100%";
+        iframe.style.maxWidth = "400px";
+        iframe.style.border = "none";
+        iframe.style.height = "600px";
+        iframe.style.zIndex = "1";
+        return iframe;
+      };
 
-  // Add toggle button
-  if (!document.getElementById("toggleImageBtn")) {
-    const toggleBtn = document.createElement("button");
-    toggleBtn.textContent = "Switch to Paid Image";
-    toggleBtn.id = "toggleImageBtn";
-    toggleBtn.style.marginTop = "10px";
-    toggleBtn.style.width = "100%";
-    toggleBtn.style.maxWidth = "400px";
-    toggleBtn.style.boxSizing = "border-box";
-    toggleBtn.style.padding = "12px";
-    toggleBtn.style.fontSize = "16px";
-    toggleBtn.style.backgroundColor = "#2a9fd6";
-    toggleBtn.style.color = "white";
-    toggleBtn.style.border = "none";
-    toggleBtn.style.borderRadius = "6px";
-    toggleBtn.style.cursor = "pointer";
+      const iframe1 = createIframe("1", true);
+      const iframe2 = createIframe("2", false);
 
-    toggleBtn.onclick = () => {
-      const frames = document.querySelectorAll(".slipFrame");
-      frames.forEach(frame => {
-        const isVisible = frame.style.display !== "none";
-        frame.style.display = isVisible ? "none" : "block";
-      });
+      box.appendChild(iframe1);
+      box.appendChild(iframe2);
 
-      const showingSlide2 = iframe2.style.display === "block";
-      toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
-    };
+      const toggleBtn = document.createElement("button");
+      toggleBtn.textContent = "Switch to Paid Image";
+      toggleBtn.id = "toggleImageBtn";
+      toggleBtn.style.marginTop = "10px";
+      toggleBtn.style.width = "100%";
+      toggleBtn.style.maxWidth = "400px";
+      toggleBtn.style.boxSizing = "border-box";
+      toggleBtn.style.padding = "12px";
+      toggleBtn.style.fontSize = "16px";
+      toggleBtn.style.backgroundColor = "#2a9fd6";
+      toggleBtn.style.color = "white";
+      toggleBtn.style.border = "none";
+      toggleBtn.style.borderRadius = "6px";
+      toggleBtn.style.cursor = "pointer";
 
-    box.parentNode.insertBefore(toggleBtn, box);
-  }
-  setTimeout(() => {
-    box.style.overflow = "hidden";
-    box.style.height = box.scrollHeight + "px";
-  }, 0);
-}
+      toggleBtn.onclick = () => {
+        const frames = document.querySelectorAll(".slipFrame");
+        frames.forEach(frame => {
+          const isVisible = frame.style.display !== "none";
+          frame.style.display = isVisible ? "none" : "block";
+        });
 
-// Insert after loadAllData success
-function buildWagerDropdown() {
-  const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
-  const inputDiv = document.getElementById("customInputSection");
+        const showingSlide2 = iframe2.style.display === "block";
+        toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
+      };
 
-  inputDiv.innerHTML = `
-    <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-      Select Wager Type Below:
-    </label>
-    <select id="wagerDropdown"></select>
-    <div class="error" id="wagerError"></div>
-  `;
+      box.parentNode.insertBefore(toggleBtn, box);
+      setTimeout(() => {
+        box.style.overflow = "hidden";
+        box.style.height = box.scrollHeight + "px";
+      }, 0);
+    }
 
-  const dropdown = document.getElementById("wagerDropdown");
+    function buildWagerDropdown() {
+      const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+      const inputDiv = document.getElementById("customInputSection");
 
-  // Default option
-  const defaultOpt = document.createElement("option");
-  defaultOpt.textContent = "Select Item Below";
-  defaultOpt.disabled = true;
-  defaultOpt.selected = true;
-  dropdown.appendChild(defaultOpt);
-
-  // 🔄 Check for override use
-  const isOverride = !!window.overrideTeamName;
-
-  // Determine sport only if NOT overridden
-  let filteredWagerData = wagerData;
-
-  if (!isOverride) {
-    const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
-    filteredWagerData = wagerData.filter(row => {
-      const rowSport = (row.Sport || "").trim();
-      return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
-    });
-  }
-
-  // Populate filtered wager options
-  filteredWagerData.forEach(row => {
-    const opt = document.createElement("option");
-    opt.textContent = row.wager_label_template;
-    opt.value = row.wager_label_template;
-    opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUMBER]]") ? "yes" : "no";
-    dropdown.appendChild(opt);
-  });
-
-  // Manual entry override
-  const otherOpt = document.createElement("option");
-  otherOpt.textContent = "Other (Manual Entry Override)";
-  otherOpt.value = "__other";
-  dropdown.appendChild(otherOpt);
-
-  dropdown.addEventListener("change", () => {
-    const selected = dropdown.value;
-    const selectedOption = dropdown.options[dropdown.selectedIndex];
-    const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
-
-    if (selected === "__other") {
       inputDiv.innerHTML = `
-        <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-          Enter Wager Type (e.g. 'ML' or 'F5')
+        <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+          Select Wager Type Below:
         </label>
-        <input type="text" id="wagerType" />
-        <button onclick="submitWagerType()">Submit</button>
+        <select id="wagerDropdown"></select>
         <div class="error" id="wagerError"></div>
       `;
-      document.getElementById("unitDropdownSection").classList.add("hidden");
-    } else {
-      document.getElementById("customInputSection").classList.add("hidden");
-      if (!requiresNumber) {
-        buildUnitDropdown();
-        document.getElementById("unitDropdownSection").classList.remove("hidden");
-      } else {
-        console.log("⚠️ Wager requires [[NUMBER]] — skipping for now.");
-        // Do nothing for now
+
+      const dropdown = document.getElementById("wagerDropdown");
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Item Below";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      const isOverride = !!window.overrideTeamName;
+
+      let filteredWagerData = wagerData;
+
+      if (!isOverride) {
+        const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
+        filteredWagerData = wagerData.filter(row => {
+          const rowSport = (row.Sport || "").trim();
+          return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
+        });
+      }
+
+      filteredWagerData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.wager_label_template;
+        opt.value = row.wager_label_template;
+        opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUMBER]]") ? "yes" : "no";
+        dropdown.appendChild(opt);
+      });
+
+      const otherOpt = document.createElement("option");
+      otherOpt.textContent = "Other (Manual Entry Override)";
+      otherOpt.value = "__other";
+      dropdown.appendChild(otherOpt);
+
+      dropdown.addEventListener("change", () => {
+        const selected = dropdown.value;
+        const selectedOption = dropdown.options[dropdown.selectedIndex];
+        const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
+
+        if (selected === "__other") {
+          inputDiv.innerHTML = `
+            <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+              Enter Wager Type (e.g. 'ML' or 'F5')
+            </label>
+            <input type="text" id="wagerType" />
+            <button onclick="submitWagerType()">Submit</button>
+            <div class="error" id="wagerError"></div>
+          `;
+          document.getElementById("unitDropdownSection").classList.add("hidden");
+        } else {
+          document.getElementById("customInputSection").classList.add("hidden");
+          if (!requiresNumber) {
+            buildUnitDropdown();
+            document.getElementById("unitDropdownSection").classList.remove("hidden");
+          }
+        }
+      });
+    }
+
+    function buildUnitDropdown() {
+      const unitData = allData.units || [];
+
+      const dropdown = document.getElementById("unitDropdown");
+      const section = document.getElementById("unitDropdownSection");
+
+      dropdown.innerHTML = "";
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Unit Amount...";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      unitData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.display_unit;
+        opt.value = row.display_unit;
+        dropdown.appendChild(opt);
+      });
+
+      if (section.classList.contains("hidden")) {
+        section.classList.remove("hidden");
       }
     }
-  });
-}
-
-function buildUnitDropdown() {
-  const unitData = allData.units || [];
-  console.log("buildUnitDropdown called, unitData:", unitData);
-
-  const dropdown = document.getElementById("unitDropdown");
-  const section = document.getElementById("unitDropdownSection");
-
-  dropdown.innerHTML = "";
-
-  // Default option
-  const defaultOpt = document.createElement("option");
-  defaultOpt.textContent = "Select Unit Amount...";
-  defaultOpt.disabled = true;
-  defaultOpt.selected = true;
-  dropdown.appendChild(defaultOpt);
-
-  // Add each unit
-  unitData.forEach(row => {
-    const opt = document.createElement("option");
-    opt.textContent = row.display_unit;
-    opt.value = row.display_unit;
-    dropdown.appendChild(opt);
-  });
-
-  // Show section
-  if (section.classList.contains("hidden")) {
-    section.classList.remove("hidden");
-  }
-}
-
-// -------------------- NEW CODE TO HANDLE HYPE PHRASE STEP --------------------
-
-// When user clicks No on notes, show hype phrase step instead of generating final output
-document.getElementById("noNoteBtn").addEventListener("click", () => {
-  document.getElementById("notesChoiceSection").classList.add("hidden");
-  document.getElementById("hypePhraseStep").classList.remove("hidden");
-  populateHypeACategories();
-});
-
-// When user submits notes, show hype phrase step instead of final output
-document.getElementById("submitNoteBtn").addEventListener("click", () => {
-  const note = document.getElementById("notesInput").value.trim();
-  document.getElementById("notesInputSection").classList.add("hidden");
-  document.getElementById("hypePhraseStep").classList.remove("hidden");
-  populateHypeACategories();
-  window.latestNote = note || "N/A"; // save note for later use
-});
-
-// Populate first dropdown with unique Column A values
-// Populate first dropdown with unique Type values from active rows
-function populateHypeACategories() {
-  const selectA = document.getElementById("hypeASelect");
-  selectA.innerHTML = '<option value="">-- Select Category --</option>';
-
-  const categories = new Set();
-  (allData.hypePhrases || []).forEach(row => {
-    if (row.active_status === "active" && row.Type && !categories.has(row.Type)) {
-      categories.add(row.Type);
-    }
-  });
-
-  [...categories].sort().forEach(cat => {
-    const option = document.createElement("option");
-    option.value = cat;
-    option.textContent = cat;
-    selectA.appendChild(option);
-  });
-
-  const selectB = document.getElementById("hypeBSelect");
-  selectB.innerHTML = '<option value="">-- Select Phrase --</option>';
-  selectB.disabled = true;
-
-  document.getElementById("hypePhraseOutputs").innerHTML = "";
-}
-
-// Populate second dropdown based on selected Type, filtered by active rows
-document.getElementById("hypeASelect").addEventListener("change", function () {
-  const selectedCategory = this.value;
-  const selectB = document.getElementById("hypeBSelect");
-  selectB.innerHTML = '<option value="">-- Select Phrase --</option>';
-
-  if (!selectedCategory) {
-    selectB.disabled = true;
-    document.getElementById("hypePhraseOutputs").innerHTML = "";
-    return;
-  }
-
-  const filteredBs = new Set();
-  (allData.hypePhrases || []).forEach(row => {
-    if (row.active_status === "active" && row.Type === selectedCategory && row.Energy) {
-      filteredBs.add(row.Energy);
-    }
-  });
-
-  [...filteredBs].sort().forEach(bVal => {
-    const option = document.createElement("option");
-    option.value = bVal;
-    option.textContent = bVal;
-    selectB.appendChild(option);
-  });
-
-  selectB.disabled = false;
-  document.getElementById("hypePhraseOutputs").innerHTML = "";
-});
-
-// Show randomized outputs and handle click to finalize
-document.getElementById("hypeBSelect").addEventListener("change", function () {
-  const selectedCategory = document.getElementById("hypeASelect").value;
-  const selectedPhrase = this.value;
-  const outputDiv = document.getElementById("hypePhraseOutputs");
-
-  if (!selectedPhrase) {
-    outputDiv.innerHTML = "";
-    return;
-  }
-
-  const matches = (allData.hypePhrases || []).filter(row =>
-    row.active_status === "active" &&
-    row.Type === selectedCategory &&
-    row.Energy === selectedPhrase
-  );
-
-  const shuffled = matches.slice().sort(() => Math.random() - 0.5);
-
-  const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
-
-  const gameTime = (() => {
-    if (!selectedMatch || !selectedMatch["Commence Time (UTC)"]) return "N/A";
-    const dt = new Date(selectedMatch["Commence Time (UTC)"]);
-    return dt.toLocaleString("en-US", {timeZone: "America/New_York", hour: "numeric", minute: "2-digit", hour12: true}) + " EST";
-  })();
-
-  const sportFromInput = selectedMatch ? (selectedMatch["Sport Name"] || "N/A") : "N/A";
-
-  let html = "";
-  shuffled.forEach(row => {
-    const sport = row.Sport || "N/A";
-    const phrase = row.Phrase || "";
-    const promo = row.Promo || "";
-
-    const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
-
-    html += `
-      <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px;">
-        <div><strong>Related Sport:</strong> ${sport}</div>
-        <div><strong>Post Title:</strong> ${postTitle}</div>
-        <div><strong>Post Description:</strong> ${promo}</div>
-      </div>
-    `;
-  });
-
-  outputDiv.innerHTML = html;
-
-  Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
-    block.onclick = () => {
-      const selectedRow = shuffled[i];
-      window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
-      window.selectedHypeRow = selectedRow;
-      window.selectedHypeNote = window.latestNote || "N/A";
-
-      document.getElementById("hypePhraseStep").classList.add("hidden");
-
-      generateFinalOutput(window.selectedHypeNote, window.selectedHypePostTitle);
-    };
-    block.onkeydown = (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        block.click();
-      }
-    }
-  });
-});
-
-
-// -------------------- PATCH generateFinalOutput --------------------
-// Patch must come AFTER original generateFinalOutput is defined
-(() => {
-  const originalGenerateFinalOutput = generateFinalOutput;
-  generateFinalOutput = function (notes, newTitle) {
-    notes = notes || "N/A";
-    if (newTitle) window.overrideTitle = newTitle;
-
-    originalGenerateFinalOutput(notes);
-  };
-})();
-
   </script>
 
 </body>
