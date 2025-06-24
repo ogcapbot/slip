@@ -373,30 +373,22 @@
         document.getElementById("teamSearch").focus();
         document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
 
-        // Attach event listener for unitDropdown here AFTER it's in DOM
-        attachUnitDropdownListener();
-
       } catch {
         alert("Failed to load sports data.");
-      }
-    }
-
-    function attachUnitDropdownListener() {
-      const unitDropdown = document.getElementById("unitDropdown");
-      if (unitDropdown) {
-        unitDropdown.addEventListener("change", () => {
-          submitUnitAmount();
-        });
       }
     }
 
     document.getElementById("teamSearch").addEventListener("keydown", e => {
       if (e.key === "Enter") searchGames();
     });
-    // Removed this here as #wagerType is created dynamically in buildWagerDropdown
-
+    document.getElementById("wagerType")?.addEventListener("keydown", e => {
+      if (e.key === "Enter") submitWagerType();
+    });
     document.getElementById("accessCode").addEventListener("keydown", e => {
       if (e.key === "Enter") validateAccess();
+    });
+    document.getElementById("unitDropdown").addEventListener("change", () => {
+      submitUnitAmount();
     });
 
     function searchGames() {
@@ -530,6 +522,7 @@
         hour12: true,
       });
 
+      const timeString = `${c_date} @ ${timeFormatted} EST`;
       const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
         team.toLowerCase().includes(teamInputRaw.toLowerCase())
       ) || teamInputRaw;
@@ -1088,16 +1081,11 @@
             <div class="error" id="wagerError"></div>
           `;
 
-          // Add event listener for dynamic wagerType input submit on Enter key:
-          setTimeout(() => {
-            const wagerTypeInput = document.getElementById("wagerType");
-            if (wagerTypeInput) {
-              wagerTypeInput.addEventListener("keydown", e => {
-                if (e.key === "Enter") submitWagerType();
-              });
-              wagerTypeInput.focus();
-            }
-          }, 0);
+          // Attach Enter key event listener for new wagerType input
+          const wagerTypeInput = inputDiv.querySelector("#wagerType");
+          wagerTypeInput.addEventListener("keydown", e => {
+            if (e.key === "Enter") submitWagerType();
+          });
 
           document.getElementById("unitDropdownSection").classList.add("hidden");
         } else {
