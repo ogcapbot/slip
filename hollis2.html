@@ -339,12 +339,11 @@
       document.getElementById("access-screen").classList.add("hidden");
       document.getElementById("sports-screen").classList.remove("hidden");
 
-      Array.from(document.querySelectorAll("#sports-screen > *"))
-        .forEach(el => {
-          if (el.id !== "loader" && el.id !== "loadingMsg") {
-            el.style.display = "none";
-          }
-        });
+      Array.from(document.querySelectorAll("#sports-screen > *")).forEach(el => {
+        if (el.id !== "loader" && el.id !== "loadingMsg") {
+          el.style.display = "none";
+        }
+      });
 
       loadAllData();
     }
@@ -364,12 +363,11 @@
         document.getElementById("loader").style.display = "none";
         document.getElementById("loadingMsg").style.display = "none";
 
-        Array.from(document.querySelectorAll("#sports-screen > *"))
-          .forEach(el => {
-            if (el.id !== "loader" && el.id !== "loadingMsg") {
-              el.style.display = "";
-            }
-          });
+        Array.from(document.querySelectorAll("#sports-screen > *")).forEach(el => {
+          if (el.id !== "loader" && el.id !== "loadingMsg") {
+            el.style.display = "";
+          }
+        });
 
         document.getElementById("loggedInInfo").classList.remove("hidden");
         document.getElementById("teamSearch").focus();
@@ -524,6 +522,7 @@
         hour12: true,
       });
 
+      const timeString = `${c_date} @ ${timeFormatted} EST`;
       const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
         team.toLowerCase().includes(teamInputRaw.toLowerCase())
       ) || teamInputRaw;
