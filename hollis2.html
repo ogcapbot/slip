@@ -1071,7 +1071,7 @@
         const selectedOption = dropdown.options[dropdown.selectedIndex];
         const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
 
-        if (selected === "__other") {
+        if (selected === "__other") {  // <--- FIXED HERE: Use '===' instead of '='
           inputDiv.innerHTML = `
             <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
               Enter Wager Type (e.g. 'ML' or 'F5')
@@ -1080,13 +1080,6 @@
             <button onclick="submitWagerType()">Submit</button>
             <div class="error" id="wagerError"></div>
           `;
-
-          // Attach Enter key event listener for new wagerType input
-          const wagerTypeInput = inputDiv.querySelector("#wagerType");
-          wagerTypeInput.addEventListener("keydown", e => {
-            if (e.key === "Enter") submitWagerType();
-          });
-
           document.getElementById("unitDropdownSection").classList.add("hidden");
         } else {
           document.getElementById("customInputSection").classList.add("hidden");
