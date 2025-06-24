@@ -209,7 +209,7 @@
     /* NEW styles for Post Title and Post Desc textboxes */
     .copyTextbox {
       font-family: 'Oswald', sans-serif !important;
-      font-size: 10px !important;
+      font-size: 11px !important;
       width: 100%;
       max-width: 400px;
       box-sizing: border-box;
@@ -230,6 +230,15 @@
       outline-offset: 2px;
     }
 
+    /* Titles above textboxes */
+    .copyTextboxLabel {
+      color: #666;
+      font-size: 14px;
+      margin: 12px 0 4px 0;
+      font-weight: 600;
+      font-family: 'Oswald', sans-serif;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -271,7 +280,7 @@
 
       <!-- Added container for Post Title and Post Desc textboxes here -->
       <div id="postTitleDescContainer" style="margin-top: 10px; max-width: 400px;">
-        <!-- These inputs will be created dynamically -->
+        <!-- These inputs and labels will be created dynamically -->
       </div>
 
       <div id="gameSuggestion" class="hidden"></div>
@@ -880,12 +889,19 @@
           const postTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
           const displaySport = (sport === "N/A" ? "Used for Any Sport" : sport);
 
+          // Add data attributes for sport and commence time so click handler can use them:
           html += `
-            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;">
-    <div><strong>Related Sport: </strong></div>${displaySport}
-    <div><strong>Post Title: </strong></div>${postTitle}
-    <div><strong>Post Desc: </strong></div>${promo}
-  </div>
+            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false"
+              style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;"
+              data-sport="${sportFromInput}"
+              data-commencetime="${gameTime}"
+              data-phrase="${phrase}"
+              data-promo="${promo}"
+            >
+              <div><strong>Related Sport: </strong>${displaySport}</div>
+              <div><strong>Post Title: </strong>${postTitle}</div>
+              <div><strong>Post Desc: </strong>${promo}</div>
+            </div>
           `;
         });
       });
@@ -895,21 +911,13 @@
       // Add click and keyboard handlers for all hype output blocks
       Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
         block.onclick = () => {
-          // Figure out which match & phrase clicked, map index:
-          // Each match has hypePhrases.length blocks; find match and phrase indices
-          let cumulativeCount = 0;
-          let selectedRow = null;
-          for (const match of shuffledMatches) {
-            if (i < cumulativeCount + hypePhrases.length) {
-              selectedRow = hypePhrases[i - cumulativeCount];
-              break;
-            }
-            cumulativeCount += hypePhrases.length;
-          }
-          if (!selectedRow) return;
+          const sportFromInput = block.dataset.sport || "N/A";
+          const gameTime = block.dataset.commencetime || "N/A";
+          const phrase = block.dataset.phrase || "";
+          const promo = block.dataset.promo || "";
 
-          window.selectedHypePostTitle = `${unitVal} UNIT(s) - ${selectedRow.Phrase} - ${selectedRow.Sport || "N/A"} ⚾️ - STARTS @ ${selectedRow.CommenceTime || "N/A"}`;
-          window.selectedHypeRow = selectedRow;
+          window.selectedHypePostTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
+          window.selectedHypeRow = { Promo: promo, Phrase: phrase, Sport: sportFromInput };
           window.selectedHypeNote = window.latestNote || "N/A";
 
           document.getElementById("hypePhraseStep").classList.add("hidden");
@@ -1097,8 +1105,15 @@
       box.appendChild(iframe2);
 
       // --- Add Post Title and Post Desc readonly textboxes here ---
+
       const postContainer = document.getElementById("postTitleDescContainer");
       postContainer.innerHTML = ""; // Clear old if any
+
+      // Add label above Post Title input
+      const postTitleLabel = document.createElement("div");
+      postTitleLabel.textContent = "Tap to Copy - Paste in Patreon Post Title";
+      postTitleLabel.className = "copyTextboxLabel";
+      postContainer.appendChild(postTitleLabel);
 
       // Create Post Title textbox
       const postTitleInput = document.createElement("input");
@@ -1115,6 +1130,13 @@
           alert("Post Title copied to clipboard!");
         });
       });
+      postContainer.appendChild(postTitleInput);
+
+      // Add label above Post Desc input
+      const postDescLabel = document.createElement("div");
+      postDescLabel.textContent = "Tap to Copy - Paste in Patreon Post Description";
+      postDescLabel.className = "copyTextboxLabel";
+      postContainer.appendChild(postDescLabel);
 
       // Create Post Desc textbox
       const postDescInput = document.createElement("input");
@@ -1131,7 +1153,6 @@
         });
       });
 
-      postContainer.appendChild(postTitleInput);
       postContainer.appendChild(postDescInput);
 
       // --- End new additions ---
@@ -1219,7 +1240,7 @@
         const selectedOption = dropdown.options[dropdown.selectedIndex];
         const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
 
-        if (selected === "__other") {  // <--- FIXED HERE: Use '===' instead of '='
+        if (selected === "__other") {
           inputDiv.innerHTML = `
             <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
               Enter Wager Type (e.g. 'ML' or 'F5')
