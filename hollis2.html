@@ -205,6 +205,31 @@
       outline: 2px solid #2179a5;
       outline-offset: 2px;
     }
+
+    /* NEW styles for Post Title and Post Desc textboxes */
+    .copyTextbox {
+      font-family: 'Oswald', sans-serif !important;
+      font-size: 10px !important;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+      padding: 6px 10px;
+      margin: 8px auto;
+      border-radius: 6px;
+      border: 1px solid #2a9fd6;
+      background-color: #f0f8ff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      user-select: all;
+    }
+
+    .copyTextbox:focus {
+      outline: 2px solid #2179a5;
+      outline-offset: 2px;
+    }
+
   </style>
 </head>
 <body>
@@ -242,6 +267,11 @@
 
       <div id="resetWrapper">
         <button id="resetBtn" onclick="resetSearch()">Reset</button>
+      </div>
+
+      <!-- Added container for Post Title and Post Desc textboxes here -->
+      <div id="postTitleDescContainer" style="margin-top: 10px; max-width: 400px;">
+        <!-- These inputs will be created dynamically -->
       </div>
 
       <div id="gameSuggestion" class="hidden"></div>
@@ -602,97 +632,100 @@
     }
 
     function resetSearch() {
-  // Clear global variables
-  matches = [];
-  currentMatchIndex = 0;
-  selectedMatch = null;
-  window.overrideTeamName = null;
-  window.selectedHypeRow = null;
-  window.selectedHypePostTitle = null;
-  window.selectedHypeNote = null;
-  window.latestNote = null;
-  window.overrideTitle = null;
+      // Clear global variables
+      matches = [];
+      currentMatchIndex = 0;
+      selectedMatch = null;
+      window.overrideTeamName = null;
+      window.selectedHypeRow = null;
+      window.selectedHypePostTitle = null;
+      window.selectedHypeNote = null;
+      window.latestNote = null;
+      window.overrideTitle = null;
 
-  // Clear inputs
-  document.getElementById("teamSearch").value = "";
-  const wagerDropdown = document.getElementById("wagerDropdown");
-  if (wagerDropdown) wagerDropdown.selectedIndex = 0;
+      // Clear inputs
+      document.getElementById("teamSearch").value = "";
+      const wagerDropdown = document.getElementById("wagerDropdown");
+      if (wagerDropdown) wagerDropdown.selectedIndex = 0;
 
-  const wagerTypeInput = document.getElementById("wagerType");
-  if (wagerTypeInput) wagerTypeInput.value = "";
+      const wagerTypeInput = document.getElementById("wagerType");
+      if (wagerTypeInput) wagerTypeInput.value = "";
 
-  const unitDropdown = document.getElementById("unitDropdown");
-  if (unitDropdown) unitDropdown.selectedIndex = 0;
+      const unitDropdown = document.getElementById("unitDropdown");
+      if (unitDropdown) unitDropdown.selectedIndex = 0;
 
-  document.getElementById("notesInput").value = "";
+      document.getElementById("notesInput").value = "";
 
-  // Clear error messages
-  document.getElementById("searchError").textContent = "";
-  const wagerError = document.getElementById("wagerError");
-  if (wagerError) wagerError.textContent = "";
-  const unitDropdownError = document.getElementById("unitDropdownError");
-  if (unitDropdownError) unitDropdownError.textContent = "";
+      // Clear error messages
+      document.getElementById("searchError").textContent = "";
+      const wagerError = document.getElementById("wagerError");
+      if (wagerError) wagerError.textContent = "";
+      const unitDropdownError = document.getElementById("unitDropdownError");
+      if (unitDropdownError) unitDropdownError.textContent = "";
 
-  // Hide all optional/secondary sections
-  const toHide = [
-    "gameSuggestion",
-    "customInputSection",
-    "unitDropdownSection",
-    "notesChoiceSection",
-    "notesInputSection",
-    "confirmOutput",
-    "submitNoteBtn",
-    "hypePhraseStep"
-  ];
-  toHide.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add("hidden");
-  });
+      // Hide all optional/secondary sections
+      const toHide = [
+        "gameSuggestion",
+        "customInputSection",
+        "unitDropdownSection",
+        "notesChoiceSection",
+        "notesInputSection",
+        "confirmOutput",
+        "submitNoteBtn",
+        "hypePhraseStep"
+      ];
+      toHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
 
-  // Clear hype phrase dropdowns and outputs
-  const hypeASelect = document.getElementById("hypeASelect");
-  if (hypeASelect) hypeASelect.selectedIndex = 0;
-  const hypeBSelect = document.getElementById("hypeBSelect");
-  if (hypeBSelect) {
-    hypeBSelect.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
-    hypeBSelect.disabled = true;
-  }
-  const hypePhraseOutputs = document.getElementById("hypePhraseOutputs");
-  if (hypePhraseOutputs) hypePhraseOutputs.innerHTML = "";
+      // Clear hype phrase dropdowns and outputs
+      const hypeASelect = document.getElementById("hypeASelect");
+      if (hypeASelect) hypeASelect.selectedIndex = 0;
+      const hypeBSelect = document.getElementById("hypeBSelect");
+      if (hypeBSelect) {
+        hypeBSelect.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
+        hypeBSelect.disabled = true;
+      }
+      const hypePhraseOutputs = document.getElementById("hypePhraseOutputs");
+      if (hypePhraseOutputs) hypePhraseOutputs.innerHTML = "";
 
-  // Clear confirm output and remove any appended toggle buttons or iframes
-  const confirmOutput = document.getElementById("confirmOutput");
-  if (confirmOutput) {
-    confirmOutput.classList.add("hidden");
-    confirmOutput.innerHTML = "";
-  }
-  const toggleBtn = document.getElementById("toggleImageBtn");
-  if (toggleBtn) toggleBtn.remove();
+      // Clear confirm output and remove any appended toggle buttons or iframes
+      const confirmOutput = document.getElementById("confirmOutput");
+      if (confirmOutput) {
+        confirmOutput.classList.add("hidden");
+        confirmOutput.innerHTML = "";
+      }
+      const toggleBtn = document.getElementById("toggleImageBtn");
+      if (toggleBtn) toggleBtn.remove();
 
-  // Show the main team search input section and label/buttons
-  const inputLabel = document.getElementById("inputLabel");
-  const teamSearch = document.getElementById("teamSearch");
-  const searchBtn = document.getElementById("searchBtn");
+      // Clear Post Title/Desc container
+      const postContainer = document.getElementById("postTitleDescContainer");
+      postContainer.innerHTML = "";
 
-  if (inputLabel) {
-    inputLabel.classList.remove("hidden");
-    inputLabel.style.display = "";
-  }
-  if (teamSearch) {
-    teamSearch.classList.remove("hidden");
-    teamSearch.style.display = "";
-    teamSearch.focus();
-  }
-  if (searchBtn) {
-    searchBtn.classList.remove("hidden");
-    searchBtn.style.display = "";
-  }
+      // Show the main team search input section and label/buttons
+      const inputLabel = document.getElementById("inputLabel");
+      const teamSearch = document.getElementById("teamSearch");
+      const searchBtn = document.getElementById("searchBtn");
 
-  // Hide the game suggestion container just in case
-  const gameSuggestion = document.getElementById("gameSuggestion");
-  if (gameSuggestion) gameSuggestion.classList.add("hidden");
-}
+      if (inputLabel) {
+        inputLabel.classList.remove("hidden");
+        inputLabel.style.display = "";
+      }
+      if (teamSearch) {
+        teamSearch.classList.remove("hidden");
+        teamSearch.style.display = "";
+        teamSearch.focus();
+      }
+      if (searchBtn) {
+        searchBtn.classList.remove("hidden");
+        searchBtn.style.display = "";
+      }
 
+      // Hide the game suggestion container just in case
+      const gameSuggestion = document.getElementById("gameSuggestion");
+      if (gameSuggestion) gameSuggestion.classList.add("hidden");
+    }
 
     function openImageGenerator() {
       const encodedText = encodeURIComponent(window._cleanedOutput || '');
@@ -851,7 +884,7 @@
             <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;">
     <div><strong>Related Sport: </strong></div>${displaySport}
     <div><strong>Post Title: </strong></div>${postTitle}
-    <div><strong>Post Description: </strong></div>${promo}
+    <div><strong>Post Desc: </strong></div>${promo}
   </div>
           `;
         });
@@ -875,7 +908,7 @@
           }
           if (!selectedRow) return;
 
-          window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${selectedRow.Sport || "N/A"} ⚾️ - STARTS @ ${selectedRow.CommenceTime || "N/A"}`;
+          window.selectedHypePostTitle = `${unitVal} UNIT(s) - ${selectedRow.Phrase} - ${selectedRow.Sport || "N/A"} ⚾️ - STARTS @ ${selectedRow.CommenceTime || "N/A"}`;
           window.selectedHypeRow = selectedRow;
           window.selectedHypeNote = window.latestNote || "N/A";
 
@@ -1062,6 +1095,46 @@
 
       box.appendChild(iframe1);
       box.appendChild(iframe2);
+
+      // --- Add Post Title and Post Desc readonly textboxes here ---
+      const postContainer = document.getElementById("postTitleDescContainer");
+      postContainer.innerHTML = ""; // Clear old if any
+
+      // Create Post Title textbox
+      const postTitleInput = document.createElement("input");
+      postTitleInput.type = "text";
+      postTitleInput.readOnly = true;
+      postTitleInput.className = "copyTextbox";
+      postTitleInput.title = "Click to copy Post Title";
+      postTitleInput.value = window.overrideTitle || "";
+      postTitleInput.style.userSelect = "all";
+
+      // Copy to clipboard on click
+      postTitleInput.addEventListener("click", () => {
+        navigator.clipboard.writeText(postTitleInput.value).then(() => {
+          alert("Post Title copied to clipboard!");
+        });
+      });
+
+      // Create Post Desc textbox
+      const postDescInput = document.createElement("input");
+      postDescInput.type = "text";
+      postDescInput.readOnly = true;
+      postDescInput.className = "copyTextbox";
+      postDescInput.title = "Click to copy Post Description";
+      postDescInput.value = window.selectedHypeRow ? (window.selectedHypeRow.Promo || "") : "";
+      postDescInput.style.userSelect = "all";
+
+      postDescInput.addEventListener("click", () => {
+        navigator.clipboard.writeText(postDescInput.value).then(() => {
+          alert("Post Description copied to clipboard!");
+        });
+      });
+
+      postContainer.appendChild(postTitleInput);
+      postContainer.appendChild(postDescInput);
+
+      // --- End new additions ---
 
       const toggleBtn = document.createElement("button");
       toggleBtn.textContent = "Switch to Paid Image";
