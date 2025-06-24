@@ -617,7 +617,11 @@
       label.textContent = `Enter the amount for [[NUM]] (${previousVal})`;
 
       const numInput = document.getElementById("numInput");
-      numInput.focus();
+      
+      setTimeout(() => {
+  numInput.focus();
+}, 100);
+     // numInput.focus();
       // On mobile, open numeric keypad immediately
      // numInput.click();
 
