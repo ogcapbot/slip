@@ -840,11 +840,12 @@
         const shuffledPhrases = hypePhrases.slice().sort(() => Math.random() - 0.5);
 
         shuffledPhrases.forEach(row => {
-          const sport = row.Sport || "Available for All Sports";
+          const sport = row.Sport || "N/A";
           const phrase = row.Phrase || "";
           const promo = row.Promo || "";
 
           const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+          const displaySport = (sport === "N/A" ? "Used for Any Sport" : sport);
 
           html += `
             <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 15px;">
