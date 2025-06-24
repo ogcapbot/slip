@@ -351,8 +351,6 @@
   <script>
     const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
     let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
-    let wagerWithNumberRaw = "";   // raw wager template with [[NUM]]
-    let wagerWithNumberFinal = ""; // wager after number substitution
 
     window.onload = async () => {
       try {
@@ -604,6 +602,67 @@
       buildWagerDropdown();
     }
 
+    // New screen: show numeric input for [[NUM]] wagers
+    function showNumInputScreen(wagerTemplate) {
+      const inputDiv = document.getElementById("customInputSection");
+      inputDiv.innerHTML = `
+        <label for="numInput" style="color:#666;font-size:14px;margin-bottom:5px;display:block;" id="numInputLabel"></label>
+        <input type="number" id="numInput" step="0.5" min="0.5" max="300" inputmode="decimal" pattern="^(0\\.5|[1-9][0-9]*([.]5)?)$" />
+        <div class="error" id="numInputError"></div>
+        <button id="numSubmitBtn">Submit</button>
+      `;
+
+      const label = document.getElementById("numInputLabel");
+      const previousVal = wagerTemplate;
+      label.textContent = `Enter the amount for [[NUM]] (${previousVal})`;
+
+      const numInput = document.getElementById("numInput");
+      numInput.focus();
+      // On mobile, open numeric keypad immediately
+      numInput.click();
+
+      // Validate on input to only allow increments of 0.5, no zero, max 300
+      numInput.addEventListener("input", () => {
+        let val = numInput.value;
+        const errorDiv = document.getElementById("numInputError");
+        errorDiv.textContent = "";
+
+        if (val === "") return;
+
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+        }
+      });
+
+      document.getElementById("numSubmitBtn").onclick = () => {
+        const val = numInput.value.trim();
+        const errorDiv = document.getElementById("numInputError");
+
+        if (!val) {
+          errorDiv.textContent = "Please enter a value.";
+          numInput.focus();
+          return;
+        }
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+          numInput.focus();
+          return;
+        }
+
+        // Replace [[NUM]] with entered number and store
+        window.currentWagerWithNum = wagerTemplate.replace(/\[\[NUM\]\]/g, val);
+
+        // Clear error and proceed to next step
+        errorDiv.textContent = "";
+        document.getElementById("customInputSection").classList.add("hidden");
+        buildUnitDropdown();
+        document.getElementById("unitDropdownSection").classList.remove("hidden");
+        document.getElementById("unitDropdown").focus();
+      };
+    }
+
     function submitWagerType() {
       const wager = document.getElementById("wagerType").value.trim();
       const errorBox = document.getElementById("wagerError");
@@ -653,8 +712,7 @@
       window.selectedHypeNote = null;
       window.latestNote = null;
       window.overrideTitle = null;
-      wagerWithNumberRaw = "";
-      wagerWithNumberFinal = "";
+      window.currentWagerWithNum = null;
 
       // Clear inputs
       document.getElementById("teamSearch").value = "";
@@ -675,6 +733,8 @@
       if (wagerError) wagerError.textContent = "";
       const unitDropdownError = document.getElementById("unitDropdownError");
       if (unitDropdownError) unitDropdownError.textContent = "";
+      const numInputError = document.getElementById("numInputError");
+      if (numInputError) numInputError.textContent = "";
 
       // Hide all optional/secondary sections
       const toHide = [
@@ -904,7 +964,7 @@
             >
               <div><strong>Related Sport: </strong>${displaySport}</div>
               <div><strong>Post Title: </strong>${postTitle}</div>
-              <div><strong>Post Desc: </strong>${promo}</div>
+              <div><strong>Post Desc: </strong><span>${promo}</span></div>
             </div>
           `;
         });
@@ -919,6 +979,8 @@
           const gameTime = block.dataset.commencetime || "N/A";
           const phrase = block.dataset.phrase || "";
           const promo = block.dataset.promo || "";
+
+          const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
 
           window.selectedHypePostTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
           window.selectedHypeRow = { Promo: promo, Phrase: phrase, Sport: sportFromInput };
@@ -942,18 +1004,15 @@
       if (newTitle) window.overrideTitle = newTitle;
 
       let wagerRaw = "";
-      // Use wagerWithNumberFinal if set, else fallback:
-      if (wagerWithNumberFinal) {
-        wagerRaw = wagerWithNumberFinal;
-      } else {
-        const wagerInput = document.getElementById("wagerType");
-        const wagerDropdown = document.getElementById("wagerDropdown");
+      const wagerInput = document.getElementById("wagerType");
+      const wagerDropdown = document.getElementById("wagerDropdown");
 
-        if (wagerInput) {
-          wagerRaw = wagerInput.value.trim();
-        } else if (wagerDropdown) {
-          wagerRaw = wagerDropdown.value.trim();
-        }
+      if (window.currentWagerWithNum) {
+        wagerRaw = window.currentWagerWithNum;
+      } else if (wagerInput) {
+        wagerRaw = wagerInput.value.trim();
+      } else if (wagerDropdown) {
+        wagerRaw = wagerDropdown.value.trim();
       }
       const wager = wagerRaw.toUpperCase();
 
@@ -1147,15 +1206,16 @@
       postDescLabel.className = "copyTextboxLabel";
       postContainer.appendChild(postDescLabel);
 
-      // Create Post Desc textbox
+      // Create Post Desc textbox (using span to preserve emojis)
       const postDescInput = document.createElement("input");
       postDescInput.type = "text";
       postDescInput.readOnly = true;
       postDescInput.className = "copyTextbox";
       postDescInput.title = "Click to copy Post Description";
-      postDescInput.value = window.selectedHypeRow ? (window.selectedHypeRow.Promo || "") : "";
+      postDescInput.value = window.selectedHypeRow ? window.selectedHypeRow.Promo || "" : "";
       postDescInput.style.userSelect = "all";
 
+      // Copy to clipboard on click
       postDescInput.addEventListener("click", () => {
         navigator.clipboard.writeText(postDescInput.value).then(() => {
           alert("Post Description copied to clipboard!");
@@ -1259,85 +1319,19 @@
             <div class="error" id="wagerError"></div>
           `;
           document.getElementById("unitDropdownSection").classList.add("hidden");
-        } else if (requiresNumber && selected.includes("[[NUM]]")) {
-          // Show number input screen instead of units
-          showNumberInputScreen(selected);
         } else {
-          document.getElementById("customInputSection").classList.add("hidden");
-          if (!requiresNumber) {
-            buildUnitDropdown();
-            document.getElementById("unitDropdownSection").classList.remove("hidden");
+          // New: If requires number & contains [[NUM]] show number input screen
+          if (requiresNumber && selected.includes("[[NUM]]")) {
+            showNumInputScreen(selected);
+          } else {
+            document.getElementById("customInputSection").classList.add("hidden");
+            if (!requiresNumber) {
+              buildUnitDropdown();
+              document.getElementById("unitDropdownSection").classList.remove("hidden");
+            }
           }
         }
       });
-    }
-
-    // Show numeric input box for wagers with [[NUM]]
-    function showNumberInputScreen(wagerTemplate) {
-      wagerWithNumberRaw = wagerTemplate;
-      wagerWithNumberFinal = "";
-
-      const inputDiv = document.getElementById("customInputSection");
-      const labelText = `Enter the amount for [[NUM]] (${wagerTemplate.replace("[[NUM]]", "")})`;
-
-      inputDiv.innerHTML = `
-        <label for="numberInput" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">${labelText}</label>
-        <input
-          type="number"
-          id="numberInput"
-          min="0.5"
-          max="300"
-          step="0.5"
-          pattern="^([1-9][0-9]*|[0-9]+\\.5)$"
-          inputmode="decimal"
-          autocomplete="off"
-          placeholder="Enter positive number in increments of 0.5, max 300"
-        />
-        <div class="error" id="numberError"></div>
-        <button id="numberSubmitBtn">Submit</button>
-      `;
-      document.getElementById("unitDropdownSection").classList.add("hidden");
-      document.getElementById("customInputSection").classList.remove("hidden");
-
-      const numberInput = document.getElementById("numberInput");
-      const numberError = document.getElementById("numberError");
-      const submitBtn = document.getElementById("numberSubmitBtn");
-
-      numberInput.focus();
-
-      // Restrict input to increments of 0.5 and max 300
-      submitBtn.onclick = () => {
-        const val = numberInput.value.trim();
-
-        // Validate number: positive, max 300, increments of 0.5 only
-        if (!val || isNaN(val)) {
-          numberError.textContent = "Please enter a valid number.";
-          return;
-        }
-        const numVal = parseFloat(val);
-        if (numVal <= 0) {
-          numberError.textContent = "Value must be greater than 0.";
-          return;
-        }
-        if (numVal > 300) {
-          numberError.textContent = "Value cannot exceed 300.";
-          return;
-        }
-        if ((numVal * 2) % 1 !== 0) {
-          numberError.textContent = "Value must be in increments of 0.5.";
-          return;
-        }
-
-        numberError.textContent = "";
-
-        wagerWithNumberFinal = wagerWithNumberRaw.replace("[[NUM]]", numVal);
-
-        // Hide the number input screen, show unit dropdown
-        document.getElementById("customInputSection").classList.add("hidden");
-        buildUnitDropdown();
-        document.getElementById("unitDropdownSection").classList.remove("hidden");
-        document.getElementById("unitDropdown").focus();
-      };
     }
 
     function buildUnitDropdown() {
