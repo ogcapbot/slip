@@ -750,6 +750,7 @@
       document.getElementById("hypePhraseOutputs").innerHTML = "";
     });
 
+    // UPDATED hypeBSelect event to show ALL matches with hype phrases for each in random order:
     document.getElementById("hypeBSelect").addEventListener("change", function () {
       const selectedType = document.getElementById("hypeASelect").value;
       const selectedEnergy = this.value;
@@ -760,47 +761,73 @@
         return;
       }
 
-      const matches = (allData.hypePhrases || []).filter(row =>
+      // Filter hype phrases for selected Type and Energy
+      const hypePhrases = (allData.hypePhrases || []).filter(row =>
         row.active_status === "active" &&
         row.Type === selectedType &&
         row.Energy === selectedEnergy
       );
 
-      const shuffled = matches.slice().sort(() => Math.random() - 0.5);
-
       const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
 
-      const gameTime = (() => {
-        if (!selectedMatch || !selectedMatch["Commence Time (UTC)"]) return "N/A";
-        const dt = new Date(selectedMatch["Commence Time (UTC)"]);
-        return dt.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", hour12: true }) + " EST";
-      })();
-
-      const sportFromInput = selectedMatch ? (selectedMatch["Sport Name"] || "N/A") : "N/A";
-
       let html = "";
-      shuffled.forEach(row => {
-        const sport = row.Sport || "N/A";
-        const phrase = row.Phrase || "";
-        const promo = row.Promo || "";
 
-        const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+      // Shuffle matches so games appear in random order
+      const shuffledMatches = matches.slice().sort(() => Math.random() - 0.5);
 
-        html += `
-          <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px;">
-            <div><strong>Related Sport:</strong> ${sport}</div>
-            <div><strong>Post Title:</strong> ${postTitle}</div>
-            <div><strong>Post Description:</strong> ${promo}</div>
-          </div>
-        `;
+      // For each match found, display all hype phrases with that match's info
+      shuffledMatches.forEach(match => {
+        // Get game time for this match:
+        const gameTime = match && match.row && match.row["Commence Time (UTC)"] ?
+          new Date(match.row["Commence Time (UTC)"]).toLocaleString("en-US", {
+            timeZone: "America/New_York",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+          }) + " EST" : "N/A";
+
+        // Get sport name for this match:
+        const sportFromInput = match.row ? (match.row["Sport Name"] || "N/A") : "N/A";
+
+        // Shuffle hype phrases for randomness
+        const shuffledPhrases = hypePhrases.slice().sort(() => Math.random() - 0.5);
+
+        shuffledPhrases.forEach(row => {
+          const sport = row.Sport || "N/A";
+          const phrase = row.Phrase || "";
+          const promo = row.Promo || "";
+
+          const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+
+          html += `
+            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px;">
+              <div><strong>Related Sport:</strong> ${sport}</div>
+              <div><strong>Post Title:</strong> ${postTitle}</div>
+              <div><strong>Post Description:</strong> ${promo}</div>
+            </div>
+          `;
+        });
       });
 
       outputDiv.innerHTML = html;
 
+      // Add click and keyboard handlers for all hype output blocks
       Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
         block.onclick = () => {
-          const selectedRow = shuffled[i];
-          window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+          // Figure out which match & phrase clicked, map index:
+          // Each match has hypePhrases.length blocks; find match and phrase indices
+          let cumulativeCount = 0;
+          let selectedRow = null;
+          for (const match of shuffledMatches) {
+            if (i < cumulativeCount + hypePhrases.length) {
+              selectedRow = hypePhrases[i - cumulativeCount];
+              break;
+            }
+            cumulativeCount += hypePhrases.length;
+          }
+          if (!selectedRow) return;
+
+          window.selectedHypePostTitle = `${unitVal} UNITS - ${selectedRow.Phrase} - ${selectedRow.Sport || "N/A"} ⚾️ - STARTS @ ${selectedRow.CommenceTime || "N/A"}`;
           window.selectedHypeRow = selectedRow;
           window.selectedHypeNote = window.latestNote || "N/A";
 
@@ -917,7 +944,7 @@
         `Game Time: ${formattedTime}`,
         "",
         "═══════════════════════",
-        "######## THANK YOU FOR TRUSTING OGCB",
+        "######## THANK YOU FOR TRUSTING OGCB`,
         "═══════════════════════",
         "",
         `Title: ${window.overrideTitle || "[[TITLE]]"}`,
