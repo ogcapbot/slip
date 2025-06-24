@@ -844,17 +844,14 @@
           const phrase = row.Phrase || "";
           const promo = row.Promo || "";
 
-          const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} ⚾️ - STARTS @ ${gameTime}`;
+          const postTitle = `${unitVal} UNITS - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
           const displaySport = (sport === "N/A" ? "Used for Any Sport" : sport);
 
           html += `
-            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 15px;">
-    <div><strong>Related Sport:</strong></div>
-    <div>${displaySport}</div>
-    <div><strong>Post Title:</strong></div>
-    <div>${postTitle}</div>
-    <div><strong>Post Description:</strong></div>
-    <div>${promo}</div>
+            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false" style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;">
+    <div><strong>Related Sport: </strong>${displaySport}</div>
+    <div><strong>Post Title: </strong>${postTitle}</div>
+    <div><strong>Post Description: </strong>${promo}</div>
   </div>
           `;
         });
