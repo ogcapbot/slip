@@ -247,11 +247,13 @@ button:hover {
 }
 
 #versionFooter {
-  max-width: 400px;          /* same max width as container */
-  margin: 20px auto 0 auto; /* center horizontally, with some top margin */
+  max-width: 400px;           /* matches container width */
+  margin: 20px auto 0 auto;  /* centers footer horizontally with spacing */
   color: gray;
   font-size: 14px;
   font-family: 'Oswald', sans-serif;
+  text-align: center;
 }
+
 
 
