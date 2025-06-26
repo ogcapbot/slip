@@ -1,4 +1,3 @@
-// dataLoader.js
 let allData = {};
 let matches = [];
 let currentMatchIndex = 0;
