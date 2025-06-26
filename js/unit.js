@@ -1,41 +1,48 @@
-(() => {
-  const unitDropdownSection = document.getElementById("unitDropdownSection");
-  const unitDropdown = document.getElementById("unitDropdown");
-  const unitDropdownError = document.getElementById("unitDropdownError");
+// unit.js
 
-  function buildUnitDropdown() {
-    const unitData = window.AppState.allData.units || [];
-    unitDropdown.innerHTML = "";
+function buildUnitDropdown() {
+  const unitData = allData.units || [];
 
-    const defaultOpt = document.createElement("option");
-    defaultOpt.textContent = "Select Unit Amount...";
-    defaultOpt.disabled = true;
-    defaultOpt.selected = true;
-    unitDropdown.appendChild(defaultOpt);
+  const dropdown = document.getElementById("unitDropdown");
+  const section = document.getElementById("unitDropdownSection");
 
-    unitData.forEach(row => {
-      const opt = document.createElement("option");
-      opt.textContent = row.display_unit;
-      opt.value = row.display_unit;
-      unitDropdown.appendChild(opt);
-    });
+  dropdown.innerHTML = "";
 
-    if(unitDropdownSection.classList.contains("hidden")) {
-      unitDropdownSection.classList.remove("hidden");
-    }
+  const defaultOpt = document.createElement("option");
+  defaultOpt.textContent = "Select Unit Amount...";
+  defaultOpt.disabled = true;
+  defaultOpt.selected = true;
+  dropdown.appendChild(defaultOpt);
+
+  unitData.forEach(row => {
+    const opt = document.createElement("option");
+    opt.textContent = row.display_unit;
+    opt.value = row.display_unit;
+    dropdown.appendChild(opt);
+  });
+
+  if (section.classList.contains("hidden")) {
+    section.classList.remove("hidden");
+  }
+}
+
+function submitUnitAmount(bypass = false) {
+  const dropdown = document.getElementById("unitDropdown");
+  const input = dropdown ? dropdown.value : "";
+  const errorDiv = document.getElementById("unitDropdownError");
+
+  if (!input || input === "Select Unit(s)") {
+    errorDiv.textContent = "Please select a valid unit amount.";
+    return;
   }
 
-  unitDropdown.addEventListener("change", () => {
-    const val = unitDropdown.value;
-    if(!val || val === "Select Unit Amount...") {
-      unitDropdownError.textContent = "Please select a valid unit amount.";
-      return;
-    }
-    unitDropdownError.textContent = "";
-    document.dispatchEvent(new CustomEvent("unitSelectionCompleted"));
-  });
+  errorDiv.textContent = "";
+  document.getElementById("unitDropdownSection").classList.remove("hidden");
 
-  document.addEventListener("unitSelectionStarted", () => {
-    buildUnitDropdown();
-  });
-})();
+  document.getElementById("unitDropdownSection").classList.add("hidden");
+  document.getElementById("notesChoiceSection").classList.remove("hidden");
+}
+
+document.getElementById("unitDropdown").addEventListener("change", () => {
+  submitUnitAmount();
+});
