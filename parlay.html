@@ -3,58 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OG Capper Bets - Official Pick Image Creator</title>
+  <title>OG Capper Bets - Official Pick Image Creator v7.25</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Oswald', sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-    }
-    button {
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      margin: 0 auto 12px;
-      display: block;
-      padding: 12px;
-      font-size: 16px;
-      background-color: #2a9fd6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #2179a5;
-    }
-    .hidden {
-      display: none;
-    }
-    #pickTypeScreen button {
-      height: 52px;
-      font-weight: bold;
-      font-size: 18px;
-    }
-  </style>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
 
-  <!-- Access Screen -->
   <div class="container" id="access-screen">
     <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
-      <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator</h3>
+      <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
       <h5 style="margin: 0; color: red;">Official Use Only</h5>
     </div>
-    <label for="accessCode" style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">Enter Access Code</label>
+
+    <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">Enter Access Code</label>
     <input
       type="text"
       id="accessCode"
@@ -64,56 +26,90 @@
       maxlength="10"
       style="width: 100%; max-width: 400px; box-sizing: border-box; display: block; margin: 0 auto 12px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;"
     />
-    <button id="accessBtn">Submit</button>
+    <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
   </div>
 
-  <!-- Pick Type Screen -->
-  <div class="container hidden" id="pickTypeScreen">
-    <button id="btnStraightPick">Straight Pick</button>
-    <button id="btnUpTo5">Up to 5 Parlay Picks</button>
-    <button id="btn6to15">6 to 15 Parlay Picks</button>
-  </div>
+  <div class="container hidden" id="sports-screen">
+    <div id="loader"></div>
+    <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
-  <!-- Sports/Game/Wager Screen -->
-  <div class="container hidden" id="sports-screen"></div>
+    <div id="loggedInInfo" class="hidden">
+      <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
+        <h3 style="margin: 0;">OG Capper Bets – Official Pick Image Creator v7.25</h3>
+        <h5 style="margin: 0; color: red;">Official Use Only</h5>
+        <h5 id="loginNotice"></h5>
+      </div>
 
-  <!-- Hype Phrase and Final Output Screen -->
-  <div class="container hidden" id="hype-screen"></div>
+      <div id="resetWrapper">
+        <button id="resetBtn" onclick="resetSearch()">Reset</button>
+      </div>
 
-  <script>
-    window.AppState = {
-      capperInfo: [],
-      allData: {},
-      matches: [],
-      currentMatchIndex: 0,
-      selectedMatch: null,
-      capperName: "",
-      parlayPicks: [],
-      currentPickNumber: 1,
-      pickType: "straight",
-      overrideTeamName: null,
-      currentWagerWithNum: null,
-      selectedHypeRow: null,
-      selectedHypePostTitle: null,
-      selectedHypeNote: null,
-      latestNote: null,
-      overrideTitle: null
-    };
-  </script>
+      <!-- Added container for Post Title and Post Desc textboxes here -->
+      <div id="postTitleDescContainer" style="margin-top: 10px; max-width: 400px;">
+        <!-- These inputs and labels will be created dynamically -->
+      </div>
 
-  <script src="js/access.js"></script>
-  <script src="js/picktype.js"></script>
-  <script src="js/game.js"></script>
-  <script src="js/wager.js"></script>
-  <script src="js/straightpicks.js"></script>
-  <script src="js/upto5picks.js"></script>
-  <script src="js/6to15picks.js"></script>
-  <script src="js/unit.js"></script>
-  <script src="js/note.js"></script>
-  <script src="js/hypephrase.js"></script>
-  <script src="js/imagecreation.js"></script>
-  <script src="js/utils.js"></script>
+      <div id="gameSuggestion" class="hidden"></div>
+    </div>
 
-</body>
-</html>
+    <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
+    <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
+    <button id="searchBtn" onclick="searchGames()">Submit</button>
+    <div class="error" id="searchError"></div>
+
+    <div id="customInputSection" class="hidden"></div>
+
+    <div id="unitDropdownSection" class="hidden">
+      <label for="unitDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+        Select Unit(s):
+      </label>
+      <select id="unitDropdown"></select>
+      <div class="error" id="unitDropdownError"></div>
+    </div>
+
+    <div id="notesChoiceSection" class="hidden">
+      <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">
+        Do You Want to Include any Comments/Notes?
+      </label>
+      <button id="yesNoteBtn">Yes, Enter Comment/Note</button>
+      <button id="noNoteBtn">No, Proceed to Next Step</button>
+    </div>
+
+    <div id="notesInputSection" class="hidden" style="margin-top: 20px;">
+      <div id="notesHeaderRow" style="display: none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <label for="notesInput" style="color: #666; font-size: 14px;">
+          Enter Your Comment/Note Below:
+        </label>
+        <div id="charCount" style="color: #666; font-size: 14px;">
+          Remaining: 100
+        </div>
+      </div>
+
+      <textarea
+        id="notesInput"
+        rows="2"
+        maxlength="100"
+        placeholder="Enter Comment/Note Here"
+        style="font-family: 'Oswald', Arial, sans-serif; font-size: 14px; width: 100%; box-sizing: border-box;"
+      ></textarea>
+
+      <button id="submitNoteBtn" class="hidden">Submit</button>
+    </div>
+
+    <!-- New Hype Phrase Step -->
+    <div id="hypePhraseStep" class="hidden" style="margin-top: 20px;">
+      <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
+        Select Type of Hype Phrase:
+      </label>
+      <select id="hypeASelect"></select>
+
+      <label for="hypeBSelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block; margin-top: 15px;">
+        Select Energy of Hype Phrase:
+      </label>
+      <select id="hypeBSelect" disabled></select>
+
+      <div id="hypePhraseOutputs" style="margin-top: 15px;"></div>
+    </div>
+
+    <pre id="confirmOutput" class="
