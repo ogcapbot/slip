@@ -90,4 +90,7 @@ function resetSearch() {
   if (gameSuggestion) gameSuggestion.classList.add("hidden");
 }
 
-document.getElementById("resetBtn").addEventListener("click", resetSearch);
+document.addEventListener("DOMContentLoaded", () => {
+  const resetBtn = document.getElementById("resetBtn");
+  resetBtn.addEventListener("click", resetSearch);
+});
