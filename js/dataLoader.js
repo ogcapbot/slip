@@ -1,5 +1,8 @@
 // dataLoader.js
 let allData = {};
+let matches = [];
+let currentMatchIndex = 0;
+let selectedMatch = null;
 
 async function loadAllData() {
   try {
