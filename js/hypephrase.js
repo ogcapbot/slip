@@ -1,4 +1,3 @@
-// js/hypephrase.js
 (() => {
   const hypeScreen = document.getElementById("hype-screen");
   let hypeASelect, hypeBSelect, hypePhraseOutputs;
@@ -96,7 +95,6 @@
     const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
 
     let html = "";
-    // shuffle matches for randomness
     const shuffledMatches = (window.AppState.matches || []).slice().sort(() => Math.random() - 0.5);
 
     shuffledMatches.forEach(match => {
