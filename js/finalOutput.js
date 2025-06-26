@@ -1,5 +1,3 @@
-// finalOutput.js
-
 function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
