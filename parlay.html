@@ -392,7 +392,6 @@
       }
     };
 
-    // Validate access code, then show pick type screen
     function validateAccess() {
       const code = document.getElementById("accessCode").value.trim();
       const match = capperInfo.find(row => row["Access Code"] == code);
@@ -407,13 +406,11 @@
       // Show pick type screen
       document.getElementById("pickTypeScreen").classList.remove("hidden");
 
-      // Reset variables
       parlayPicks = [];
       currentPickNumber = 1;
       pickType = "straight";
     }
 
-    // Access code input cleanup
     document.getElementById("accessCode").addEventListener("input", (e) => {
       e.target.value = e.target.value.replace(/\D/g, "");
       if (e.target.value.length > 10) {
@@ -421,7 +418,6 @@
       }
     });
 
-    // Pick Type Buttons handlers
     document.getElementById("btnStraightPick").addEventListener("click", () => {
       pickType = "straight";
       document.getElementById("pickTypeScreen").classList.add("hidden");
@@ -444,7 +440,6 @@
       showSportsScreenInitial();
     });
 
-    // Show Sports Screen initial UI and load data
     async function showSportsScreenInitial() {
       document.getElementById("sports-screen").classList.remove("hidden");
 
@@ -475,7 +470,6 @@
         if (el) el.classList.add("hidden");
       });
 
-      // Load all data once
       await loadAllData();
     }
 
@@ -515,7 +509,6 @@
       submitUnitAmount();
     });
 
-    // GAME SEARCH & SELECTION
     function searchGames() {
       const input = document.getElementById("teamSearch").value.trim().toLowerCase();
       const rows = allData.gameCache || [];
@@ -676,7 +669,6 @@
       showGameOption();
     }
 
-    // Modified useThisGame to handle parlay flow
     function useThisGame() {
       document.getElementById("gameSuggestion").classList.add("hidden");
 
@@ -688,7 +680,6 @@
       buildWagerDropdown();
     }
 
-    // Override buildWagerDropdown to add parlay handling
     function buildWagerDropdown() {
       const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
       const inputDiv = document.getElementById("customInputSection");
@@ -766,7 +757,6 @@
       });
     }
 
-    // Show number input screen for wagers requiring [[NUM]]
     function showNumInputScreen(wagerTemplate) {
       const inputDiv = document.getElementById("customInputSection");
       inputDiv.innerHTML = `
@@ -824,7 +814,6 @@
       };
     }
 
-    // Build units dropdown
     function buildUnitDropdown() {
       const unitData = allData.units || [];
 
@@ -845,7 +834,7 @@
       });
     }
 
-    // Submit unit amount with parlay pick logic
+    // Enhanced submitUnitAmount for parlay picks
     function submitUnitAmount() {
       const dropdown = document.getElementById("unitDropdown");
       const input = dropdown ? dropdown.value : "";
@@ -859,14 +848,13 @@
       errorDiv.textContent = "";
 
       if (pickType === "straight") {
-        // Normal flow: hide unitDropdown and show notesChoiceSection
+        // Normal flow
         document.getElementById("unitDropdownSection").classList.add("hidden");
         document.getElementById("notesChoiceSection").classList.remove("hidden");
       } else {
         // Parlay pick flow
-        // Collect current pick data and store in parlayPicks array with pick number
 
-        // Compose current pick data snapshot:
+        // Save current pick info
         const teamSearchEl = document.getElementById("teamSearch");
         const teamName = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
         const wagerInput = document.getElementById("wagerType");
@@ -883,10 +871,10 @@
 
         const unitVal = input;
 
-        // Clone selectedMatch so changes later won't affect saved picks
+        // Clone selectedMatch
         const matchCopy = JSON.parse(JSON.stringify(selectedMatch || {}));
 
-        // Store pick data as object with pick number suffix
+        // Store pick with number suffix in memory
         const pickData = {
           pickNumber: currentPickNumber,
           teamName: teamName,
@@ -897,146 +885,124 @@
 
         parlayPicks.push(pickData);
 
-        // Reset currentWagerWithNum to null for next pick
         window.currentWagerWithNum = null;
 
-        // Hide unitDropdownSection to prevent duplicate pick submits
         document.getElementById("unitDropdownSection").classList.add("hidden");
 
+        // Show buttons for adding picks or submitting picks depending on pickType and currentPickNumber
         if (pickType === "upTo5") {
           if (currentPickNumber < 5) {
-            // Show button to add another parlay pick
             showAddAnotherPickOption(true);
           } else {
-            // Max picks reached, proceed to notesChoiceSection
             showAddAnotherPickOption(false);
           }
         } else if (pickType === "6to15") {
           if (currentPickNumber < 6) {
-            // Must force add more picks until 6 reached: only show Add Another Pick, hide submit button
             showAddAnotherPickOption(true, true);
           } else if (currentPickNumber < 15) {
-            // Show both buttons: Add Another Pick and Submit Picks
             showAddAnotherPickOption(true);
           } else {
-            // Max picks reached 15, only submit
             showAddAnotherPickOption(false);
           }
         }
 
-        // Disable teamSearch and wager inputs so user cannot change them mid-parlay pick session
-        disableTeamAndWagerInputs(true);
-      }
-
-      function showAddAnotherPickOption(showAddButton, forceAddOnly = false) {
-        // Hide all sections except customInputSection for buttons
-        document.getElementById("customInputSection").classList.add("hidden");
-        document.getElementById("notesChoiceSection").classList.add("hidden");
-        document.getElementById("notesInputSection").classList.add("hidden");
-        document.getElementById("confirmOutput").classList.add("hidden");
-        document.getElementById("hypePhraseStep").classList.add("hidden");
-
-        // Create container below unitDropdownSection for buttons
-        let container = document.getElementById("parlayPickButtonsContainer");
-        if (!container) {
-          container = document.createElement("div");
-          container.id = "parlayPickButtonsContainer";
-          container.style.maxWidth = "400px";
-          container.style.margin = "10px auto 20px auto";
-          container.style.display = "flex";
-          container.style.justifyContent = "space-between";
-          container.style.gap = "10px";
-          document.getElementById("unitDropdownSection").parentNode.insertBefore(container, document.getElementById("unitDropdownSection").nextSibling);
-        }
-
-        container.innerHTML = "";
-
-        if (showAddButton) {
-          const addBtn = document.createElement("button");
-          addBtn.textContent = `Add Another Parlay Pick (Pick ${currentPickNumber + 1})`;
-          addBtn.style.flex = "1";
-          addBtn.onclick = () => {
-            container.innerHTML = "";
-            currentPickNumber++;
-            resetForNextPick();
-          };
-          container.appendChild(addBtn);
-        }
-
-        if (!forceAddOnly) {
-          const submitBtn = document.createElement("button");
-          submitBtn.textContent = "Submit All Picks";
-          submitBtn.style.flex = "1";
-          submitBtn.onclick = () => {
-            container.innerHTML = "";
-            finalizeParlayPicks();
-          };
-          container.appendChild(submitBtn);
-        }
-      }
-
-      // Reset inputs for next parlay pick
-      function resetForNextPick() {
-        // Reset UI for teamSearch + wager inputs
-        document.getElementById("inputLabel").classList.remove("hidden");
-        document.getElementById("inputLabel").style.display = "";
-        document.getElementById("teamSearch").classList.remove("hidden");
-        document.getElementById("teamSearch").style.display = "";
-        document.getElementById("teamSearch").value = "";
-        document.getElementById("teamSearch").focus();
-
-        // Reset wager section
-        document.getElementById("customInputSection").classList.remove("hidden");
-        document.getElementById("customInputSection").innerHTML = "";
-        buildWagerDropdown();
-
-        // Show search button
-        document.getElementById("searchBtn").classList.remove("hidden");
-        document.getElementById("searchBtn").style.display = "";
-
-        // Reset overrideTeamName and selectedMatch to null for fresh pick
-        window.overrideTeamName = null;
-        selectedMatch = null;
-        matches = [];
-        currentMatchIndex = 0;
-
-        // Reset other inputs and errors
-        document.getElementById("unitDropdownSection").classList.add("hidden");
-        document.getElementById("unitDropdown").innerHTML = "";
-        document.getElementById("unitDropdownError").textContent = "";
-        document.getElementById("searchError").textContent = "";
-
-        // Enable inputs for teamSearch and wager
-        disableTeamAndWagerInputs(false);
-      }
-
-      // Disable or enable teamSearch and wager inputs to avoid mid-parlay changes
-      function disableTeamAndWagerInputs(disable) {
-        document.getElementById("teamSearch").disabled = disable;
-        const wagerDropdown = document.getElementById("wagerDropdown");
-        if (wagerDropdown) wagerDropdown.disabled = disable;
-        const wagerType = document.getElementById("wagerType");
-        if (wagerType) wagerType.disabled = disable;
-        document.getElementById("searchBtn").disabled = disable;
-      }
-
-      // Called when submitting all picks in parlay
-      function finalizeParlayPicks() {
-        // Hide any parlay buttons container if present
-        const container = document.getElementById("parlayPickButtonsContainer");
-        if (container) container.innerHTML = "";
-
-        // Proceed to notes section before final output
-        document.getElementById("notesChoiceSection").classList.remove("hidden");
-
-        // Disable team and wager inputs now
         disableTeamAndWagerInputs(true);
       }
     }
 
-    // Reset search: clear everything and go back to pick type screen
+    function showAddAnotherPickOption(showAddButton, forceAddOnly = false) {
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+      document.getElementById("notesInputSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+      document.getElementById("hypePhraseStep").classList.add("hidden");
+
+      let container = document.getElementById("parlayPickButtonsContainer");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "parlayPickButtonsContainer";
+        container.style.maxWidth = "400px";
+        container.style.margin = "10px auto 20px auto";
+        container.style.display = "flex";
+        container.style.justifyContent = "space-between";
+        container.style.gap = "10px";
+        document.getElementById("unitDropdownSection").parentNode.insertBefore(container, document.getElementById("unitDropdownSection").nextSibling);
+      }
+
+      container.innerHTML = "";
+
+      if (showAddButton) {
+        const addBtn = document.createElement("button");
+        addBtn.textContent = `Add Another Parlay Pick (Pick ${currentPickNumber + 1})`;
+        addBtn.style.flex = "1";
+        addBtn.onclick = () => {
+          container.innerHTML = "";
+          currentPickNumber++;
+          resetForNextPick();
+        };
+        container.appendChild(addBtn);
+      }
+
+      if (!forceAddOnly) {
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Submit All Picks";
+        submitBtn.style.flex = "1";
+        submitBtn.onclick = () => {
+          container.innerHTML = "";
+          finalizeParlayPicks();
+        };
+        container.appendChild(submitBtn);
+      }
+    }
+
+    function resetForNextPick() {
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("inputLabel").style.display = "";
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("teamSearch").style.display = "";
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("teamSearch").focus();
+
+      document.getElementById("customInputSection").classList.remove("hidden");
+      document.getElementById("customInputSection").innerHTML = "";
+      buildWagerDropdown();
+
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("searchBtn").style.display = "";
+
+      window.overrideTeamName = null;
+      selectedMatch = null;
+      matches = [];
+      currentMatchIndex = 0;
+
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+      document.getElementById("unitDropdown").innerHTML = "";
+      document.getElementById("unitDropdownError").textContent = "";
+      document.getElementById("searchError").textContent = "";
+
+      disableTeamAndWagerInputs(false);
+    }
+
+    function disableTeamAndWagerInputs(disable) {
+      document.getElementById("teamSearch").disabled = disable;
+      const wagerDropdown = document.getElementById("wagerDropdown");
+      if (wagerDropdown) wagerDropdown.disabled = disable;
+      const wagerType = document.getElementById("wagerType");
+      if (wagerType) wagerType.disabled = disable;
+      document.getElementById("searchBtn").disabled = disable;
+    }
+
+    function finalizeParlayPicks() {
+      const container = document.getElementById("parlayPickButtonsContainer");
+      if (container) container.innerHTML = "";
+
+      document.getElementById("notesChoiceSection").classList.remove("hidden");
+
+      disableTeamAndWagerInputs(true);
+    }
+
+    // Reset everything back to pickTypeScreen on reset
     function resetSearch() {
-      // Clear global variables
       matches = [];
       currentMatchIndex = 0;
       selectedMatch = null;
@@ -1051,7 +1017,6 @@
       currentPickNumber = 1;
       pickType = "straight";
 
-      // Clear inputs
       document.getElementById("teamSearch").value = "";
       const wagerDropdown = document.getElementById("wagerDropdown");
       if (wagerDropdown) wagerDropdown.selectedIndex = 0;
@@ -1064,7 +1029,6 @@
 
       document.getElementById("notesInput").value = "";
 
-      // Clear error messages
       document.getElementById("searchError").textContent = "";
       const wagerError = document.getElementById("wagerError");
       if (wagerError) wagerError.textContent = "";
@@ -1073,7 +1037,6 @@
       const numInputError = document.getElementById("numInputError");
       if (numInputError) numInputError.textContent = "";
 
-      // Hide all optional/secondary sections
       const toHide = [
         "gameSuggestion",
         "customInputSection",
@@ -1083,14 +1046,14 @@
         "confirmOutput",
         "submitNoteBtn",
         "hypePhraseStep",
-        "pickTypeScreen"
+        "pickTypeScreen",
+        "parlayPickButtonsContainer"
       ];
       toHide.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add("hidden");
       });
 
-      // Clear hype phrase dropdowns and outputs
       const hypeASelect = document.getElementById("hypeASelect");
       if (hypeASelect) hypeASelect.selectedIndex = 0;
       const hypeBSelect = document.getElementById("hypeBSelect");
@@ -1101,7 +1064,6 @@
       const hypePhraseOutputs = document.getElementById("hypePhraseOutputs");
       if (hypePhraseOutputs) hypePhraseOutputs.innerHTML = "";
 
-      // Clear confirm output and remove any appended toggle buttons or iframes
       const confirmOutput = document.getElementById("confirmOutput");
       if (confirmOutput) {
         confirmOutput.classList.add("hidden");
@@ -1110,14 +1072,12 @@
       const toggleBtn = document.getElementById("toggleImageBtn");
       if (toggleBtn) toggleBtn.remove();
 
-      // Clear Post Title/Desc container
       const postContainer = document.getElementById("postTitleDescContainer");
       postContainer.innerHTML = "";
 
-      // Show pick type screen again
       document.getElementById("pickTypeScreen").classList.remove("hidden");
 
-      // Show the main team search input section and label/buttons hidden
+      // Hide main inputs
       const inputLabel = document.getElementById("inputLabel");
       const teamSearch = document.getElementById("teamSearch");
       const searchBtn = document.getElementById("searchBtn");
@@ -1135,12 +1095,9 @@
         searchBtn.style.display = "none";
       }
 
-      // Hide the game suggestion container just in case
       const gameSuggestion = document.getElementById("gameSuggestion");
       if (gameSuggestion) gameSuggestion.classList.add("hidden");
     }
-
-    // NOTES / HYPE PHRASE / FINAL OUTPUT FLOW UNCHANGED
 
     document.getElementById("yesNoteBtn").addEventListener("click", () => {
       document.getElementById("notesChoiceSection").classList.add("hidden");
@@ -1182,14 +1139,419 @@
       populateHypeACategories();
     }
 
-    // The rest of your original hype phrase functions and generateFinalOutput remain exactly the same (no modifications to your original code for those)...
+    function populateHypeACategories() {
+      const selectA = document.getElementById("hypeASelect");
+      selectA.innerHTML = '<option value="">-- Select Type of Hype Phrase --</option>';
 
-    // Just as a safeguard, explicitly call buildUnitDropdown listener:
-    document.getElementById("unitDropdown").addEventListener("change", () => {
-      submitUnitAmount();
+      const categories = new Set();
+      (allData.hypePhrases || []).forEach(row => {
+        if (row.active_status === "active" && row.Type && !categories.has(row.Type)) {
+          categories.add(row.Type);
+        }
+      });
+
+      [...categories].sort().forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        selectA.appendChild(option);
+      });
+
+      const selectB = document.getElementById("hypeBSelect");
+      selectB.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
+      selectB.disabled = true;
+
+      document.getElementById("hypePhraseOutputs").innerHTML = "";
+    }
+
+    document.getElementById("hypeASelect").addEventListener("change", function () {
+      const selectedType = this.value;
+      const selectB = document.getElementById("hypeBSelect");
+      selectB.innerHTML = '<option value="">-- Select Energy of Hype Phrase --</option>';
+
+      if (!selectedType) {
+        selectB.disabled = true;
+        document.getElementById("hypePhraseOutputs").innerHTML = "";
+        return;
+      }
+
+      const energies = new Set();
+      (allData.hypePhrases || []).forEach(row => {
+        if (row.active_status === "active" && row.Type === selectedType && row.Energy) {
+          energies.add(row.Energy);
+        }
+      });
+
+      [...energies].sort().forEach(energy => {
+        const option = document.createElement("option");
+        option.value = energy;
+        option.textContent = energy;
+        selectB.appendChild(option);
+      });
+
+      selectB.disabled = false;
+      document.getElementById("hypePhraseOutputs").innerHTML = "";
     });
 
-  </script>
+    document.getElementById("hypeBSelect").addEventListener("change", function () {
+      const selectedType = document.getElementById("hypeASelect").value;
+      const selectedEnergy = this.value;
+      const outputDiv = document.getElementById("hypePhraseOutputs");
 
+      if (!selectedEnergy) {
+        outputDiv.innerHTML = "";
+        return;
+      }
+
+      const hypePhrases = (allData.hypePhrases || []).filter(row =>
+        row.active_status === "active" &&
+        row.Type === selectedType &&
+        row.Energy === selectedEnergy
+      );
+
+      const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
+
+      let html = "";
+
+      const shuffledMatches = matches.slice().sort(() => Math.random() - 0.5);
+
+      shuffledMatches.forEach(match => {
+        const gameTime = match && match.row && match.row["Commence Time (UTC)"] ?
+          new Date(match.row["Commence Time (UTC)"]).toLocaleString("en-US", {
+            timeZone: "America/New_York",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true
+          }) + " EST" : "N/A";
+
+        const sportFromInput = match.row ? (match.row["Sport Name"] || "N/A") : "N/A";
+
+        const shuffledPhrases = hypePhrases.slice().sort(() => Math.random() - 0.5);
+
+        shuffledPhrases.forEach(row => {
+          const sport = row.Sport || "N/A";
+          const phrase = row.Phrase || "";
+          const promo = row.Promo || "";
+
+          const postTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
+          const displaySport = (sport === "N/A" ? "Used for Any Sport" : sport);
+
+          html += `
+            <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false"
+              style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;"
+              data-sport="${sportFromInput}"
+              data-commencetime="${gameTime}"
+              data-phrase="${phrase}"
+              data-promo="${promo}"
+            >
+              <div><strong>Related Sport: </strong>${displaySport}</div>
+              <div><strong>Post Title: </strong>${postTitle}</div>
+              <div><strong>Post Desc: </strong><span>${promo}</span></div>
+            </div>
+          `;
+        });
+      });
+
+      outputDiv.innerHTML = html;
+
+      Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block) => {
+        block.onclick = () => {
+          const sportFromInput = block.dataset.sport || "N/A";
+          const gameTime = block.dataset.commencetime || "N/A";
+          const phrase = block.dataset.phrase || "";
+          const promo = block.dataset.promo || "";
+
+          const unitVal = document.getElementById("unitDropdown")?.value || "[[UNIT]]";
+
+          window.selectedHypePostTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
+          window.selectedHypeRow = { Promo: promo, Phrase: phrase, Sport: sportFromInput };
+          window.selectedHypeNote = window.latestNote || "N/A";
+
+          document.getElementById("hypePhraseStep").classList.add("hidden");
+
+          generateFinalOutput(window.selectedHypeNote, window.selectedHypePostTitle);
+        };
+        block.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            block.click();
+          }
+        };
+      });
+    });
+
+    function generateFinalOutput(notes, newTitle) {
+      notes = notes || "N/A";
+      if (newTitle) window.overrideTitle = newTitle;
+
+      let wagerRaw = "";
+      const wagerInput = document.getElementById("wagerType");
+      const wagerDropdown = document.getElementById("wagerDropdown");
+
+      if (window.currentWagerWithNum) {
+        wagerRaw = window.currentWagerWithNum;
+      } else if (wagerInput) {
+        wagerRaw = wagerInput.value.trim();
+      } else if (wagerDropdown) {
+        wagerRaw = wagerDropdown.value.trim();
+      }
+      const wager = wagerRaw.toUpperCase();
+
+      const teamSearchEl = document.getElementById("teamSearch");
+      const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
+      const dropdown = document.getElementById("unitDropdown");
+      const unitInput = dropdown ? dropdown.value.trim() : "";
+      const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
+
+      let matchedTeam = "";
+      const teamSearchLower = teamSearchInput.toLowerCase();
+
+      if (window.overrideTeamName) {
+        matchedTeam = window.overrideTeamName;
+      } else if (
+        selectedMatch &&
+        selectedMatch["Home Team"] !== "Unavailable" &&
+        selectedMatch["Away Team"] !== "Unavailable"
+      ) {
+        const home = selectedMatch["Home Team"];
+        const away = selectedMatch["Away Team"];
+        matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+      } else {
+        matchedTeam = teamSearchInput;
+      }
+
+      let formattedTime = "Unavailable";
+      if (selectedMatch["Commence Time (UTC)"]) {
+        const date = new Date(selectedMatch["Commence Time (UTC)"]);
+        formattedTime = date.toLocaleString("en-US", {
+          timeZone: "America/New_York",
+          weekday: "short", month: "short", day: "numeric",
+          hour: "numeric", minute: "2-digit", hour12: true
+        }) + " ET";
+      }
+
+      const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nowNY);
+      const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
+
+      const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
+      const today = new Date();
+      const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+      const pickId = `${secondsSinceEpoch}-${mmddyy}`;
+
+      let pickDescValue = "Unavailable";
+
+      if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
+        const selectedWager = document.getElementById("wagerDropdown").value;
+        const wagerRow = (allData.wagers || []).find(row =>
+          row.wager_label_template === selectedWager
+        );
+
+        if (wagerRow && wagerRow.pick_desc_template) {
+          pickDescValue = wagerRow.pick_desc_template;
+
+          pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
+
+          const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
+          if (numberMatch) {
+            const numericValue = numberMatch[0];
+            pickDescValue = pickDescValue
+              .replace(/\[\[NUM\]\]/g, numericValue)
+              .replace(/\[\[NUMBER\]\]/g, numericValue);
+          }
+        }
+      }
+
+      // If parlay picks exist, add extra info accordingly for parlay slides and pick naming
+      if (parlayPicks.length > 0) {
+        // Here, you would adjust slide numbers and pick naming for parlay picks per your requirements
+        // For demonstration, simply showing all picks info in output
+
+        const picksInfo = parlayPicks.map(pick => {
+          return `Pick ${pick.pickNumber} - Team: ${pick.teamName}, Wager: ${pick.wagerRaw}, Units: ${pick.unitVal}`;
+        }).join("\n");
+
+        pickDescValue += "\n\nParlay Picks:\n" + picksInfo;
+      }
+
+      const output = [
+        "═══════════════════════",
+        "######## OFFICIAL PICK",
+        "═══════════════════════",
+        `Wager Type: ${pickType === "straight" ? "STRAIGHT WAGER" : "PARLAY WAGER"}`,
+        `Official Pick: ${matchedTeam}`,
+        `Official Type: ${wager}`,
+        `Official Wager: ${unitInput} Unit(s)`,
+        `To Win: ${pickDescValue}`,
+        "",
+        "═══════════════════════",
+        "######## GAME DETAILS",
+        "═══════════════════════",
+        `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+        `League: ${selectedMatch["Sport Name"]}`,
+        `Home Team: ${selectedMatch["Home Team"]}`,
+        `Away Team: ${selectedMatch["Away Team"]}`,
+        `Game Time: ${formattedTime}`,
+        "",
+        "═══════════════════════",
+        "######## THANK YOU FOR TRUSTING OGCB",
+        "═══════════════════════",
+        "",
+        `Title: ${window.overrideTitle || "[[TITLE]]"}`,
+        `Pick ID: ${pickId}`,
+        `Pick by: ${capperName}`,
+        `Input Value: ${allInputsRaw}`,
+        `Notes: ${notes}`,
+        "",
+        "═══════════════════════",
+        "######## STRICT CONFIDENTIALITY NOTICE",
+        "═══════════════════════",
+        "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+        "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+        "",
+        `Created: ${estString}`
+      ].join("\n");
+
+      const box = document.getElementById("confirmOutput");
+      box.classList.remove("hidden");
+      box.innerHTML = "";
+
+      const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+      window._cleanedOutput = cleanedOutput;
+
+      const encodedOutput = encodeURIComponent(cleanedOutput);
+
+      const existingFrame = document.getElementById("slipFrame");
+      if (existingFrame) existingFrame.remove();
+
+      const payload = {
+        "FULL_TEAM_ENTERED": matchedTeam,
+        "FULL_BET_TYPE": wager,
+        "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+        "PICK_DESC": pickDescValue,
+        "NOTES": notes,
+        "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+        "FULL_SPORT_NAME": selectedMatch["League (Group)"],
+        "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+        "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+        "DATE and TIME OF GAME START": formattedTime,
+        "TITLE": window.overrideTitle || "[[TITLE]]",
+        "PICKID": pickId,
+        "CAPPERS NAME": capperName,
+        "USER_INPUT_VALUE": allInputsRaw,
+        "24HR_LONG_DATE_SECONDS": estString
+      };
+
+      const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+      box.innerHTML = "";
+
+      const createIframe = (slideNum, visible) => {
+        const iframe = document.createElement("iframe");
+        iframe.className = "slipFrame";
+        iframe.dataset.slide = slideNum;
+        iframe.style.display = visible ? "block" : "none";
+        iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+        iframe.style.width = "100%";
+        iframe.style.maxWidth = "400px";
+        iframe.style.border = "none";
+        iframe.style.height = "600px";
+        iframe.style.zIndex = "1";
+        return iframe;
+      };
+
+      // Choose slide numbers based on parlay or straight pick
+      let slide1 = "1", slide2 = "2";
+      if (pickType === "upTo5") {
+        slide1 = "3";
+        slide2 = "4";
+      } else if (pickType === "6to15") {
+        slide1 = "1"; // Adjust this URL if you have a different slides doc for 6-15 picks
+        slide2 = "2";
+      }
+
+      const iframe1 = createIframe(slide1, true);
+      const iframe2 = createIframe(slide2, false);
+
+      box.appendChild(iframe1);
+      box.appendChild(iframe2);
+
+      // Post Title / Desc inputs
+      const postContainer = document.getElementById("postTitleDescContainer");
+      postContainer.innerHTML = "";
+
+      const postTitleLabel = document.createElement("div");
+      postTitleLabel.textContent = "Tap to Copy - Paste in Patreon Post Title";
+      postTitleLabel.className = "copyTextboxLabel";
+      postContainer.appendChild(postTitleLabel);
+
+      const postTitleInput = document.createElement("input");
+      postTitleInput.type = "text";
+      postTitleInput.readOnly = true;
+      postTitleInput.className = "copyTextbox";
+      postTitleInput.title = "Click to copy Post Title";
+      postTitleInput.value = window.overrideTitle || "";
+      postTitleInput.style.userSelect = "all";
+
+      postTitleInput.addEventListener("click", () => {
+        navigator.clipboard.writeText(postTitleInput.value).then(() => {
+          alert("Post Title copied to clipboard!");
+        });
+      });
+      postContainer.appendChild(postTitleInput);
+
+      const postDescLabel = document.createElement("div");
+      postDescLabel.textContent = "Tap to Copy - Paste in Patreon Post Description";
+      postDescLabel.className = "copyTextboxLabel";
+      postContainer.appendChild(postDescLabel);
+
+      const postDescInput = document.createElement("input");
+      postDescInput.type = "text";
+      postDescInput.readOnly = true;
+      postDescInput.className = "copyTextbox";
+      postDescInput.title = "Click to copy Post Description";
+      postDescInput.value = window.selectedHypeRow ? window.selectedHypeRow.Promo || "" : "";
+      postDescInput.style.userSelect = "all";
+
+      postDescInput.addEventListener("click", () => {
+        navigator.clipboard.writeText(postDescInput.value).then(() => {
+          alert("Post Description copied to clipboard!");
+        });
+      });
+
+      postContainer.appendChild(postDescInput);
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.textContent = "Switch to Paid Image";
+      toggleBtn.id = "toggleImageBtn";
+      toggleBtn.style.marginTop = "10px";
+      toggleBtn.style.width = "100%";
+      toggleBtn.style.maxWidth = "400px";
+      toggleBtn.style.boxSizing = "border-box";
+      toggleBtn.style.padding = "12px";
+      toggleBtn.style.fontSize = "16px";
+      toggleBtn.style.backgroundColor = "#2a9fd6";
+      toggleBtn.style.color = "white";
+      toggleBtn.style.border = "none";
+      toggleBtn.style.borderRadius = "6px";
+      toggleBtn.style.cursor = "pointer";
+
+      toggleBtn.onclick = () => {
+        const frames = document.querySelectorAll(".slipFrame");
+        frames.forEach(frame => {
+          const isVisible = frame.style.display !== "none";
+          frame.style.display = isVisible ? "none" : "block";
+        });
+
+        const showingSlide2 = iframe2.style.display === "block";
+        toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
+      };
+
+      box.parentNode.insertBefore(toggleBtn, box);
+      setTimeout(() => {
+        box.style.overflow = "hidden";
+        box.style.height = box.scrollHeight + "px";
+      }, 0);
+    }
+  </script>
 </body>
 </html>
