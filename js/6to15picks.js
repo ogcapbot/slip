@@ -1,13 +1,6 @@
-// js/6to15picks.js
 (() => {
-  // Manages parlay picks from 6 to 15 picks
-  // Requires minimum 6 picks before showing submit button
-  // After 6 picks, allow add another pick up to 15, then submit only
-
-  const containerId = "customInputSection";
-
   function promptAddPickButtons() {
-    const container = document.getElementById(containerId);
+    const container = document.getElementById("customInputSection");
     container.classList.remove("hidden");
 
     let html = "";
@@ -21,7 +14,6 @@
         <button id="submitFinalPickBtn">Submit Parlay Picks</button>
       `;
     } else {
-      // 15 picks max, only submit
       html = `<button id="submitFinalPickBtn">Submit Parlay Picks</button>`;
     }
 
@@ -45,7 +37,7 @@
         container.classList.add("hidden");
         if(window.AppState.currentPickNumber < 6){
           alert("You must select at least 6 picks.");
-          promptAddPickButtons(); // re-show buttons
+          promptAddPickButtons();
           return;
         }
         document.dispatchEvent(new CustomEvent("notesScreenStart"));
@@ -95,7 +87,6 @@
     }
     if(searchBtn) searchBtn.classList.remove("hidden");
 
-    // Hide other sections
     ["gameSuggestion", "customInputSection", "unitDropdownSection", "notesChoiceSection", "notesInputSection"].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.classList.add("hidden");
