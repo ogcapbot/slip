@@ -240,8 +240,18 @@ button:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.2;
   max-width: 100%;
   margin: 0 auto;
 }
+
+#versionFooter {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 400px; /* match container width */
+  background: #f9f9f9;
+  border-top: 1px solid #ddd;
+}
+
