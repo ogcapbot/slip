@@ -1,5 +1,3 @@
-// unit.js
-
 function buildUnitDropdown() {
   const unitData = allData.units || [];
 
