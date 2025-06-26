@@ -129,7 +129,6 @@ function showGameOption() {
     hour12: true,
   });
 
-  const timeString = `${c_date} @ ${timeFormatted} EST`;
   const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
     team.toLowerCase().includes(teamInputRaw.toLowerCase())
   ) || teamInputRaw;
@@ -153,7 +152,6 @@ function showGameOption() {
 
   container.classList.remove("hidden");
 
-  // Add event listeners for new buttons:
   const nextBtn = document.getElementById("nextOptionBtn");
   if (nextBtn) {
     nextBtn.addEventListener("click", nextOption);
@@ -183,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   searchBtn.addEventListener("click", searchGames);
 
-  teamSearch.addEventListener("keydown", e => {
+  teamSearch.addEventListener("keydown", (e) => {
     if (e.key === "Enter") searchGames();
   });
 });
