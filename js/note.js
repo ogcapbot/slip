@@ -1,4 +1,3 @@
-// js/note.js
 (() => {
   const notesChoiceSection = document.getElementById("notesChoiceSection");
   const notesInputSection = document.getElementById("notesInputSection");
