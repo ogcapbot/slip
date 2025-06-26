@@ -26,7 +26,7 @@
       maxlength="10"
       style="width: 100%; max-width: 400px; box-sizing: border-box; display: block; margin: 0 auto 12px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc;"
     />
-    <button id="accessBtn" onclick="validateAccess()">Submit</button>
+    <button id="accessBtn">Submit</button>
     <div class="error" id="error"></div>
   </div>
 
@@ -42,7 +42,7 @@
       </div>
 
       <div id="resetWrapper">
-        <button id="resetBtn" onclick="resetSearch()">Reset</button>
+        <button id="resetBtn">Reset</button>
       </div>
 
       <!-- Added container for Post Title and Post Desc textboxes here -->
@@ -55,7 +55,7 @@
 
     <div id="inputLabel">Enter Team Name: (e.g. 'Chicago Cubs' or 'Cubs')</div>
     <input type="text" id="teamSearch" placeholder="Must be at least 3 Characters" />
-    <button id="searchBtn" onclick="searchGames()">Submit</button>
+    <button id="searchBtn">Submit</button>
     <div class="error" id="searchError"></div>
 
     <div id="customInputSection" class="hidden"></div>
@@ -99,17 +99,4 @@
 
     <!-- New Hype Phrase Step -->
     <div id="hypePhraseStep" class="hidden" style="margin-top: 20px;">
-      <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
-        Select Type of Hype Phrase:
-      </label>
-      <select id="hypeASelect"></select>
-
-      <label for="hypeBSelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block; margin-top: 15px;">
-        Select Energy of Hype Phrase:
-      </label>
-      <select id="hypeBSelect" disabled></select>
-
-      <div id="hypePhraseOutputs" style="margin-top: 15px;"></div>
-    </div>
-
-    <pre id="confirmOutput" class="
+      <label fo
