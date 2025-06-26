@@ -1,30 +1,19 @@
-// js/imagecreation.js
 (() => {
   const hypeScreen = document.getElementById("hype-screen");
 
   document.addEventListener("finalOutputReady", () => {
-    // Clear hype screen & show final output area
-    hypeScreen.innerHTML = "";
     hypeScreen.classList.remove("hidden");
+    hypeScreen.innerHTML = "";
 
-    // Compose final output text and iframe(s) for image generation
-    generateFinalOutput();
-  });
-
-  function generateFinalOutput() {
     const notes = window.AppState.selectedHypeNote || "N/A";
     const newTitle = window.AppState.selectedHypePostTitle || "";
 
     if(newTitle) window.AppState.overrideTitle = newTitle;
 
-    let wagerRaw = "";
-    if (window.AppState.currentWagerWithNum) {
-      wagerRaw = window.AppState.currentWagerWithNum;
-    }
-
+    const wagerRaw = window.AppState.currentWagerWithNum || "";
     const wager = wagerRaw.toUpperCase();
 
-    const teamSearchInput = window.AppState.overrideTeamName || (window.AppState.selectedMatch ? window.AppState.selectedMatch["Home Team"] : "");
+    const teamSearchInput = window.AppState.overrideTeamName || (window.AppState.selectedMatch ? (window.AppState.selectedMatch["Home Team"] || "") : "");
     const dropdown = document.getElementById("unitDropdown");
     const unitInput = dropdown ? dropdown.value.trim() : "";
     const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
@@ -64,12 +53,7 @@
     const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
     const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
-    let pickDescValue = "Unavailable";
-
-    if (window.AppState.selectedMatch && window.AppState.selectedMatch["wagerDropdown"]) {
-      // Legacy support if needed
-    }
-
+    // Compose the final output text
     const output = [
       "═══════════════════════",
       "######## OFFICIAL PICK",
@@ -78,7 +62,7 @@
       `Official Pick: ${matchedTeam}`,
       `Official Type: ${wager}`,
       `Official Wager: ${unitInput} Unit(s)`,
-      `To Win: ${pickDescValue}`,
+      `To Win: Unavailable`,
       "",
       "═══════════════════════",
       "######## GAME DETAILS",
@@ -108,8 +92,6 @@
       `Created: ${estString}`
     ].join("\n");
 
-    hypeScreen.innerHTML = `
-      <pre style="white-space: pre-wrap; font-family: monospace; background: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 6px; margin-top: 10px; resize: none; overflow: hidden; min-height: 200px; height: auto;">${output}</pre>
-    `;
+    hypeScreen.innerHTML = `<pre>${output}</pre>`;
   }
 })();
