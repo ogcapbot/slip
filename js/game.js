@@ -1,13 +1,5 @@
-// js/game.js
 (() => {
   const sportsScreen = document.getElementById("sports-screen");
-
-  // We'll dynamically create and manage the sports/game search and input UI here.
-  // Elements needed:
-  // - Search input
-  // - Search button
-  // - Game suggestion div
-  // - Wager input section (delegated to wager.js)
 
   let matches = [];
   let currentMatchIndex = 0;
@@ -63,9 +55,7 @@
       <pre id="confirmOutput" class="hidden" style="white-space: pre-wrap; font-family: monospace; background: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 6px; margin-top: 10px; resize: none; overflow: hidden; min-height: 200px; height: auto;"></pre>
     `;
 
-    // Show logged in info
     document.getElementById("loginNotice").textContent = `Logged in as: ${window.AppState.capperName}`;
-
     setupListeners();
   }
 
@@ -78,8 +68,13 @@
       if (e.key === "Enter") searchGames();
     });
 
-    // Listen for notes buttons and input will be delegated to note.js
-    // We'll trigger custom events for navigation & updates.
+    document.addEventListener("overrideSelected", () => {
+      document.dispatchEvent(new CustomEvent("proceedToWager"));
+    });
+
+    document.addEventListener("gameSelected", () => {
+      document.dispatchEvent(new CustomEvent("proceedToWager"));
+    });
   }
 
   async function searchGames() {
@@ -208,7 +203,6 @@
       hour12: true,
     });
 
-    const timeString = `${c_date} @ ${timeFormatted} EST`;
     const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
       team.toLowerCase().includes(teamInputRaw.toLowerCase())
     ) || teamInputRaw;
@@ -252,23 +246,11 @@
   }
 
   document.addEventListener("startSportsScreen", () => {
-    // Reset UI and variables
     window.AppState.matches = [];
     window.AppState.currentMatchIndex = 0;
     window.AppState.selectedMatch = null;
     window.AppState.overrideTeamName = null;
-
     createUI();
     document.getElementById("teamSearch").focus();
-  });
-
-  // Listen for overrideSelected to proceed to wager input (manual team)
-  document.addEventListener("overrideSelected", () => {
-    document.dispatchEvent(new CustomEvent("proceedToWager"));
-  });
-
-  // Listen for gameSelected to proceed to wager input
-  document.addEventListener("gameSelected", () => {
-    document.dispatchEvent(new CustomEvent("proceedToWager"));
   });
 })();
