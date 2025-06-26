@@ -37,15 +37,20 @@ function validateAccess() {
   loadAllData();
 }
 
-document.getElementById("accessCode").addEventListener("input", (e) => {
-  e.target.value = e.target.value.replace(/\D/g, "");
-  if (e.target.value.length > 10) {
-    e.target.value = e.target.value.slice(0, 10);
-  }
-});
+document.addEventListener("DOMContentLoaded", () => {
+  const accessBtn = document.getElementById("accessBtn");
+  const accessCode = document.getElementById("accessCode");
 
-document.getElementById("accessCode").addEventListener("keydown", e => {
-  if (e.key === "Enter") validateAccess();
-});
+  accessBtn.addEventListener("click", validateAccess);
 
-document.getElementById("accessBtn").addEventListener("click", validateAccess);
+  accessCode.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "");
+    if (e.target.value.length > 10) {
+      e.target.value = e.target.value.slice(0, 10);
+    }
+  });
+
+  accessCode.addEventListener("keydown", e => {
+    if (e.key === "Enter") validateAccess();
+  });
+});
