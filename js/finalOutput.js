@@ -160,87 +160,11 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.width = "100%";
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
-    iframe.style.height = "600px";
-    iframe.style.zIndex = "1";
+    iframe.style.height = "400px";
     return iframe;
   };
 
-  const iframe1 = createIframe("1", true);
-  const iframe2 = createIframe("2", false);
-
-  box.appendChild(iframe1);
-  box.appendChild(iframe2);
-
-  const postContainer = document.getElementById("postTitleDescContainer");
-  postContainer.innerHTML = "";
-
-  const postTitleLabel = document.createElement("div");
-  postTitleLabel.textContent = "Tap to Copy - Paste in Patreon Post Title";
-  postTitleLabel.className = "copyTextboxLabel";
-  postContainer.appendChild(postTitleLabel);
-
-  const postTitleInput = document.createElement("input");
-  postTitleInput.type = "text";
-  postTitleInput.readOnly = true;
-  postTitleInput.className = "copyTextbox";
-  postTitleInput.title = "Click to copy Post Title";
-  postTitleInput.value = window.overrideTitle || "";
-  postTitleInput.style.userSelect = "all";
-  postTitleInput.addEventListener("click", () => {
-    navigator.clipboard.writeText(postTitleInput.value).then(() => {
-      alert("Post Title copied to clipboard!");
-    });
-  });
-  postContainer.appendChild(postTitleInput);
-
-  const postDescLabel = document.createElement("div");
-  postDescLabel.textContent = "Tap to Copy - Paste in Patreon Post Description";
-  postDescLabel.className = "copyTextboxLabel";
-  postContainer.appendChild(postDescLabel);
-
-  const postDescInput = document.createElement("input");
-  postDescInput.type = "text";
-  postDescInput.readOnly = true;
-  postDescInput.className = "copyTextbox";
-  postDescInput.title = "Click to copy Post Description";
-  postDescInput.value = window.selectedHypeRow ? window.selectedHypeRow.Promo || "" : "";
-  postDescInput.style.userSelect = "all";
-  postDescInput.addEventListener("click", () => {
-    navigator.clipboard.writeText(postDescInput.value).then(() => {
-      alert("Post Description copied to clipboard!");
-    });
-  });
-  postContainer.appendChild(postDescInput);
-
-  const toggleBtn = document.createElement("button");
-  toggleBtn.textContent = "Switch to Paid Image";
-  toggleBtn.id = "toggleImageBtn";
-  toggleBtn.style.marginTop = "10px";
-  toggleBtn.style.width = "100%";
-  toggleBtn.style.maxWidth = "400px";
-  toggleBtn.style.boxSizing = "border-box";
-  toggleBtn.style.padding = "12px";
-  toggleBtn.style.fontSize = "16px";
-  toggleBtn.style.backgroundColor = "#2a9fd6";
-  toggleBtn.style.color = "white";
-  toggleBtn.style.border = "none";
-  toggleBtn.style.borderRadius = "6px";
-  toggleBtn.style.cursor = "pointer";
-
-  toggleBtn.onclick = () => {
-    const frames = document.querySelectorAll(".slipFrame");
-    frames.forEach(frame => {
-      const isVisible = frame.style.display !== "none";
-      frame.style.display = isVisible ? "none" : "block";
-    });
-
-    const showingSlide2 = iframe2.style.display === "block";
-    toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
-  };
-
-  box.parentNode.insertBefore(toggleBtn, box);
-  setTimeout(() => {
-    box.style.overflow = "hidden";
-    box.style.height = box.scrollHeight + "px";
-  }, 0);
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+  box.appendChild(createIframe(3, false));
 }
