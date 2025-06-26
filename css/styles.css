@@ -247,11 +247,11 @@ button:hover {
 }
 
 #versionFooter {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  max-width: 400px; /* match container width */
-  background: #f9f9f9;
-  border-top: 1px solid #ddd;
+  max-width: 400px;          /* same max width as container */
+  margin: 20px auto 0 auto; /* center horizontally, with some top margin */
+  color: gray;
+  font-size: 14px;
+  font-family: 'Oswald', sans-serif;
 }
+
 
