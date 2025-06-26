@@ -1,7 +1,4 @@
-// js/unit.js
 (() => {
-  // Handles unit selection dropdown and moves forward on selection
-
   const unitDropdownSection = document.getElementById("unitDropdownSection");
   const unitDropdown = document.getElementById("unitDropdown");
   const unitDropdownError = document.getElementById("unitDropdownError");
@@ -35,7 +32,6 @@
       return;
     }
     unitDropdownError.textContent = "";
-    // Notify unit selection completed
     document.dispatchEvent(new CustomEvent("unitSelectionCompleted"));
   });
 
