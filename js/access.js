@@ -1,4 +1,3 @@
-// access.js
 const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
 let capperInfo = [], capperName = "";
 
