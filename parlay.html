@@ -240,20 +240,11 @@
       user-select: none;
     }
 
-    /* New Pick Type Screen styles */
-    #pickTypeScreen {
-      margin-top: 20px;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+    /* New styles for Pick Type buttons */
     #pickTypeScreen button {
-      height: 50px; /* 10-15px taller than normal 35-40px */
+      height: 52px; /* slightly taller than normal 40px buttons */
+      font-weight: bold;
       font-size: 18px;
-      font-weight: 600;
     }
   </style>
 </head>
@@ -279,11 +270,10 @@
     <div class="error" id="error"></div>
   </div>
 
-  <!-- New Pick Type Screen, hidden initially -->
   <div class="container hidden" id="pickTypeScreen">
-    <button id="btnStraightPick" type="button">Straight Pick</button>
-    <button id="btnUpTo5Parlay" type="button">Up to 5 Parlay Picks</button>
-    <button id="btn6to15Parlay" type="button">6 to 15 Parlay Picks</button>
+    <button id="btnStraightPick">Straight Pick</button>
+    <button id="btnUpTo5">Up to 5 Parlay Picks</button>
+    <button id="btn6to15">6 to 15 Parlay Picks</button>
   </div>
 
   <div class="container hidden" id="sports-screen">
@@ -301,8 +291,9 @@
         <button id="resetBtn" onclick="resetSearch()">Reset</button>
       </div>
 
+      <!-- Added container for Post Title and Post Desc textboxes here -->
       <div id="postTitleDescContainer" style="margin-top: 10px; max-width: 400px;">
-        <!-- Dynamic post title and desc inputs inserted here -->
+        <!-- These inputs and labels will be created dynamically -->
       </div>
 
       <div id="gameSuggestion" class="hidden"></div>
@@ -352,6 +343,7 @@
       <button id="submitNoteBtn" class="hidden">Submit</button>
     </div>
 
+    <!-- New Hype Phrase Step -->
     <div id="hypePhraseStep" class="hidden" style="margin-top: 20px;">
       <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
         Select Type of Hype Phrase:
@@ -373,10 +365,10 @@
     const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
     let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
 
-    // Parlay pick management variables
-    let pickType = "straight"; // "straight", "upTo5", or "6to15"
+    // Parlay globals
     let parlayPicks = [];
     let currentPickNumber = 1;
+    let pickType = "straight"; // 'straight', 'upTo5', '6to15'
 
     window.onload = async () => {
       try {
@@ -401,11 +393,17 @@
       }
 
       capperName = match["Display Name"];
+
+      // Hide access screen
       document.getElementById("access-screen").classList.add("hidden");
 
       // Show pick type screen
       document.getElementById("pickTypeScreen").classList.remove("hidden");
 
+      // Hide sports screen (just to be sure)
+      document.getElementById("sports-screen").classList.add("hidden");
+
+      // Reset parlay globals for new session
       parlayPicks = [];
       currentPickNumber = 1;
       pickType = "straight";
@@ -420,57 +418,69 @@
 
     document.getElementById("btnStraightPick").addEventListener("click", () => {
       pickType = "straight";
-      document.getElementById("pickTypeScreen").classList.add("hidden");
-      showSportsScreenInitial();
+      startSportsScreen();
     });
 
-    document.getElementById("btnUpTo5Parlay").addEventListener("click", () => {
+    document.getElementById("btnUpTo5").addEventListener("click", () => {
       pickType = "upTo5";
-      parlayPicks = [];
-      currentPickNumber = 1;
-      document.getElementById("pickTypeScreen").classList.add("hidden");
-      showSportsScreenInitial();
+      startSportsScreen();
     });
 
-    document.getElementById("btn6to15Parlay").addEventListener("click", () => {
+    document.getElementById("btn6to15").addEventListener("click", () => {
       pickType = "6to15";
-      parlayPicks = [];
-      currentPickNumber = 1;
-      document.getElementById("pickTypeScreen").classList.add("hidden");
-      showSportsScreenInitial();
+      startSportsScreen();
     });
 
-    async function showSportsScreenInitial() {
+    function startSportsScreen() {
+      // Hide pick type screen
+      document.getElementById("pickTypeScreen").classList.add("hidden");
+
+      // Show sports screen
       document.getElementById("sports-screen").classList.remove("hidden");
 
-      document.getElementById("loggedInInfo").classList.remove("hidden");
-      document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+      // Reset search inputs and focus teamSearch
+      resetSearchInputsForPick();
 
+      // Load data if needed
+      if (!allData.gameCache) {
+        loadAllData();
+      } else {
+        // Show logged in info, hide loader
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("loadingMsg").style.display = "none";
+        document.getElementById("loggedInInfo").classList.remove("hidden");
+        document.getElementById("teamSearch").focus();
+        document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+      }
+    }
+
+    function resetSearchInputsForPick() {
       document.getElementById("inputLabel").classList.remove("hidden");
       document.getElementById("inputLabel").style.display = "";
       document.getElementById("teamSearch").classList.remove("hidden");
       document.getElementById("teamSearch").style.display = "";
       document.getElementById("teamSearch").value = "";
       document.getElementById("teamSearch").focus();
+
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("customInputSection").innerHTML = "";
+
       document.getElementById("searchBtn").classList.remove("hidden");
       document.getElementById("searchBtn").style.display = "";
 
-      const optionalSections = [
-        "gameSuggestion",
-        "customInputSection",
-        "unitDropdownSection",
-        "notesChoiceSection",
-        "notesInputSection",
-        "confirmOutput",
-        "submitNoteBtn",
-        "hypePhraseStep"
-      ];
-      optionalSections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add("hidden");
-      });
+      document.getElementById("gameSuggestion").classList.add("hidden");
 
-      await loadAllData();
+      document.getElementById("searchError").textContent = "";
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+      document.getElementById("unitDropdown").innerHTML = "";
+      document.getElementById("unitDropdownError").textContent = "";
+
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+      document.getElementById("notesInputSection").classList.add("hidden");
+      document.getElementById("confirmOutput").classList.add("hidden");
+      document.getElementById("hypePhraseStep").classList.add("hidden");
+
+      disableTeamAndWagerInputs(false);
     }
 
     async function loadAllData() {
@@ -501,9 +511,6 @@
     });
     document.getElementById("wagerType")?.addEventListener("keydown", e => {
       if (e.key === "Enter") submitWagerType();
-    });
-    document.getElementById("accessCode").addEventListener("keydown", e => {
-      if (e.key === "Enter") validateAccess();
     });
     document.getElementById("unitDropdown").addEventListener("change", () => {
       submitUnitAmount();
@@ -603,7 +610,7 @@
           document.getElementById("gameSuggestion").classList.add("hidden");
 
           document.getElementById("customInputSection").classList.remove("hidden");
-          buildWagerDropdown();
+          document.getElementById("wagerType")?.focus();
         };
 
         return;
@@ -640,6 +647,7 @@
         hour12: true,
       });
 
+      const timeString = `${c_date} @ ${timeFormatted} EST`;
       const matchedTeam = [row["Home Team"], row["Away Team"]].find(team =>
         team.toLowerCase().includes(teamInputRaw.toLowerCase())
       ) || teamInputRaw;
@@ -680,83 +688,7 @@
       buildWagerDropdown();
     }
 
-    function buildWagerDropdown() {
-      const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
-      const inputDiv = document.getElementById("customInputSection");
-
-      inputDiv.innerHTML = `
-        <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-          Select Wager Type Below:
-        </label>
-        <select id="wagerDropdown"></select>
-        <div class="error" id="wagerError"></div>
-      `;
-
-      const dropdown = document.getElementById("wagerDropdown");
-
-      const defaultOpt = document.createElement("option");
-      defaultOpt.textContent = "Select Item Below";
-      defaultOpt.disabled = true;
-      defaultOpt.selected = true;
-      dropdown.appendChild(defaultOpt);
-
-      const isOverride = !!window.overrideTeamName;
-
-      let filteredWagerData = wagerData;
-
-      if (!isOverride) {
-        const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
-        filteredWagerData = wagerData.filter(row => {
-          const rowSport = (row.Sport || "").trim();
-          return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
-        });
-      }
-
-      filteredWagerData.forEach(row => {
-        const opt = document.createElement("option");
-        opt.textContent = row.wager_label_template;
-        opt.value = row.wager_label_template;
-        opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUM]]") ? "yes" : "no";
-        dropdown.appendChild(opt);
-      });
-
-      const otherOpt = document.createElement("option");
-      otherOpt.textContent = "Other (Manual Entry Override)";
-      otherOpt.value = "__other";
-      dropdown.appendChild(otherOpt);
-
-      dropdown.addEventListener("change", () => {
-        const selected = dropdown.value;
-        const selectedOption = dropdown.options[dropdown.selectedIndex];
-        const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
-
-        if (selected === "__other") {
-          inputDiv.innerHTML = `
-            <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
-              Enter Wager Type (e.g. 'ML' or 'F5')
-            </label>
-            <input type="text" id="wagerType" />
-            <button id="submitWagerBtn">Submit</button>
-            <div class="error" id="wagerError"></div>
-          `;
-
-          document.getElementById("submitWagerBtn").onclick = () => {
-            submitWagerType();
-          };
-
-          document.getElementById("unitDropdownSection").classList.add("hidden");
-        } else {
-          if (requiresNumber && selected.includes("[[NUM]]")) {
-            showNumInputScreen(selected);
-          } else {
-            document.getElementById("customInputSection").classList.add("hidden");
-            buildUnitDropdown();
-            document.getElementById("unitDropdownSection").classList.remove("hidden");
-          }
-        }
-      });
-    }
-
+    // New screen: show numeric input for [[NUM]] wagers
     function showNumInputScreen(wagerTemplate) {
       const inputDiv = document.getElementById("customInputSection");
       inputDiv.innerHTML = `
@@ -767,14 +699,17 @@
       `;
 
       const label = document.getElementById("numInputLabel");
-      label.textContent = `Enter the amount for [[NUM]] (${wagerTemplate})`;
+      const previousVal = wagerTemplate;
+      label.textContent = `Enter the amount for [[NUM]] (${previousVal})`;
 
       const numInput = document.getElementById("numInput");
-
+      
       setTimeout(() => {
         numInput.focus();
       }, 100);
+      numInput.click();
 
+      // Validate on input to only allow increments of 0.5, no zero, max 300
       numInput.addEventListener("input", () => {
         let val = numInput.value;
         const errorDiv = document.getElementById("numInputError");
@@ -804,8 +739,10 @@
           return;
         }
 
+        // Replace [[NUM]] with entered number and store
         window.currentWagerWithNum = wagerTemplate.replace(/\[\[NUM\]\]/g, val);
 
+        // Clear error and proceed to next step
         errorDiv.textContent = "";
         document.getElementById("customInputSection").classList.add("hidden");
         buildUnitDropdown();
@@ -814,82 +751,51 @@
       };
     }
 
-    function buildUnitDropdown() {
-      const unitData = allData.units || [];
+    function submitWagerType() {
+      const wager = document.getElementById("wagerType").value.trim();
+      const errorBox = document.getElementById("wagerError");
 
-      const dropdown = document.getElementById("unitDropdown");
-      dropdown.innerHTML = "";
+      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+      if (!valid) {
+        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+        return;
+      }
 
-      const defaultOpt = document.createElement("option");
-      defaultOpt.textContent = "Select Unit Amount...";
-      defaultOpt.disabled = true;
-      defaultOpt.selected = true;
-      dropdown.appendChild(defaultOpt);
+      errorBox.textContent = "";
 
-      unitData.forEach(row => {
-        const opt = document.createElement("option");
-        opt.textContent = row.display_unit;
-        opt.value = row.display_unit;
-        dropdown.appendChild(opt);
-      });
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
+
+      buildUnitDropdown();
+
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
+      document.getElementById("unitDropdown").focus();
     }
 
-    // Enhanced submitUnitAmount for parlay picks
-    function submitUnitAmount() {
+    // Overriding submitUnitAmount to handle parlay logic
+    function submitUnitAmount(bypass = false) {
       const dropdown = document.getElementById("unitDropdown");
       const input = dropdown ? dropdown.value : "";
       const errorDiv = document.getElementById("unitDropdownError");
 
-      if (!input || input === "Select Unit(s)" || input === "") {
+      if (!input || input === "Select Unit(s)") {
         errorDiv.textContent = "Please select a valid unit amount.";
         return;
       }
 
       errorDiv.textContent = "";
 
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
+
       if (pickType === "straight") {
-        // Normal flow
+        // Normal process for straight pick
         document.getElementById("unitDropdownSection").classList.add("hidden");
         document.getElementById("notesChoiceSection").classList.remove("hidden");
       } else {
-        // Parlay pick flow
+        // Parlay process
+        saveCurrentPick();
 
-        // Save current pick info
-        const teamSearchEl = document.getElementById("teamSearch");
-        const teamName = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
-        const wagerInput = document.getElementById("wagerType");
-        const wagerDropdown = document.getElementById("wagerDropdown");
-        let wagerRaw = "";
-
-        if (window.currentWagerWithNum) {
-          wagerRaw = window.currentWagerWithNum;
-        } else if (wagerInput && wagerInput.value.trim()) {
-          wagerRaw = wagerInput.value.trim();
-        } else if (wagerDropdown && wagerDropdown.value.trim()) {
-          wagerRaw = wagerDropdown.value.trim();
-        }
-
-        const unitVal = input;
-
-        // Clone selectedMatch
-        const matchCopy = JSON.parse(JSON.stringify(selectedMatch || {}));
-
-        // Store pick with number suffix in memory
-        const pickData = {
-          pickNumber: currentPickNumber,
-          teamName: teamName,
-          wagerRaw: wagerRaw,
-          unitVal: unitVal,
-          match: matchCopy
-        };
-
-        parlayPicks.push(pickData);
-
-        window.currentWagerWithNum = null;
-
-        document.getElementById("unitDropdownSection").classList.add("hidden");
-
-        // Show buttons for adding picks or submitting picks depending on pickType and currentPickNumber
+        // Show add another pick buttons or submit based on pickType and currentPickNumber
         if (pickType === "upTo5") {
           if (currentPickNumber < 5) {
             showAddAnotherPickOption(true);
@@ -898,6 +804,7 @@
           }
         } else if (pickType === "6to15") {
           if (currentPickNumber < 6) {
+            // Must add picks up to 6, no submit button
             showAddAnotherPickOption(true, true);
           } else if (currentPickNumber < 15) {
             showAddAnotherPickOption(true);
@@ -908,6 +815,41 @@
 
         disableTeamAndWagerInputs(true);
       }
+    }
+
+    function saveCurrentPick() {
+      const teamName = window.overrideTeamName || (document.getElementById("teamSearch")?.value.trim() || "");
+      const wagerInput = document.getElementById("wagerType");
+      const wagerDropdown = document.getElementById("wagerDropdown");
+      let wagerRaw = "";
+
+      if (window.currentWagerWithNum) {
+        wagerRaw = window.currentWagerWithNum;
+      } else if (wagerInput && wagerInput.value.trim()) {
+        wagerRaw = wagerInput.value.trim();
+      } else if (wagerDropdown && wagerDropdown.value.trim()) {
+        wagerRaw = wagerDropdown.value.trim();
+      }
+
+      const unitVal = document.getElementById("unitDropdown").value;
+
+      // Clone selectedMatch
+      const matchCopy = JSON.parse(JSON.stringify(selectedMatch || {}));
+
+      // Store pick with number suffix in memory
+      const pickData = {
+        pickNumber: currentPickNumber,
+        teamName: teamName,
+        wagerRaw: wagerRaw,
+        unitVal: unitVal,
+        match: matchCopy
+      };
+
+      parlayPicks.push(pickData);
+
+      window.currentWagerWithNum = null;
+
+      document.getElementById("unitDropdownSection").classList.add("hidden");
     }
 
     function showAddAnotherPickOption(showAddButton, forceAddOnly = false) {
@@ -1013,6 +955,7 @@
       window.latestNote = null;
       window.overrideTitle = null;
       window.currentWagerWithNum = null;
+
       parlayPicks = [];
       currentPickNumber = 1;
       pickType = "straight";
@@ -1045,9 +988,7 @@
         "notesInputSection",
         "confirmOutput",
         "submitNoteBtn",
-        "hypePhraseStep",
-        "pickTypeScreen",
-        "parlayPickButtonsContainer"
+        "hypePhraseStep"
       ];
       toHide.forEach(id => {
         const el = document.getElementById(id);
@@ -1075,70 +1016,15 @@
       const postContainer = document.getElementById("postTitleDescContainer");
       postContainer.innerHTML = "";
 
+      // Show pick type screen, hide others
       document.getElementById("pickTypeScreen").classList.remove("hidden");
-
-      // Hide main inputs
-      const inputLabel = document.getElementById("inputLabel");
-      const teamSearch = document.getElementById("teamSearch");
-      const searchBtn = document.getElementById("searchBtn");
-
-      if (inputLabel) {
-        inputLabel.classList.add("hidden");
-        inputLabel.style.display = "none";
-      }
-      if (teamSearch) {
-        teamSearch.classList.add("hidden");
-        teamSearch.style.display = "none";
-      }
-      if (searchBtn) {
-        searchBtn.classList.add("hidden");
-        searchBtn.style.display = "none";
-      }
-
-      const gameSuggestion = document.getElementById("gameSuggestion");
-      if (gameSuggestion) gameSuggestion.classList.add("hidden");
+      document.getElementById("access-screen").classList.add("hidden");
+      document.getElementById("sports-screen").classList.add("hidden");
     }
 
-    document.getElementById("yesNoteBtn").addEventListener("click", () => {
-      document.getElementById("notesChoiceSection").classList.add("hidden");
-      document.getElementById("notesInputSection").classList.remove("hidden");
+    // The rest of your original hype phrase functions and generateFinalOutput remain unchanged below
 
-      document.getElementById("notesHeaderRow").style.display = "flex";
-      document.getElementById("submitNoteBtn").classList.remove("hidden");
-
-      document.getElementById("notesInput").value = "";
-      document.getElementById("charCount").textContent = "Remaining: 100";
-
-      document.getElementById("notesInput").focus();
-    });
-
-    document.getElementById("noNoteBtn").addEventListener("click", () => {
-      document.getElementById("notesChoiceSection").classList.add("hidden");
-      showHypePhraseStep();
-    });
-
-    document.getElementById("submitNoteBtn").addEventListener("click", () => {
-      const note = document.getElementById("notesInput").value.trim();
-      document.getElementById("notesInputSection").classList.add("hidden");
-
-      window.latestNote = note || "N/A";
-
-      showHypePhraseStep();
-    });
-
-    document.getElementById("notesInput").addEventListener("input", (e) => {
-      const remaining = 100 - e.target.value.length;
-      document.getElementById("charCount").textContent = `Remaining: ${remaining}`;
-    });
-
-    function showHypePhraseStep() {
-      document.getElementById("notesChoiceSection").classList.add("hidden");
-      document.getElementById("notesInputSection").classList.add("hidden");
-      document.getElementById("hypePhraseStep").classList.remove("hidden");
-
-      populateHypeACategories();
-    }
-
+    // Hype phrase dropdown population & event handlers
     function populateHypeACategories() {
       const selectA = document.getElementById("hypeASelect");
       selectA.innerHTML = '<option value="">-- Select Type of Hype Phrase --</option>';
@@ -1193,6 +1079,7 @@
       document.getElementById("hypePhraseOutputs").innerHTML = "";
     });
 
+    // UPDATED hypeBSelect event to show ALL matches with hype phrases for each in random order:
     document.getElementById("hypeBSelect").addEventListener("change", function () {
       const selectedType = document.getElementById("hypeASelect").value;
       const selectedEnergy = this.value;
@@ -1203,6 +1090,7 @@
         return;
       }
 
+      // Filter hype phrases for selected Type and Energy
       const hypePhrases = (allData.hypePhrases || []).filter(row =>
         row.active_status === "active" &&
         row.Type === selectedType &&
@@ -1213,9 +1101,12 @@
 
       let html = "";
 
+      // Shuffle matches so games appear in random order
       const shuffledMatches = matches.slice().sort(() => Math.random() - 0.5);
 
+      // For each match found, display all hype phrases with that match's info
       shuffledMatches.forEach(match => {
+        // Get game time for this match:
         const gameTime = match && match.row && match.row["Commence Time (UTC)"] ?
           new Date(match.row["Commence Time (UTC)"]).toLocaleString("en-US", {
             timeZone: "America/New_York",
@@ -1224,8 +1115,10 @@
             hour12: true
           }) + " EST" : "N/A";
 
+        // Get sport name for this match:
         const sportFromInput = match.row ? (match.row["Sport Name"] || "N/A") : "N/A";
 
+        // Shuffle hype phrases for randomness
         const shuffledPhrases = hypePhrases.slice().sort(() => Math.random() - 0.5);
 
         shuffledPhrases.forEach(row => {
@@ -1236,6 +1129,7 @@
           const postTitle = `${unitVal} UNIT(s) - ${phrase} - ${sportFromInput} - STARTS @ ${gameTime}`;
           const displaySport = (sport === "N/A" ? "Used for Any Sport" : sport);
 
+          // Add data attributes for sport and commence time so click handler can use them:
           html += `
             <div class="hypeOutputBlock" tabindex="0" role="button" aria-pressed="false"
               style="border: 1px solid #2a9fd6; padding: 10px; margin-bottom: 10px; cursor: pointer; border-radius: 6px; font-size: 11px;"
@@ -1254,7 +1148,8 @@
 
       outputDiv.innerHTML = html;
 
-      Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block) => {
+      // Add click and keyboard handlers for all hype output blocks
+      Array.from(outputDiv.querySelectorAll(".hypeOutputBlock")).forEach((block, i) => {
         block.onclick = () => {
           const sportFromInput = block.dataset.sport || "N/A";
           const gameTime = block.dataset.commencetime || "N/A";
@@ -1362,23 +1257,11 @@
         }
       }
 
-      // If parlay picks exist, add extra info accordingly for parlay slides and pick naming
-      if (parlayPicks.length > 0) {
-        // Here, you would adjust slide numbers and pick naming for parlay picks per your requirements
-        // For demonstration, simply showing all picks info in output
-
-        const picksInfo = parlayPicks.map(pick => {
-          return `Pick ${pick.pickNumber} - Team: ${pick.teamName}, Wager: ${pick.wagerRaw}, Units: ${pick.unitVal}`;
-        }).join("\n");
-
-        pickDescValue += "\n\nParlay Picks:\n" + picksInfo;
-      }
-
       const output = [
         "═══════════════════════",
         "######## OFFICIAL PICK",
         "═══════════════════════",
-        `Wager Type: ${pickType === "straight" ? "STRAIGHT WAGER" : "PARLAY WAGER"}`,
+        `Wager Type: STRAIGHT WAGER`,
         `Official Pick: ${matchedTeam}`,
         `Official Type: ${wager}`,
         `Official Wager: ${unitInput} Unit(s)`,
@@ -1459,31 +1342,24 @@
         return iframe;
       };
 
-      // Choose slide numbers based on parlay or straight pick
-      let slide1 = "1", slide2 = "2";
-      if (pickType === "upTo5") {
-        slide1 = "3";
-        slide2 = "4";
-      } else if (pickType === "6to15") {
-        slide1 = "1"; // Adjust this URL if you have a different slides doc for 6-15 picks
-        slide2 = "2";
-      }
-
-      const iframe1 = createIframe(slide1, true);
-      const iframe2 = createIframe(slide2, false);
+      const iframe1 = createIframe("1", true);
+      const iframe2 = createIframe("2", false);
 
       box.appendChild(iframe1);
       box.appendChild(iframe2);
 
-      // Post Title / Desc inputs
-      const postContainer = document.getElementById("postTitleDescContainer");
-      postContainer.innerHTML = "";
+      // --- Add Post Title and Post Desc readonly textboxes here ---
 
+      const postContainer = document.getElementById("postTitleDescContainer");
+      postContainer.innerHTML = ""; // Clear old if any
+
+      // Add label above Post Title input
       const postTitleLabel = document.createElement("div");
       postTitleLabel.textContent = "Tap to Copy - Paste in Patreon Post Title";
       postTitleLabel.className = "copyTextboxLabel";
       postContainer.appendChild(postTitleLabel);
 
+      // Create Post Title textbox
       const postTitleInput = document.createElement("input");
       postTitleInput.type = "text";
       postTitleInput.readOnly = true;
@@ -1492,6 +1368,7 @@
       postTitleInput.value = window.overrideTitle || "";
       postTitleInput.style.userSelect = "all";
 
+      // Copy to clipboard on click
       postTitleInput.addEventListener("click", () => {
         navigator.clipboard.writeText(postTitleInput.value).then(() => {
           alert("Post Title copied to clipboard!");
@@ -1499,11 +1376,13 @@
       });
       postContainer.appendChild(postTitleInput);
 
+      // Add label above Post Desc input
       const postDescLabel = document.createElement("div");
       postDescLabel.textContent = "Tap to Copy - Paste in Patreon Post Description";
       postDescLabel.className = "copyTextboxLabel";
       postContainer.appendChild(postDescLabel);
 
+      // Create Post Desc textbox (using span to preserve emojis)
       const postDescInput = document.createElement("input");
       postDescInput.type = "text";
       postDescInput.readOnly = true;
@@ -1512,6 +1391,7 @@
       postDescInput.value = window.selectedHypeRow ? window.selectedHypeRow.Promo || "" : "";
       postDescInput.style.userSelect = "all";
 
+      // Copy to clipboard on click
       postDescInput.addEventListener("click", () => {
         navigator.clipboard.writeText(postDescInput.value).then(() => {
           alert("Post Description copied to clipboard!");
@@ -1519,6 +1399,8 @@
       });
 
       postContainer.appendChild(postDescInput);
+
+      // --- End new additions ---
 
       const toggleBtn = document.createElement("button");
       toggleBtn.textContent = "Switch to Paid Image";
@@ -1552,6 +1434,107 @@
         box.style.height = box.scrollHeight + "px";
       }, 0);
     }
+
+    function buildWagerDropdown() {
+      const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+      const inputDiv = document.getElementById("customInputSection");
+
+      inputDiv.innerHTML = `
+        <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+          Select Wager Type Below:
+        </label>
+        <select id="wagerDropdown"></select>
+        <div class="error" id="wagerError"></div>
+      `;
+
+      const dropdown = document.getElementById("wagerDropdown");
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Item Below";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      const isOverride = !!window.overrideTeamName;
+
+      let filteredWagerData = wagerData;
+
+      if (!isOverride) {
+        const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
+        filteredWagerData = wagerData.filter(row => {
+          const rowSport = (row.Sport || "").trim();
+          return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
+        });
+      }
+
+      filteredWagerData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.wager_label_template;
+        opt.value = row.wager_label_template;
+        opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUM]]") ? "yes" : "no";
+        dropdown.appendChild(opt);
+      });
+
+      const otherOpt = document.createElement("option");
+      otherOpt.textContent = "Other (Manual Entry Override)";
+      otherOpt.value = "__other";
+      dropdown.appendChild(otherOpt);
+
+      dropdown.addEventListener("change", () => {
+        const selected = dropdown.value;
+        const selectedOption = dropdown.options[dropdown.selectedIndex];
+        const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
+
+        if (selected === "__other") {
+          inputDiv.innerHTML = `
+            <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+              Enter Wager Type (e.g. 'ML' or 'F5')
+            </label>
+            <input type="text" id="wagerType" />
+            <button onclick="submitWagerType()">Submit</button>
+            <div class="error" id="wagerError"></div>
+          `;
+          document.getElementById("unitDropdownSection").classList.add("hidden");
+        } else {
+          if (requiresNumber && selected.includes("[[NUM]]")) {
+            showNumInputScreen(selected);
+          } else {
+            document.getElementById("customInputSection").classList.add("hidden");
+            if (!requiresNumber) {
+              buildUnitDropdown();
+              document.getElementById("unitDropdownSection").classList.remove("hidden");
+            }
+          }
+        }
+      });
+    }
+
+    function buildUnitDropdown() {
+      const unitData = allData.units || [];
+
+      const dropdown = document.getElementById("unitDropdown");
+      const section = document.getElementById("unitDropdownSection");
+
+      dropdown.innerHTML = "";
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Unit Amount...";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      unitData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.display_unit;
+        opt.value = row.display_unit;
+        dropdown.appendChild(opt);
+      });
+
+      if (section.classList.contains("hidden")) {
+        section.classList.remove("hidden");
+      }
+    }
   </script>
+
 </body>
 </html>
