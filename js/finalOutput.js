@@ -188,7 +188,6 @@ function generateFinalOutput(notes, newTitle) {
   postTitleInput.title = "Click to copy Post Title";
   postTitleInput.value = window.overrideTitle || "";
   postTitleInput.style.userSelect = "all";
-
   postTitleInput.addEventListener("click", () => {
     navigator.clipboard.writeText(postTitleInput.value).then(() => {
       alert("Post Title copied to clipboard!");
@@ -208,13 +207,11 @@ function generateFinalOutput(notes, newTitle) {
   postDescInput.title = "Click to copy Post Description";
   postDescInput.value = window.selectedHypeRow ? window.selectedHypeRow.Promo || "" : "";
   postDescInput.style.userSelect = "all";
-
   postDescInput.addEventListener("click", () => {
     navigator.clipboard.writeText(postDescInput.value).then(() => {
       alert("Post Description copied to clipboard!");
     });
   });
-
   postContainer.appendChild(postDescInput);
 
   const toggleBtn = document.createElement("button");
@@ -248,9 +245,4 @@ function generateFinalOutput(notes, newTitle) {
     box.style.overflow = "hidden";
     box.style.height = box.scrollHeight + "px";
   }, 0);
-}
-
-function openImageGenerator() {
-  const encodedText = encodeURIComponent(window._cleanedOutput || '');
-  window.open(`${BASE_URL}?text=${encodedText}`, '_blank');
 }
