@@ -1,5 +1,3 @@
-// resetAndUI.js
-
 function resetSearch() {
   matches = [];
   currentMatchIndex = 0;
