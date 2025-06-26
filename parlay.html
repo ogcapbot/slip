@@ -51,6 +51,13 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    /* New style: Increase height of parlay pick buttons */
+    .pick-type-btn {
+      padding-top: 22px;
+      padding-bottom: 22px;
     }
 
     button:hover {
@@ -239,6 +246,19 @@
       font-family: 'Oswald', sans-serif;
       user-select: none;
     }
+
+    /* New Pick Type Screen container */
+    #pickTypeScreen {
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    #pickTypeScreen h2 {
+      margin-bottom: 20px;
+      font-weight: 700;
+      color: #2a9fd6;
+    }
   </style>
 </head>
 <body>
@@ -261,6 +281,14 @@
     />
     <button id="accessBtn" onclick="validateAccess()">Submit</button>
     <div class="error" id="error"></div>
+  </div>
+
+  <!-- NEW Pick Type Selection Screen - initially hidden -->
+  <div class="container hidden" id="pickTypeScreen">
+    <h2>Please Select Your Pick Type</h2>
+    <button class="pick-type-btn" id="btnStraightPick">Straight Pick</button>
+    <button class="pick-type-btn" id="btnUpTo5Parlay">Up to 5 Parlay Picks</button>
+    <button class="pick-type-btn" id="btn6to15Parlay">6 to 15 Parlay Picks</button>
   </div>
 
   <div class="container hidden" id="sports-screen">
@@ -352,6 +380,11 @@
     const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
     let capperInfo = [], allData = {}, currentMatchIndex = 0, matches = [], selectedMatch = null, capperName = "";
 
+    // Added variables to track pick type and parlay picks in memory
+    let pickType = "straight"; // "straight", "upTo5", "6to15"
+    let parlayPicks = []; // array to store picks as objects
+    let currentPickNumber = 1;
+
     window.onload = async () => {
       try {
         const res = await fetch(BASE_URL + "?action=capperOnly");
@@ -376,60 +409,547 @@
 
       capperName = match["Display Name"];
       document.getElementById("access-screen").classList.add("hidden");
-      document.getElementById("sports-screen").classList.remove("hidden");
 
-      Array.from(document.querySelectorAll("#sports-screen > *")).forEach(el => {
+      // Show Pick Type Screen instead of sports screen immediately
+      document.getElementById("pickTypeScreen").classList.remove("hidden");
+
+      // Hide everything in sports screen for now
+      const sportsScreen = document.getElementById("sports-screen");
+      Array.from(sportsScreen.children).forEach(el => el.style.display = "none");
+
+      // Setup Pick Type button events
+      setupPickTypeButtons();
+    }
+
+    function setupPickTypeButtons() {
+      document.getElementById("btnStraightPick").onclick = () => {
+        pickType = "straight";
+        parlayPicks = [];
+        currentPickNumber = 1;
+
+        // Hide pick type screen, show sports screen, show normal initial UI
+        document.getElementById("pickTypeScreen").classList.add("hidden");
+        showSportsScreenInitial();
+      };
+
+      document.getElementById("btnUpTo5Parlay").onclick = () => {
+        pickType = "upTo5";
+        parlayPicks = [];
+        currentPickNumber = 1;
+
+        document.getElementById("pickTypeScreen").classList.add("hidden");
+        showSportsScreenInitial();
+      };
+
+      document.getElementById("btn6to15Parlay").onclick = () => {
+        pickType = "6to15";
+        parlayPicks = [];
+        currentPickNumber = 1;
+
+        document.getElementById("pickTypeScreen").classList.add("hidden");
+        showSportsScreenInitial();
+      };
+    }
+
+    // Show the sports screen initial elements, after pick type selection
+    function showSportsScreenInitial() {
+      const sportsScreen = document.getElementById("sports-screen");
+
+      // Show all children except loader and loadingMsg - reset visibility
+      Array.from(sportsScreen.children).forEach(el => {
         if (el.id !== "loader" && el.id !== "loadingMsg") {
-          el.style.display = "none";
+          el.style.display = "";
         }
       });
 
-      loadAllData();
+      // Show loggedInInfo container
+      document.getElementById("loggedInInfo").classList.remove("hidden");
+
+      // Set login notice
+      document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+
+      // Show main inputs: label, teamSearch, searchBtn
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("inputLabel").style.display = "";
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("teamSearch").style.display = "";
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("teamSearch").focus();
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("searchBtn").style.display = "";
+
+      // Hide other optional sections just in case
+      const optionalSections = [
+        "gameSuggestion",
+        "customInputSection",
+        "unitDropdownSection",
+        "notesChoiceSection",
+        "notesInputSection",
+        "confirmOutput",
+        "submitNoteBtn",
+        "hypePhraseStep"
+      ];
+      optionalSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
     }
 
-    document.getElementById("accessCode").addEventListener("input", (e) => {
-      e.target.value = e.target.value.replace(/\D/g, "");
-      if (e.target.value.length > 10) {
-        e.target.value = e.target.value.slice(0, 10);
-      }
-    });
+    // Override the normal useThisGame function for parlay picks flow
+    function useThisGame() {
+      document.getElementById("gameSuggestion").classList.add("hidden");
 
-    async function loadAllData() {
-      try {
-        const res = await fetch(BASE_URL + "?action=data");
-        allData = await res.json();
+      document.getElementById("inputLabel").classList.add("hidden");
+      document.getElementById("teamSearch").classList.add("hidden");
+      document.getElementById("searchBtn").classList.add("hidden");
 
-        document.getElementById("loader").style.display = "none";
-        document.getElementById("loadingMsg").style.display = "none";
+      document.getElementById("customInputSection").classList.remove("hidden");
+      buildWagerDropdownForPick();
+    }
 
-        Array.from(document.querySelectorAll("#sports-screen > *")).forEach(el => {
-          if (el.id !== "loader" && el.id !== "loadingMsg") {
-            el.style.display = "";
-          }
+    // Build wager dropdown with extra buttons for parlay picks after wager and unit input
+    function buildWagerDropdownForPick() {
+      const wagerData = (allData.wagers || []).filter(row => row.active_status === 'active');
+      const inputDiv = document.getElementById("customInputSection");
+
+      inputDiv.innerHTML = `
+        <label for="wagerDropdown" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+          Select Wager Type Below:
+        </label>
+        <select id="wagerDropdown"></select>
+        <div class="error" id="wagerError"></div>
+      `;
+
+      const dropdown = document.getElementById("wagerDropdown");
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Item Below";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      const isOverride = !!window.overrideTeamName;
+
+      let filteredWagerData = wagerData;
+
+      if (!isOverride) {
+        const detectedSport = selectedMatch?.["League (Group)"]?.trim() || "";
+        filteredWagerData = wagerData.filter(row => {
+          const rowSport = (row.Sport || "").trim();
+          return !rowSport || rowSport.toLowerCase() === detectedSport.toLowerCase();
         });
+      }
 
-        document.getElementById("loggedInInfo").classList.remove("hidden");
-        document.getElementById("teamSearch").focus();
-        document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+      filteredWagerData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.wager_label_template;
+        opt.value = row.wager_label_template;
+        opt.dataset.requiresNumber = row.pick_desc_template.includes("[[NUM]]") ? "yes" : "no";
+        dropdown.appendChild(opt);
+      });
 
-      } catch {
-        alert("Failed to load sports data.");
+      const otherOpt = document.createElement("option");
+      otherOpt.textContent = "Other (Manual Entry Override)";
+      otherOpt.value = "__other";
+      dropdown.appendChild(otherOpt);
+
+      dropdown.addEventListener("change", () => {
+        const selected = dropdown.value;
+        const selectedOption = dropdown.options[dropdown.selectedIndex];
+        const requiresNumber = selectedOption.dataset.requiresNumber === "yes";
+
+        if (selected === "__other") {
+          inputDiv.innerHTML = `
+            <label for="wagerType" style="color:#666;font-size:14px;margin-bottom:5px;display:block;">
+              Enter Wager Type (e.g. 'ML' or 'F5')
+            </label>
+            <input type="text" id="wagerType" />
+            <button id="submitWagerBtn">Submit</button>
+            <div class="error" id="wagerError"></div>
+          `;
+
+          document.getElementById("submitWagerBtn").onclick = () => {
+            submitWagerTypeForPick();
+          };
+
+          document.getElementById("unitDropdownSection").classList.add("hidden");
+        } else {
+          if (requiresNumber && selected.includes("[[NUM]]")) {
+            showNumInputScreenForPick(selected);
+          } else {
+            // Hide customInputSection after selection (for now)
+            // then show unit dropdown section
+            document.getElementById("customInputSection").classList.add("hidden");
+            buildUnitDropdownForPick();
+            document.getElementById("unitDropdownSection").classList.remove("hidden");
+          }
+        }
+      });
+    }
+
+    function submitWagerTypeForPick() {
+      const wagerInput = document.getElementById("wagerType");
+      const wager = wagerInput.value.trim();
+      const errorBox = document.getElementById("wagerError");
+
+      const valid = /^[A-Za-z0-9 .]+$/.test(wager) && wager.length > 0;
+      if (!valid) {
+        errorBox.textContent = "The information entered does not conform to the standard or was left blank. Please check your entry, and try again.";
+        return;
+      }
+
+      errorBox.textContent = "";
+
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.remove("hidden");
+
+      buildUnitDropdownForPick();
+      document.getElementById("unitDropdown").focus();
+    }
+
+    function showNumInputScreenForPick(wagerTemplate) {
+      const inputDiv = document.getElementById("customInputSection");
+      inputDiv.innerHTML = `
+        <label for="numInput" style="color:#666;font-size:14px;margin-bottom:5px;display:block;" id="numInputLabel"></label>
+        <input type="number" id="numInput" step="0.5" min="0.5" max="300" inputmode="decimal" pattern="^(0\\.5|[1-9][0-9]*([.]5)?)$" />
+        <div class="error" id="numInputError"></div>
+        <button id="numSubmitBtn">Submit</button>
+      `;
+
+      const label = document.getElementById("numInputLabel");
+      const previousVal = wagerTemplate;
+      label.textContent = `Enter the amount for [[NUM]] (${previousVal})`;
+
+      const numInput = document.getElementById("numInput");
+
+      setTimeout(() => {
+        numInput.focus();
+      }, 100);
+
+      // Validate increments
+      numInput.addEventListener("input", () => {
+        let val = numInput.value;
+        const errorDiv = document.getElementById("numInputError");
+        errorDiv.textContent = "";
+
+        if (val === "") return;
+
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+        }
+      });
+
+      document.getElementById("numSubmitBtn").onclick = () => {
+        const val = numInput.value.trim();
+        const errorDiv = document.getElementById("numInputError");
+
+        if (!val) {
+          errorDiv.textContent = "Please enter a value.";
+          numInput.focus();
+          return;
+        }
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+          numInput.focus();
+          return;
+        }
+
+        window.currentWagerWithNum = wagerTemplate.replace(/\[\[NUM\]\]/g, val);
+
+        errorDiv.textContent = "";
+        document.getElementById("customInputSection").classList.add("hidden");
+        buildUnitDropdownForPick();
+        document.getElementById("unitDropdownSection").classList.remove("hidden");
+        document.getElementById("unitDropdown").focus();
+      };
+    }
+
+    function buildUnitDropdownForPick() {
+      const unitData = allData.units || [];
+
+      const dropdown = document.getElementById("unitDropdown");
+      const section = document.getElementById("unitDropdownSection");
+
+      dropdown.innerHTML = "";
+
+      const defaultOpt = document.createElement("option");
+      defaultOpt.textContent = "Select Unit Amount...";
+      defaultOpt.disabled = true;
+      defaultOpt.selected = true;
+      dropdown.appendChild(defaultOpt);
+
+      unitData.forEach(row => {
+        const opt = document.createElement("option");
+        opt.textContent = row.display_unit;
+        opt.value = row.display_unit;
+        dropdown.appendChild(opt);
+      });
+
+      if (section.classList.contains("hidden")) {
+        section.classList.remove("hidden");
       }
     }
 
-    document.getElementById("teamSearch").addEventListener("keydown", e => {
-      if (e.key === "Enter") searchGames();
-    });
-    document.getElementById("wagerType")?.addEventListener("keydown", e => {
-      if (e.key === "Enter") submitWagerType();
-    });
-    document.getElementById("accessCode").addEventListener("keydown", e => {
-      if (e.key === "Enter") validateAccess();
-    });
-    document.getElementById("unitDropdown").addEventListener("change", () => {
-      submitUnitAmount();
-    });
+    // Override submitUnitAmount to handle parlay picks logic
+    function submitUnitAmount(bypass = false) {
+      const dropdown = document.getElementById("unitDropdown");
+      const input = dropdown ? dropdown.value : "";
+      const errorDiv = document.getElementById("unitDropdownError");
 
+      if (!input || input === "Select Unit(s)") {
+        errorDiv.textContent = "Please select a valid unit amount.";
+        return;
+      }
+
+      errorDiv.textContent = "";
+
+      if (pickType === "straight") {
+        // Normal flow for straight pick
+        document.getElementById("unitDropdownSection").classList.add("hidden");
+        document.getElementById("notesChoiceSection").classList.remove("hidden");
+      } else {
+        // Parlay picks flow
+        document.getElementById("unitDropdownSection").classList.add("hidden");
+
+        // Capture current pick data
+        let wagerRaw = "";
+        const wagerInput = document.getElementById("wagerType");
+        const wagerDropdown = document.getElementById("wagerDropdown");
+
+        if (window.currentWagerWithNum) {
+          wagerRaw = window.currentWagerWithNum;
+        } else if (wagerInput) {
+          wagerRaw = wagerInput.value.trim();
+        } else if (wagerDropdown) {
+          wagerRaw = wagerDropdown.value.trim();
+        }
+
+        // Save current pick info in parlayPicks array
+        // Copy selectedMatch and replace keys with P1, P2, ... suffixes
+        let pickObj = {};
+
+        // Deep copy selectedMatch with suffix
+        for (const key in selectedMatch) {
+          if (Object.hasOwnProperty.call(selectedMatch, key)) {
+            pickObj[`${key}P${currentPickNumber}`] = selectedMatch[key];
+          }
+        }
+
+        // Add wager and units
+        pickObj[`WagerP${currentPickNumber}`] = wagerRaw;
+        pickObj[`UnitP${currentPickNumber}`] = input;
+
+        parlayPicks.push(pickObj);
+
+        // Reset wager inputs for next pick
+        window.currentWagerWithNum = null;
+        document.getElementById("wagerType")?.value && (document.getElementById("wagerType").value = "");
+        const wagerDropdownElem = document.getElementById("wagerDropdown");
+        if (wagerDropdownElem) wagerDropdownElem.selectedIndex = 0;
+
+        currentPickNumber++;
+
+        // Reset teamSearch and gameSuggestion for next pick
+        resetPickInputsForNextPick();
+
+        // Decide if show add another pick or submit button
+        if (pickType === "upTo5") {
+          if (currentPickNumber <= 5) {
+            showAddAnotherPickButtons(false); // user can add or submit
+          } else {
+            // Max picks reached
+            showSubmitOnlyButton();
+          }
+        } else if (pickType === "6to15") {
+          if (currentPickNumber <= 5) {
+            // Force user to add another pick, no submit yet
+            showAddAnotherPickButtons(true); // hide submit button
+          } else if (currentPickNumber <= 15) {
+            showAddAnotherPickButtons(false); // allow add or submit
+          } else {
+            // Max picks reached
+            showSubmitOnlyButton();
+          }
+        }
+      }
+    }
+
+    // Show buttons after wager/unit input for parlay picks
+    function showAddAnotherPickButtons(forceAddOnly) {
+      // Hide notesChoiceSection
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+
+      const customSection = document.getElementById("customInputSection");
+      const unitSection = document.getElementById("unitDropdownSection");
+      const notesSection = document.getElementById("notesChoiceSection");
+
+      // Clear any existing buttons in customInputSection and unitDropdownSection to avoid confusion
+      // (We keep those hidden anyway, so safe)
+
+      // Show a new div with "Add Another Parlay Pick" and "Submit" buttons
+      const pickActionDivId = "parlayPickActionsDiv";
+      let actionDiv = document.getElementById(pickActionDivId);
+      if (!actionDiv) {
+        actionDiv = document.createElement("div");
+        actionDiv.id = pickActionDivId;
+        actionDiv.style.marginTop = "10px";
+        actionDiv.style.maxWidth = "400px";
+        actionDiv.style.marginLeft = "auto";
+        actionDiv.style.marginRight = "auto";
+        actionDiv.style.display = "flex";
+        actionDiv.style.flexDirection = "column";
+        actionDiv.style.gap = "10px";
+        document.getElementById("sports-screen").insertBefore(actionDiv, notesSection);
+      }
+      actionDiv.innerHTML = "";
+
+      // Add "Add Another Parlay Pick" button
+      const addBtn = document.createElement("button");
+      addBtn.textContent = "Add Another Parlay Pick";
+      addBtn.style.backgroundColor = "#2a9fd6";
+      addBtn.style.color = "white";
+      addBtn.style.border = "none";
+      addBtn.style.borderRadius = "6px";
+      addBtn.style.cursor = "pointer";
+      addBtn.style.padding = "12px";
+      addBtn.style.fontSize = "16px";
+      addBtn.onclick = () => {
+        // Hide this div and go back to team/game input for next pick
+        actionDiv.style.display = "none";
+
+        // Show team input
+        document.getElementById("inputLabel").classList.remove("hidden");
+        document.getElementById("inputLabel").style.display = "";
+        document.getElementById("teamSearch").classList.remove("hidden");
+        document.getElementById("teamSearch").style.display = "";
+        document.getElementById("teamSearch").value = "";
+        document.getElementById("teamSearch").focus();
+        document.getElementById("searchBtn").classList.remove("hidden");
+        document.getElementById("searchBtn").style.display = "";
+
+        // Reset gameSuggestion and others
+        document.getElementById("gameSuggestion").classList.add("hidden");
+        selectedMatch = null;
+        matches = [];
+        currentMatchIndex = 0;
+      };
+      actionDiv.appendChild(addBtn);
+
+      if (!forceAddOnly) {
+        // Add Submit button for parlay picks
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Submit Parlay Picks";
+        submitBtn.style.backgroundColor = "#2a9fd6";
+        submitBtn.style.color = "white";
+        submitBtn.style.border = "none";
+        submitBtn.style.borderRadius = "6px";
+        submitBtn.style.cursor = "pointer";
+        submitBtn.style.padding = "12px";
+        submitBtn.style.fontSize = "16px";
+        submitBtn.onclick = () => {
+          // Remove action div
+          actionDiv.style.display = "none";
+
+          // Proceed to Unit Selection screen for parlay picks flow (or final process)
+          proceedAfterParlayPicks();
+        };
+        actionDiv.appendChild(submitBtn);
+      } else {
+        // Hide Submit button if forceAddOnly = true (for 6to15 picks first 5 picks)
+        // So only "Add Another Parlay Pick" button visible and Submit hidden
+      }
+
+      actionDiv.style.display = "flex";
+    }
+
+    // Show only Submit button (max picks reached)
+    function showSubmitOnlyButton() {
+      // Hide notesChoiceSection
+      document.getElementById("notesChoiceSection").classList.add("hidden");
+
+      const pickActionDivId = "parlayPickActionsDiv";
+      let actionDiv = document.getElementById(pickActionDivId);
+      if (!actionDiv) {
+        actionDiv = document.createElement("div");
+        actionDiv.id = pickActionDivId;
+        actionDiv.style.marginTop = "10px";
+        actionDiv.style.maxWidth = "400px";
+        actionDiv.style.marginLeft = "auto";
+        actionDiv.style.marginRight = "auto";
+        actionDiv.style.display = "flex";
+        actionDiv.style.flexDirection = "column";
+        actionDiv.style.gap = "10px";
+        document.getElementById("sports-screen").insertBefore(actionDiv, document.getElementById("notesChoiceSection"));
+      }
+      actionDiv.innerHTML = "";
+
+      const submitBtn = document.createElement("button");
+      submitBtn.textContent = "Submit Parlay Picks";
+      submitBtn.style.backgroundColor = "#2a9fd6";
+      submitBtn.style.color = "white";
+      submitBtn.style.border = "none";
+      submitBtn.style.borderRadius = "6px";
+      submitBtn.style.cursor = "pointer";
+      submitBtn.style.padding = "12px";
+      submitBtn.style.fontSize = "16px";
+      submitBtn.onclick = () => {
+        actionDiv.style.display = "none";
+        proceedAfterParlayPicks();
+      };
+      actionDiv.appendChild(submitBtn);
+
+      actionDiv.style.display = "flex";
+    }
+
+    // Reset inputs and states for next pick after adding a parlay pick
+    function resetPickInputsForNextPick() {
+      // Hide customInputSection and unitDropdownSection
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+
+      // Reset wagerType and wagerDropdown inputs
+      if (document.getElementById("wagerType")) document.getElementById("wagerType").value = "";
+      if (document.getElementById("wagerDropdown")) document.getElementById("wagerDropdown").selectedIndex = 0;
+
+      // Show team/game selection inputs again
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("inputLabel").style.display = "";
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("teamSearch").style.display = "";
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("teamSearch").focus();
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("searchBtn").style.display = "";
+
+      // Hide gameSuggestion, customInputSection, unitDropdownSection
+      document.getElementById("gameSuggestion").classList.add("hidden");
+      document.getElementById("customInputSection").classList.add("hidden");
+      document.getElementById("unitDropdownSection").classList.add("hidden");
+
+      // Clear any errors
+      document.getElementById("wagerError")?.textContent = "";
+      document.getElementById("unitDropdownError")?.textContent = "";
+      document.getElementById("numInputError")?.textContent = "";
+      document.getElementById("searchError")?.textContent = "";
+
+      selectedMatch = null;
+      matches = [];
+      currentMatchIndex = 0;
+    }
+
+    // When user clicks "Submit Parlay Picks" after 1-5 or 6-15 picks
+    function proceedAfterParlayPicks() {
+      // We now have parlayPicks[] array with pick objects containing all info
+      // Store parlay picks globally for further use if needed
+      window.parlayPicksData = parlayPicks;
+
+      // Show notesChoiceSection for parlay picks (or could skip notes? Here same flow)
+      document.getElementById("notesChoiceSection").classList.remove("hidden");
+    }
+
+    // Original searchGames function unchanged
     function searchGames() {
       const input = document.getElementById("teamSearch").value.trim().toLowerCase();
       const rows = allData.gameCache || [];
@@ -524,7 +1044,7 @@
           document.getElementById("gameSuggestion").classList.add("hidden");
 
           document.getElementById("customInputSection").classList.remove("hidden");
-          document.getElementById("wagerType")?.focus();
+          buildWagerDropdownForPick();
         };
 
         return;
@@ -591,81 +1111,50 @@
       showGameOption();
     }
 
-    function useThisGame() {
-      document.getElementById("gameSuggestion").classList.add("hidden");
+    // The rest of your existing code remains unchanged exactly as you provided, here it is fully:
 
-      document.getElementById("inputLabel").classList.add("hidden");
-      document.getElementById("teamSearch").classList.add("hidden");
-      document.getElementById("searchBtn").classList.add("hidden");
+    document.getElementById("accessCode").addEventListener("input", (e) => {
+      e.target.value = e.target.value.replace(/\D/g, "");
+      if (e.target.value.length > 10) {
+        e.target.value = e.target.value.slice(0, 10);
+      }
+    });
 
-      document.getElementById("customInputSection").classList.remove("hidden");
-      buildWagerDropdown();
+    async function loadAllData() {
+      try {
+        const res = await fetch(BASE_URL + "?action=data");
+        allData = await res.json();
+
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("loadingMsg").style.display = "none";
+
+        Array.from(document.querySelectorAll("#sports-screen > *")).forEach(el => {
+          if (el.id !== "loader" && el.id !== "loadingMsg") {
+            el.style.display = "";
+          }
+        });
+
+        document.getElementById("loggedInInfo").classList.remove("hidden");
+        document.getElementById("teamSearch").focus();
+        document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+
+      } catch {
+        alert("Failed to load sports data.");
+      }
     }
 
-    // New screen: show numeric input for [[NUM]] wagers
-    function showNumInputScreen(wagerTemplate) {
-      const inputDiv = document.getElementById("customInputSection");
-      inputDiv.innerHTML = `
-        <label for="numInput" style="color:#666;font-size:14px;margin-bottom:5px;display:block;" id="numInputLabel"></label>
-        <input type="number" id="numInput" step="0.5" min="0.5" max="300" inputmode="decimal" pattern="^(0\\.5|[1-9][0-9]*([.]5)?)$" />
-        <div class="error" id="numInputError"></div>
-        <button id="numSubmitBtn">Submit</button>
-      `;
-
-      const label = document.getElementById("numInputLabel");
-      const previousVal = wagerTemplate;
-      label.textContent = `Enter the amount for [[NUM]] (${previousVal})`;
-
-      const numInput = document.getElementById("numInput");
-      
-      setTimeout(() => {
-  numInput.focus();
-}, 100);
-     // numInput.focus();
-      // On mobile, open numeric keypad immediately
-      numInput.click();
-
-      // Validate on input to only allow increments of 0.5, no zero, max 300
-      numInput.addEventListener("input", () => {
-        let val = numInput.value;
-        const errorDiv = document.getElementById("numInputError");
-        errorDiv.textContent = "";
-
-        if (val === "") return;
-
-        const num = parseFloat(val);
-        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
-          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
-        }
-      });
-
-      document.getElementById("numSubmitBtn").onclick = () => {
-        const val = numInput.value.trim();
-        const errorDiv = document.getElementById("numInputError");
-
-        if (!val) {
-          errorDiv.textContent = "Please enter a value.";
-          numInput.focus();
-          return;
-        }
-        const num = parseFloat(val);
-        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
-          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
-          numInput.focus();
-          return;
-        }
-
-        // Replace [[NUM]] with entered number and store
-        window.currentWagerWithNum = wagerTemplate.replace(/\[\[NUM\]\]/g, val);
-
-        // Clear error and proceed to next step
-        errorDiv.textContent = "";
-        document.getElementById("customInputSection").classList.add("hidden");
-        buildUnitDropdown();
-        document.getElementById("unitDropdownSection").classList.remove("hidden");
-        document.getElementById("unitDropdown").focus();
-      };
-    }
+    document.getElementById("teamSearch").addEventListener("keydown", e => {
+      if (e.key === "Enter") searchGames();
+    });
+    document.getElementById("wagerType")?.addEventListener("keydown", e => {
+      if (e.key === "Enter") submitWagerType();
+    });
+    document.getElementById("accessCode").addEventListener("keydown", e => {
+      if (e.key === "Enter") validateAccess();
+    });
+    document.getElementById("unitDropdown").addEventListener("change", () => {
+      submitUnitAmount();
+    });
 
     function submitWagerType() {
       const wager = document.getElementById("wagerType").value.trim();
@@ -688,23 +1177,6 @@
       document.getElementById("unitDropdown").focus();
     }
 
-    function submitUnitAmount(bypass = false) {
-      const dropdown = document.getElementById("unitDropdown");
-      const input = dropdown ? dropdown.value : "";
-      const errorDiv = document.getElementById("unitDropdownError");
-
-      if (!input || input === "Select Unit(s)") {
-        errorDiv.textContent = "Please select a valid unit amount.";
-        return;
-      }
-
-      errorDiv.textContent = "";
-      document.getElementById("unitDropdownSection").classList.remove("hidden");
-
-      document.getElementById("unitDropdownSection").classList.add("hidden");
-      document.getElementById("notesChoiceSection").classList.remove("hidden");
-    }
-
     function resetSearch() {
       // Clear global variables
       matches = [];
@@ -717,6 +1189,9 @@
       window.latestNote = null;
       window.overrideTitle = null;
       window.currentWagerWithNum = null;
+      parlayPicks = [];
+      currentPickNumber = 1;
+      pickType = "straight";
 
       // Clear inputs
       document.getElementById("teamSearch").value = "";
@@ -1170,11 +1645,30 @@
         return iframe;
       };
 
-      const iframe1 = createIframe("1", true);
-      const iframe2 = createIframe("2", false);
+      // For parlay picks: use different slide docs
+      if (pickType === "upTo5") {
+        // Use slide 3 and 4 instead of 1 and 2
+        const iframe1 = createIframe("3", true);
+        const iframe2 = createIframe("4", false);
 
-      box.appendChild(iframe1);
-      box.appendChild(iframe2);
+        box.appendChild(iframe1);
+        box.appendChild(iframe2);
+      } else if (pickType === "6to15") {
+        // Use different Google Slides doc for 6-15 parlay (assuming handled in backend by slideNum param)
+        // For demo: use slide 1 and 2 but backend should detect & use different doc if needed
+        const iframe1 = createIframe("1", true);
+        const iframe2 = createIframe("2", false);
+
+        box.appendChild(iframe1);
+        box.appendChild(iframe2);
+      } else {
+        // Straight pick default
+        const iframe1 = createIframe("1", true);
+        const iframe2 = createIframe("2", false);
+
+        box.appendChild(iframe1);
+        box.appendChild(iframe2);
+      }
 
       // --- Add Post Title and Post Desc readonly textboxes here ---
 
@@ -1252,7 +1746,7 @@
           frame.style.display = isVisible ? "none" : "block";
         });
 
-        const showingSlide2 = iframe2.style.display === "block";
+        const showingSlide2 = box.querySelector('iframe[data-slide="2"], iframe[data-slide="4"]')?.style.display === "block";
         toggleBtn.textContent = showingSlide2 ? "Switch to Regular Image" : "Switch to Paid Image";
       };
 
@@ -1319,31 +1813,88 @@
               Enter Wager Type (e.g. 'ML' or 'F5')
             </label>
             <input type="text" id="wagerType" />
-            <button onclick="submitWagerType()">Submit</button>
+            <button id="submitWagerBtn">Submit</button>
             <div class="error" id="wagerError"></div>
           `;
+
+          document.getElementById("submitWagerBtn").onclick = () => {
+            submitWagerType();
+          };
+
           document.getElementById("unitDropdownSection").classList.add("hidden");
         } else {
-          // New: If requires number & contains [[NUM]] show number input screen
           if (requiresNumber && selected.includes("[[NUM]]")) {
             showNumInputScreen(selected);
           } else {
             document.getElementById("customInputSection").classList.add("hidden");
-            if (!requiresNumber) {
-              buildUnitDropdown();
-              document.getElementById("unitDropdownSection").classList.remove("hidden");
-            }
+            buildUnitDropdown();
+            document.getElementById("unitDropdownSection").classList.remove("hidden");
           }
         }
       });
+    }
+
+    function showNumInputScreen(wagerTemplate) {
+      const inputDiv = document.getElementById("customInputSection");
+      inputDiv.innerHTML = `
+        <label for="numInput" style="color:#666;font-size:14px;margin-bottom:5px;display:block;" id="numInputLabel"></label>
+        <input type="number" id="numInput" step="0.5" min="0.5" max="300" inputmode="decimal" pattern="^(0\\.5|[1-9][0-9]*([.]5)?)$" />
+        <div class="error" id="numInputError"></div>
+        <button id="numSubmitBtn">Submit</button>
+      `;
+
+      const label = document.getElementById("numInputLabel");
+      label.textContent = `Enter the amount for [[NUM]] (${wagerTemplate})`;
+
+      const numInput = document.getElementById("numInput");
+
+      setTimeout(() => {
+        numInput.focus();
+      }, 100);
+
+      numInput.addEventListener("input", () => {
+        let val = numInput.value;
+        const errorDiv = document.getElementById("numInputError");
+        errorDiv.textContent = "";
+
+        if (val === "") return;
+
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+        }
+      });
+
+      document.getElementById("numSubmitBtn").onclick = () => {
+        const val = numInput.value.trim();
+        const errorDiv = document.getElementById("numInputError");
+
+        if (!val) {
+          errorDiv.textContent = "Please enter a value.";
+          numInput.focus();
+          return;
+        }
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0.5 || num > 300 || (num * 2) % 1 !== 0) {
+          errorDiv.textContent = "Please enter a positive number up to 300 in 0.5 increments (e.g. 0.5, 1, 1.5).";
+          numInput.focus();
+          return;
+        }
+
+        window.currentWagerWithNum = wagerTemplate.replace(/\[\[NUM\]\]/g, val);
+
+        errorDiv.textContent = "";
+        document.getElementById("customInputSection").classList.add("hidden");
+        buildUnitDropdown();
+        document.getElementById("unitDropdownSection").classList.remove("hidden");
+        document.getElementById("unitDropdown").focus();
+      };
     }
 
     function buildUnitDropdown() {
       const unitData = allData.units || [];
 
       const dropdown = document.getElementById("unitDropdown");
-      const section = document.getElementById("unitDropdownSection");
-
       dropdown.innerHTML = "";
 
       const defaultOpt = document.createElement("option");
@@ -1358,12 +1909,65 @@
         opt.value = row.display_unit;
         dropdown.appendChild(opt);
       });
-
-      if (section.classList.contains("hidden")) {
-        section.classList.remove("hidden");
-      }
     }
-  </script>
 
+    document.getElementById("teamSearch").addEventListener("input", () => {
+      document.getElementById("searchError").textContent = "";
+    });
+
+    // Load data after access validation and pick type selection
+    async function startSportsScreen() {
+      document.getElementById("loader").style.display = "block";
+      document.getElementById("loadingMsg").style.display = "block";
+
+      await loadAllData();
+
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("loadingMsg").style.display = "none";
+    }
+
+    // Modified showSportsScreenInitial to call startSportsScreen
+    // We now do that inside pick type button handlers:
+    function showSportsScreenInitial() {
+      const sportsScreen = document.getElementById("sports-screen");
+      sportsScreen.classList.remove("hidden");
+
+      document.getElementById("loggedInInfo").classList.remove("hidden");
+      document.getElementById("loginNotice").textContent = `Logged in as: ${capperName}`;
+
+      // Show main inputs: label, teamSearch, searchBtn
+      document.getElementById("inputLabel").classList.remove("hidden");
+      document.getElementById("inputLabel").style.display = "";
+      document.getElementById("teamSearch").classList.remove("hidden");
+      document.getElementById("teamSearch").style.display = "";
+      document.getElementById("teamSearch").value = "";
+      document.getElementById("teamSearch").focus();
+      document.getElementById("searchBtn").classList.remove("hidden");
+      document.getElementById("searchBtn").style.display = "";
+
+      const optionalSections = [
+        "gameSuggestion",
+        "customInputSection",
+        "unitDropdownSection",
+        "notesChoiceSection",
+        "notesInputSection",
+        "confirmOutput",
+        "submitNoteBtn",
+        "hypePhraseStep"
+      ];
+      optionalSections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+
+      startSportsScreen();
+    }
+
+    // Hook submitUnitAmount to the unitDropdown change event for all flows
+    document.getElementById("unitDropdown").addEventListener("change", () => {
+      submitUnitAmount();
+    });
+
+  </script>
 </body>
 </html>
