@@ -43,6 +43,11 @@ function submitUnitAmount(bypass = false) {
   document.getElementById("notesChoiceSection").classList.remove("hidden");
 }
 
-document.getElementById("unitDropdown").addEventListener("change", () => {
-  submitUnitAmount();
+document.addEventListener("DOMContentLoaded", () => {
+  const unitDropdown = document.getElementById("unitDropdown");
+  if (unitDropdown) {
+    unitDropdown.addEventListener("change", () => {
+      submitUnitAmount();
+    });
+  }
 });
