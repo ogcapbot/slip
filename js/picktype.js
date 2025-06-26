@@ -1,4 +1,3 @@
-// js/picktype.js
 (() => {
   const pickTypeScreen = document.getElementById("pickTypeScreen");
   const sportsScreen = document.getElementById("sports-screen");
@@ -9,28 +8,26 @@
 
   btnStraight.addEventListener("click", () => {
     window.AppState.pickType = "straight";
-    navigateToSportsScreen();
+    proceedToSports();
   });
 
   btnUpTo5.addEventListener("click", () => {
     window.AppState.pickType = "upTo5";
     window.AppState.parlayPicks = [];
     window.AppState.currentPickNumber = 1;
-    navigateToSportsScreen();
+    proceedToSports();
   });
 
   btn6to15.addEventListener("click", () => {
     window.AppState.pickType = "6to15";
     window.AppState.parlayPicks = [];
     window.AppState.currentPickNumber = 1;
-    navigateToSportsScreen();
+    proceedToSports();
   });
 
-  function navigateToSportsScreen() {
+  function proceedToSports() {
     pickTypeScreen.classList.add("hidden");
     sportsScreen.classList.remove("hidden");
-
-    // Trigger an event to init game screen
     document.dispatchEvent(new CustomEvent("startSportsScreen"));
   }
 })();
