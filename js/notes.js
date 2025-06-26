@@ -1,5 +1,3 @@
-// notes.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const yesNoteBtn = document.getElementById("yesNoteBtn");
   const noNoteBtn = document.getElementById("noNoteBtn");
