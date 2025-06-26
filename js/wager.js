@@ -1,5 +1,3 @@
-// wager.js
-
 function submitWagerType() {
   const wager = document.getElementById("wagerType").value.trim();
   const errorBox = document.getElementById("wagerError");
