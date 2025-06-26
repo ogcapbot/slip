@@ -45,9 +45,7 @@
         <button id="resetBtn">Reset</button>
       </div>
 
-      <!-- Added container for Post Title and Post Desc textboxes here -->
       <div id="postTitleDescContainer" style="margin-top: 10px; max-width: 400px;">
-        <!-- These inputs and labels will be created dynamically -->
       </div>
 
       <div id="gameSuggestion" class="hidden"></div>
@@ -97,6 +95,32 @@
       <button id="submitNoteBtn" class="hidden">Submit</button>
     </div>
 
-    <!-- New Hype Phrase Step -->
     <div id="hypePhraseStep" class="hidden" style="margin-top: 20px;">
-      <label fo
+      <label for="hypeASelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block;">
+        Select Type of Hype Phrase:
+      </label>
+      <select id="hypeASelect"></select>
+
+      <label for="hypeBSelect" style="color:#666; font-size:14px; margin-bottom:5px; display:block; margin-top: 15px;">
+        Select Energy of Hype Phrase:
+      </label>
+      <select id="hypeBSelect" disabled></select>
+
+      <div id="hypePhraseOutputs" style="margin-top: 15px;"></div>
+    </div>
+
+    <pre id="confirmOutput" class="hidden"></pre>
+  </div>
+
+  <script src="js/access.js"></script>
+  <script src="js/dataLoader.js"></script>
+  <script src="js/searchGames.js"></script>
+  <script src="js/wager.js"></script>
+  <script src="js/unit.js"></script>
+  <script src="js/notes.js"></script>
+  <script src="js/hypephrase.js"></script>
+  <script src="js/finalOutput.js"></script>
+  <script src="js/resetAndUI.js"></script>
+
+</body>
+</html>
