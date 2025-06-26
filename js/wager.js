@@ -1,6 +1,4 @@
-// js/wager.js
 (() => {
-  // Listens for 'proceedToWager' event and shows wager input UI
   const sportsScreen = document.getElementById("sports-screen");
 
   document.addEventListener("proceedToWager", () => {
@@ -88,7 +86,6 @@
   }
 
   function hideManualWagerInput() {
-    // restore wager dropdown for next usage
     buildWagerDropdown();
   }
 
