@@ -1,4 +1,3 @@
-// js/access.js
 (() => {
   const BASE_URL = "https://script.google.com/macros/s/AKfycbzbNo6fcQsDvPSlsaC9y1U3NsO214vuS-7a6EwhtFXi-sH3fHQaJawg6LDehcf4TCepkA/exec";
 
@@ -30,22 +29,16 @@
     }
     errorDiv.textContent = "";
     window.AppState.capperName = match["Display Name"];
-
-    // Hide access screen, show pick type screen
     accessScreen.classList.add("hidden");
     pickTypeScreen.classList.remove("hidden");
   }
 
   accessBtn.addEventListener("click", validateAccess);
-
   accessCodeInput.addEventListener("input", e => {
     e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
   });
-
   accessCodeInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      validateAccess();
-    }
+    if (e.key === "Enter") validateAccess();
   });
 
   loadCapperInfo();
