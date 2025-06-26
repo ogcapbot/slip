@@ -229,3 +229,19 @@ button:hover {
   font-family: 'Oswald', sans-serif;
   user-select: none;
 }
+
+/* --- Added to keep #globalHeader h3 on one line --- */
+#globalHeader {
+  padding: 10px 5px;
+  text-align: center;
+}
+
+#globalHeader h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 20px;
+  line-height: 1.2;
+  max-width: 100%;
+  margin: 0 auto;
+}
