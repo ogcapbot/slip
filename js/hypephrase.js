@@ -1,5 +1,3 @@
-// hypephrase.js
-
 function showHypePhraseStep() {
   document.getElementById("notesChoiceSection").classList.add("hidden");
   document.getElementById("notesInputSection").classList.add("hidden");
