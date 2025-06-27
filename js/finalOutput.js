@@ -180,7 +180,6 @@ function generateFinalOutput(notes, newTitle) {
     textBoxContainer.style.maxWidth = "400px";
     container.insertBefore(textBoxContainer, box);
 
-    // Add labels above textboxes:
     const label1 = document.createElement("label");
     label1.htmlFor = "textBox1";
     label1.textContent = "Post Title";
@@ -194,7 +193,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox1.style.width = "100%";
     textBox1.style.height = "28px";
     textBox1.style.marginBottom = "8px";
-    textBox1.style.fontSize = "12px";  // smaller font size
+    textBox1.style.fontSize = "12px";
     textBox1.style.fontFamily = "'Oswald', sans-serif";
     textBox1.style.padding = "6px 8px";
     textBox1.style.borderRadius = "6px";
@@ -218,7 +217,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.type = "text";
     textBox2.style.width = "100%";
     textBox2.style.height = "28px";
-    textBox2.style.fontSize = "12px";  // smaller font size
+    textBox2.style.fontSize = "12px";
     textBox2.style.fontFamily = "'Oswald', sans-serif";
     textBox2.style.padding = "6px 8px";
     textBox2.style.borderRadius = "6px";
@@ -245,8 +244,11 @@ function generateFinalOutput(notes, newTitle) {
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
 
-  // FIXED: now ensuring notes come from the correct source (latestNote preferred)
-  textBox2.value = window.selectedHypeNote || window.latestNote || "No Note Available";
+  if (typeof window.selectedHypeNote === 'string' && window.selectedHypeNote.trim() !== '') {
+    textBox2.value = window.selectedHypeNote;
+  } else {
+    textBox2.value = "No Note Available";
+  }
 
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
