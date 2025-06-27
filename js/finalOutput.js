@@ -170,6 +170,32 @@ function generateFinalOutput(notes, newTitle) {
     return iframe;
   };
 
+  const copyImageFromUrlToClipboard = (imageUrl) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          alert('Failed to create image blob');
+          return;
+        }
+        const item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(() => {
+          alert('Image copied to clipboard!');
+        }).catch(err => {
+          alert('Failed to copy image: ' + err);
+        });
+      }, 'image/png');
+    };
+    img.onerror = () => alert('Failed to load image for clipboard copy');
+    img.src = imageUrl;
+  };
+
   const container = box.parentElement;
 
   const oldToggleBtn = document.getElementById("toggleImageBtn");
@@ -210,7 +236,7 @@ function generateFinalOutput(notes, newTitle) {
 
     const label2 = document.createElement("label");
     label2.htmlFor = "textBox2";
-    label2.textContent = "Hype Phrase Description"; // <-- Updated label text here
+    label2.textContent = "Hype Phrase Description";
     label2.className = "copyTextboxLabel";
     textBoxContainer.appendChild(label2);
 
@@ -246,7 +272,6 @@ function generateFinalOutput(notes, newTitle) {
   const textBox1 = document.getElementById("textBox1");
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Note Available";
 
   const toggleBtn = document.createElement("button");
@@ -263,15 +288,6 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.borderRadius = "6px";
   toggleBtn.style.cursor = "pointer";
 
-  const copyIframeSrc = (iframe) => {
-    if (!iframe || !iframe.src) return;
-    navigator.clipboard.writeText(iframe.src).then(() => {
-      alert("Image URL copied to clipboard!");
-    }).catch(() => {
-      alert("Failed to copy image URL.");
-    });
-  };
-
   toggleBtn.onclick = () => {
     const frames = box.querySelectorAll(".slipFrame");
     let visibleIndex = -1;
@@ -286,7 +302,7 @@ function generateFinalOutput(notes, newTitle) {
     nextFrame.style.display = "block";
 
     nextFrame.style.cursor = "pointer";
-    nextFrame.onclick = () => copyIframeSrc(nextFrame);
+    nextFrame.onclick = () => copyImageFromUrlToClipboard(nextFrame.src);
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
@@ -297,7 +313,7 @@ function generateFinalOutput(notes, newTitle) {
   const initialFrame = box.querySelector(".slipFrame");
   if (initialFrame) {
     initialFrame.style.cursor = "pointer";
-    initialFrame.onclick = () => copyIframeSrc(initialFrame);
+    initialFrame.onclick = () => copyImageFromUrlToClipboard(initialFrame.src);
   }
 
   container.insertBefore(toggleBtn, box);
