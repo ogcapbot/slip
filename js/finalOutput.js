@@ -121,8 +121,6 @@ function generateFinalOutput(notes, newTitle) {
   const box = document.getElementById("confirmOutput");
   box.classList.remove("hidden");
   box.innerHTML = "";
-  box.style.height = "auto";
-  box.style.overflow = "visible";
 
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
@@ -131,10 +129,32 @@ function generateFinalOutput(notes, newTitle) {
 
   const container = box.parentElement;
 
-  // Show loader, hide images & toggle button initially
-  const loader = document.getElementById("loader");
-  if (loader) loader.style.display = "block";
-  box.style.display = "none";
+  // --- LOADER ---
+  // Create loader div just once below text boxes (if not exist)
+  let loader = document.getElementById("imageGenLoader");
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "imageGenLoader";
+    loader.style.display = "block";
+    loader.style.marginTop = "10px";
+    loader.style.textAlign = "center";
+    loader.innerHTML = `
+      <div class="loader"></div>
+      <div style="font-weight: 600; color: #444; margin-top: 6px;">Generating Images...</div>
+    `;
+    // Insert loader after textBoxesContainer if exists, else at container start
+    const textBoxesContainer = document.getElementById("textBoxesContainer");
+    if (textBoxesContainer && container.contains(textBoxesContainer)) {
+      container.insertBefore(loader, box);
+    } else {
+      container.insertBefore(loader, box);
+    }
+  }
+  loader.style.display = "block"; // show loader now
+
+  box.style.display = "none"; // hide output container initially
+
+  // Hide toggle button initially if exists
   let toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) toggleBtn.style.display = "none";
 
@@ -150,13 +170,12 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.width = "100%";
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
-
+    iframe.style.height = "auto";
+    iframe.style.minHeight = "400px";
+    iframe.style.overflow = "visible";
     iframe.style.pointerEvents = "auto";
 
-    // Remove fixed heights to allow dynamic sizing
-    iframe.style.height = "auto";
-    iframe.style.minHeight = "auto";
-
+    // On iframe load: count, when all loaded hide loader & show content
     iframe.onload = () => {
       loadedCount++;
       if (loadedCount === totalFrames) {
@@ -164,30 +183,34 @@ function generateFinalOutput(notes, newTitle) {
         box.style.display = "block";
         if (toggleBtn) toggleBtn.style.display = "block";
 
-        // Try to adjust container height based on iframe content height
-        const visibleIframe = [...box.querySelectorAll(".slipFrame")].find(f => f.style.display === "block");
-        if (visibleIframe) {
+        // Adjust iframe heights if possible (same-origin)
+        Array.from(box.querySelectorAll("iframe")).forEach((frame) => {
           try {
-            const iframeDoc = visibleIframe.contentDocument || visibleIframe.contentWindow.document;
-            const iframeBody = iframeDoc.body;
-            if (iframeBody) {
-              box.style.height = iframeBody.scrollHeight + "px";
+            const doc = frame.contentDocument || frame.contentWindow.document;
+            if (doc) {
+              const body = doc.body;
+              if (body) {
+                frame.style.height = body.scrollHeight + "px";
+              }
             }
-          } catch (e) {
-            box.style.height = "auto"; // fallback if cross-origin blocks access
+          } catch {
+            // ignore cross-origin errors
           }
-        }
+        });
+
+        // Update container height to fit images
+        box.style.height = box.scrollHeight + "px";
       }
     };
 
     return iframe;
   };
 
-  box.innerHTML = "";
-
+  box.innerHTML = ""; // Clear old iframes
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
+  // --- TEXTBOXES ---
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
@@ -261,31 +284,49 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  toggleBtn = document.getElementById("toggleImageBtn");
-  if (toggleBtn) {
-    toggleBtn.style.display = "none"; // Hide initially
-    toggleBtn.onclick = () => {
-      const frames = box.querySelectorAll(".slipFrame");
-      let visibleIndex = -1;
-      frames.forEach((frame, i) => {
-        if (frame.style.display !== "none") visibleIndex = i;
-        frame.style.display = "none";
-        frame.onclick = null;
-        frame.style.cursor = "default";
-      });
-      const nextIndex = (visibleIndex + 1) % frames.length;
-      const nextFrame = frames[nextIndex];
-      nextFrame.style.display = "block";
-
-      nextFrame.style.cursor = "default";
-      nextFrame.onclick = null;
-
-      toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-      toggleBtn.style.display = "block";
-    };
+  // --- TOGGLE BUTTON ---
+  if (!toggleBtn) {
+    toggleBtn = document.createElement("button");
+    toggleBtn.id = "toggleImageBtn";
+    toggleBtn.style.marginTop = "10px";
+    toggleBtn.style.width = "100%";
+    toggleBtn.style.maxWidth = "400px";
+    toggleBtn.style.padding = "12px";
+    toggleBtn.style.fontSize = "16px";
+    toggleBtn.style.backgroundColor = "#2a9fd6";
+    toggleBtn.style.color = "white";
+    toggleBtn.style.border = "none";
+    toggleBtn.style.borderRadius = "6px";
+    toggleBtn.style.cursor = "pointer";
   }
 
-  container.insertBefore(toggleBtn, box);
+  toggleBtn.style.display = "none";
+
+  toggleBtn.onclick = () => {
+    const frames = box.querySelectorAll(".slipFrame");
+    let visibleIndex = -1;
+    frames.forEach((frame, i) => {
+      if (frame.style.display !== "none") visibleIndex = i;
+      frame.style.display = "none";
+      frame.onclick = null;
+      frame.style.cursor = "default";
+    });
+    const nextIndex = (visibleIndex + 1) % frames.length;
+    const nextFrame = frames[nextIndex];
+    nextFrame.style.display = "block";
+
+    nextFrame.style.cursor = "default";
+    nextFrame.onclick = null;
+
+    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+    toggleBtn.style.display = "block";
+  };
+
+  if (container && box && container.contains(box)) {
+    container.insertBefore(toggleBtn, box);
+  } else if (container) {
+    container.appendChild(toggleBtn);
+  }
 
   setTimeout(() => {
     box.style.overflow = "visible";
