@@ -167,4 +167,39 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
   box.appendChild(createIframe(3, false));
+
+  // --- Add toggle button to switch between iframes ---
+  const toggleBtn = document.createElement("button");
+  toggleBtn.textContent = "Switch to Paid Image";
+  toggleBtn.style.marginTop = "10px";
+  toggleBtn.style.width = "100%";
+  toggleBtn.style.maxWidth = "400px";
+  toggleBtn.style.padding = "12px";
+  toggleBtn.style.fontSize = "16px";
+  toggleBtn.style.backgroundColor = "#2a9fd6";
+  toggleBtn.style.color = "white";
+  toggleBtn.style.border = "none";
+  toggleBtn.style.borderRadius = "6px";
+  toggleBtn.style.cursor = "pointer";
+
+  toggleBtn.onclick = () => {
+    const frames = box.querySelectorAll(".slipFrame");
+    let visibleIndex = -1;
+    frames.forEach((frame, i) => {
+      if (frame.style.display !== "none") visibleIndex = i;
+      frame.style.display = "none";
+    });
+    const nextIndex = (visibleIndex + 1) % frames.length;
+    frames[nextIndex].style.display = "block";
+
+    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+  };
+
+  box.appendChild(toggleBtn);
+
+  // Optional: Adjust container height to fit content smoothly
+  setTimeout(() => {
+    box.style.overflow = "hidden";
+    box.style.height = box.scrollHeight + "px";
+  }, 0);
 }
