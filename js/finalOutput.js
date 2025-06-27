@@ -220,7 +220,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.width = "100%";
     textBox2.style.height = "28px";
     textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "'Oswald', sans-serif";
+    textBox2.style.fontFamily = "Oswald";
     textBox2.style.padding = "6px 8px";
     textBox2.style.borderRadius = "6px";
     textBox2.style.border = "1px solid #ccc";
