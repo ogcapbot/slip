@@ -127,200 +127,39 @@ function generateFinalOutput(notes, newTitle) {
 
   const encodedOutput = encodeURIComponent(cleanedOutput);
 
-  const container = box.parentElement;
-
-  // Create or select the textboxes container
-  let textBoxContainer = document.getElementById("textBoxesContainer");
-  if (!textBoxContainer) {
-    textBoxContainer = document.createElement("div");
-    textBoxContainer.id = "textBoxesContainer";
-    textBoxContainer.style.marginBottom = "10px";
-    textBoxContainer.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer, box);
-
-    const label1 = document.createElement("label");
-    label1.htmlFor = "textBox1";
-    label1.textContent = "Post Title";
-    label1.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label1);
-
-    const textBox1 = document.createElement("input");
-    textBox1.id = "textBox1";
-    textBox1.readOnly = true;
-    textBox1.type = "text";
-    textBox1.style.width = "100%";
-    textBox1.style.height = "28px";
-    textBox1.style.marginBottom = "8px";
-    textBox1.style.fontSize = "12px";
-    textBox1.style.fontFamily = "'Oswald', sans-serif";
-    textBox1.style.padding = "6px 8px";
-    textBox1.style.borderRadius = "6px";
-    textBox1.style.border = "1px solid #ccc";
-    textBox1.style.whiteSpace = "nowrap";
-    textBox1.style.overflow = "hidden";
-    textBox1.style.textOverflow = "ellipsis";
-    textBox1.style.cursor = "pointer";
-    textBox1.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox1);
-
-    const label2 = document.createElement("label");
-    label2.htmlFor = "textBox2";
-    label2.textContent = "Hype Phrase Description";
-    label2.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label2);
-
-    const textBox2 = document.createElement("input");
-    textBox2.id = "textBox2";
-    textBox2.readOnly = true;
-    textBox2.type = "text";
-    textBox2.style.width = "100%";
-    textBox2.style.height = "28px";
-    textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "'Oswald', sans-serif";
-    textBox2.style.padding = "6px 8px";
-    textBox2.style.borderRadius = "6px";
-    textBox2.style.border = "1px solid #ccc";
-    textBox2.style.whiteSpace = "nowrap";
-    textBox2.style.overflow = "hidden";
-    textBox2.style.textOverflow = "ellipsis";
-    textBox2.style.cursor = "pointer";
-    textBox2.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox2);
-
-    [textBox1, textBox2].forEach(textBox => {
-      textBox.addEventListener("click", () => {
-        navigator.clipboard.writeText(textBox.value).then(() => {
-          alert("Copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy.");
-        });
-      });
-    });
-  }
-
-  const textBox1 = document.getElementById("textBox1");
-  const textBox2 = document.getElementById("textBox2");
-  textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-
-  // Create loader container below textboxes if not exists
-  let loaderContainer = document.getElementById("loaderContainer");
-  if (!loaderContainer) {
-    loaderContainer = document.createElement("div");
-    loaderContainer.id = "loaderContainer";
-    loaderContainer.style.textAlign = "center";
-    loaderContainer.style.marginBottom = "15px";
-    loaderContainer.style.marginTop = "5px";
-
-    // Spinner element
-    const loader = document.createElement("div");
-    loader.id = "loader"; // your existing spinner CSS targets #loader
-    loader.style.margin = "0 auto";
-    loaderContainer.appendChild(loader);
-
-    // Loader text
-    const loaderText = document.createElement("div");
-    loaderText.id = "loaderText";
-    loaderText.textContent = "Generating Images...";
-    loaderText.style.fontWeight = "bold";
-    loaderText.style.color = "#555";
-    loaderText.style.marginTop = "8px";
-    loaderContainer.appendChild(loaderText);
-
-    container.insertBefore(loaderContainer, box);
-  }
-
-  // Show loader, hide images container and toggle button at start
-  loaderContainer.style.display = "block";
-  box.style.display = "none";
-
-  // Create or select toggle button
-  let toggleBtn = document.getElementById("toggleImageBtn");
-  if (!toggleBtn) {
-    toggleBtn = document.createElement("button");
-    toggleBtn.id = "toggleImageBtn";
-    toggleBtn.textContent = "Switch to Paid Image";
-    toggleBtn.style.display = "none";
-    toggleBtn.style.marginBottom = "10px";
-    container.insertBefore(toggleBtn, box);
-  } else {
-    toggleBtn.style.display = "none";
-  }
-
-  const totalFrames = 2;
-  let loadedCount = 0;
-
-  const encodedPayload = encodeURIComponent(JSON.stringify({
-    "FULL_TEAM_ENTERED": matchedTeam,
-    "FULL_BET_TYPE": wager,
-    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-    "PICK_DESC": pickDescValue,
-    "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-    "DATE and TIME OF GAME START": formattedTime,
-    "TITLE": window.overrideTitle || "[[TITLE]]",
-    "PICKID": pickId,
-    "CAPPERS NAME": capperName,
-    "USER_INPUT_VALUE": allInputsRaw,
-    "24HR_LONG_DATE_SECONDS": estString
-  }));
-
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-
-    iframe.style.pointerEvents = "auto";
-
-    // FIX: Set fixed height to prevent scrollbars (adjust as needed)
-    iframe.style.height = "600px";
-    iframe.style.minHeight = "600px";
-
-    iframe.onload = () => {
-      loadedCount++;
-      if (loadedCount === totalFrames) {
-        loaderContainer.style.display = "none";
-        box.style.display = "block";
-        toggleBtn.style.display = "block";
-      }
-    };
-
-    return iframe;
-  };
-
+  // Clear old content
   box.innerHTML = "";
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
 
-  toggleBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
-    let visibleIndex = -1;
-    frames.forEach((frame, i) => {
-      if (frame.style.display !== "none") visibleIndex = i;
-      frame.style.display = "none";
-      frame.onclick = null;
-      frame.style.cursor = "default";
-    });
-    const nextIndex = (visibleIndex + 1) % frames.length;
-    const nextFrame = frames[nextIndex];
-    nextFrame.style.display = "block";
+  // Create and append standard version label
+  const labelStandard = document.createElement("div");
+  labelStandard.textContent = "Standard Version Image";
+  labelStandard.style.fontWeight = "bold";
+  labelStandard.style.marginBottom = "8px";
+  box.appendChild(labelStandard);
 
-    nextFrame.style.cursor = "default";
-    nextFrame.onclick = null;
+  // Create and append standard version iframe
+  const iframeStandard = document.createElement("iframe");
+  iframeStandard.src = `${BASE_URL}?json=${encodedPayload}&slideNum=1`;
+  iframeStandard.style.width = "100%";
+  iframeStandard.style.maxWidth = "400px";
+  iframeStandard.style.height = "600px";
+  iframeStandard.style.border = "none";
+  iframeStandard.style.marginBottom = "20px";
+  box.appendChild(iframeStandard);
 
-    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-  };
+  // Create and append paid version label
+  const labelPaid = document.createElement("div");
+  labelPaid.textContent = "Paid Version Image";
+  labelPaid.style.fontWeight = "bold";
+  labelPaid.style.marginBottom = "8px";
+  box.appendChild(labelPaid);
 
-  setTimeout(() => {
-    box.style.overflow = "visible";
-    box.style.height = "auto";
-  }, 0);
+  // Create and append paid version iframe
+  const iframePaid = document.createElement("iframe");
+  iframePaid.src = `${BASE_URL}?json=${encodedPayload}&slideNum=2`;
+  iframePaid.style.width = "100%";
+  iframePaid.style.maxWidth = "400px";
+  iframePaid.style.height = "600px";
+  iframePaid.style.border = "none";
+  box.appendChild(iframePaid);
 }
