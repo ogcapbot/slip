@@ -220,4 +220,81 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.width = "100%";
     textBox2.style.height = "28px";
     textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "'Os
+    textBox2.style.fontFamily = "'Oswald', sans-serif";
+    textBox2.style.padding = "6px 8px";
+    textBox2.style.borderRadius = "6px";
+    textBox2.style.border = "1px solid #ccc";
+    textBox2.style.whiteSpace = "nowrap";
+    textBox2.style.overflow = "hidden";
+    textBox2.style.textOverflow = "ellipsis";
+    textBox2.style.cursor = "pointer";
+    textBox2.title = "Click to copy text";
+    textBoxContainer.appendChild(textBox2);
+
+    [textBox1, textBox2].forEach(textBox => {
+      textBox.addEventListener("click", () => {
+        navigator.clipboard.writeText(textBox.value).then(() => {
+          alert("Copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy.");
+        });
+      });
+    });
+  }
+
+  const textBox1 = document.getElementById("textBox1");
+  const textBox2 = document.getElementById("textBox2");
+  textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
+  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.id = "toggleImageBtn";
+  toggleBtn.textContent = "Switch to Paid Image";
+  toggleBtn.style.marginTop = "10px";
+  toggleBtn.style.width = "100%";
+  toggleBtn.style.maxWidth = "400px";
+  toggleBtn.style.padding = "12px";
+  toggleBtn.style.fontSize = "16px";
+  toggleBtn.style.backgroundColor = "#2a9fd6";
+  toggleBtn.style.color = "white";
+  toggleBtn.style.border = "none";
+  toggleBtn.style.borderRadius = "6px";
+  toggleBtn.style.cursor = "pointer";
+
+  toggleBtn.onclick = () => {
+    const frames = box.querySelectorAll(".slipFrame");
+    let visibleIndex = -1;
+    frames.forEach((frame, i) => {
+      if (frame.style.display !== "none") visibleIndex = i;
+      frame.style.display = "none";
+      frame.onclick = null;
+      frame.style.cursor = "default";
+    });
+    const nextIndex = (visibleIndex + 1) % frames.length;
+    const nextFrame = frames[nextIndex];
+    nextFrame.style.display = "block";
+
+    // No copy on click anymore, so reset cursor and onclick to null
+    nextFrame.style.cursor = "default";
+    nextFrame.onclick = null;
+
+    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+  };
+
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+
+  // Remove initial click-to-copy behavior on iframe
+  const initialFrame = box.querySelector(".slipFrame");
+  if (initialFrame) {
+    initialFrame.style.cursor = "default";
+    initialFrame.onclick = null;
+  }
+
+  container.insertBefore(toggleBtn, box);
+
+  setTimeout(() => {
+    box.style.overflow = "visible";
+    box.style.height = box.scrollHeight + "px";
+  }, 0);
+}
