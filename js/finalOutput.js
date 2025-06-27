@@ -169,31 +169,36 @@ function generateFinalOutput(notes, newTitle) {
     return iframe;
   };
 
-  const copyImageFromUrlToClipboard = (imageUrl) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          alert('Failed to create image blob');
-          return;
-        }
-        const item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => {
-          alert('Image copied to clipboard!');
-        }).catch(() => {
-          alert('Failed to copy image.');
-        });
-      }, 'image/png');
-    };
-    img.onerror = () => alert('Failed to load image for clipboard copy');
-    img.src = imageUrl;
-  };
+  // NEW: copy base64 image inside iframe to clipboard
+  async function copyImageFromIframe(iframe) {
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      const img = doc.querySelector("img");
+      if (!img) {
+        alert("No image found inside iframe.");
+        return;
+      }
+      const src = img.src;
+      if (!src.startsWith("data:image/png;base64,")) {
+        alert("Image source is not base64 PNG.");
+        return;
+      }
+      const base64Data = src.replace(/^data:image\/png;base64,/, "");
+      const binaryString = atob(base64Data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: "image/png" });
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": blob })
+      ]);
+      alert("Image copied to clipboard!");
+    } catch (err) {
+      alert("Failed to copy image: " + err);
+    }
+  }
 
   const container = box.parentElement;
 
@@ -301,26 +306,23 @@ function generateFinalOutput(notes, newTitle) {
     nextFrame.style.display = "block";
 
     nextFrame.style.cursor = "pointer";
-    nextFrame.onclick = () => copyImageFromUrlToClipboard(nextFrame.src);
+    nextFrame.onclick = () => copyImageFromIframe(nextFrame);
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  // Append the iframes
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  // Set initial click to copy on visible iframe
   const initialFrame = box.querySelector(".slipFrame");
   if (initialFrame) {
     initialFrame.style.cursor = "pointer";
-    initialFrame.onclick = () => copyImageFromUrlToClipboard(initialFrame.src);
+    initialFrame.onclick = () => copyImageFromIframe(initialFrame);
   }
 
-  // Insert toggle button above images container
   container.insertBefore(toggleBtn, box);
 
-  // Add the new button "Copy THIS image to Clipboard" below toggleBtn
+  // Add a separate "Copy THIS image to Clipboard" button below toggleBtn
   let copyThisBtn = document.getElementById("copyThisImageBtn");
   if (!copyThisBtn) {
     copyThisBtn = document.createElement("button");
@@ -331,18 +333,17 @@ function generateFinalOutput(notes, newTitle) {
     copyThisBtn.style.maxWidth = "400px";
     copyThisBtn.style.padding = "12px";
     copyThisBtn.style.fontSize = "16px";
-    copyThisBtn.style.backgroundColor = "#28a745"; // Green
+    copyThisBtn.style.backgroundColor = "#28a745";
     copyThisBtn.style.color = "white";
     copyThisBtn.style.border = "none";
     copyThisBtn.style.borderRadius = "6px";
     copyThisBtn.style.cursor = "pointer";
 
-    // Add click handler to copy currently visible iframe's image
     copyThisBtn.onclick = () => {
       const frames = box.querySelectorAll(".slipFrame");
       const visibleFrame = [...frames].find(frame => frame.style.display !== "none");
       if (visibleFrame) {
-        copyImageFromUrlToClipboard(visibleFrame.src);
+        copyImageFromIframe(visibleFrame);
       } else {
         alert("No image to copy.");
       }
