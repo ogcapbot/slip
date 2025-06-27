@@ -237,7 +237,10 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Helper: create container with label and iframe, add click-to-copy on iframe URL
+  // Track loaded iframes count to hide loader once both loaded
+  let loadedCount = 0;
+
+  // Helper: create container with label and iframe, add overlay to capture clicks for copying iframe URL
   function createImageContainer(labelText, slideNum) {
     const container = document.createElement("div");
     container.style.border = "1px solid #ccc";
@@ -245,6 +248,7 @@ function generateFinalOutput(notes, newTitle) {
     container.style.padding = "12px";
     container.style.marginBottom = "20px";
     container.style.maxWidth = "420px";
+    container.style.position = "relative"; // for overlay
 
     const label = document.createElement("div");
     label.textContent = labelText;
@@ -253,16 +257,26 @@ function generateFinalOutput(notes, newTitle) {
     label.style.color = "#666666";
     label.style.marginBottom = "10px";
 
-    const iframe = document.createElement("iframe");
     const iframeSrc = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+
+    const iframe = document.createElement("iframe");
     iframe.src = iframeSrc;
     iframe.style.width = "100%";
     iframe.style.height = "600px";
     iframe.style.border = "none";
-    iframe.style.cursor = "pointer";
 
-    // Click to copy iframe URL to clipboard
-    iframe.addEventListener("click", () => {
+    // Overlay div to capture clicks
+    const overlay = document.createElement("div");
+    overlay.style.position = "absolute";
+    overlay.style.top = label.offsetHeight + 12 + "px"; // label height + container padding
+    overlay.style.left = "12px"; // container padding left
+    overlay.style.right = "12px"; // container padding right
+    overlay.style.height = "600px";
+    overlay.style.cursor = "pointer";
+    overlay.style.background = "transparent";
+    overlay.title = `Click to copy ${labelText} URL`;
+
+    overlay.addEventListener("click", () => {
       navigator.clipboard.writeText(iframeSrc).then(() => {
         alert(`${labelText} URL copied to clipboard!`);
       }).catch(() => {
@@ -270,7 +284,6 @@ function generateFinalOutput(notes, newTitle) {
       });
     });
 
-    // On iframe load, track count and hide loader when done
     iframe.onload = () => {
       loadedCount++;
       if (loadedCount === 2) {
@@ -280,12 +293,10 @@ function generateFinalOutput(notes, newTitle) {
 
     container.appendChild(label);
     container.appendChild(iframe);
+    container.appendChild(overlay);
 
     return container;
   }
-
-  // Track loaded iframes count to hide loader once both loaded
-  let loadedCount = 0;
 
   container.appendChild(createImageContainer("Standard Version Image", 1));
   container.appendChild(createImageContainer("Paid Version Image", 2));
