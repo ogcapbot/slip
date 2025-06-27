@@ -125,7 +125,6 @@ function generateFinalOutput(notes, newTitle) {
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
 
-  // Define your payload here before usage:
   const payload = {
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
@@ -146,57 +145,46 @@ function generateFinalOutput(notes, newTitle) {
 
   const encodedPayload = encodeURIComponent(JSON.stringify(payload));
 
-  // Clear box content for images:
-  box.innerHTML = "";
-
-  // Your new Apps Script URL:
-  const BASE_URL = "https://script.google.com/macros/s/AKfycbyHjf8OGKQj2oveR5xRXMzH6F-UZ4r2PId6f3wDPeiRl0UqulKf2GIvcIymX6j0rmG95Q/exec";
-
-  // Create image elements:
+  // Now define createImage AFTER encodedPayload is ready
   const createImage = (slideNum, visible) => {
     const img = document.createElement("img");
     img.className = "slipImage";
     img.dataset.slide = slideNum;
     img.style.display = visible ? "block" : "none";
+    img.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
     img.style.width = "100%";
     img.style.maxWidth = "400px";
     img.style.border = "none";
-    img.style.cursor = "pointer";
     img.style.height = "auto";
     img.style.minHeight = "400px";
+    img.style.cursor = "pointer";
 
-    img.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-
-    img.onclick = () => copyImageFromUrlToClipboard(img.src);
+    img.onclick = () => {
+      // Copy image data to clipboard on click
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          alert("Failed to create image blob");
+          return;
+        }
+        const item = new ClipboardItem({ "image/png": blob });
+        navigator.clipboard.write([item]).then(() => {
+          alert("Image copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy image.");
+        });
+      }, "image/png");
+    };
 
     return img;
   };
 
-  const copyImageFromUrlToClipboard = (imageUrl) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          alert('Failed to create image blob');
-          return;
-        }
-        const item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => {
-          alert('Image copied to clipboard!');
-        }).catch(() => {
-          alert('Failed to copy image.');
-        });
-      }, 'image/png');
-    };
-    img.onerror = () => alert('Failed to load image for clipboard copy');
-    img.src = imageUrl;
-  };
+  box.appendChild(createImage(1, true));
+  box.appendChild(createImage(2, false));
 
   const container = box.parentElement;
 
@@ -296,15 +284,37 @@ function generateFinalOutput(notes, newTitle) {
     images.forEach((img, i) => {
       if (img.style.display !== "none") visibleIndex = i;
       img.style.display = "none";
+      img.style.cursor = "default";
+      img.onclick = null;
     });
     const nextIndex = (visibleIndex + 1) % images.length;
-    images[nextIndex].style.display = "block";
+    const nextImg = images[nextIndex];
+    nextImg.style.display = "block";
+
+    // Re-add copy on click for visible image
+    nextImg.style.cursor = "pointer";
+    nextImg.onclick = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = nextImg.naturalWidth;
+      canvas.height = nextImg.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(nextImg, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          alert("Failed to create image blob");
+          return;
+        }
+        const item = new ClipboardItem({ "image/png": blob });
+        navigator.clipboard.write([item]).then(() => {
+          alert("Image copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy image.");
+        });
+      }, "image/png");
+    };
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
-
-  box.appendChild(createImage(1, true));
-  box.appendChild(createImage(2, false));
 
   container.insertBefore(toggleBtn, box);
 
