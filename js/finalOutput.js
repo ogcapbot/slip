@@ -138,11 +138,34 @@ function generateFinalOutput(notes, newTitle) {
     "24HR_LONG_DATE_SECONDS": estString
   }));
 
-  const box = document.getElementById("confirmOutput");
-  box.classList.remove("hidden");
-  box.innerHTML = "";
+  const container = document.getElementById("confirmOutput");
+  container.classList.remove("hidden");
 
-  // === Add Post Title label + input ===
+  // Clear container for fresh content
+  container.innerHTML = "";
+
+  // Create and show loader container with spinner + text
+  const loaderContainer = document.createElement("div");
+  loaderContainer.id = "loaderContainer";
+  loaderContainer.style.textAlign = "center";
+  loaderContainer.style.marginBottom = "15px";
+  loaderContainer.style.marginTop = "5px";
+
+  const loaderSpinner = document.createElement("div");
+  loaderSpinner.id = "loader"; // spinner CSS target
+  loaderSpinner.style.margin = "0 auto";
+  loaderContainer.appendChild(loaderSpinner);
+
+  const loaderText = document.createElement("div");
+  loaderText.textContent = "Generating Images...";
+  loaderText.style.fontWeight = "bold";
+  loaderText.style.color = "#555";
+  loaderText.style.marginTop = "8px";
+  loaderContainer.appendChild(loaderText);
+
+  container.appendChild(loaderContainer);
+
+  // Add Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -150,7 +173,7 @@ function generateFinalOutput(notes, newTitle) {
   labelPostTitle.style.color = "#666666";
   labelPostTitle.style.display = "block";
   labelPostTitle.style.marginBottom = "6px";
-  box.appendChild(labelPostTitle);
+  container.appendChild(labelPostTitle);
 
   const inputPostTitle = document.createElement("input");
   inputPostTitle.type = "text";
@@ -168,9 +191,17 @@ function generateFinalOutput(notes, newTitle) {
   inputPostTitle.style.overflow = "hidden";
   inputPostTitle.style.textOverflow = "ellipsis";
   inputPostTitle.title = "Click to copy text";
-  box.appendChild(inputPostTitle);
+  container.appendChild(inputPostTitle);
 
-  // === Add Hype Phrase Description label + input ===
+  inputPostTitle.addEventListener("click", () => {
+    navigator.clipboard.writeText(inputPostTitle.value).then(() => {
+      alert("Post Title copied to clipboard!");
+    }).catch(() => {
+      alert("Failed to copy Post Title.");
+    });
+  });
+
+  // Add Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -178,7 +209,7 @@ function generateFinalOutput(notes, newTitle) {
   labelHypeDesc.style.color = "#666666";
   labelHypeDesc.style.display = "block";
   labelHypeDesc.style.marginBottom = "6px";
-  box.appendChild(labelHypeDesc);
+  container.appendChild(labelHypeDesc);
 
   const inputHypeDesc = document.createElement("input");
   inputHypeDesc.type = "text";
@@ -196,9 +227,17 @@ function generateFinalOutput(notes, newTitle) {
   inputHypeDesc.style.overflow = "hidden";
   inputHypeDesc.style.textOverflow = "ellipsis";
   inputHypeDesc.title = "Click to copy text";
-  box.appendChild(inputHypeDesc);
+  container.appendChild(inputHypeDesc);
 
-  // Helper function to create a container with label and iframe
+  inputHypeDesc.addEventListener("click", () => {
+    navigator.clipboard.writeText(inputHypeDesc.value).then(() => {
+      alert("Hype Phrase Description copied to clipboard!");
+    }).catch(() => {
+      alert("Failed to copy Hype Phrase Description.");
+    });
+  });
+
+  // Helper: create container with label and iframe, add click-to-copy on iframe URL
   function createImageContainer(labelText, slideNum) {
     const container = document.createElement("div");
     container.style.border = "1px solid #ccc";
@@ -215,10 +254,29 @@ function generateFinalOutput(notes, newTitle) {
     label.style.marginBottom = "10px";
 
     const iframe = document.createElement("iframe");
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    const iframeSrc = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.src = iframeSrc;
     iframe.style.width = "100%";
     iframe.style.height = "600px";
     iframe.style.border = "none";
+    iframe.style.cursor = "pointer";
+
+    // Click to copy iframe URL to clipboard
+    iframe.addEventListener("click", () => {
+      navigator.clipboard.writeText(iframeSrc).then(() => {
+        alert(`${labelText} URL copied to clipboard!`);
+      }).catch(() => {
+        alert(`Failed to copy ${labelText} URL.`);
+      });
+    });
+
+    // On iframe load, track count and hide loader when done
+    iframe.onload = () => {
+      loadedCount++;
+      if (loadedCount === 2) {
+        loaderContainer.style.display = "none";
+      }
+    };
 
     container.appendChild(label);
     container.appendChild(iframe);
@@ -226,9 +284,9 @@ function generateFinalOutput(notes, newTitle) {
     return container;
   }
 
-  // Append Standard Image container
-  box.appendChild(createImageContainer("Standard Version Image", 1));
+  // Track loaded iframes count to hide loader once both loaded
+  let loadedCount = 0;
 
-  // Append Paid Image container
-  box.appendChild(createImageContainer("Paid Version Image", 2));
+  container.appendChild(createImageContainer("Standard Version Image", 1));
+  container.appendChild(createImageContainer("Paid Version Image", 2));
 }
