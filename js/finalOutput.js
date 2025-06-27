@@ -164,12 +164,16 @@ function generateFinalOutput(notes, newTitle) {
     return iframe;
   };
 
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
-  box.appendChild(createIframe(3, false));
+  // Get parent container of the box to insert button above the image container
+  const container = box.parentElement;
 
-  // --- Add toggle button to switch between iframes ---
+  // Remove any existing toggle button if present
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.remove();
+
+  // Create toggle button element
   const toggleBtn = document.createElement("button");
+  toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
   toggleBtn.style.marginTop = "10px";
   toggleBtn.style.width = "100%";
@@ -195,7 +199,13 @@ function generateFinalOutput(notes, newTitle) {
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  box.appendChild(toggleBtn);
+  // Append the iframes inside the box as usual
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+  box.appendChild(createIframe(3, false));
+
+  // Insert toggle button above the image container but below Reset button
+  container.insertBefore(toggleBtn, box);
 
   // Optional: Adjust container height to fit content smoothly
   setTimeout(() => {
