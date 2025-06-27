@@ -161,6 +161,7 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
 
+    // Allow pointer events on iframe to enable clicks
     iframe.style.pointerEvents = "auto";
 
     iframe.style.height = "100%";
@@ -309,38 +310,46 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  // New button below toggle button to copy the currently visible image
-  let copyCurrentImageBtn = document.getElementById("copyCurrentImageBtn");
-  if (copyCurrentImageBtn) copyCurrentImageBtn.remove();
-
-  copyCurrentImageBtn = document.createElement("button");
-  copyCurrentImageBtn.id = "copyCurrentImageBtn";
-  copyCurrentImageBtn.textContent = "Copy THIS image to Clipboard";
-  copyCurrentImageBtn.style.marginTop = "10px";
-  copyCurrentImageBtn.style.width = "100%";
-  copyCurrentImageBtn.style.maxWidth = "400px";
-  copyCurrentImageBtn.style.padding = "12px";
-  copyCurrentImageBtn.style.fontSize = "16px";
-  copyCurrentImageBtn.style.backgroundColor = "#2a9fd6";
-  copyCurrentImageBtn.style.color = "white";
-  copyCurrentImageBtn.style.border = "none";
-  copyCurrentImageBtn.style.borderRadius = "6px";
-  copyCurrentImageBtn.style.cursor = "pointer";
-
-  copyCurrentImageBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
-    const visibleFrame = [...frames].find(frame => frame.style.display !== "none");
-    if (visibleFrame) {
-      copyImageFromUrlToClipboard(visibleFrame.src);
-    } else {
-      alert("No visible image to copy.");
-    }
-  };
-
-  // Insert the copy button below toggle button
-  container.insertBefore(copyCurrentImageBtn, box.nextSibling);
+  const initialFrame = box.querySelector(".slipFrame");
+  if (initialFrame) {
+    initialFrame.style.cursor = "pointer";
+    initialFrame.onclick = () => copyImageFromUrlToClipboard(initialFrame.src);
+  }
 
   container.insertBefore(toggleBtn, box);
+
+  // Create copy button right after toggleBtn
+  let copyImageBtn = document.getElementById("copyImageBtn");
+  if (!copyImageBtn) {
+    copyImageBtn = document.createElement("button");
+    copyImageBtn.id = "copyImageBtn";
+    copyImageBtn.textContent = "Copy THIS image to Clipboard";
+    copyImageBtn.style.marginTop = "10px";
+    copyImageBtn.style.width = "100%";
+    copyImageBtn.style.maxWidth = "400px";
+    copyImageBtn.style.padding = "12px";
+    copyImageBtn.style.fontSize = "16px";
+    copyImageBtn.style.backgroundColor = "#2a9fd6";
+    copyImageBtn.style.color = "white";
+    copyImageBtn.style.border = "none";
+    copyImageBtn.style.borderRadius = "6px";
+    copyImageBtn.style.cursor = "pointer";
+
+    copyImageBtn.onclick = () => {
+      const frames = box.querySelectorAll(".slipFrame");
+      let visibleFrame = null;
+      frames.forEach(frame => {
+        if (frame.style.display !== "none") visibleFrame = frame;
+      });
+      if (visibleFrame) {
+        copyImageFromUrlToClipboard(visibleFrame.src);
+      } else {
+        alert("No image found to copy!");
+      }
+    };
+
+    container.insertBefore(copyImageBtn, box);
+  }
 
   setTimeout(() => {
     box.style.overflow = "visible";
