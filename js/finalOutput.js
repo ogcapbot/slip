@@ -175,7 +175,7 @@ function generateFinalOutput(notes, newTitle) {
   const oldToggleBtn = document.getElementById("toggleImageBtn");
   if (oldToggleBtn) oldToggleBtn.remove();
 
-  // Create the two text boxes container (if not exists)
+  // Create the two single-line text boxes container (if not exists)
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
@@ -184,36 +184,46 @@ function generateFinalOutput(notes, newTitle) {
     textBoxContainer.style.maxWidth = "400px";
     container.insertBefore(textBoxContainer, box); // Insert above images container
 
-    // Create first text box
-    const textBox1 = document.createElement("textarea");
+    // Create first single-line text box
+    const textBox1 = document.createElement("input");
     textBox1.id = "textBox1";
     textBox1.readOnly = true;
+    textBox1.type = "text";
     textBox1.style.width = "100%";
-    textBox1.style.height = "60px";
+    textBox1.style.height = "30px";
     textBox1.style.marginBottom = "8px";
-    textBox1.style.fontSize = "14px";
-    textBox1.style.padding = "8px";
+    textBox1.style.fontSize = "16px";
+    textBox1.style.fontFamily = "'Oswald', sans-serif";
+    textBox1.style.padding = "6px 8px";
     textBox1.style.borderRadius = "6px";
     textBox1.style.border = "1px solid #ccc";
-    textBox1.style.resize = "none";
+    textBox1.style.whiteSpace = "nowrap";
+    textBox1.style.overflow = "hidden";
+    textBox1.style.textOverflow = "ellipsis";
+    textBox1.style.cursor = "pointer";
     textBox1.title = "Click to copy text";
     textBoxContainer.appendChild(textBox1);
 
-    // Create second text box
-    const textBox2 = document.createElement("textarea");
+    // Create second single-line text box
+    const textBox2 = document.createElement("input");
     textBox2.id = "textBox2";
     textBox2.readOnly = true;
+    textBox2.type = "text";
     textBox2.style.width = "100%";
-    textBox2.style.height = "60px";
-    textBox2.style.fontSize = "14px";
-    textBox2.style.padding = "8px";
+    textBox2.style.height = "30px";
+    textBox2.style.fontSize = "16px";
+    textBox2.style.fontFamily = "'Oswald', sans-serif";
+    textBox2.style.padding = "6px 8px";
     textBox2.style.borderRadius = "6px";
     textBox2.style.border = "1px solid #ccc";
-    textBox2.style.resize = "none";
+    textBox2.style.whiteSpace = "nowrap";
+    textBox2.style.overflow = "hidden";
+    textBox2.style.textOverflow = "ellipsis";
+    textBox2.style.cursor = "pointer";
     textBox2.title = "Click to copy text";
     textBoxContainer.appendChild(textBox2);
 
-    // Add click event to copy content to clipboard for both textareas
+    // Add click event to copy content to clipboard for both inputs
     [textBox1, textBox2].forEach(textBox => {
       textBox.addEventListener("click", () => {
         navigator.clipboard.writeText(textBox.value).then(() => {
