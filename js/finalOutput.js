@@ -233,8 +233,19 @@ function generateFinalOutput(notes, newTitle) {
   // Show loader, hide images container and toggle button at start
   loaderContainer.style.display = "block";
   box.style.display = "none";
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+
+  // --- FIX: create toggle button if it doesn't exist ---
+  let toggleBtn = document.getElementById("toggleImageBtn");
+  if (!toggleBtn) {
+    toggleBtn = document.createElement("button");
+    toggleBtn.id = "toggleImageBtn";
+    toggleBtn.textContent = "Switch to Paid Image"; // initial text
+    toggleBtn.style.display = "none"; // start hidden
+    toggleBtn.style.marginBottom = "10px";
+    container.insertBefore(toggleBtn, box);
+  } else {
+    toggleBtn.style.display = "none"; // hide initially
+  }
 
   const totalFrames = 2;
   let loadedCount = 0;
@@ -268,8 +279,8 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.border = "none";
 
     iframe.style.pointerEvents = "auto";
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
+    iframe.style.height = "auto"; // FIXED: allow iframe height to auto adjust
+    iframe.style.minHeight = "0"; // remove fixed minHeight to prevent forced scrollbar
 
     iframe.onload = () => {
       loadedCount++;
@@ -277,7 +288,7 @@ function generateFinalOutput(notes, newTitle) {
         // Hide loader, show images container and toggle button
         loaderContainer.style.display = "none";
         box.style.display = "block";
-        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+        toggleBtn.style.display = "block";
       }
     };
 
@@ -288,34 +299,27 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  const toggleBtn = document.getElementById("toggleImageBtn");
-  if (toggleBtn) {
-    toggleBtn.style.display = "none"; // Hide initially
-    toggleBtn.onclick = () => {
-      const frames = box.querySelectorAll(".slipFrame");
-      let visibleIndex = -1;
-      frames.forEach((frame, i) => {
-        if (frame.style.display !== "none") visibleIndex = i;
-        frame.style.display = "none";
-        frame.onclick = null;
-        frame.style.cursor = "default";
-      });
-      const nextIndex = (visibleIndex + 1) % frames.length;
-      const nextFrame = frames[nextIndex];
-      nextFrame.style.display = "block";
+  toggleBtn.onclick = () => {
+    const frames = box.querySelectorAll(".slipFrame");
+    let visibleIndex = -1;
+    frames.forEach((frame, i) => {
+      if (frame.style.display !== "none") visibleIndex = i;
+      frame.style.display = "none";
+      frame.onclick = null;
+      frame.style.cursor = "default";
+    });
+    const nextIndex = (visibleIndex + 1) % frames.length;
+    const nextFrame = frames[nextIndex];
+    nextFrame.style.display = "block";
 
-      nextFrame.style.cursor = "default";
-      nextFrame.onclick = null;
+    nextFrame.style.cursor = "default";
+    nextFrame.onclick = null;
 
-      toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-      toggleBtn.style.display = "block";
-    };
-  }
-
-  container.insertBefore(toggleBtn, box);
+    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+  };
 
   setTimeout(() => {
     box.style.overflow = "visible";
-    box.style.height = box.scrollHeight + "px";
+    box.style.height = "auto"; // fix container height to auto for no scrollbar
   }, 0);
 }
