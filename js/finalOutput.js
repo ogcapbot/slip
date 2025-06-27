@@ -129,88 +129,7 @@ function generateFinalOutput(notes, newTitle) {
 
   const container = box.parentElement;
 
-  // --- LOADER ---
-  // Create loader div just once below text boxes (if not exist)
-  let loader = document.getElementById("imageGenLoader");
-  if (!loader) {
-    loader = document.createElement("div");
-    loader.id = "imageGenLoader";
-    loader.style.display = "block";
-    loader.style.marginTop = "10px";
-    loader.style.textAlign = "center";
-    loader.innerHTML = `
-      <div class="loader"></div>
-      <div style="font-weight: 600; color: #444; margin-top: 6px;">Generating Images...</div>
-    `;
-    // Insert loader after textBoxesContainer if exists, else at container start
-    const textBoxesContainer = document.getElementById("textBoxesContainer");
-    if (textBoxesContainer && container.contains(textBoxesContainer)) {
-      container.insertBefore(loader, box);
-    } else {
-      container.insertBefore(loader, box);
-    }
-  }
-  loader.style.display = "block"; // show loader now
-
-  box.style.display = "none"; // hide output container initially
-
-  // Hide toggle button initially if exists
-  let toggleBtn = document.getElementById("toggleImageBtn");
-  if (toggleBtn) toggleBtn.style.display = "none";
-
-  let loadedCount = 0;
-  const totalFrames = 2;
-
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedOutput}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-    iframe.style.height = "auto";
-    iframe.style.minHeight = "400px";
-    iframe.style.overflow = "visible";
-    iframe.style.pointerEvents = "auto";
-
-    // On iframe load: count, when all loaded hide loader & show content
-    iframe.onload = () => {
-      loadedCount++;
-      if (loadedCount === totalFrames) {
-        if (loader) loader.style.display = "none";
-        box.style.display = "block";
-        if (toggleBtn) toggleBtn.style.display = "block";
-
-        // Adjust iframe heights if possible (same-origin)
-        Array.from(box.querySelectorAll("iframe")).forEach((frame) => {
-          try {
-            const doc = frame.contentDocument || frame.contentWindow.document;
-            if (doc) {
-              const body = doc.body;
-              if (body) {
-                frame.style.height = body.scrollHeight + "px";
-              }
-            }
-          } catch {
-            // ignore cross-origin errors
-          }
-        });
-
-        // Update container height to fit images
-        box.style.height = box.scrollHeight + "px";
-      }
-    };
-
-    return iframe;
-  };
-
-  box.innerHTML = ""; // Clear old iframes
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
-
-  // --- TEXTBOXES ---
+  // Create or select the textboxes container
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
@@ -284,49 +203,116 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  // --- TOGGLE BUTTON ---
-  if (!toggleBtn) {
-    toggleBtn = document.createElement("button");
-    toggleBtn.id = "toggleImageBtn";
-    toggleBtn.style.marginTop = "10px";
-    toggleBtn.style.width = "100%";
-    toggleBtn.style.maxWidth = "400px";
-    toggleBtn.style.padding = "12px";
-    toggleBtn.style.fontSize = "16px";
-    toggleBtn.style.backgroundColor = "#2a9fd6";
-    toggleBtn.style.color = "white";
-    toggleBtn.style.border = "none";
-    toggleBtn.style.borderRadius = "6px";
-    toggleBtn.style.cursor = "pointer";
+  // Create loader container below textboxes if not exists
+  let loaderContainer = document.getElementById("loaderContainer");
+  if (!loaderContainer) {
+    loaderContainer = document.createElement("div");
+    loaderContainer.id = "loaderContainer";
+    loaderContainer.style.textAlign = "center";
+    loaderContainer.style.marginBottom = "15px";
+    loaderContainer.style.marginTop = "5px";
+
+    // Spinner element
+    const loader = document.createElement("div");
+    loader.id = "loader"; // your existing spinner CSS targets #loader
+    loader.style.margin = "0 auto";
+    loaderContainer.appendChild(loader);
+
+    // Loader text
+    const loaderText = document.createElement("div");
+    loaderText.id = "loaderText";
+    loaderText.textContent = "Generating Images...";
+    loaderText.style.fontWeight = "bold";
+    loaderText.style.color = "#555";
+    loaderText.style.marginTop = "8px";
+    loaderContainer.appendChild(loaderText);
+
+    container.insertBefore(loaderContainer, box);
   }
 
-  toggleBtn.style.display = "none";
+  // Show loader, hide images container and toggle button at start
+  loaderContainer.style.display = "block";
+  box.style.display = "none";
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.style.display = "none";
 
-  toggleBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
-    let visibleIndex = -1;
-    frames.forEach((frame, i) => {
-      if (frame.style.display !== "none") visibleIndex = i;
-      frame.style.display = "none";
-      frame.onclick = null;
-      frame.style.cursor = "default";
-    });
-    const nextIndex = (visibleIndex + 1) % frames.length;
-    const nextFrame = frames[nextIndex];
-    nextFrame.style.display = "block";
+  const totalFrames = 2;
+  let loadedCount = 0;
 
-    nextFrame.style.cursor = "default";
-    nextFrame.onclick = null;
+  const encodedPayload = encodeURIComponent(JSON.stringify({
+    "FULL_TEAM_ENTERED": matchedTeam,
+    "FULL_BET_TYPE": wager,
+    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+    "PICK_DESC": pickDescValue,
+    "NOTES": notes,
+    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
+    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+    "DATE and TIME OF GAME START": formattedTime,
+    "TITLE": window.overrideTitle || "[[TITLE]]",
+    "PICKID": pickId,
+    "CAPPERS NAME": capperName,
+    "USER_INPUT_VALUE": allInputsRaw,
+    "24HR_LONG_DATE_SECONDS": estString
+  }));
 
-    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-    toggleBtn.style.display = "block";
+  const createIframe = (slideNum, visible) => {
+    const iframe = document.createElement("iframe");
+    iframe.className = "slipFrame";
+    iframe.dataset.slide = slideNum;
+    iframe.style.display = visible ? "block" : "none";
+    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.style.width = "100%";
+    iframe.style.maxWidth = "400px";
+    iframe.style.border = "none";
+
+    iframe.style.pointerEvents = "auto";
+    iframe.style.height = "100%";
+    iframe.style.minHeight = "400px";
+
+    iframe.onload = () => {
+      loadedCount++;
+      if (loadedCount === totalFrames) {
+        // Hide loader, show images container and toggle button
+        loaderContainer.style.display = "none";
+        box.style.display = "block";
+        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+      }
+    };
+
+    return iframe;
   };
 
-  if (container && box && container.contains(box)) {
-    container.insertBefore(toggleBtn, box);
-  } else if (container) {
-    container.appendChild(toggleBtn);
+  box.innerHTML = ""; // Clear any old frames
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+
+  const toggleBtn = document.getElementById("toggleImageBtn");
+  if (toggleBtn) {
+    toggleBtn.style.display = "none"; // Hide initially
+    toggleBtn.onclick = () => {
+      const frames = box.querySelectorAll(".slipFrame");
+      let visibleIndex = -1;
+      frames.forEach((frame, i) => {
+        if (frame.style.display !== "none") visibleIndex = i;
+        frame.style.display = "none";
+        frame.onclick = null;
+        frame.style.cursor = "default";
+      });
+      const nextIndex = (visibleIndex + 1) % frames.length;
+      const nextFrame = frames[nextIndex];
+      nextFrame.style.display = "block";
+
+      nextFrame.style.cursor = "default";
+      nextFrame.onclick = null;
+
+      toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+      toggleBtn.style.display = "block";
+    };
   }
+
+  container.insertBefore(toggleBtn, box);
 
   setTimeout(() => {
     box.style.overflow = "visible";
