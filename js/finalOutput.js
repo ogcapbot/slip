@@ -1,4 +1,4 @@
-function generateFinalOutput(notes, newTitle) {
+async function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
 
@@ -125,12 +125,7 @@ function generateFinalOutput(notes, newTitle) {
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
 
-  const encodedOutput = encodeURIComponent(cleanedOutput);
-
-  const existingFrame = document.getElementById("slipFrame");
-  if (existingFrame) existingFrame.remove();
-
-  const payload = {
+  const encodedPayload = encodeURIComponent(JSON.stringify({
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
     "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
@@ -146,134 +141,38 @@ function generateFinalOutput(notes, newTitle) {
     "CAPPERS NAME": capperName,
     "USER_INPUT_VALUE": allInputsRaw,
     "24HR_LONG_DATE_SECONDS": estString
-  };
+  }));
 
-  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-  box.innerHTML = "";
-
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-
-    // Allow pointer events on iframe to enable clicks
-    iframe.style.pointerEvents = "auto";
-
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
-
-    return iframe;
-  };
-
-  const copyImageFromUrlToClipboard = (imageUrl) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          alert('Failed to create image blob');
-          return;
-        }
-        const item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => {
-          alert('Image copied to clipboard!');
-        }).catch(err => {
-          alert('Failed to copy image: ' + err);
-        });
-      }, 'image/png');
-    };
-    img.onerror = () => alert('Failed to load image for clipboard copy');
-    img.src = imageUrl;
-  };
-
-  const container = box.parentElement;
+  // Remove previous images and buttons if present
+  const oldImageContainer = document.getElementById("imageContainer");
+  if (oldImageContainer) oldImageContainer.remove();
 
   const oldToggleBtn = document.getElementById("toggleImageBtn");
   if (oldToggleBtn) oldToggleBtn.remove();
 
-  let textBoxContainer = document.getElementById("textBoxesContainer");
-  if (!textBoxContainer) {
-    textBoxContainer = document.createElement("div");
-    textBoxContainer.id = "textBoxesContainer";
-    textBoxContainer.style.marginBottom = "10px";
-    textBoxContainer.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer, box);
+  const oldCopyBtn = document.getElementById("copyImageBtn");
+  if (oldCopyBtn) oldCopyBtn.remove();
 
-    const label1 = document.createElement("label");
-    label1.htmlFor = "textBox1";
-    label1.textContent = "Post Title";
-    label1.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label1);
+  // Create container for image and buttons
+  const container = box.parentElement;
 
-    const textBox1 = document.createElement("input");
-    textBox1.id = "textBox1";
-    textBox1.readOnly = true;
-    textBox1.type = "text";
-    textBox1.style.width = "100%";
-    textBox1.style.height = "28px";
-    textBox1.style.marginBottom = "8px";
-    textBox1.style.fontSize = "12px";
-    textBox1.style.fontFamily = "'Oswald', sans-serif";
-    textBox1.style.padding = "6px 8px";
-    textBox1.style.borderRadius = "6px";
-    textBox1.style.border = "1px solid #ccc";
-    textBox1.style.whiteSpace = "nowrap";
-    textBox1.style.overflow = "hidden";
-    textBox1.style.textOverflow = "ellipsis";
-    textBox1.style.cursor = "pointer";
-    textBox1.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox1);
+  const imageContainer = document.createElement("div");
+  imageContainer.id = "imageContainer";
+  imageContainer.style.maxWidth = "400px";
+  imageContainer.style.marginTop = "10px";
 
-    const label2 = document.createElement("label");
-    label2.htmlFor = "textBox2";
-    label2.textContent = "Hype Phrase Description";
-    label2.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label2);
+  // Create image element
+  const img = document.createElement("img");
+  img.id = "renderedImage";
+  img.style.width = "100%";
+  img.style.border = "1px solid #ccc";
+  img.style.borderRadius = "6px";
+  img.style.cursor = "pointer";
 
-    const textBox2 = document.createElement("input");
-    textBox2.id = "textBox2";
-    textBox2.readOnly = true;
-    textBox2.type = "text";
-    textBox2.style.width = "100%";
-    textBox2.style.height = "28px";
-    textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "'Oswald', sans-serif";
-    textBox2.style.padding = "6px 8px";
-    textBox2.style.borderRadius = "6px";
-    textBox2.style.border = "1px solid #ccc";
-    textBox2.style.whiteSpace = "nowrap";
-    textBox2.style.overflow = "hidden";
-    textBox2.style.textOverflow = "ellipsis";
-    textBox2.style.cursor = "pointer";
-    textBox2.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox2);
+  imageContainer.appendChild(img);
+  box.appendChild(imageContainer);
 
-    [textBox1, textBox2].forEach(textBox => {
-      textBox.addEventListener("click", () => {
-        navigator.clipboard.writeText(textBox.value).then(() => {
-          alert("Copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy.");
-        });
-      });
-    });
-  }
-
-  const textBox1 = document.getElementById("textBox1");
-  const textBox2 = document.getElementById("textBox2");
-  textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-
+  // Create toggle button
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
@@ -288,71 +187,91 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.borderRadius = "6px";
   toggleBtn.style.cursor = "pointer";
 
-  toggleBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
-    let visibleIndex = -1;
-    frames.forEach((frame, i) => {
-      if (frame.style.display !== "none") visibleIndex = i;
-      frame.style.display = "none";
-      frame.onclick = null;
-      frame.style.cursor = "default";
-    });
-    const nextIndex = (visibleIndex + 1) % frames.length;
-    const nextFrame = frames[nextIndex];
-    nextFrame.style.display = "block";
+  container.insertBefore(toggleBtn, box.nextSibling);
 
-    nextFrame.style.cursor = "pointer";
-    nextFrame.onclick = () => copyImageFromUrlToClipboard(nextFrame.src);
+  // Create copy button below toggle button
+  const copyBtn = document.createElement("button");
+  copyBtn.id = "copyImageBtn";
+  copyBtn.textContent = "Copy THIS image to Clipboard";
+  copyBtn.style.marginTop = "10px";
+  copyBtn.style.width = "100%";
+  copyBtn.style.maxWidth = "400px";
+  copyBtn.style.padding = "12px";
+  copyBtn.style.fontSize = "16px";
+  copyBtn.style.backgroundColor = "#2a9fd6";
+  copyBtn.style.color = "white";
+  copyBtn.style.border = "none";
+  copyBtn.style.borderRadius = "6px";
+  copyBtn.style.cursor = "pointer";
 
-    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+  container.insertBefore(copyBtn, toggleBtn.nextSibling);
+
+  let currentSlideNum = 1;
+
+  // Helper: fetch base64 image from Apps Script URL
+  async function fetchRenderedImage(slideNum) {
+    const url = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    const res = await fetch(url, { mode: 'cors' });
+    const text = await res.text();
+    const match = text.match(/<img src="([^"]+)"/);
+    if (match && match[1]) return match[1];
+    throw new Error("Image base64 not found");
+  }
+
+  // Load image into img element
+  async function loadImage(slideNum) {
+    try {
+      img.src = ""; // clear while loading
+      const base64 = await fetchRenderedImage(slideNum);
+      img.src = base64;
+      currentSlideNum = slideNum;
+    } catch (err) {
+      alert("Failed to load image: " + err.message);
+    }
+  }
+
+  // Load initial slide image
+  await loadImage(1);
+
+  // Toggle image button click handler
+  toggleBtn.onclick = async () => {
+    const nextSlide = currentSlideNum === 1 ? 2 : 1;
+    await loadImage(nextSlide);
+    toggleBtn.textContent = nextSlide === 1 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
-
-  const initialFrame = box.querySelector(".slipFrame");
-  if (initialFrame) {
-    initialFrame.style.cursor = "pointer";
-    initialFrame.onclick = () => copyImageFromUrlToClipboard(initialFrame.src);
-  }
-
-  container.insertBefore(toggleBtn, box);
-
-  // Create copy button right after toggleBtn
-  let copyImageBtn = document.getElementById("copyImageBtn");
-  if (!copyImageBtn) {
-    copyImageBtn = document.createElement("button");
-    copyImageBtn.id = "copyImageBtn";
-    copyImageBtn.textContent = "Copy THIS image to Clipboard";
-    copyImageBtn.style.marginTop = "10px";
-    copyImageBtn.style.width = "100%";
-    copyImageBtn.style.maxWidth = "400px";
-    copyImageBtn.style.padding = "12px";
-    copyImageBtn.style.fontSize = "16px";
-    copyImageBtn.style.backgroundColor = "#2a9fd6";
-    copyImageBtn.style.color = "white";
-    copyImageBtn.style.border = "none";
-    copyImageBtn.style.borderRadius = "6px";
-    copyImageBtn.style.cursor = "pointer";
-
-    copyImageBtn.onclick = () => {
-      const frames = box.querySelectorAll(".slipFrame");
-      let visibleFrame = null;
-      frames.forEach(frame => {
-        if (frame.style.display !== "none") visibleFrame = frame;
-      });
-      if (visibleFrame) {
-        copyImageFromUrlToClipboard(visibleFrame.src);
-      } else {
-        alert("No image found to copy!");
-      }
+  // Copy image button click handler
+  copyBtn.onclick = () => {
+    if (!img.src) {
+      alert("No image loaded to copy.");
+      return;
+    }
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(image, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          alert("Failed to copy image.");
+          return;
+        }
+        navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob })
+        ]).then(() => {
+          alert("Image copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy image.");
+        });
+      }, "image/png");
     };
+    image.onerror = () => alert("Failed to load image for copying.");
+    image.src = img.src;
+  };
 
-    container.insertBefore(copyImageBtn, box);
-  }
-
-  setTimeout(() => {
-    box.style.overflow = "visible";
-    box.style.height = box.scrollHeight + "px";
-  }, 0);
+  // Optional: clicking image also copies it
+  img.onclick = copyBtn.onclick;
 }
