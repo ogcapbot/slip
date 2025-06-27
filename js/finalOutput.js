@@ -187,7 +187,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox1.style.width = "100%";
     textBox1.style.height = "30px";
     textBox1.style.marginBottom = "8px";
-    textBox1.style.fontSize = "16px";
+    textBox1.style.fontSize = "14px";  // reduced font size here
     textBox1.style.fontFamily = "'Oswald', sans-serif";
     textBox1.style.padding = "6px 8px";
     textBox1.style.borderRadius = "6px";
@@ -205,7 +205,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.type = "text";
     textBox2.style.width = "100%";
     textBox2.style.height = "30px";
-    textBox2.style.fontSize = "16px";
+    textBox2.style.fontSize = "14px";  // reduced font size here
     textBox2.style.fontFamily = "'Oswald', sans-serif";
     textBox2.style.padding = "6px 8px";
     textBox2.style.borderRadius = "6px";
@@ -231,6 +231,8 @@ function generateFinalOutput(notes, newTitle) {
   const textBox1 = document.getElementById("textBox1");
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
+
+  // FIX: Correct note assignment here:
   textBox2.value = window.selectedHypeNote || "No Note Available";
 
   const toggleBtn = document.createElement("button");
