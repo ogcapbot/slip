@@ -220,7 +220,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.width = "100%";
     textBox2.style.height = "28px";
     textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "Oswald";
+    textBox2.style.fontFamily = "'Oswald', sans-serif";
     textBox2.style.padding = "6px 8px";
     textBox2.style.borderRadius = "6px";
     textBox2.style.border = "1px solid #ccc";
@@ -274,7 +274,7 @@ function generateFinalOutput(notes, newTitle) {
     const nextFrame = frames[nextIndex];
     nextFrame.style.display = "block";
 
-    // No copy on click anymore, so reset cursor and onclick to null
+    // Remove copy on click, cursor default
     nextFrame.style.cursor = "default";
     nextFrame.onclick = null;
 
@@ -284,7 +284,7 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  // Remove initial click-to-copy behavior on iframe
+  // Remove copy on click from initial frame as well
   const initialFrame = box.querySelector(".slipFrame");
   if (initialFrame) {
     initialFrame.style.cursor = "default";
