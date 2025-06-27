@@ -118,26 +118,41 @@ function generateFinalOutput(notes, newTitle) {
     `Created: ${estString}`
   ].join("\n");
 
+  // Store cleaned output globally if needed
+  window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+
+  // Encode payload for iframe URLs
+  const encodedPayload = encodeURIComponent(JSON.stringify({
+    "FULL_TEAM_ENTERED": matchedTeam,
+    "FULL_BET_TYPE": wager,
+    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+    "PICK_DESC": pickDescValue,
+    "NOTES": notes,
+    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
+    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+    "DATE and TIME OF GAME START": formattedTime,
+    "TITLE": window.overrideTitle || "[[TITLE]]",
+    "PICKID": pickId,
+    "CAPPERS NAME": capperName,
+    "USER_INPUT_VALUE": allInputsRaw,
+    "24HR_LONG_DATE_SECONDS": estString
+  }));
+
   const box = document.getElementById("confirmOutput");
   box.classList.remove("hidden");
+
+  // Clear ONLY the contents inside confirmOutput
   box.innerHTML = "";
 
-  const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
-  window._cleanedOutput = cleanedOutput;
-
-  const encodedOutput = encodeURIComponent(cleanedOutput);
-
-  // Clear old content
-  box.innerHTML = "";
-
-  // Create and append standard version label
+  // Add label + iframe for Standard Version Image
   const labelStandard = document.createElement("div");
   labelStandard.textContent = "Standard Version Image";
   labelStandard.style.fontWeight = "bold";
   labelStandard.style.marginBottom = "8px";
   box.appendChild(labelStandard);
 
-  // Create and append standard version iframe
   const iframeStandard = document.createElement("iframe");
   iframeStandard.src = `${BASE_URL}?json=${encodedPayload}&slideNum=1`;
   iframeStandard.style.width = "100%";
@@ -147,14 +162,13 @@ function generateFinalOutput(notes, newTitle) {
   iframeStandard.style.marginBottom = "20px";
   box.appendChild(iframeStandard);
 
-  // Create and append paid version label
+  // Add label + iframe for Paid Version Image
   const labelPaid = document.createElement("div");
   labelPaid.textContent = "Paid Version Image";
   labelPaid.style.fontWeight = "bold";
   labelPaid.style.marginBottom = "8px";
   box.appendChild(labelPaid);
 
-  // Create and append paid version iframe
   const iframePaid = document.createElement("iframe");
   iframePaid.src = `${BASE_URL}?json=${encodedPayload}&slideNum=2`;
   iframePaid.style.width = "100%";
