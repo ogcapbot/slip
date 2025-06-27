@@ -234,17 +234,17 @@ function generateFinalOutput(notes, newTitle) {
   loaderContainer.style.display = "block";
   box.style.display = "none";
 
-  // --- FIX: create toggle button if it doesn't exist ---
+  // Create or select toggle button
   let toggleBtn = document.getElementById("toggleImageBtn");
   if (!toggleBtn) {
     toggleBtn = document.createElement("button");
     toggleBtn.id = "toggleImageBtn";
-    toggleBtn.textContent = "Switch to Paid Image"; // initial text
-    toggleBtn.style.display = "none"; // start hidden
+    toggleBtn.textContent = "Switch to Paid Image";
+    toggleBtn.style.display = "none";
     toggleBtn.style.marginBottom = "10px";
     container.insertBefore(toggleBtn, box);
   } else {
-    toggleBtn.style.display = "none"; // hide initially
+    toggleBtn.style.display = "none";
   }
 
   const totalFrames = 2;
@@ -279,13 +279,14 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.border = "none";
 
     iframe.style.pointerEvents = "auto";
-    iframe.style.height = "auto"; // FIXED: allow iframe height to auto adjust
-    iframe.style.minHeight = "0"; // remove fixed minHeight to prevent forced scrollbar
+
+    // FIX: Set fixed height to prevent scrollbars (adjust as needed)
+    iframe.style.height = "600px";
+    iframe.style.minHeight = "600px";
 
     iframe.onload = () => {
       loadedCount++;
       if (loadedCount === totalFrames) {
-        // Hide loader, show images container and toggle button
         loaderContainer.style.display = "none";
         box.style.display = "block";
         toggleBtn.style.display = "block";
@@ -295,7 +296,7 @@ function generateFinalOutput(notes, newTitle) {
     return iframe;
   };
 
-  box.innerHTML = ""; // Clear any old frames
+  box.innerHTML = "";
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
@@ -320,6 +321,6 @@ function generateFinalOutput(notes, newTitle) {
 
   setTimeout(() => {
     box.style.overflow = "visible";
-    box.style.height = "auto"; // fix container height to auto for no scrollbar
+    box.style.height = "auto";
   }, 0);
 }
