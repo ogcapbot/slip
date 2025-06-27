@@ -9,15 +9,17 @@
 </head>
 <body>
 
-  <div class="container"> <!-- Wrap all content inside one container -->
+  <div class="container">
 
+    <!-- GLOBAL HEADER: Only once at the top, visible on all screens -->
+    <div id="globalHeader" style="text-align: center; padding: 15px 0 6px;">
+      <h3 style="margin: 0;">OG Capper Bets</h3>
+      <h3 style="margin: 0;">Official Pick Image Creator</h3>
+      <h6 style="margin: 0; color: red;">Official Use Only</h6>
+    </div>
+
+    <!-- Access Screen -->
     <div id="access-screen">
-      <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
-        <h3 style="margin: 0;">OG Capper Bets</h3>
-        <h3 style="margin: 0;">Official Pick Image Creator</h3>
-        <h5 style="margin: 0; color: red;">Official Use Only</h5>
-      </div>
-
       <label style="color: #666; font-size: 14px; margin-bottom: 10px; display: block;">Enter Access Code</label>
       <input
         type="password"
@@ -32,17 +34,14 @@
       <div class="error" id="error"></div>
     </div>
 
+    <!-- Sports Screen -->
     <div id="sports-screen" class="hidden">
       <div id="loader"></div>
       <div id="loadingMsg" style="text-align:center; font-weight:bold;">Loading Games...</div>
 
       <div id="loggedInInfo" class="hidden">
-        <div id="globalHeader" style="text-align: center; padding: 20px 0 10px;">
-          <h3 style="margin: 0;">OG Capper Bets</h3>
-          <h3 style="margin: 0;">Official Pick Image Creator</h3>
-          <h5 style="margin: 0; color: red;">Official Use Only</h5>
-          <h5 id="loginNotice"></h5>
-        </div>
+
+        <h5 id="loginNotice"></h5>
 
         <div id="resetWrapper">
           <button id="resetBtn">Reset</button>
