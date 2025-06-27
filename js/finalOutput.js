@@ -122,9 +122,31 @@ async function generateFinalOutput(notes, newTitle) {
 
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
+
   container.innerHTML = "";
 
-  // Post Title input with click-to-copy
+  // Create and show loader container with spinner + text
+  const loaderContainer = document.createElement("div");
+  loaderContainer.id = "loaderContainer";
+  loaderContainer.style.textAlign = "center";
+  loaderContainer.style.marginBottom = "15px";
+  loaderContainer.style.marginTop = "5px";
+
+  const loaderSpinner = document.createElement("div");
+  loaderSpinner.id = "loader"; // spinner CSS target
+  loaderSpinner.style.margin = "0 auto";
+  loaderContainer.appendChild(loaderSpinner);
+
+  const loaderText = document.createElement("div");
+  loaderText.textContent = "Generating Images...";
+  loaderText.style.fontWeight = "bold";
+  loaderText.style.color = "#555";
+  loaderText.style.marginTop = "8px";
+  loaderContainer.appendChild(loaderText);
+
+  container.appendChild(loaderContainer);
+
+  // Add Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -160,7 +182,7 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Hype Phrase Description input with click-to-copy
+  // Add Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -196,16 +218,17 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Fetch slide image IDs from deployed Google Apps Script web app
+  // Fetch slide images file IDs from Google Apps Script deployed web app
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec');
-    if (!response.ok) throw new Error('Network response was not ok');
+    const response = await fetch("https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec");
+    if (!response.ok) throw new Error("Failed to fetch slide images.");
     const data = await response.json();
 
-    // Assuming data is an array of slide image IDs for slides 1 and 2
-    const slide1ImageId = data[0];
-    const slide2ImageId = data[1];
+    if (!Array.isArray(data) || data.length < 2) throw new Error("Invalid image data received.");
 
+    const [slide1ImageId, slide2ImageId] = data;
+
+    // Helper to create image container with label and copy-to-clipboard on click
     function createImageSection(title, fileId) {
       const section = document.createElement("div");
       section.style.maxWidth = "420px";
