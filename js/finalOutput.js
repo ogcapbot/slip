@@ -135,8 +135,8 @@ function generateFinalOutput(notes, newTitle) {
   const loader = document.getElementById("loader");
   if (loader) loader.style.display = "block";
   box.style.display = "none";
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+  let toggleBtn = document.getElementById("toggleImageBtn");
+  if (toggleBtn) toggleBtn.style.display = "none";
 
   let loadedCount = 0;
   const totalFrames = 2;
@@ -146,7 +146,7 @@ function generateFinalOutput(notes, newTitle) {
     iframe.className = "slipFrame";
     iframe.dataset.slide = slideNum;
     iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.src = `${BASE_URL}?json=${encodedOutput}&slideNum=${slideNum}`;
     iframe.style.width = "100%";
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
@@ -162,7 +162,7 @@ function generateFinalOutput(notes, newTitle) {
       if (loadedCount === totalFrames) {
         if (loader) loader.style.display = "none";
         box.style.display = "block";
-        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+        if (toggleBtn) toggleBtn.style.display = "block";
 
         // Try to adjust container height based on iframe content height
         const visibleIframe = [...box.querySelectorAll(".slipFrame")].find(f => f.style.display === "block");
@@ -261,7 +261,7 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  const toggleBtn = document.getElementById("toggleImageBtn");
+  toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) {
     toggleBtn.style.display = "none"; // Hide initially
     toggleBtn.onclick = () => {
