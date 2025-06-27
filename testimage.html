@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Drive Image Clipboard Test</title>
+  <style>
+    #imageContainer {
+      width: 400px;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      padding: 8px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    #imageContainer img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    #copyBtn {
+      width: 400px;
+      max-width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #copyBtn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div id="imageContainer" title="Click image to copy">
+    <img id="driveImage" src="https://drive.google.com/uc?export=view&id=1IscM3xgIA01JeF5aZ47mc7uBDIZiTD6S" alt="Drive Image" crossorigin="anonymous" />
+  </div>
+  <button id="copyBtn">Copy THIS image to Clipboard</button>
+
+  <script>
+    const image = document.getElementById('driveImage');
+    const copyBtn = document.getElementById('copyBtn');
+
+    // Function to copy image to clipboard via canvas
+    async function copyImageToClipboard(imgElement) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('Failed to create image blob');
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+
+        alert('Image copied to clipboard!');
+      } catch (err) {
+        alert('Failed to copy image: ' + err.message);
+      }
+    }
+
+    // Click on image copies it
+    image.addEventListener('click', () => copyImageToClipboard(image));
+
+    // Click on button copies the image
+    copyBtn.addEventListener('click', () => copyImageToClipboard(image));
+  </script>
+</body>
+</html>
