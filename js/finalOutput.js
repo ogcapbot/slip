@@ -161,6 +161,9 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
 
+    // Allow pointer events on iframe to enable clicks
+    iframe.style.pointerEvents = "auto";
+
     iframe.style.height = "100%";
     iframe.style.minHeight = "400px";
 
@@ -207,7 +210,7 @@ function generateFinalOutput(notes, newTitle) {
 
     const label2 = document.createElement("label");
     label2.htmlFor = "textBox2";
-    label2.textContent = "Notes";
+    label2.textContent = "Hype Phrase Description"; // <-- Updated label text here
     label2.className = "copyTextboxLabel";
     textBoxContainer.appendChild(label2);
 
@@ -244,11 +247,7 @@ function generateFinalOutput(notes, newTitle) {
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
 
-  if (typeof window.selectedHypeNote === 'string' && window.selectedHypeNote.trim() !== '') {
-    textBox2.value = window.selectedHypeNote;
-  } else {
-    textBox2.value = "No Note Available";
-  }
+  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Note Available";
 
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
