@@ -1,25 +1,3 @@
-async function initGapiClient() {
-  return new Promise((resolve, reject) => {
-    gapi.load('client:auth2', async () => {
-      try {
-        await gapi.client.init({
-          apiKey: 'YOUR_API_KEY',
-          clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
-          scope: 'https://www.googleapis.com/auth/drive.readonly',
-        });
-        const authInstance = gapi.auth2.getAuthInstance();
-        if (!authInstance.isSignedIn.get()) {
-          await authInstance.signIn();
-        }
-        resolve();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  });
-}
-
 async function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
@@ -146,27 +124,6 @@ async function generateFinalOutput(notes, newTitle) {
   container.classList.remove("hidden");
   container.innerHTML = "";
 
-  // Loader container + spinner + text
-  const loaderContainer = document.createElement("div");
-  loaderContainer.id = "loaderContainer";
-  loaderContainer.style.textAlign = "center";
-  loaderContainer.style.marginBottom = "15px";
-  loaderContainer.style.marginTop = "5px";
-
-  const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // spinner CSS
-  loaderSpinner.style.margin = "0 auto";
-  loaderContainer.appendChild(loaderSpinner);
-
-  const loaderText = document.createElement("div");
-  loaderText.textContent = "Generating Images...";
-  loaderText.style.fontWeight = "bold";
-  loaderText.style.color = "#555";
-  loaderText.style.marginTop = "8px";
-  loaderContainer.appendChild(loaderText);
-
-  container.appendChild(loaderContainer);
-
   // Post Title input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
@@ -239,81 +196,55 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Load and display images from Drive
-  async function loadAndDisplayImages() {
-    const FOLDER_ID = "1d7WWR1xv8XTzvh-hj6dXTjV3MKoO5ZgZ"; // Your Drive folder ID
+  // Fetch slide image IDs from deployed Google Apps Script web app
+  try {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec');
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
 
-    const query = encodeURIComponent(`'${FOLDER_ID}' in parents and mimeType='image/png' and trashed=false`);
-    const url = `https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=createdTime desc&fields=files(id,name,webContentLink)`;
+    // Assuming data is an array of slide image IDs for slides 1 and 2
+    const slide1ImageId = data[0];
+    const slide2ImageId = data[1];
 
-    try {
-      await initGapiClient();
+    function createImageSection(title, fileId) {
+      const section = document.createElement("div");
+      section.style.maxWidth = "420px";
+      section.style.marginBottom = "20px";
+      section.style.border = "1px solid #ccc";
+      section.style.borderRadius = "6px";
+      section.style.padding = "12px";
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${gapi.auth.getToken().access_token}`
-        }
-      });
+      const label = document.createElement("div");
+      label.textContent = title;
+      label.style.fontFamily = "'Oswald', sans-serif";
+      label.style.fontWeight = "bold";
+      label.style.color = "#666666";
+      label.style.marginBottom = "10px";
 
-      if (!response.ok) throw new Error("Failed to list images");
+      const img = document.createElement("img");
+      img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
+      img.style.width = "100%";
+      img.style.borderRadius = "6px";
+      img.style.cursor = "pointer";
+      img.title = "Click to copy image URL";
 
-      const data = await response.json();
-      const images = data.files.slice(0, 2);
-
-      loaderContainer.style.display = "none";
-
-      images.forEach((file, idx) => {
-        const imgContainer = document.createElement("div");
-        imgContainer.style.border = "1px solid #ccc";
-        imgContainer.style.borderRadius = "6px";
-        imgContainer.style.marginBottom = "20px";
-        imgContainer.style.maxWidth = "420px";
-        imgContainer.style.padding = "12px";
-
-        const label = document.createElement("div");
-        label.textContent = idx === 0 ? "Standard Version Image" : "Paid Version Image";
-        label.style.fontFamily = "'Oswald', sans-serif";
-        label.style.fontWeight = "bold";
-        label.style.color = "#666666";
-        label.style.marginBottom = "10px";
-
-        const img = document.createElement("img");
-        img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
-        img.style.width = "100%";
-        img.style.borderRadius = "6px";
-        img.style.cursor = "pointer";
-        img.title = "Click to copy image URL";
-
-        img.addEventListener("click", () => {
-          navigator.clipboard.writeText(img.src).then(() => {
-            alert(`Image URL copied to clipboard!`);
-          }).catch(() => {
-            alert("Failed to copy image URL.");
-          });
+      img.addEventListener("click", () => {
+        navigator.clipboard.writeText(img.src).then(() => {
+          alert("Image URL copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy image URL.");
         });
-
-        imgContainer.appendChild(label);
-        imgContainer.appendChild(img);
-
-        container.appendChild(imgContainer);
       });
 
-      if (images.length === 0) {
-        const noImg = document.createElement("div");
-        noImg.textContent = "No images found in Drive folder.";
-        noImg.style.color = "#999";
-        container.appendChild(noImg);
-        loaderContainer.style.display = "none";
-      }
-
-    } catch (err) {
-      loaderContainer.style.display = "none";
-      const errorMsg = document.createElement("div");
-      errorMsg.textContent = "Error loading images: " + err.message;
-      errorMsg.style.color = "red";
-      container.appendChild(errorMsg);
+      section.appendChild(label);
+      section.appendChild(img);
+      return section;
     }
-  }
 
-  await loadAndDisplayImages();
+    container.appendChild(createImageSection("Standard Version Image", slide1ImageId));
+    container.appendChild(createImageSection("Paid Version Image", slide2ImageId));
+  } catch (error) {
+    console.error("Failed to load images:", error);
+    container.textContent = "Failed to load images.";
+  }
 }
