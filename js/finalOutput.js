@@ -1,4 +1,4 @@
-function generateFinalOutput(notes, newTitle) {
+async function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
 
@@ -120,31 +120,11 @@ function generateFinalOutput(notes, newTitle) {
 
   window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
 
-  const encodedPayload = encodeURIComponent(JSON.stringify({
-    "FULL_TEAM_ENTERED": matchedTeam,
-    "FULL_BET_TYPE": wager,
-    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-    "PICK_DESC": pickDescValue,
-    "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-    "DATE and TIME OF GAME START": formattedTime,
-    "TITLE": window.overrideTitle || "[[TITLE]]",
-    "PICKID": pickId,
-    "CAPPERS NAME": capperName,
-    "USER_INPUT_VALUE": allInputsRaw,
-    "24HR_LONG_DATE_SECONDS": estString
-  }));
-
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
-
-  // Clear container for fresh content
   container.innerHTML = "";
 
-  // Create and show loader container with spinner + text
+  // Loader container + spinner + text
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
@@ -152,7 +132,7 @@ function generateFinalOutput(notes, newTitle) {
   loaderContainer.style.marginTop = "5px";
 
   const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // spinner CSS target
+  loaderSpinner.id = "loader"; // spinner CSS
   loaderSpinner.style.margin = "0 auto";
   loaderContainer.appendChild(loaderSpinner);
 
@@ -165,7 +145,7 @@ function generateFinalOutput(notes, newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Add Post Title label + input with click-to-copy
+  // Post Title input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -201,7 +181,7 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Add Hype Phrase Description label + input with click-to-copy
+  // Hype Phrase Description input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -237,67 +217,86 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Track loaded iframes count to hide loader once both loaded
-  let loadedCount = 0;
+  // Function to fetch the latest two PNG images from Drive folder and display
+  async function loadAndDisplayImages() {
+    const FOLDER_ID = "1d7WWR1xv8XTzvh-hj6dXTjV3MKoO5ZgZ"; // Your Drive folder ID
 
-  // Helper: create container with label and iframe, add overlay to capture clicks for copying iframe URL
-  function createImageContainer(labelText, slideNum) {
-    const container = document.createElement("div");
-    container.style.border = "1px solid #ccc";
-    container.style.borderRadius = "6px";
-    container.style.padding = "12px";
-    container.style.marginBottom = "20px";
-    container.style.maxWidth = "420px";
-    container.style.position = "relative"; // for overlay
+    // Use Google Picker or Drive API to list files - here we use Google Drive REST API fetch
+    // This requires the user to be authenticated and you to have Drive API enabled and authorized.
 
-    const label = document.createElement("div");
-    label.textContent = labelText;
-    label.style.fontFamily = "'Oswald', sans-serif";
-    label.style.fontWeight = "bold";
-    label.style.color = "#666666";
-    label.style.marginBottom = "10px";
+    // Construct Drive API files list URL with query to get PNGs from folder ordered by createdTime desc
+    const query = encodeURIComponent(`'${FOLDER_ID}' in parents and mimeType='image/png' and trashed=false`);
+    const url = `https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=createdTime desc&fields=files(id,name,webContentLink)`;
 
-    const iframeSrc = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-
-    const iframe = document.createElement("iframe");
-    iframe.src = iframeSrc;
-    iframe.style.width = "100%";
-    iframe.style.height = "600px";
-    iframe.style.border = "none";
-
-    // Overlay div to capture clicks
-    const overlay = document.createElement("div");
-    overlay.style.position = "absolute";
-    overlay.style.top = label.offsetHeight + 12 + "px"; // label height + container padding
-    overlay.style.left = "12px"; // container padding left
-    overlay.style.right = "12px"; // container padding right
-    overlay.style.height = "600px";
-    overlay.style.cursor = "pointer";
-    overlay.style.background = "transparent";
-    overlay.title = `Click to copy ${labelText} URL`;
-
-    overlay.addEventListener("click", () => {
-      navigator.clipboard.writeText(iframeSrc).then(() => {
-        alert(`${labelText} URL copied to clipboard!`);
-      }).catch(() => {
-        alert(`Failed to copy ${labelText} URL.`);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${gapi.auth.getToken().access_token}`
+        }
       });
-    });
 
-    iframe.onload = () => {
-      loadedCount++;
-      if (loadedCount === 2) {
+      if (!response.ok) throw new Error("Failed to list images");
+
+      const data = await response.json();
+
+      // Pick top 2 images (slides)
+      const images = data.files.slice(0, 2);
+
+      // Remove loader while displaying images
+      loaderContainer.style.display = "none";
+
+      images.forEach((file, idx) => {
+        const imgContainer = document.createElement("div");
+        imgContainer.style.border = "1px solid #ccc";
+        imgContainer.style.borderRadius = "6px";
+        imgContainer.style.marginBottom = "20px";
+        imgContainer.style.maxWidth = "420px";
+        imgContainer.style.padding = "12px";
+
+        const label = document.createElement("div");
+        label.textContent = idx === 0 ? "Standard Version Image" : "Paid Version Image";
+        label.style.fontFamily = "'Oswald', sans-serif";
+        label.style.fontWeight = "bold";
+        label.style.color = "#666666";
+        label.style.marginBottom = "10px";
+
+        const img = document.createElement("img");
+        img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
+        img.style.width = "100%";
+        img.style.borderRadius = "6px";
+        img.style.cursor = "pointer";
+        img.title = "Click to copy image URL";
+
+        img.addEventListener("click", () => {
+          navigator.clipboard.writeText(img.src).then(() => {
+            alert(`Image URL copied to clipboard!`);
+          }).catch(() => {
+            alert("Failed to copy image URL.");
+          });
+        });
+
+        imgContainer.appendChild(label);
+        imgContainer.appendChild(img);
+
+        container.appendChild(imgContainer);
+      });
+
+      if (images.length === 0) {
+        const noImg = document.createElement("div");
+        noImg.textContent = "No images found in Drive folder.";
+        noImg.style.color = "#999";
+        container.appendChild(noImg);
         loaderContainer.style.display = "none";
       }
-    };
 
-    container.appendChild(label);
-    container.appendChild(iframe);
-    container.appendChild(overlay);
-
-    return container;
+    } catch (err) {
+      loaderContainer.style.display = "none";
+      const errorMsg = document.createElement("div");
+      errorMsg.textContent = "Error loading images: " + err.message;
+      errorMsg.style.color = "red";
+      container.appendChild(errorMsg);
+    }
   }
 
-  container.appendChild(createImageContainer("Standard Version Image", 1));
-  container.appendChild(createImageContainer("Paid Version Image", 2));
+  await loadAndDisplayImages();
 }
