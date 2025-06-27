@@ -161,30 +161,25 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
 
-    // <-- updated styles to avoid scrollbars and fit container height dynamically
     iframe.style.height = "100%";
     iframe.style.minHeight = "400px";
 
     return iframe;
   };
 
-  // Get parent container of the box to insert button above the image container
   const container = box.parentElement;
 
-  // Remove any existing toggle button if present
   const oldToggleBtn = document.getElementById("toggleImageBtn");
   if (oldToggleBtn) oldToggleBtn.remove();
 
-  // Create the two single-line text boxes container (if not exists)
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
     textBoxContainer.id = "textBoxesContainer";
     textBoxContainer.style.marginBottom = "10px";
     textBoxContainer.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer, box); // Insert above images container
+    container.insertBefore(textBoxContainer, box);
 
-    // Create first single-line text box
     const textBox1 = document.createElement("input");
     textBox1.id = "textBox1";
     textBox1.readOnly = true;
@@ -204,7 +199,6 @@ function generateFinalOutput(notes, newTitle) {
     textBox1.title = "Click to copy text";
     textBoxContainer.appendChild(textBox1);
 
-    // Create second single-line text box
     const textBox2 = document.createElement("input");
     textBox2.id = "textBox2";
     textBox2.readOnly = true;
@@ -223,7 +217,6 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.title = "Click to copy text";
     textBoxContainer.appendChild(textBox2);
 
-    // Add click event to copy content to clipboard for both inputs
     [textBox1, textBox2].forEach(textBox => {
       textBox.addEventListener("click", () => {
         navigator.clipboard.writeText(textBox.value).then(() => {
@@ -235,13 +228,11 @@ function generateFinalOutput(notes, newTitle) {
     });
   }
 
-  // Update text boxes content based on hype phrase data (or fallback)
   const textBox1 = document.getElementById("textBox1");
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = window.selectedHypeNote || "No Note Available";
 
-  // Create toggle button element
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
@@ -256,7 +247,6 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.borderRadius = "6px";
   toggleBtn.style.cursor = "pointer";
 
-  // Helper function to copy iframe src to clipboard
   const copyIframeSrc = (iframe) => {
     if (!iframe || !iframe.src) return;
     navigator.clipboard.writeText(iframe.src).then(() => {
@@ -266,14 +256,12 @@ function generateFinalOutput(notes, newTitle) {
     });
   };
 
-  // Toggle button click handler updated to add copy-on-click to current iframe
   toggleBtn.onclick = () => {
     const frames = box.querySelectorAll(".slipFrame");
     let visibleIndex = -1;
     frames.forEach((frame, i) => {
       if (frame.style.display !== "none") visibleIndex = i;
       frame.style.display = "none";
-      // Remove old click handler to avoid duplicates
       frame.onclick = null;
       frame.style.cursor = "default";
     });
@@ -281,30 +269,25 @@ function generateFinalOutput(notes, newTitle) {
     const nextFrame = frames[nextIndex];
     nextFrame.style.display = "block";
 
-    // Add click handler to copy iframe src on click
     nextFrame.style.cursor = "pointer";
     nextFrame.onclick = () => copyIframeSrc(nextFrame);
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  // Append only slides 1 and 2
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  // Add click handler for the initially visible iframe to copy src
   const initialFrame = box.querySelector(".slipFrame");
   if (initialFrame) {
     initialFrame.style.cursor = "pointer";
     initialFrame.onclick = () => copyIframeSrc(initialFrame);
   }
 
-  // Insert toggle button above the image container but below Reset button
   container.insertBefore(toggleBtn, box);
 
-  // Adjust container height to fit content smoothly and avoid scrollbars
   setTimeout(() => {
-    box.style.overflow = "visible"; // changed from hidden to visible to avoid clipping
+    box.style.overflow = "visible";
     box.style.height = box.scrollHeight + "px";
   }, 0);
 }
