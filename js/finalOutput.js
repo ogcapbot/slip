@@ -121,6 +121,8 @@ function generateFinalOutput(notes, newTitle) {
   const box = document.getElementById("confirmOutput");
   box.classList.remove("hidden");
   box.innerHTML = "";
+  box.style.height = "auto";
+  box.style.overflow = "visible";
 
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
@@ -129,7 +131,63 @@ function generateFinalOutput(notes, newTitle) {
 
   const container = box.parentElement;
 
-  // Create or select the textboxes container
+  // Show loader, hide images & toggle button initially
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "block";
+  box.style.display = "none";
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+
+  let loadedCount = 0;
+  const totalFrames = 2;
+
+  const createIframe = (slideNum, visible) => {
+    const iframe = document.createElement("iframe");
+    iframe.className = "slipFrame";
+    iframe.dataset.slide = slideNum;
+    iframe.style.display = visible ? "block" : "none";
+    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.style.width = "100%";
+    iframe.style.maxWidth = "400px";
+    iframe.style.border = "none";
+
+    iframe.style.pointerEvents = "auto";
+
+    // Remove fixed heights to allow dynamic sizing
+    iframe.style.height = "auto";
+    iframe.style.minHeight = "auto";
+
+    iframe.onload = () => {
+      loadedCount++;
+      if (loadedCount === totalFrames) {
+        if (loader) loader.style.display = "none";
+        box.style.display = "block";
+        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+
+        // Try to adjust container height based on iframe content height
+        const visibleIframe = [...box.querySelectorAll(".slipFrame")].find(f => f.style.display === "block");
+        if (visibleIframe) {
+          try {
+            const iframeDoc = visibleIframe.contentDocument || visibleIframe.contentWindow.document;
+            const iframeBody = iframeDoc.body;
+            if (iframeBody) {
+              box.style.height = iframeBody.scrollHeight + "px";
+            }
+          } catch (e) {
+            box.style.height = "auto"; // fallback if cross-origin blocks access
+          }
+        }
+      }
+    };
+
+    return iframe;
+  };
+
+  box.innerHTML = "";
+
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
@@ -202,91 +260,6 @@ function generateFinalOutput(notes, newTitle) {
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-
-  // Create loader container below textboxes if not exists
-  let loaderContainer = document.getElementById("loaderContainer");
-  if (!loaderContainer) {
-    loaderContainer = document.createElement("div");
-    loaderContainer.id = "loaderContainer";
-    loaderContainer.style.textAlign = "center";
-    loaderContainer.style.marginBottom = "15px";
-    loaderContainer.style.marginTop = "5px";
-
-    // Spinner element
-    const loader = document.createElement("div");
-    loader.id = "loader"; // your existing spinner CSS targets #loader
-    loader.style.margin = "0 auto";
-    loaderContainer.appendChild(loader);
-
-    // Loader text
-    const loaderText = document.createElement("div");
-    loaderText.id = "loaderText";
-    loaderText.textContent = "Generating Images...";
-    loaderText.style.fontWeight = "bold";
-    loaderText.style.color = "#555";
-    loaderText.style.marginTop = "8px";
-    loaderContainer.appendChild(loaderText);
-
-    container.insertBefore(loaderContainer, box);
-  }
-
-  // Show loader, hide images container and toggle button at start
-  loaderContainer.style.display = "block";
-  box.style.display = "none";
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.style.display = "none";
-
-  const totalFrames = 2;
-  let loadedCount = 0;
-
-  const encodedPayload = encodeURIComponent(JSON.stringify({
-    "FULL_TEAM_ENTERED": matchedTeam,
-    "FULL_BET_TYPE": wager,
-    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-    "PICK_DESC": pickDescValue,
-    "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-    "DATE and TIME OF GAME START": formattedTime,
-    "TITLE": window.overrideTitle || "[[TITLE]]",
-    "PICKID": pickId,
-    "CAPPERS NAME": capperName,
-    "USER_INPUT_VALUE": allInputsRaw,
-    "24HR_LONG_DATE_SECONDS": estString
-  }));
-
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-
-    iframe.style.pointerEvents = "auto";
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
-
-    iframe.onload = () => {
-      loadedCount++;
-      if (loadedCount === totalFrames) {
-        // Hide loader, show images container and toggle button
-        loaderContainer.style.display = "none";
-        box.style.display = "block";
-        if (oldToggleBtn) oldToggleBtn.style.display = "block";
-      }
-    };
-
-    return iframe;
-  };
-
-  box.innerHTML = ""; // Clear any old frames
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
 
   const toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) {
