@@ -122,9 +122,9 @@ async function generateFinalOutput(notes, newTitle) {
 
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
-  container.innerHTML = ""; // clear previous content
+  container.innerHTML = "";
 
-  // Add Post Title label + input with click-to-copy
+  // Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -160,7 +160,7 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Add Hype Phrase Description label + input with click-to-copy
+  // Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -196,7 +196,7 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Show loading spinner while fetching images
+  // Loading text while fetching images
   const loaderText = document.createElement("div");
   loaderText.textContent = "Generating Images...";
   loaderText.style.fontWeight = "bold";
@@ -206,16 +206,16 @@ async function generateFinalOutput(notes, newTitle) {
   container.appendChild(loaderText);
 
   try {
-    // Fetch image URLs from your deployed Google Apps Script endpoint
-    // It should return an array of URLs, e.g. ["https://drive.usercontent.google.com/download?id=...&export=view", ...]
     const response = await fetch("https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec");
     if (!response.ok) throw new Error("Failed to fetch images from server.");
-    const imageUrls = await response.json();
+    const fileIds = await response.json();
 
-    // Remove loader text after images loaded
+    // Build URLs from file IDs returned
+    const baseUrl = "https://drive.usercontent.google.com/download?id=";
+    const constructedUrls = fileIds.map(id => `${baseUrl}${id}&export=view&authuser=0`);
+
     loaderText.remove();
 
-    // Add images with labels
     function createImageSection(labelText, imageUrl) {
       const section = document.createElement("div");
       section.style.border = "1px solid #ccc";
@@ -242,8 +242,8 @@ async function generateFinalOutput(notes, newTitle) {
       return section;
     }
 
-    container.appendChild(createImageSection("Standard Version Image", imageUrls[0]));
-    container.appendChild(createImageSection("Paid Version Image", imageUrls[1]));
+    container.appendChild(createImageSection("Standard Version Image", constructedUrls[0]));
+    container.appendChild(createImageSection("Paid Version Image", constructedUrls[1]));
 
   } catch (error) {
     loaderText.textContent = "Failed to load images.";
