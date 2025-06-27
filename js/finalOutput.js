@@ -119,7 +119,7 @@ function generateFinalOutput(notes, newTitle) {
   ].join("\n");
 
   const box = document.getElementById("confirmOutput");
-  box.classList.add("hidden"); // Hide image container initially
+  box.classList.remove("hidden");
   box.innerHTML = "";
 
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
@@ -149,7 +149,18 @@ function generateFinalOutput(notes, newTitle) {
   };
 
   const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-  box.innerHTML = "";
+
+  const container = box.parentElement;
+
+  // Show the loader, hide images and toggle button at start
+  const loader = document.getElementById("loader");
+  if (loader) loader.style.display = "block";
+  box.style.display = "none";
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+
+  let loadedCount = 0;
+  const totalFrames = 2;
 
   const createIframe = (slideNum, visible) => {
     const iframe = document.createElement("iframe");
@@ -162,25 +173,26 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.border = "none";
 
     iframe.style.pointerEvents = "auto";
-
     iframe.style.height = "100%";
     iframe.style.minHeight = "400px";
 
-    // When iframe loads, hide loader and show image container + toggle button
+    // On iframe load, count and when all loaded, hide loader and show content
     iframe.onload = () => {
-      const loader = document.getElementById("loader");
-      loader.style.display = "none";  // hide loader
-      box.classList.remove("hidden"); // show images container
-      toggleBtn.style.display = "block"; // show toggle button
+      loadedCount++;
+      if (loadedCount === totalFrames) {
+        if (loader) loader.style.display = "none";
+        box.style.display = "block";
+        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+      }
     };
 
     return iframe;
   };
 
-  const container = box.parentElement;
+  box.innerHTML = ""; // Clear old frames
 
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.remove();
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
 
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
@@ -255,43 +267,29 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  const toggleBtn = document.createElement("button");
-  toggleBtn.id = "toggleImageBtn";
-  toggleBtn.textContent = "Switch to Paid Image";
-  toggleBtn.style.marginTop = "10px";
-  toggleBtn.style.width = "100%";
-  toggleBtn.style.maxWidth = "400px";
-  toggleBtn.style.padding = "12px";
-  toggleBtn.style.fontSize = "16px";
-  toggleBtn.style.backgroundColor = "#2a9fd6";
-  toggleBtn.style.color = "white";
-  toggleBtn.style.border = "none";
-  toggleBtn.style.borderRadius = "6px";
-  toggleBtn.style.cursor = "pointer";
-  toggleBtn.style.display = "none"; // Hide initially
+  const toggleBtn = document.getElementById("toggleImageBtn");
+  if (toggleBtn) {
+    toggleBtn.style.display = "none"; // Hide initially
+    toggleBtn.onclick = () => {
+      const frames = box.querySelectorAll(".slipFrame");
+      let visibleIndex = -1;
+      frames.forEach((frame, i) => {
+        if (frame.style.display !== "none") visibleIndex = i;
+        frame.style.display = "none";
+        frame.onclick = null;
+        frame.style.cursor = "default";
+      });
+      const nextIndex = (visibleIndex + 1) % frames.length;
+      const nextFrame = frames[nextIndex];
+      nextFrame.style.display = "block";
 
-  toggleBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
-    let visibleIndex = -1;
-    frames.forEach((frame, i) => {
-      if (frame.style.display !== "none") visibleIndex = i;
-      frame.style.display = "none";
-      frame.onclick = null;
-      frame.style.cursor = "default";
-    });
-    const nextIndex = (visibleIndex + 1) % frames.length;
-    const nextFrame = frames[nextIndex];
-    nextFrame.style.display = "block";
+      nextFrame.style.cursor = "default";
+      nextFrame.onclick = null;
 
-    // Remove click events & cursor changes for copying, keep default cursor
-    nextFrame.style.cursor = "default";
-    nextFrame.onclick = null;
-
-    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-  };
-
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
+      toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
+      toggleBtn.style.display = "block";
+    };
+  }
 
   container.insertBefore(toggleBtn, box);
 
