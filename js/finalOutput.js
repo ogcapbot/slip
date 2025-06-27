@@ -169,37 +169,6 @@ function generateFinalOutput(notes, newTitle) {
     return iframe;
   };
 
-  // NEW: copy base64 image inside iframe to clipboard
-  async function copyImageFromIframe(iframe) {
-    try {
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      const img = doc.querySelector("img");
-      if (!img) {
-        alert("No image found inside iframe.");
-        return;
-      }
-      const src = img.src;
-      if (!src.startsWith("data:image/png;base64,")) {
-        alert("Image source is not base64 PNG.");
-        return;
-      }
-      const base64Data = src.replace(/^data:image\/png;base64,/, "");
-      const binaryString = atob(base64Data);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: "image/png" });
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob })
-      ]);
-      alert("Image copied to clipboard!");
-    } catch (err) {
-      alert("Failed to copy image: " + err);
-    }
-  }
-
   const container = box.parentElement;
 
   const oldToggleBtn = document.getElementById("toggleImageBtn");
@@ -305,8 +274,9 @@ function generateFinalOutput(notes, newTitle) {
     const nextFrame = frames[nextIndex];
     nextFrame.style.display = "block";
 
-    nextFrame.style.cursor = "pointer";
-    nextFrame.onclick = () => copyImageFromIframe(nextFrame);
+    // No copy on click anymore, so reset cursor and onclick to null
+    nextFrame.style.cursor = "default";
+    nextFrame.onclick = null;
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
@@ -314,43 +284,14 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
+  // Remove initial click-to-copy behavior on iframe
   const initialFrame = box.querySelector(".slipFrame");
   if (initialFrame) {
-    initialFrame.style.cursor = "pointer";
-    initialFrame.onclick = () => copyImageFromIframe(initialFrame);
+    initialFrame.style.cursor = "default";
+    initialFrame.onclick = null;
   }
 
   container.insertBefore(toggleBtn, box);
-
-  // Add a separate "Copy THIS image to Clipboard" button below toggleBtn
-  let copyThisBtn = document.getElementById("copyThisImageBtn");
-  if (!copyThisBtn) {
-    copyThisBtn = document.createElement("button");
-    copyThisBtn.id = "copyThisImageBtn";
-    copyThisBtn.textContent = "Copy THIS image to Clipboard";
-    copyThisBtn.style.marginTop = "8px";
-    copyThisBtn.style.width = "100%";
-    copyThisBtn.style.maxWidth = "400px";
-    copyThisBtn.style.padding = "12px";
-    copyThisBtn.style.fontSize = "16px";
-    copyThisBtn.style.backgroundColor = "#28a745";
-    copyThisBtn.style.color = "white";
-    copyThisBtn.style.border = "none";
-    copyThisBtn.style.borderRadius = "6px";
-    copyThisBtn.style.cursor = "pointer";
-
-    copyThisBtn.onclick = () => {
-      const frames = box.querySelectorAll(".slipFrame");
-      const visibleFrame = [...frames].find(frame => frame.style.display !== "none");
-      if (visibleFrame) {
-        copyImageFromIframe(visibleFrame);
-      } else {
-        alert("No image to copy.");
-      }
-    };
-
-    container.insertBefore(copyThisBtn, box);
-  }
 
   setTimeout(() => {
     box.style.overflow = "visible";
