@@ -152,12 +152,20 @@ function generateFinalOutput(notes, newTitle) {
 
   const container = box.parentElement;
 
-  // Show loader & hide images + toggle button initially
+  // Show the loader and hide images + toggle button initially
   const loader = document.getElementById("loader");
   if (loader) loader.style.display = "block";
   box.style.display = "none";
-  const toggleBtn = document.getElementById("toggleImageBtn");
-  if (toggleBtn) toggleBtn.style.display = "none";
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+
+  // Insert loader right below textBoxesContainer
+  const textBoxContainer = document.getElementById("textBoxesContainer");
+  if (loader && textBoxContainer && textBoxContainer.parentNode) {
+    textBoxContainer.parentNode.insertBefore(loader, textBoxContainer.nextSibling);
+    loader.style.marginTop = "10px";
+    loader.style.marginBottom = "10px";
+  }
 
   let loadedCount = 0;
   const totalFrames = 2;
@@ -181,29 +189,31 @@ function generateFinalOutput(notes, newTitle) {
       if (loadedCount === totalFrames) {
         if (loader) loader.style.display = "none";
         box.style.display = "block";
-        if (toggleBtn) toggleBtn.style.display = "block";
+        if (oldToggleBtn) oldToggleBtn.style.display = "block";
       }
     };
 
     return iframe;
   };
 
+  box.innerHTML = "";
+
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  let textBoxContainer = document.getElementById("textBoxesContainer");
-  if (!textBoxContainer) {
-    textBoxContainer = document.createElement("div");
-    textBoxContainer.id = "textBoxesContainer";
-    textBoxContainer.style.marginBottom = "10px";
-    textBoxContainer.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer, box);
+  let textBoxContainer2 = document.getElementById("textBoxesContainer");
+  if (!textBoxContainer2) {
+    textBoxContainer2 = document.createElement("div");
+    textBoxContainer2.id = "textBoxesContainer";
+    textBoxContainer2.style.marginBottom = "10px";
+    textBoxContainer2.style.maxWidth = "400px";
+    container.insertBefore(textBoxContainer2, box);
 
     const label1 = document.createElement("label");
     label1.htmlFor = "textBox1";
     label1.textContent = "Post Title";
     label1.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label1);
+    textBoxContainer2.appendChild(label1);
 
     const textBox1 = document.createElement("input");
     textBox1.id = "textBox1";
@@ -222,13 +232,13 @@ function generateFinalOutput(notes, newTitle) {
     textBox1.style.textOverflow = "ellipsis";
     textBox1.style.cursor = "pointer";
     textBox1.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox1);
+    textBoxContainer2.appendChild(textBox1);
 
     const label2 = document.createElement("label");
     label2.htmlFor = "textBox2";
     label2.textContent = "Hype Phrase Description";
     label2.className = "copyTextboxLabel";
-    textBoxContainer.appendChild(label2);
+    textBoxContainer2.appendChild(label2);
 
     const textBox2 = document.createElement("input");
     textBox2.id = "textBox2";
@@ -246,7 +256,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.textOverflow = "ellipsis";
     textBox2.style.cursor = "pointer";
     textBox2.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox2);
+    textBoxContainer2.appendChild(textBox2);
 
     [textBox1, textBox2].forEach(textBox => {
       textBox.addEventListener("click", () => {
@@ -264,7 +274,9 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
+  const toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) {
+    toggleBtn.style.display = "none";
     toggleBtn.onclick = () => {
       const frames = box.querySelectorAll(".slipFrame");
       let visibleIndex = -1;
