@@ -118,10 +118,8 @@ function generateFinalOutput(notes, newTitle) {
     `Created: ${estString}`
   ].join("\n");
 
-  // Store cleaned output globally if needed
   window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
 
-  // Encode payload for iframe URLs
   const encodedPayload = encodeURIComponent(JSON.stringify({
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
@@ -142,38 +140,95 @@ function generateFinalOutput(notes, newTitle) {
 
   const box = document.getElementById("confirmOutput");
   box.classList.remove("hidden");
-
-  // Clear ONLY the contents inside confirmOutput
   box.innerHTML = "";
 
-  // Add label + iframe for Standard Version Image
-  const labelStandard = document.createElement("div");
-  labelStandard.textContent = "Standard Version Image";
-  labelStandard.style.fontWeight = "bold";
-  labelStandard.style.marginBottom = "8px";
-  box.appendChild(labelStandard);
+  // === Add Post Title label + input ===
+  const labelPostTitle = document.createElement("label");
+  labelPostTitle.textContent = "Post Title";
+  labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
+  labelPostTitle.style.fontWeight = "bold";
+  labelPostTitle.style.color = "#666666";
+  labelPostTitle.style.display = "block";
+  labelPostTitle.style.marginBottom = "6px";
+  box.appendChild(labelPostTitle);
 
-  const iframeStandard = document.createElement("iframe");
-  iframeStandard.src = `${BASE_URL}?json=${encodedPayload}&slideNum=1`;
-  iframeStandard.style.width = "100%";
-  iframeStandard.style.maxWidth = "400px";
-  iframeStandard.style.height = "600px";
-  iframeStandard.style.border = "none";
-  iframeStandard.style.marginBottom = "20px";
-  box.appendChild(iframeStandard);
+  const inputPostTitle = document.createElement("input");
+  inputPostTitle.type = "text";
+  inputPostTitle.readOnly = true;
+  inputPostTitle.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
+  inputPostTitle.style.width = "100%";
+  inputPostTitle.style.height = "28px";
+  inputPostTitle.style.marginBottom = "12px";
+  inputPostTitle.style.fontFamily = "'Oswald', sans-serif";
+  inputPostTitle.style.fontSize = "12px";
+  inputPostTitle.style.padding = "6px 8px";
+  inputPostTitle.style.border = "1px solid #ccc";
+  inputPostTitle.style.borderRadius = "6px";
+  inputPostTitle.style.whiteSpace = "nowrap";
+  inputPostTitle.style.overflow = "hidden";
+  inputPostTitle.style.textOverflow = "ellipsis";
+  inputPostTitle.title = "Click to copy text";
+  box.appendChild(inputPostTitle);
 
-  // Add label + iframe for Paid Version Image
-  const labelPaid = document.createElement("div");
-  labelPaid.textContent = "Paid Version Image";
-  labelPaid.style.fontWeight = "bold";
-  labelPaid.style.marginBottom = "8px";
-  box.appendChild(labelPaid);
+  // === Add Hype Phrase Description label + input ===
+  const labelHypeDesc = document.createElement("label");
+  labelHypeDesc.textContent = "Hype Phrase Description";
+  labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
+  labelHypeDesc.style.fontWeight = "bold";
+  labelHypeDesc.style.color = "#666666";
+  labelHypeDesc.style.display = "block";
+  labelHypeDesc.style.marginBottom = "6px";
+  box.appendChild(labelHypeDesc);
 
-  const iframePaid = document.createElement("iframe");
-  iframePaid.src = `${BASE_URL}?json=${encodedPayload}&slideNum=2`;
-  iframePaid.style.width = "100%";
-  iframePaid.style.maxWidth = "400px";
-  iframePaid.style.height = "600px";
-  iframePaid.style.border = "none";
-  box.appendChild(iframePaid);
+  const inputHypeDesc = document.createElement("input");
+  inputHypeDesc.type = "text";
+  inputHypeDesc.readOnly = true;
+  inputHypeDesc.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
+  inputHypeDesc.style.width = "100%";
+  inputHypeDesc.style.height = "28px";
+  inputHypeDesc.style.marginBottom = "20px";
+  inputHypeDesc.style.fontFamily = "'Oswald', sans-serif";
+  inputHypeDesc.style.fontSize = "12px";
+  inputHypeDesc.style.padding = "6px 8px";
+  inputHypeDesc.style.border = "1px solid #ccc";
+  inputHypeDesc.style.borderRadius = "6px";
+  inputHypeDesc.style.whiteSpace = "nowrap";
+  inputHypeDesc.style.overflow = "hidden";
+  inputHypeDesc.style.textOverflow = "ellipsis";
+  inputHypeDesc.title = "Click to copy text";
+  box.appendChild(inputHypeDesc);
+
+  // Helper function to create a container with label and iframe
+  function createImageContainer(labelText, slideNum) {
+    const container = document.createElement("div");
+    container.style.border = "1px solid #ccc";
+    container.style.borderRadius = "6px";
+    container.style.padding = "12px";
+    container.style.marginBottom = "20px";
+    container.style.maxWidth = "420px";
+
+    const label = document.createElement("div");
+    label.textContent = labelText;
+    label.style.fontFamily = "'Oswald', sans-serif";
+    label.style.fontWeight = "bold";
+    label.style.color = "#666666";
+    label.style.marginBottom = "10px";
+
+    const iframe = document.createElement("iframe");
+    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.style.width = "100%";
+    iframe.style.height = "600px";
+    iframe.style.border = "none";
+
+    container.appendChild(label);
+    container.appendChild(iframe);
+
+    return container;
+  }
+
+  // Append Standard Image container
+  box.appendChild(createImageContainer("Standard Version Image", 1));
+
+  // Append Paid Image container
+  box.appendChild(createImageContainer("Paid Version Image", 2));
 }
