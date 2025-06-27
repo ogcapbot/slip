@@ -151,36 +151,14 @@ function generateFinalOutput(notes, newTitle) {
   const encodedPayload = encodeURIComponent(JSON.stringify(payload));
   box.innerHTML = "";
 
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-
-    iframe.style.pointerEvents = "auto";
-
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
-
-    return iframe;
-  };
-
-  const container = box.parentElement;
-
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.remove();
-
+  // Insert loader immediately below Hype Phrase Description textbox
   let textBoxContainer = document.getElementById("textBoxesContainer");
   if (!textBoxContainer) {
     textBoxContainer = document.createElement("div");
     textBoxContainer.id = "textBoxesContainer";
     textBoxContainer.style.marginBottom = "10px";
     textBoxContainer.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer, box);
+    box.parentElement.insertBefore(textBoxContainer, box);
 
     const label1 = document.createElement("label");
     label1.htmlFor = "textBox1";
@@ -240,12 +218,36 @@ function generateFinalOutput(notes, newTitle) {
         });
       });
     });
+
+    // Add loader div below the text boxes
+    const loaderDiv = document.createElement("div");
+    loaderDiv.id = "imageLoader";
+    loaderDiv.style.textAlign = "center";
+    loaderDiv.style.marginTop = "10px";
+    loaderDiv.style.fontSize = "14px";
+    loaderDiv.style.color = "#555";
+
+    // Spinner CSS (simple)
+    loaderDiv.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 50 50" style="vertical-align: middle; margin-right: 8px;" >
+        <circle cx="25" cy="25" r="20" fill="none" stroke="#2a9fd6" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+          <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      Creating Images...
+    `;
+    textBoxContainer.appendChild(loaderDiv);
   }
 
   const textBox1 = document.getElementById("textBox1");
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
+
+  const boxContainer = box.parentElement;
+
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.remove();
 
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
@@ -260,6 +262,7 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.border = "none";
   toggleBtn.style.borderRadius = "6px";
   toggleBtn.style.cursor = "pointer";
+  toggleBtn.style.display = "none"; // hide toggle initially until images ready
 
   toggleBtn.onclick = () => {
     const frames = box.querySelectorAll(".slipFrame");
@@ -281,17 +284,43 @@ function generateFinalOutput(notes, newTitle) {
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
+  container.insertBefore(textBoxContainer, box);
 
-  // Remove copy on click from initial frame as well
-  const initialFrame = box.querySelector(".slipFrame");
-  if (initialFrame) {
-    initialFrame.style.cursor = "default";
-    initialFrame.onclick = null;
-  }
+  // Append iframes (images) after showing loader
+  // Loader is visible now, so hide toggle button & images, show loader until both iframes loaded
 
-  container.insertBefore(toggleBtn, box);
+  // Function to create iframe with load event to track loading state
+  const createIframeWithLoadHandler = (slideNum, visible) => {
+    const iframe = createIframe(slideNum, visible);
+    iframe.style.display = "none"; // hide initially
+    iframe.onload = () => {
+      iframe.style.display = visible ? "block" : "none";
+      // Check if both iframes loaded, then hide loader and show toggle btn
+      loadedIframesCount++;
+      if (loadedIframesCount === 2) {
+        document.getElementById("imageLoader").style.display = "none";
+        toggleBtn.style.display = "block";
+        box.style.display = "block";
+      }
+    };
+    return iframe;
+  };
+
+  // Track loaded iframes
+  let loadedIframesCount = 0;
+
+  // Append two iframes with load handlers
+  const iframe1 = createIframeWithLoadHandler(1, true);
+  const iframe2 = createIframeWithLoadHandler(2, false);
+
+  box.appendChild(iframe1);
+  box.appendChild(iframe2);
+
+  // Hide box (images container) until loaded
+  box.style.display = "none";
+
+  // Insert toggle button before box
+  boxContainer.insertBefore(toggleBtn, box);
 
   setTimeout(() => {
     box.style.overflow = "visible";
