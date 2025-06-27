@@ -160,7 +160,11 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.width = "100%";
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
-    iframe.style.height = "400px";
+
+    // <-- updated styles to avoid scrollbars and fit container height dynamically
+    iframe.style.height = "100%";
+    iframe.style.minHeight = "400px";
+
     return iframe;
   };
 
@@ -206,9 +210,9 @@ function generateFinalOutput(notes, newTitle) {
   // Insert toggle button above the image container but below Reset button
   container.insertBefore(toggleBtn, box);
 
-  // Optional: Adjust container height to fit content smoothly
+  // Adjust container height to fit content smoothly and avoid scrollbars
   setTimeout(() => {
-    box.style.overflow = "hidden";
+    box.style.overflow = "visible"; // changed from hidden to visible to avoid clipping
     box.style.height = box.scrollHeight + "px";
   }, 0);
 }
