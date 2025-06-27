@@ -253,7 +253,19 @@ button:hover {
   font-size: 14px;
   font-family: 'Oswald', sans-serif;
   text-align: center;
+
+  /* Remove fixed positioning and other properties causing layout shift */
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  padding: 0;
+  background: transparent;
+  width: auto;
+  box-sizing: content-box;
+  z-index: auto;
 }
+
 
 
 
