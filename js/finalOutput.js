@@ -120,35 +120,11 @@ async function generateFinalOutput(notes, newTitle) {
 
   window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
 
-  // Show container
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
+  container.innerHTML = ""; // clear previous content
 
-  // Clear container for fresh content
-  container.innerHTML = "";
-
-  // Create loader container
-  const loaderContainer = document.createElement("div");
-  loaderContainer.id = "loaderContainer";
-  loaderContainer.style.textAlign = "center";
-  loaderContainer.style.marginBottom = "15px";
-  loaderContainer.style.marginTop = "5px";
-
-  const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // spinner CSS target
-  loaderSpinner.style.margin = "0 auto";
-  loaderContainer.appendChild(loaderSpinner);
-
-  const loaderText = document.createElement("div");
-  loaderText.textContent = "Generating Images...";
-  loaderText.style.fontWeight = "bold";
-  loaderText.style.color = "#555";
-  loaderText.style.marginTop = "8px";
-  loaderContainer.appendChild(loaderText);
-
-  container.appendChild(loaderContainer);
-
-  // Post Title label + input with click-to-copy
+  // Add Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -184,7 +160,7 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Hype Phrase Description label + input with click-to-copy
+  // Add Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -220,50 +196,57 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Now fetch images from your deployed Google Script endpoint
-  // This should return an array of full download URLs for slides 1 & 2
-  let imgUrls = [];
+  // Show loading spinner while fetching images
+  const loaderText = document.createElement("div");
+  loaderText.textContent = "Generating Images...";
+  loaderText.style.fontWeight = "bold";
+  loaderText.style.color = "#555";
+  loaderText.style.marginTop = "8px";
+  loaderText.style.textAlign = "center";
+  container.appendChild(loaderText);
+
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec');
-    imgUrls = await response.json();
+    // Fetch image URLs from your deployed Google Apps Script endpoint
+    // It should return an array of URLs, e.g. ["https://drive.usercontent.google.com/download?id=...&export=view", ...]
+    const response = await fetch("https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec");
+    if (!response.ok) throw new Error("Failed to fetch images from server.");
+    const imageUrls = await response.json();
 
-    // Validate returned data
-    if (!Array.isArray(imgUrls) || imgUrls.length === 0) {
-      throw new Error("Invalid image data received.");
+    // Remove loader text after images loaded
+    loaderText.remove();
+
+    // Add images with labels
+    function createImageSection(labelText, imageUrl) {
+      const section = document.createElement("div");
+      section.style.border = "1px solid #ccc";
+      section.style.borderRadius = "6px";
+      section.style.padding = "12px";
+      section.style.marginBottom = "20px";
+      section.style.maxWidth = "420px";
+
+      const label = document.createElement("div");
+      label.textContent = labelText;
+      label.style.fontFamily = "'Oswald', sans-serif";
+      label.style.fontWeight = "bold";
+      label.style.color = "#666666";
+      label.style.marginBottom = "10px";
+
+      const img = document.createElement("img");
+      img.src = imageUrl;
+      img.alt = labelText;
+      img.style.width = "100%";
+      img.style.borderRadius = "4px";
+
+      section.appendChild(label);
+      section.appendChild(img);
+      return section;
     }
+
+    container.appendChild(createImageSection("Standard Version Image", imageUrls[0]));
+    container.appendChild(createImageSection("Paid Version Image", imageUrls[1]));
+
   } catch (error) {
-    loaderContainer.innerHTML = `<div style="color: red; font-weight: bold;">Failed to load images: ${error.message}</div>`;
-    return;
+    loaderText.textContent = "Failed to load images.";
+    console.error("Failed to load images:", error);
   }
-
-  // Remove loader
-  loaderContainer.style.display = "none";
-
-  // Render images
-  imgUrls.forEach((url, idx) => {
-    const containerDiv = document.createElement('div');
-    containerDiv.style.border = '1px solid #ccc';
-    containerDiv.style.borderRadius = '6px';
-    containerDiv.style.padding = '12px';
-    containerDiv.style.marginBottom = '20px';
-    containerDiv.style.maxWidth = '420px';
-
-    const label = document.createElement('div');
-    label.textContent = idx === 0 ? 'Standard Version Image' : 'Paid Version Image';
-    label.style.fontFamily = "'Oswald', sans-serif";
-    label.style.fontWeight = 'bold';
-    label.style.color = '#666666';
-    label.style.marginBottom = '10px';
-
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = label.textContent;
-    img.style.width = '100%';
-    img.style.borderRadius = '6px';
-
-    containerDiv.appendChild(label);
-    containerDiv.appendChild(img);
-
-    container.appendChild(containerDiv);
-  });
 }
