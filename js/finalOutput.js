@@ -310,11 +310,12 @@ function generateFinalOutput(notes, newTitle) {
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
 
-  const initialFrame = box.querySelector(".slipFrame");
-  if (initialFrame) {
-    initialFrame.style.cursor = "pointer";
-    initialFrame.onclick = () => copyImageFromUrlToClipboard(initialFrame.src);
-  }
+  // Add click handler to both iframes to copy image URL on click
+  const iframes = box.querySelectorAll(".slipFrame");
+  iframes.forEach(iframe => {
+    iframe.style.cursor = "pointer";
+    iframe.onclick = () => copyImageFromUrlToClipboard(iframe.src);
+  });
 
   container.insertBefore(toggleBtn, box);
 
