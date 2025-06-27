@@ -272,7 +272,7 @@ function generateFinalOutput(notes, newTitle) {
   const textBox1 = document.getElementById("textBox1");
   const textBox2 = document.getElementById("textBox2");
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Note Available";
+  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
