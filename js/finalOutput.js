@@ -199,10 +199,9 @@ function generateFinalOutput(notes, newTitle) {
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  // Append the iframes inside the box as usual
+  // Append only slides 1 and 2
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
-  box.appendChild(createIframe(3, false));
 
   // Insert toggle button above the image container but below Reset button
   container.insertBefore(toggleBtn, box);
