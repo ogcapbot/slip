@@ -1,110 +1,136 @@
 function generateFinalOutput(notes, newTitle) {
-  // ... all your existing code above remains unchanged ...
+  notes = notes || "N/A";
+  if (newTitle) window.overrideTitle = newTitle;
+
+  let wagerRaw = "";
+  const wagerInput = document.getElementById("wagerType");
+  const wagerDropdown = document.getElementById("wagerDropdown");
+
+  if (window.currentWagerWithNum) {
+    wagerRaw = window.currentWagerWithNum;
+  } else if (wagerInput) {
+    wagerRaw = wagerInput.value.trim();
+  } else if (wagerDropdown) {
+    wagerRaw = wagerDropdown.value.trim();
+  }
+  const wager = wagerRaw.toUpperCase();
+
+  const teamSearchEl = document.getElementById("teamSearch");
+  const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
+  const dropdown = document.getElementById("unitDropdown");
+  const unitInput = dropdown ? dropdown.value.trim() : "";
+  const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
+
+  let matchedTeam = "";
+  const teamSearchLower = teamSearchInput.toLowerCase();
+
+  if (window.overrideTeamName) {
+    matchedTeam = window.overrideTeamName;
+  } else if (
+    selectedMatch &&
+    selectedMatch["Home Team"] !== "Unavailable" &&
+    selectedMatch["Away Team"] !== "Unavailable"
+  ) {
+    const home = selectedMatch["Home Team"];
+    const away = selectedMatch["Away Team"];
+    matchedTeam = [home, away].find(team => team.toLowerCase().includes(teamSearchLower)) || teamSearchInput;
+  } else {
+    matchedTeam = teamSearchInput;
+  }
+
+  let formattedTime = "Unavailable";
+  if (selectedMatch["Commence Time (UTC)"]) {
+    const date = new Date(selectedMatch["Commence Time (UTC)"]);
+    formattedTime = date.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit", hour12: true
+    }) + " ET";
+  }
+
+  const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+  const nyDate = new Date(nowNY);
+  const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
+
+  const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
+  const today = new Date();
+  const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+  const pickId = `${secondsSinceEpoch}-${mmddyy}`;
+
+  let pickDescValue = "Unavailable";
+
+  if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
+    const selectedWager = document.getElementById("wagerDropdown").value;
+    const wagerRow = (allData.wagers || []).find(row =>
+      row.wager_label_template === selectedWager
+    );
+
+    if (wagerRow && wagerRow.pick_desc_template) {
+      pickDescValue = wagerRow.pick_desc_template;
+
+      pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
+
+      const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
+      if (numberMatch) {
+        const numericValue = numberMatch[0];
+        pickDescValue = pickDescValue
+          .replace(/\[\[NUM\]\]/g, numericValue)
+          .replace(/\[\[NUMBER\]\]/g, numericValue);
+      }
+    }
+  }
+
+  const output = [
+    "═══════════════════════",
+    "######## OFFICIAL PICK",
+    "═══════════════════════",
+    `Wager Type: STRAIGHT WAGER`,
+    `Official Pick: ${matchedTeam}`,
+    `Official Type: ${wager}`,
+    `Official Wager: ${unitInput} Unit(s)`,
+    `To Win: ${pickDescValue}`,
+    "",
+    "═══════════════════════",
+    "######## GAME DETAILS",
+    "═══════════════════════",
+    `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
+    `League: ${selectedMatch["Sport Name"]}`,
+    `Home Team: ${selectedMatch["Home Team"]}`,
+    `Away Team: ${selectedMatch["Away Team"]}`,
+    `Game Time: ${formattedTime}`,
+    "",
+    "═══════════════════════",
+    "######## THANK YOU FOR TRUSTING OGCB",
+    "═══════════════════════",
+    "",
+    `Title: ${window.overrideTitle || "[[TITLE]]"}`,
+    `Pick ID: ${pickId}`,
+    `Pick by: ${capperName}`,
+    `Input Value: ${allInputsRaw}`,
+    `Notes: ${notes}`,
+    "",
+    "═══════════════════════",
+    "######## STRICT CONFIDENTIALITY NOTICE",
+    "═══════════════════════",
+    "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
+    "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
+    "",
+    `Created: ${estString}`
+  ].join("\n");
 
   const box = document.getElementById("confirmOutput");
-
-  // Hide container initially
-  box.classList.add("hidden");
+  box.classList.add("hidden"); // Hide image container initially
   box.innerHTML = "";
 
-  // Find or create textBoxesContainer (which contains the two text inputs)
-  let textBoxesContainer = document.getElementById("textBoxesContainer");
-  if (!textBoxesContainer) {
-    textBoxesContainer = document.createElement("div");
-    textBoxesContainer.id = "textBoxesContainer";
-    textBoxesContainer.style.marginBottom = "10px";
-    textBoxesContainer.style.maxWidth = "400px";
-    box.parentElement.insertBefore(textBoxesContainer, box);
+  const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
+  window._cleanedOutput = cleanedOutput;
 
-    // Post Title label + input
-    const label1 = document.createElement("label");
-    label1.htmlFor = "textBox1";
-    label1.textContent = "Post Title";
-    label1.className = "copyTextboxLabel";
-    textBoxesContainer.appendChild(label1);
+  const encodedOutput = encodeURIComponent(cleanedOutput);
 
-    const textBox1 = document.createElement("input");
-    textBox1.id = "textBox1";
-    textBox1.readOnly = true;
-    textBox1.type = "text";
-    textBox1.style.cssText = "width:100%; height:28px; margin-bottom:8px; font-size:12px; font-family:'Oswald', sans-serif; padding:6px 8px; border-radius:6px; border:1px solid #ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;";
-    textBox1.title = "Click to copy text";
-    textBoxesContainer.appendChild(textBox1);
+  const existingFrame = document.getElementById("slipFrame");
+  if (existingFrame) existingFrame.remove();
 
-    // Hype Phrase Description label + input
-    const label2 = document.createElement("label");
-    label2.htmlFor = "textBox2";
-    label2.textContent = "Hype Phrase Description";
-    label2.className = "copyTextboxLabel";
-    textBoxesContainer.appendChild(label2);
-
-    const textBox2 = document.createElement("input");
-    textBox2.id = "textBox2";
-    textBox2.readOnly = true;
-    textBox2.type = "text";
-    textBox2.style.cssText = "width:100%; height:28px; font-size:12px; font-family:'Oswald', sans-serif; padding:6px 8px; border-radius:6px; border:1px solid #ccc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;";
-    textBox2.title = "Click to copy text";
-    textBoxesContainer.appendChild(textBox2);
-
-    // Copy-to-clipboard for inputs
-    [textBox1, textBox2].forEach(textBox => {
-      textBox.addEventListener("click", () => {
-        navigator.clipboard.writeText(textBox.value).then(() => {
-          alert("Copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy.");
-        });
-      });
-    });
-  }
-
-  // Set textbox values
-  document.getElementById("textBox1").value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  document.getElementById("textBox2").value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-
-  // Create loader below textBoxesContainer, above iframe container
-  let loader = document.getElementById("imageLoader");
-  if (!loader) {
-    loader = document.createElement("div");
-    loader.id = "imageLoader";
-    loader.style.textAlign = "center";
-    loader.style.marginBottom = "10px";
-    loader.style.fontFamily = "'Oswald', sans-serif";
-    loader.style.fontSize = "14px";
-    loader.innerHTML = `
-      <div class="loader" style="
-        border: 6px solid #f3f3f3;
-        border-top: 6px solid #3498db;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 8px auto;">
-      </div>
-      <div>Creating Images</div>
-    `;
-    textBoxesContainer.insertAdjacentElement('afterend', loader);
-  }
-  loader.style.display = "block";
-
-  // Add spinner CSS if not present
-  if (!document.getElementById("loader-style")) {
-    const styleEl = document.createElement("style");
-    styleEl.id = "loader-style";
-    styleEl.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      .loader {
-        display: inline-block;
-      }
-    `;
-    document.head.appendChild(styleEl);
-  }
-
-  // Prepare encodedPayload (unchanged, your existing logic)
-  const encodedPayload = encodeURIComponent(JSON.stringify({
+  const payload = {
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
     "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
@@ -120,9 +146,11 @@ function generateFinalOutput(notes, newTitle) {
     "CAPPERS NAME": capperName,
     "USER_INPUT_VALUE": allInputsRaw,
     "24HR_LONG_DATE_SECONDS": estString
-  }));
+  };
 
-  // Create iframes hidden initially
+  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+  box.innerHTML = "";
+
   const createIframe = (slideNum, visible) => {
     const iframe = document.createElement("iframe");
     iframe.className = "slipFrame";
@@ -132,35 +160,101 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.width = "100%";
     iframe.style.maxWidth = "400px";
     iframe.style.border = "none";
+
     iframe.style.pointerEvents = "auto";
+
     iframe.style.height = "100%";
     iframe.style.minHeight = "400px";
+
+    // When iframe loads, hide loader and show image container + toggle button
+    iframe.onload = () => {
+      const loader = document.getElementById("loader");
+      loader.style.display = "none";  // hide loader
+      box.classList.remove("hidden"); // show images container
+      toggleBtn.style.display = "block"; // show toggle button
+    };
+
     return iframe;
   };
 
-  const iframe1 = createIframe(1, false);
-  const iframe2 = createIframe(2, false);
+  const container = box.parentElement;
 
-  // Track loaded iframes
-  let loadedCount = 0;
-  const onIframeLoad = () => {
-    loadedCount++;
-    if (loadedCount === 2) {
-      loader.style.display = "none";
-      box.classList.remove("hidden");
-      toggleBtn.style.display = "block";
-      iframe1.style.display = "block";
-    }
-  };
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.remove();
 
-  iframe1.onload = onIframeLoad;
-  iframe2.onload = onIframeLoad;
+  let textBoxContainer = document.getElementById("textBoxesContainer");
+  if (!textBoxContainer) {
+    textBoxContainer = document.createElement("div");
+    textBoxContainer.id = "textBoxesContainer";
+    textBoxContainer.style.marginBottom = "10px";
+    textBoxContainer.style.maxWidth = "400px";
+    container.insertBefore(textBoxContainer, box);
 
-  box.innerHTML = ""; // clear before appending iframes
-  box.appendChild(iframe1);
-  box.appendChild(iframe2);
+    const label1 = document.createElement("label");
+    label1.htmlFor = "textBox1";
+    label1.textContent = "Post Title";
+    label1.className = "copyTextboxLabel";
+    textBoxContainer.appendChild(label1);
 
-  // Create toggle button, hidden initially
+    const textBox1 = document.createElement("input");
+    textBox1.id = "textBox1";
+    textBox1.readOnly = true;
+    textBox1.type = "text";
+    textBox1.style.width = "100%";
+    textBox1.style.height = "28px";
+    textBox1.style.marginBottom = "8px";
+    textBox1.style.fontSize = "12px";
+    textBox1.style.fontFamily = "'Oswald', sans-serif";
+    textBox1.style.padding = "6px 8px";
+    textBox1.style.borderRadius = "6px";
+    textBox1.style.border = "1px solid #ccc";
+    textBox1.style.whiteSpace = "nowrap";
+    textBox1.style.overflow = "hidden";
+    textBox1.style.textOverflow = "ellipsis";
+    textBox1.style.cursor = "pointer";
+    textBox1.title = "Click to copy text";
+    textBoxContainer.appendChild(textBox1);
+
+    const label2 = document.createElement("label");
+    label2.htmlFor = "textBox2";
+    label2.textContent = "Hype Phrase Description";
+    label2.className = "copyTextboxLabel";
+    textBoxContainer.appendChild(label2);
+
+    const textBox2 = document.createElement("input");
+    textBox2.id = "textBox2";
+    textBox2.readOnly = true;
+    textBox2.type = "text";
+    textBox2.style.width = "100%";
+    textBox2.style.height = "28px";
+    textBox2.style.fontSize = "12px";
+    textBox2.style.fontFamily = "'Oswald', sans-serif";
+    textBox2.style.padding = "6px 8px";
+    textBox2.style.borderRadius = "6px";
+    textBox2.style.border = "1px solid #ccc";
+    textBox2.style.whiteSpace = "nowrap";
+    textBox2.style.overflow = "hidden";
+    textBox2.style.textOverflow = "ellipsis";
+    textBox2.style.cursor = "pointer";
+    textBox2.title = "Click to copy text";
+    textBoxContainer.appendChild(textBox2);
+
+    [textBox1, textBox2].forEach(textBox => {
+      textBox.addEventListener("click", () => {
+        navigator.clipboard.writeText(textBox.value).then(() => {
+          alert("Copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy.");
+        });
+      });
+    });
+  }
+
+  const textBox1 = document.getElementById("textBox1");
+  const textBox2 = document.getElementById("textBox2");
+  textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
+  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
+
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
@@ -174,7 +268,7 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.border = "none";
   toggleBtn.style.borderRadius = "6px";
   toggleBtn.style.cursor = "pointer";
-  toggleBtn.style.display = "none";
+  toggleBtn.style.display = "none"; // Hide initially
 
   toggleBtn.onclick = () => {
     const frames = box.querySelectorAll(".slipFrame");
@@ -189,15 +283,18 @@ function generateFinalOutput(notes, newTitle) {
     const nextFrame = frames[nextIndex];
     nextFrame.style.display = "block";
 
+    // Remove click events & cursor changes for copying, keep default cursor
     nextFrame.style.cursor = "default";
     nextFrame.onclick = null;
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  box.parentElement.insertBefore(toggleBtn, box);
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
 
-  // Adjust container height after images load
+  container.insertBefore(toggleBtn, box);
+
   setTimeout(() => {
     box.style.overflow = "visible";
     box.style.height = box.scrollHeight + "px";
