@@ -125,6 +125,11 @@ function generateFinalOutput(notes, newTitle) {
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
 
+  const encodedOutput = encodeURIComponent(cleanedOutput);
+
+  const existingFrame = document.getElementById("slipFrame");
+  if (existingFrame) existingFrame.remove();
+
   const payload = {
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
@@ -144,47 +149,25 @@ function generateFinalOutput(notes, newTitle) {
   };
 
   const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+  box.innerHTML = "";
 
-  // Now define createImage AFTER encodedPayload is ready
-  const createImage = (slideNum, visible) => {
-    const img = document.createElement("img");
-    img.className = "slipImage";
-    img.dataset.slide = slideNum;
-    img.style.display = visible ? "block" : "none";
-    img.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    img.style.width = "100%";
-    img.style.maxWidth = "400px";
-    img.style.border = "none";
-    img.style.height = "auto";
-    img.style.minHeight = "400px";
-    img.style.cursor = "pointer";
+  const createIframe = (slideNum, visible) => {
+    const iframe = document.createElement("iframe");
+    iframe.className = "slipFrame";
+    iframe.dataset.slide = slideNum;
+    iframe.style.display = visible ? "block" : "none";
+    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.style.width = "100%";
+    iframe.style.maxWidth = "400px";
+    iframe.style.border = "none";
 
-    img.onclick = () => {
-      // Copy image data to clipboard on click
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          alert("Failed to create image blob");
-          return;
-        }
-        const item = new ClipboardItem({ "image/png": blob });
-        navigator.clipboard.write([item]).then(() => {
-          alert("Image copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy image.");
-        });
-      }, "image/png");
-    };
+    iframe.style.pointerEvents = "auto";
 
-    return img;
+    iframe.style.height = "100%";
+    iframe.style.minHeight = "400px";
+
+    return iframe;
   };
-
-  box.appendChild(createImage(1, true));
-  box.appendChild(createImage(2, false));
 
   const container = box.parentElement;
 
@@ -237,89 +220,4 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.width = "100%";
     textBox2.style.height = "28px";
     textBox2.style.fontSize = "12px";
-    textBox2.style.fontFamily = "'Oswald', sans-serif";
-    textBox2.style.padding = "6px 8px";
-    textBox2.style.borderRadius = "6px";
-    textBox2.style.border = "1px solid #ccc";
-    textBox2.style.whiteSpace = "nowrap";
-    textBox2.style.overflow = "hidden";
-    textBox2.style.textOverflow = "ellipsis";
-    textBox2.style.cursor = "pointer";
-    textBox2.title = "Click to copy text";
-    textBoxContainer.appendChild(textBox2);
-
-    [textBox1, textBox2].forEach(textBox => {
-      textBox.addEventListener("click", () => {
-        navigator.clipboard.writeText(textBox.value).then(() => {
-          alert("Copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy.");
-        });
-      });
-    });
-  }
-
-  const textBox1 = document.getElementById("textBox1");
-  const textBox2 = document.getElementById("textBox2");
-  textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-
-  const toggleBtn = document.createElement("button");
-  toggleBtn.id = "toggleImageBtn";
-  toggleBtn.textContent = "Switch to Paid Image";
-  toggleBtn.style.marginTop = "10px";
-  toggleBtn.style.width = "100%";
-  toggleBtn.style.maxWidth = "400px";
-  toggleBtn.style.padding = "12px";
-  toggleBtn.style.fontSize = "16px";
-  toggleBtn.style.backgroundColor = "#2a9fd6";
-  toggleBtn.style.color = "white";
-  toggleBtn.style.border = "none";
-  toggleBtn.style.borderRadius = "6px";
-  toggleBtn.style.cursor = "pointer";
-
-  toggleBtn.onclick = () => {
-    const images = box.querySelectorAll(".slipImage");
-    let visibleIndex = -1;
-    images.forEach((img, i) => {
-      if (img.style.display !== "none") visibleIndex = i;
-      img.style.display = "none";
-      img.style.cursor = "default";
-      img.onclick = null;
-    });
-    const nextIndex = (visibleIndex + 1) % images.length;
-    const nextImg = images[nextIndex];
-    nextImg.style.display = "block";
-
-    // Re-add copy on click for visible image
-    nextImg.style.cursor = "pointer";
-    nextImg.onclick = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = nextImg.naturalWidth;
-      canvas.height = nextImg.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(nextImg, 0, 0);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          alert("Failed to create image blob");
-          return;
-        }
-        const item = new ClipboardItem({ "image/png": blob });
-        navigator.clipboard.write([item]).then(() => {
-          alert("Image copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy image.");
-        });
-      }, "image/png");
-    };
-
-    toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
-  };
-
-  container.insertBefore(toggleBtn, box);
-
-  setTimeout(() => {
-    box.style.overflow = "visible";
-    box.style.height = box.scrollHeight + "px";
-  }, 0);
-}
+    textBox2.style.fontFamily = "'Os
