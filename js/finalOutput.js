@@ -152,12 +152,12 @@ function generateFinalOutput(notes, newTitle) {
 
   const container = box.parentElement;
 
-  // Show the loader, hide images and toggle button at start
+  // Show loader & hide images + toggle button initially
   const loader = document.getElementById("loader");
   if (loader) loader.style.display = "block";
   box.style.display = "none";
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+  const toggleBtn = document.getElementById("toggleImageBtn");
+  if (toggleBtn) toggleBtn.style.display = "none";
 
   let loadedCount = 0;
   const totalFrames = 2;
@@ -176,20 +176,17 @@ function generateFinalOutput(notes, newTitle) {
     iframe.style.height = "100%";
     iframe.style.minHeight = "400px";
 
-    // On iframe load, count and when all loaded, hide loader and show content
     iframe.onload = () => {
       loadedCount++;
       if (loadedCount === totalFrames) {
         if (loader) loader.style.display = "none";
         box.style.display = "block";
-        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+        if (toggleBtn) toggleBtn.style.display = "block";
       }
     };
 
     return iframe;
   };
-
-  box.innerHTML = ""; // Clear old frames
 
   box.appendChild(createIframe(1, true));
   box.appendChild(createIframe(2, false));
@@ -267,9 +264,7 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  const toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) {
-    toggleBtn.style.display = "none"; // Hide initially
     toggleBtn.onclick = () => {
       const frames = box.querySelectorAll(".slipFrame");
       let visibleIndex = -1;
