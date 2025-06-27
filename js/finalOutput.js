@@ -127,46 +127,59 @@ function generateFinalOutput(notes, newTitle) {
 
   const encodedOutput = encodeURIComponent(cleanedOutput);
 
-  const existingFrame = document.getElementById("slipFrame");
-  if (existingFrame) existingFrame.remove();
-
-  const payload = {
-    "FULL_TEAM_ENTERED": matchedTeam,
-    "FULL_BET_TYPE": wager,
-    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-    "PICK_DESC": pickDescValue,
-    "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-    "DATE and TIME OF GAME START": formattedTime,
-    "TITLE": window.overrideTitle || "[[TITLE]]",
-    "PICKID": pickId,
-    "CAPPERS NAME": capperName,
-    "USER_INPUT_VALUE": allInputsRaw,
-    "24HR_LONG_DATE_SECONDS": estString
-  };
-
-  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+  // Remove any existing images inside box
   box.innerHTML = "";
 
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
+  // Use your new Google Apps Script URL here:
+  const BASE_URL = "https://script.google.com/macros/s/AKfycbyHjf8OGKQj2oveR5xRXMzH6F-UZ4r2PId6f3wDPeiRl0UqulKf2GIvcIymX6j0rmG95Q/exec";
 
-    iframe.style.pointerEvents = "auto";
+  // Create image elements instead of iframes:
+  const createImage = (slideNum, visible) => {
+    const img = document.createElement("img");
+    img.className = "slipImage";
+    img.dataset.slide = slideNum;
+    img.style.display = visible ? "block" : "none";
+    img.style.width = "100%";
+    img.style.maxWidth = "400px";
+    img.style.border = "none";
+    img.style.cursor = "pointer";
+    img.style.height = "auto";
+    img.style.minHeight = "400px";
 
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
+    // Construct URL with payload and slideNum
+    img.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
 
-    return iframe;
+    // Clicking image copies it to clipboard
+    img.onclick = () => copyImageFromUrlToClipboard(img.src);
+
+    return img;
+  };
+
+  // Copy image to clipboard from URL, using canvas
+  const copyImageFromUrlToClipboard = (imageUrl) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          alert('Failed to create image blob');
+          return;
+        }
+        const item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(() => {
+          alert('Image copied to clipboard!');
+        }).catch(() => {
+          alert('Failed to copy image.');
+        });
+      }, 'image/png');
+    };
+    img.onerror = () => alert('Failed to load image for clipboard copy');
+    img.src = imageUrl;
   };
 
   const container = box.parentElement;
@@ -247,6 +260,7 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
+  // Toggle button to switch images visibility
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
@@ -262,34 +276,20 @@ function generateFinalOutput(notes, newTitle) {
   toggleBtn.style.cursor = "pointer";
 
   toggleBtn.onclick = () => {
-    const frames = box.querySelectorAll(".slipFrame");
+    const images = box.querySelectorAll(".slipImage");
     let visibleIndex = -1;
-    frames.forEach((frame, i) => {
-      if (frame.style.display !== "none") visibleIndex = i;
-      frame.style.display = "none";
-      frame.onclick = null;
-      frame.style.cursor = "default";
+    images.forEach((img, i) => {
+      if (img.style.display !== "none") visibleIndex = i;
+      img.style.display = "none";
     });
-    const nextIndex = (visibleIndex + 1) % frames.length;
-    const nextFrame = frames[nextIndex];
-    nextFrame.style.display = "block";
-
-    // No copy on click anymore, so reset cursor and onclick to null
-    nextFrame.style.cursor = "default";
-    nextFrame.onclick = null;
+    const nextIndex = (visibleIndex + 1) % images.length;
+    images[nextIndex].style.display = "block";
 
     toggleBtn.textContent = nextIndex === 0 ? "Switch to Paid Image" : "Switch to Regular Image";
   };
 
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
-
-  // Remove initial click-to-copy behavior on iframe
-  const initialFrame = box.querySelector(".slipFrame");
-  if (initialFrame) {
-    initialFrame.style.cursor = "default";
-    initialFrame.onclick = null;
-  }
+  box.appendChild(createImage(1, true));
+  box.appendChild(createImage(2, false));
 
   container.insertBefore(toggleBtn, box);
 
