@@ -1,3 +1,25 @@
+async function initGapiClient() {
+  return new Promise((resolve, reject) => {
+    gapi.load('client:auth2', async () => {
+      try {
+        await gapi.client.init({
+          apiKey: 'YOUR_API_KEY',
+          clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+          scope: 'https://www.googleapis.com/auth/drive.readonly',
+        });
+        const authInstance = gapi.auth2.getAuthInstance();
+        if (!authInstance.isSignedIn.get()) {
+          await authInstance.signIn();
+        }
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
 async function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
@@ -217,18 +239,16 @@ async function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Function to fetch the latest two PNG images from Drive folder and display
+  // Load and display images from Drive
   async function loadAndDisplayImages() {
     const FOLDER_ID = "1d7WWR1xv8XTzvh-hj6dXTjV3MKoO5ZgZ"; // Your Drive folder ID
 
-    // Use Google Picker or Drive API to list files - here we use Google Drive REST API fetch
-    // This requires the user to be authenticated and you to have Drive API enabled and authorized.
-
-    // Construct Drive API files list URL with query to get PNGs from folder ordered by createdTime desc
     const query = encodeURIComponent(`'${FOLDER_ID}' in parents and mimeType='image/png' and trashed=false`);
     const url = `https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=createdTime desc&fields=files(id,name,webContentLink)`;
 
     try {
+      await initGapiClient();
+
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${gapi.auth.getToken().access_token}`
@@ -238,11 +258,8 @@ async function generateFinalOutput(notes, newTitle) {
       if (!response.ok) throw new Error("Failed to list images");
 
       const data = await response.json();
-
-      // Pick top 2 images (slides)
       const images = data.files.slice(0, 2);
 
-      // Remove loader while displaying images
       loaderContainer.style.display = "none";
 
       images.forEach((file, idx) => {
