@@ -127,93 +127,22 @@ function generateFinalOutput(notes, newTitle) {
 
   const encodedOutput = encodeURIComponent(cleanedOutput);
 
-  const existingFrame = document.getElementById("slipFrame");
-  if (existingFrame) existingFrame.remove();
-
-  const payload = {
-    "FULL_TEAM_ENTERED": matchedTeam,
-    "FULL_BET_TYPE": wager,
-    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
-    "PICK_DESC": pickDescValue,
-    "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
-    "DATE and TIME OF GAME START": formattedTime,
-    "TITLE": window.overrideTitle || "[[TITLE]]",
-    "PICKID": pickId,
-    "CAPPERS NAME": capperName,
-    "USER_INPUT_VALUE": allInputsRaw,
-    "24HR_LONG_DATE_SECONDS": estString
-  };
-
-  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
-
   const container = box.parentElement;
 
-  // Show the loader and hide images + toggle button initially
-  const loader = document.getElementById("loader");
-  if (loader) loader.style.display = "block";
-  box.style.display = "none";
-  const oldToggleBtn = document.getElementById("toggleImageBtn");
-  if (oldToggleBtn) oldToggleBtn.style.display = "none";
-
-  // Insert loader right below textBoxesContainer
-  const textBoxContainer = document.getElementById("textBoxesContainer");
-  if (loader && textBoxContainer && textBoxContainer.parentNode) {
-    textBoxContainer.parentNode.insertBefore(loader, textBoxContainer.nextSibling);
-    loader.style.marginTop = "10px";
-    loader.style.marginBottom = "10px";
-  }
-
-  let loadedCount = 0;
-  const totalFrames = 2;
-
-  const createIframe = (slideNum, visible) => {
-    const iframe = document.createElement("iframe");
-    iframe.className = "slipFrame";
-    iframe.dataset.slide = slideNum;
-    iframe.style.display = visible ? "block" : "none";
-    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-    iframe.style.width = "100%";
-    iframe.style.maxWidth = "400px";
-    iframe.style.border = "none";
-
-    iframe.style.pointerEvents = "auto";
-    iframe.style.height = "100%";
-    iframe.style.minHeight = "400px";
-
-    iframe.onload = () => {
-      loadedCount++;
-      if (loadedCount === totalFrames) {
-        if (loader) loader.style.display = "none";
-        box.style.display = "block";
-        if (oldToggleBtn) oldToggleBtn.style.display = "block";
-      }
-    };
-
-    return iframe;
-  };
-
-  box.innerHTML = "";
-
-  box.appendChild(createIframe(1, true));
-  box.appendChild(createIframe(2, false));
-
-  let textBoxContainer2 = document.getElementById("textBoxesContainer");
-  if (!textBoxContainer2) {
-    textBoxContainer2 = document.createElement("div");
-    textBoxContainer2.id = "textBoxesContainer";
-    textBoxContainer2.style.marginBottom = "10px";
-    textBoxContainer2.style.maxWidth = "400px";
-    container.insertBefore(textBoxContainer2, box);
+  // Create or select the textboxes container
+  let textBoxContainer = document.getElementById("textBoxesContainer");
+  if (!textBoxContainer) {
+    textBoxContainer = document.createElement("div");
+    textBoxContainer.id = "textBoxesContainer";
+    textBoxContainer.style.marginBottom = "10px";
+    textBoxContainer.style.maxWidth = "400px";
+    container.insertBefore(textBoxContainer, box);
 
     const label1 = document.createElement("label");
     label1.htmlFor = "textBox1";
     label1.textContent = "Post Title";
     label1.className = "copyTextboxLabel";
-    textBoxContainer2.appendChild(label1);
+    textBoxContainer.appendChild(label1);
 
     const textBox1 = document.createElement("input");
     textBox1.id = "textBox1";
@@ -232,13 +161,13 @@ function generateFinalOutput(notes, newTitle) {
     textBox1.style.textOverflow = "ellipsis";
     textBox1.style.cursor = "pointer";
     textBox1.title = "Click to copy text";
-    textBoxContainer2.appendChild(textBox1);
+    textBoxContainer.appendChild(textBox1);
 
     const label2 = document.createElement("label");
     label2.htmlFor = "textBox2";
     label2.textContent = "Hype Phrase Description";
     label2.className = "copyTextboxLabel";
-    textBoxContainer2.appendChild(label2);
+    textBoxContainer.appendChild(label2);
 
     const textBox2 = document.createElement("input");
     textBox2.id = "textBox2";
@@ -256,7 +185,7 @@ function generateFinalOutput(notes, newTitle) {
     textBox2.style.textOverflow = "ellipsis";
     textBox2.style.cursor = "pointer";
     textBox2.title = "Click to copy text";
-    textBoxContainer2.appendChild(textBox2);
+    textBoxContainer.appendChild(textBox2);
 
     [textBox1, textBox2].forEach(textBox => {
       textBox.addEventListener("click", () => {
@@ -274,9 +203,94 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
+  // Create loader container below textboxes if not exists
+  let loaderContainer = document.getElementById("loaderContainer");
+  if (!loaderContainer) {
+    loaderContainer = document.createElement("div");
+    loaderContainer.id = "loaderContainer";
+    loaderContainer.style.textAlign = "center";
+    loaderContainer.style.marginBottom = "15px";
+    loaderContainer.style.marginTop = "5px";
+
+    // Spinner element
+    const loader = document.createElement("div");
+    loader.id = "loader"; // your existing spinner CSS targets #loader
+    loader.style.margin = "0 auto";
+    loaderContainer.appendChild(loader);
+
+    // Loader text
+    const loaderText = document.createElement("div");
+    loaderText.id = "loaderText";
+    loaderText.textContent = "Generating Images...";
+    loaderText.style.fontWeight = "bold";
+    loaderText.style.color = "#555";
+    loaderText.style.marginTop = "8px";
+    loaderContainer.appendChild(loaderText);
+
+    container.insertBefore(loaderContainer, box);
+  }
+
+  // Show loader, hide images container and toggle button at start
+  loaderContainer.style.display = "block";
+  box.style.display = "none";
+  const oldToggleBtn = document.getElementById("toggleImageBtn");
+  if (oldToggleBtn) oldToggleBtn.style.display = "none";
+
+  const totalFrames = 2;
+  let loadedCount = 0;
+
+  const encodedPayload = encodeURIComponent(JSON.stringify({
+    "FULL_TEAM_ENTERED": matchedTeam,
+    "FULL_BET_TYPE": wager,
+    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+    "PICK_DESC": pickDescValue,
+    "NOTES": notes,
+    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
+    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+    "DATE and TIME OF GAME START": formattedTime,
+    "TITLE": window.overrideTitle || "[[TITLE]]",
+    "PICKID": pickId,
+    "CAPPERS NAME": capperName,
+    "USER_INPUT_VALUE": allInputsRaw,
+    "24HR_LONG_DATE_SECONDS": estString
+  }));
+
+  const createIframe = (slideNum, visible) => {
+    const iframe = document.createElement("iframe");
+    iframe.className = "slipFrame";
+    iframe.dataset.slide = slideNum;
+    iframe.style.display = visible ? "block" : "none";
+    iframe.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    iframe.style.width = "100%";
+    iframe.style.maxWidth = "400px";
+    iframe.style.border = "none";
+
+    iframe.style.pointerEvents = "auto";
+    iframe.style.height = "100%";
+    iframe.style.minHeight = "400px";
+
+    iframe.onload = () => {
+      loadedCount++;
+      if (loadedCount === totalFrames) {
+        // Hide loader, show images container and toggle button
+        loaderContainer.style.display = "none";
+        box.style.display = "block";
+        if (oldToggleBtn) oldToggleBtn.style.display = "block";
+      }
+    };
+
+    return iframe;
+  };
+
+  box.innerHTML = ""; // Clear any old frames
+  box.appendChild(createIframe(1, true));
+  box.appendChild(createIframe(2, false));
+
   const toggleBtn = document.getElementById("toggleImageBtn");
   if (toggleBtn) {
-    toggleBtn.style.display = "none";
+    toggleBtn.style.display = "none"; // Hide initially
     toggleBtn.onclick = () => {
       const frames = box.querySelectorAll(".slipFrame");
       let visibleIndex = -1;
