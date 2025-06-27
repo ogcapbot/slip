@@ -125,15 +125,34 @@ function generateFinalOutput(notes, newTitle) {
   const cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
   window._cleanedOutput = cleanedOutput;
 
-  const encodedOutput = encodeURIComponent(cleanedOutput);
+  // Define your payload here before usage:
+  const payload = {
+    "FULL_TEAM_ENTERED": matchedTeam,
+    "FULL_BET_TYPE": wager,
+    "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
+    "PICK_DESC": pickDescValue,
+    "NOTES": notes,
+    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
+    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
+    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
+    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+    "DATE and TIME OF GAME START": formattedTime,
+    "TITLE": window.overrideTitle || "[[TITLE]]",
+    "PICKID": pickId,
+    "CAPPERS NAME": capperName,
+    "USER_INPUT_VALUE": allInputsRaw,
+    "24HR_LONG_DATE_SECONDS": estString
+  };
 
-  // Remove any existing images inside box
+  const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+
+  // Clear box content for images:
   box.innerHTML = "";
 
-  // Use your new Google Apps Script URL here:
+  // Your new Apps Script URL:
   const BASE_URL = "https://script.google.com/macros/s/AKfycbyHjf8OGKQj2oveR5xRXMzH6F-UZ4r2PId6f3wDPeiRl0UqulKf2GIvcIymX6j0rmG95Q/exec";
 
-  // Create image elements instead of iframes:
+  // Create image elements:
   const createImage = (slideNum, visible) => {
     const img = document.createElement("img");
     img.className = "slipImage";
@@ -146,16 +165,13 @@ function generateFinalOutput(notes, newTitle) {
     img.style.height = "auto";
     img.style.minHeight = "400px";
 
-    // Construct URL with payload and slideNum
     img.src = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
 
-    // Clicking image copies it to clipboard
     img.onclick = () => copyImageFromUrlToClipboard(img.src);
 
     return img;
   };
 
-  // Copy image to clipboard from URL, using canvas
   const copyImageFromUrlToClipboard = (imageUrl) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -260,7 +276,6 @@ function generateFinalOutput(notes, newTitle) {
   textBox1.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
   textBox2.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
 
-  // Toggle button to switch images visibility
   const toggleBtn = document.createElement("button");
   toggleBtn.id = "toggleImageBtn";
   toggleBtn.textContent = "Switch to Paid Image";
