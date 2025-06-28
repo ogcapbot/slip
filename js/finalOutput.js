@@ -1,6 +1,4 @@
-// finalOutput.js — FULL updated version
-
-// Assuming all global vars like selectedMatch, capperName, allData, etc. are defined elsewhere
+// finalOutput.js — FULL updated version with iframe + overlay + long-press copy
 
 function generateFinalOutput(notes = "N/A", newTitle) {
   if (newTitle) window.overrideTitle = newTitle;
@@ -8,8 +6,8 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   const BASE_URL = "https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec";
 
   // Gather inputs
-  const wagerRaw = window.currentWagerWithNum || 
-                   (document.getElementById("wagerType")?.value.trim()) || 
+  const wagerRaw = window.currentWagerWithNum ||
+                   (document.getElementById("wagerType")?.value.trim()) ||
                    (document.getElementById("wagerDropdown")?.value.trim()) || "";
 
   const wager = wagerRaw.toUpperCase();
@@ -99,7 +97,7 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   container.classList.remove("hidden");
   container.innerHTML = "";
 
-  // Loader
+  // Loader container
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
@@ -158,7 +156,7 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   createCopyInput("Post Title", window.selectedHypePostTitle || "No Hype Phrase Selected");
   createCopyInput("Hype Phrase Description", (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available");
 
-  // Track loaded images (success or error) to hide loader after both finish
+  // Track loaded iframes to hide loader after both finish loading
   let loadedCount = 0;
 
   function incrementLoadedCount() {
@@ -184,20 +182,53 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     label.style.color = "#666666";
     label.style.marginBottom = "10px";
 
-    const imageUrl = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
+    const iframeSrc = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
 
-    const img = document.createElement("img");
-    img.src = imageUrl;
-    img.style.width = "100%";
-    img.style.height = "auto";
-    img.style.borderRadius = "4px";
-    img.style.userSelect = "none";
+    const iframe = document.createElement("iframe");
+    iframe.src = iframeSrc;
+    iframe.style.width = "100%";
+    iframe.style.height = "600px";
+    iframe.style.border = "none";
 
-    img.onload = incrementLoadedCount;
-    img.onerror = incrementLoadedCount;
+    // Overlay div to capture long press for copying URL
+    const overlay = document.createElement("div");
+    overlay.style.position = "absolute";
+    overlay.style.top = label.offsetHeight + 12 + "px"; // label height + padding
+    overlay.style.left = "12px";  // container padding
+    overlay.style.right = "12px"; // container padding
+    overlay.style.height = "600px";
+    overlay.style.cursor = "pointer";
+    overlay.style.background = "transparent";
+    overlay.title = `Long press to copy ${labelText} URL`;
+
+    let pressTimer = null;
+
+    function copyUrl() {
+      navigator.clipboard.writeText(iframeSrc)
+        .then(() => alert(`${labelText} URL copied to clipboard!`))
+        .catch(() => alert(`Failed to copy ${labelText} URL.`));
+    }
+
+    overlay.addEventListener("touchstart", () => {
+      pressTimer = setTimeout(copyUrl, 600); // 600ms long press
+    });
+
+    overlay.addEventListener("touchend", () => {
+      if (pressTimer) clearTimeout(pressTimer);
+    });
+
+    overlay.addEventListener("touchcancel", () => {
+      if (pressTimer) clearTimeout(pressTimer);
+    });
+
+    // Fallback click to copy
+    overlay.addEventListener("click", copyUrl);
+
+    iframe.onload = incrementLoadedCount;
 
     div.appendChild(label);
-    div.appendChild(img);
+    div.appendChild(iframe);
+    div.appendChild(overlay);
 
     return div;
   }
@@ -216,5 +247,4 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   }
 }
 
-// Export or expose generateFinalOutput if using modules or attach to window if needed
 window.generateFinalOutput = generateFinalOutput;
