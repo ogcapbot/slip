@@ -1,3 +1,4 @@
+// leagueSelector.js
 import { db } from "../firebaseInit.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
