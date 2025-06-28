@@ -1,3 +1,4 @@
+// wagerType.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -7,6 +8,7 @@ const wagerTypeSelect = document.getElementById('wagerTypeSelect');
 sportSelect.addEventListener('change', async () => {
   const selectedSport = sportSelect.value;
 
+  // Disable and show loading in wagerType dropdown immediately
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.innerHTML = '<option>Loading wager types...</option>';
 
@@ -17,7 +19,8 @@ sportSelect.addEventListener('change', async () => {
   }
 
   try {
-    const wagerTypesRef = collection(db, 'WagerTypes');
+    // Make sure Firestore collection name matches exactly, e.g. 'WagerTypes' or 'wagerType'
+    const wagerTypesRef = collection(db, 'WagerTypes'); // Adjust if needed
     const q = query(wagerTypesRef, where('Sport', '==', selectedSport));
     const querySnapshot = await getDocs(q);
 
@@ -42,5 +45,6 @@ sportSelect.addEventListener('change', async () => {
   } catch (error) {
     console.error('Error loading wager types:', error);
     wagerTypeSelect.innerHTML = '<option>Error loading wager types</option>';
+    wagerTypeSelect.disabled = true;
   }
 });
