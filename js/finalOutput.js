@@ -1,28 +1,20 @@
-function generateFinalOutput(notes, newTitle) {
-  notes = notes || "N/A";
+function generateFinalOutput(notes = "N/A", newTitle) {
   if (newTitle) window.overrideTitle = newTitle;
 
   const BASE_URL = "https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec";
 
-  let wagerRaw = "";
-  const wagerInput = document.getElementById("wagerType");
-  const wagerDropdown = document.getElementById("wagerDropdown");
+  // Gather inputs
+  const wagerRaw = window.currentWagerWithNum || 
+                   (document.getElementById("wagerType")?.value.trim()) || 
+                   (document.getElementById("wagerDropdown")?.value.trim()) || "";
 
-  if (window.currentWagerWithNum) {
-    wagerRaw = window.currentWagerWithNum;
-  } else if (wagerInput) {
-    wagerRaw = wagerInput.value.trim();
-  } else if (wagerDropdown) {
-    wagerRaw = wagerDropdown.value.trim();
-  }
   const wager = wagerRaw.toUpperCase();
 
-  const teamSearchEl = document.getElementById("teamSearch");
-  const teamSearchInput = window.overrideTeamName || (teamSearchEl ? teamSearchEl.value.trim() : "");
-  const dropdown = document.getElementById("unitDropdown");
-  const unitInput = dropdown ? dropdown.value.trim() : "";
+  const teamSearchInput = window.overrideTeamName || document.getElementById("teamSearch")?.value.trim() || "";
+  const unitInput = document.getElementById("unitDropdown")?.value.trim() || "";
   const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
+  // Determine matched team
   let matchedTeam = "";
   const teamSearchLower = teamSearchInput.toLowerCase();
 
@@ -40,8 +32,9 @@ function generateFinalOutput(notes, newTitle) {
     matchedTeam = teamSearchInput;
   }
 
+  // Format game time
   let formattedTime = "Unavailable";
-  if (selectedMatch["Commence Time (UTC)"]) {
+  if (selectedMatch?.["Commence Time (UTC)"]) {
     const date = new Date(selectedMatch["Commence Time (UTC)"]);
     formattedTime = date.toLocaleString("en-US", {
       timeZone: "America/New_York",
@@ -50,27 +43,23 @@ function generateFinalOutput(notes, newTitle) {
     }) + " ET";
   }
 
+  // Generate Pick ID based on time
   const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
   const nyDate = new Date(nowNY);
   const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
 
   const secondsSinceEpoch = Math.floor((new Date() - new Date("1981-07-25T12:00:00Z")) / 1000);
-  const today = new Date();
-  const mmddyy = `${today.getMonth() + 1}${today.getDate()}${today.getFullYear().toString().slice(2)}`;
+  const mmddyy = `${nyDate.getMonth() + 1}${nyDate.getDate()}${nyDate.getFullYear().toString().slice(2)}`;
   const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
+  // Pick Description
   let pickDescValue = "Unavailable";
-
   if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
     const selectedWager = document.getElementById("wagerDropdown").value;
-    const wagerRow = (allData.wagers || []).find(row =>
-      row.wager_label_template === selectedWager
-    );
-
-    if (wagerRow && wagerRow.pick_desc_template) {
-      pickDescValue = wagerRow.pick_desc_template;
-
-      pickDescValue = pickDescValue.replace(/\[\[TEAM\]\]/g, matchedTeam);
+    const wagerRow = (allData.wagers || []).find(row => row.wager_label_template === selectedWager);
+    if (wagerRow?.pick_desc_template) {
+      pickDescValue = wagerRow.pick_desc_template
+        .replace(/\[\[TEAM\]\]/g, matchedTeam);
 
       const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
       if (numberMatch) {
@@ -82,79 +71,38 @@ function generateFinalOutput(notes, newTitle) {
     }
   }
 
-  const output = [
-    "═══════════════════════",
-    "######## OFFICIAL PICK",
-    "═══════════════════════",
-    `Wager Type: STRAIGHT WAGER`,
-    `Official Pick: ${matchedTeam}`,
-    `Official Type: ${wager}`,
-    `Official Wager: ${unitInput} Unit(s)`,
-    `To Win: ${pickDescValue}`,
-    "",
-    "═══════════════════════",
-    "######## GAME DETAILS",
-    "═══════════════════════",
-    `Sport: ${selectedMatch["League (Group)"].toUpperCase()}`,
-    `League: ${selectedMatch["Sport Name"]}`,
-    `Home Team: ${selectedMatch["Home Team"]}`,
-    `Away Team: ${selectedMatch["Away Team"]}`,
-    `Game Time: ${formattedTime}`,
-    "",
-    "═══════════════════════",
-    "######## THANK YOU FOR TRUSTING OGCB",
-    "═══════════════════════",
-    "",
-    `Title: ${window.overrideTitle || "[[TITLE]]"}`,
-    `Pick ID: ${pickId}`,
-    `Pick by: ${capperName}`,
-    `Input Value: ${allInputsRaw}`,
-    `Notes: ${notes}`,
-    "",
-    "═══════════════════════",
-    "######## STRICT CONFIDENTIALITY NOTICE",
-    "═══════════════════════",
-    "All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED.",
-    "Violation = Termination. No Refund. No Appeal. Lifetime Ban.",
-    "",
-    `Created: ${estString}`
-  ].join("\n");
-
-  window._cleanedOutput = output.replace(/[\u2028\u2029]/g, '');
-
+  // Encode payload for image URLs
   const encodedPayload = encodeURIComponent(JSON.stringify({
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
     "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
     "PICK_DESC": pickDescValue,
     "NOTES": notes,
-    "FULL_LEAGUE_NAME": selectedMatch["Sport Name"],
-    "FULL_SPORT_NAME": selectedMatch["League (Group)"],
-    "HOME_TEAM_FULL_NAME": selectedMatch["Home Team"],
-    "AWAY_TEAM_FULL_NAME": selectedMatch["Away Team"],
+    "FULL_LEAGUE_NAME": selectedMatch?.["Sport Name"] || "",
+    "FULL_SPORT_NAME": selectedMatch?.["League (Group)"] || "",
+    "HOME_TEAM_FULL_NAME": selectedMatch?.["Home Team"] || "",
+    "AWAY_TEAM_FULL_NAME": selectedMatch?.["Away Team"] || "",
     "DATE and TIME OF GAME START": formattedTime,
     "TITLE": window.overrideTitle || "[[TITLE]]",
     "PICKID": pickId,
-    "CAPPERS NAME": capperName,
+    "CAPPERS NAME": capperName || "",
     "USER_INPUT_VALUE": allInputsRaw,
     "24HR_LONG_DATE_SECONDS": estString
   }));
 
+  // Prepare container
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
-
-  // Clear container for fresh content
   container.innerHTML = "";
 
-  // Create and show loader container with spinner + text
+  // Create loader container
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
-  loaderContainer.style.marginBottom = "15px";
-  loaderContainer.style.marginTop = "5px";
+  loaderContainer.style.margin = "5px 0 15px 0";
 
   const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // spinner CSS target
+  loaderSpinner.id = "loader"; // your spinner CSS target
   loaderSpinner.style.margin = "0 auto";
   loaderContainer.appendChild(loaderSpinner);
 
@@ -167,87 +115,56 @@ function generateFinalOutput(notes, newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Add Post Title label + input with click-to-copy
-  const labelPostTitle = document.createElement("label");
-  labelPostTitle.textContent = "Post Title";
-  labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
-  labelPostTitle.style.fontWeight = "bold";
-  labelPostTitle.style.color = "#666666";
-  labelPostTitle.style.display = "block";
-  labelPostTitle.style.marginBottom = "6px";
-  container.appendChild(labelPostTitle);
+  // Helper: creates label + input with click-to-copy
+  function createCopyInput(labelText, value) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+    label.style.fontFamily = "'Oswald', sans-serif";
+    label.style.fontWeight = "bold";
+    label.style.color = "#666666";
+    label.style.display = "block";
+    label.style.marginBottom = "6px";
+    container.appendChild(label);
 
-  const inputPostTitle = document.createElement("input");
-  inputPostTitle.type = "text";
-  inputPostTitle.readOnly = true;
-  inputPostTitle.value = window.selectedHypePostTitle || "No Hype Phrase Selected";
-  inputPostTitle.style.width = "100%";
-  inputPostTitle.style.height = "28px";
-  inputPostTitle.style.marginBottom = "12px";
-  inputPostTitle.style.fontFamily = "'Oswald', sans-serif";
-  inputPostTitle.style.fontSize = "12px";
-  inputPostTitle.style.padding = "6px 8px";
-  inputPostTitle.style.border = "1px solid #ccc";
-  inputPostTitle.style.borderRadius = "6px";
-  inputPostTitle.style.whiteSpace = "nowrap";
-  inputPostTitle.style.overflow = "hidden";
-  inputPostTitle.style.textOverflow = "ellipsis";
-  inputPostTitle.title = "Click to copy text";
-  container.appendChild(inputPostTitle);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.readOnly = true;
+    input.value = value;
+    input.style.width = "100%";
+    input.style.height = "28px";
+    input.style.marginBottom = "12px";
+    input.style.fontFamily = "'Oswald', sans-serif";
+    input.style.fontSize = "12px";
+    input.style.padding = "6px 8px";
+    input.style.border = "1px solid #ccc";
+    input.style.borderRadius = "6px";
+    input.style.whiteSpace = "nowrap";
+    input.style.overflow = "hidden";
+    input.style.textOverflow = "ellipsis";
+    input.title = "Click to copy text";
+    container.appendChild(input);
 
-  inputPostTitle.addEventListener("click", () => {
-    navigator.clipboard.writeText(inputPostTitle.value).then(() => {
-      alert("Post Title copied to clipboard!");
-    }).catch(() => {
-      alert("Failed to copy Post Title.");
+    input.addEventListener("click", () => {
+      navigator.clipboard.writeText(input.value)
+        .then(() => alert(`${labelText} copied to clipboard!`))
+        .catch(() => alert(`Failed to copy ${labelText}.`));
     });
-  });
+  }
 
-  // Add Hype Phrase Description label + input with click-to-copy
-  const labelHypeDesc = document.createElement("label");
-  labelHypeDesc.textContent = "Hype Phrase Description";
-  labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
-  labelHypeDesc.style.fontWeight = "bold";
-  labelHypeDesc.style.color = "#666666";
-  labelHypeDesc.style.display = "block";
-  labelHypeDesc.style.marginBottom = "6px";
-  container.appendChild(labelHypeDesc);
+  createCopyInput("Post Title", window.selectedHypePostTitle || "No Hype Phrase Selected");
+  createCopyInput("Hype Phrase Description", (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available");
 
-  const inputHypeDesc = document.createElement("input");
-  inputHypeDesc.type = "text";
-  inputHypeDesc.readOnly = true;
-  inputHypeDesc.value = (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available";
-  inputHypeDesc.style.width = "100%";
-  inputHypeDesc.style.height = "28px";
-  inputHypeDesc.style.marginBottom = "20px";
-  inputHypeDesc.style.fontFamily = "'Oswald', sans-serif";
-  inputHypeDesc.style.fontSize = "12px";
-  inputHypeDesc.style.padding = "6px 8px";
-  inputHypeDesc.style.border = "1px solid #ccc";
-  inputHypeDesc.style.borderRadius = "6px";
-  inputHypeDesc.style.whiteSpace = "nowrap";
-  inputHypeDesc.style.overflow = "hidden";
-  inputHypeDesc.style.textOverflow = "ellipsis";
-  inputHypeDesc.title = "Click to copy text";
-  container.appendChild(inputHypeDesc);
+  // Track loaded images to hide loader after both finish
+  let loadedCount = 0;
 
-  inputHypeDesc.addEventListener("click", () => {
-    navigator.clipboard.writeText(inputHypeDesc.value).then(() => {
-      alert("Hype Phrase Description copied to clipboard!");
-    }).catch(() => {
-      alert("Failed to copy Hype Phrase Description.");
-    });
-  });
-
-  // Image creation with long-tap copy support
   function createImageContainer(labelText, slideNum) {
-    const containerDiv = document.createElement("div");
-    containerDiv.style.border = "1px solid #ccc";
-    containerDiv.style.borderRadius = "6px";
-    containerDiv.style.padding = "12px";
-    containerDiv.style.marginBottom = "20px";
-    containerDiv.style.maxWidth = "420px";
-    containerDiv.style.position = "relative";
+    const div = document.createElement("div");
+    div.style.border = "1px solid #ccc";
+    div.style.borderRadius = "6px";
+    div.style.padding = "12px";
+    div.style.marginBottom = "20px";
+    div.style.maxWidth = "420px";
+    div.style.position = "relative";
 
     const label = document.createElement("div");
     label.textContent = labelText;
@@ -265,23 +182,18 @@ function generateFinalOutput(notes, newTitle) {
     img.style.borderRadius = "4px";
     img.style.userSelect = "none";
 
-    // Store image URL in a property
     img.imageUrl = imageUrl;
 
     let pressTimer = null;
 
     function copyImageUrl() {
-      navigator.clipboard.writeText(img.imageUrl).then(() => {
-        alert(`${labelText} URL copied to clipboard!`);
-      }).catch(() => {
-        alert(`Failed to copy ${labelText} URL.`);
-      });
+      navigator.clipboard.writeText(img.imageUrl)
+        .then(() => alert(`${labelText} URL copied to clipboard!`))
+        .catch(() => alert(`Failed to copy ${labelText} URL.`));
     }
 
     img.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(() => {
-        copyImageUrl();
-      }, 600);
+      pressTimer = setTimeout(copyImageUrl, 600);
     });
 
     img.addEventListener("touchend", () => {
@@ -292,23 +204,43 @@ function generateFinalOutput(notes, newTitle) {
       if (pressTimer) clearTimeout(pressTimer);
     });
 
-    // For desktop, allow right-click copy
     img.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       copyImageUrl();
     });
 
-    // Also allow click to copy on desktop
-    img.addEventListener("click", () => {
-      copyImageUrl();
-    });
+    img.addEventListener("click", copyImageUrl);
 
-    containerDiv.appendChild(label);
-    containerDiv.appendChild(img);
+    // Hide loader after image loads
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === 2) {
+        loaderContainer.style.display = "none";
+      }
+    };
 
-    return containerDiv;
+    div.appendChild(label);
+    div.appendChild(img);
+
+    return div;
   }
 
   container.appendChild(createImageContainer("Standard Version Image", 1));
   container.appendChild(createImageContainer("Paid Version Image", 2));
+
+  // Optional Reset Button to clear output and reset UI
+  const resetBtn = document.createElement("button");
+  resetBtn.textContent = "Reset";
+  resetBtn.style.display = "block";
+  resetBtn.style.marginTop = "20px";
+  resetBtn.style.padding = "8px 16px";
+  resetBtn.style.fontSize = "14px";
+  resetBtn.style.cursor = "pointer";
+  resetBtn.addEventListener("click", () => {
+    container.innerHTML = "";
+    container.classList.add("hidden");
+    loadedCount = 0;
+  });
+
+  container.appendChild(resetBtn);
 }
