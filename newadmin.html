@@ -50,6 +50,11 @@
       <label for="pickInput">Your Pick</label>
       <div id="pickOptionsContainer" style="display:flex; gap:10px; margin-bottom:15px;"></div>
 
+      <!-- New Wager Type Dropdown -->
+      <label for="wagerTypeSelect">Choose Wager Type</label>
+      <select id="wagerTypeSelect" disabled>
+        <option>Select a sport first</option>
+      </select>
 
       <button type="submit" disabled>Submit Pick</button>
 
@@ -69,6 +74,7 @@
   <script type="module" src="admin/firebaseInit.js"></script>
   <script type="module" src="admin/js/auth.js"></script>
   <script type="module" src="admin/js/sportSelector.js"></script>
+  <script type="module" src="admin/js/wagerType.js"></script>
   <script type="module" src="admin/js/leagueSelector.js"></script>
   <script type="module" src="admin/js/gameSelector.js"></script>
   <script type="module" src="admin/js/pickSubmit.js"></script>
