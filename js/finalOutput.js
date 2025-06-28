@@ -138,13 +138,14 @@ function generateFinalOutput(notes, newTitle) {
     "24HR_LONG_DATE_SECONDS": estString
   }));
 
+  // ====== Important: Get container BEFORE any usage ======
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
 
-  // Clear container for fresh content
+  // Clear container before adding content
   container.innerHTML = "";
 
-  // Create and show loader container with spinner + text
+  // Loader container (spinner + text)
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
@@ -165,7 +166,7 @@ function generateFinalOutput(notes, newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Add Post Title label + input with click-to-copy
+  // Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -201,7 +202,7 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Add Hype Phrase Description label + input with click-to-copy
+  // Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -237,7 +238,7 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Image creation with long-tap copy support
+  // ====== Image Creation With Long Tap Copy ======
   function createImageContainer(labelText, slideNum) {
     const containerDiv = document.createElement("div");
     containerDiv.style.border = "1px solid #ccc";
@@ -263,7 +264,7 @@ function generateFinalOutput(notes, newTitle) {
     img.style.borderRadius = "4px";
     img.style.userSelect = "none";
 
-    // Store image URL in a property
+    // Store image URL in a property for easy access
     img.imageUrl = imageUrl;
 
     let pressTimer = null;
@@ -290,11 +291,13 @@ function generateFinalOutput(notes, newTitle) {
       if (pressTimer) clearTimeout(pressTimer);
     });
 
+    // For desktop, allow right-click copy
     img.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       copyImageUrl();
     });
 
+    // Also allow click to copy on desktop
     img.addEventListener("click", () => {
       copyImageUrl();
     });
