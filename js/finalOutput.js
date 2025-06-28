@@ -1,11 +1,55 @@
-// finalOutput.js — FULL updated version with iframe + overlay + long-press copy
+// finalOutput.js — fetch & display images as base64 <img>, enable native long tap copy
 
-function generateFinalOutput(notes = "N/A", newTitle) {
-  if (newTitle) window.overrideTitle = newTitle;
-
+async function fetchAndDisplayImage(labelText, slideNum, container, payload) {
   const BASE_URL = "https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec";
 
-  // Gather inputs
+  const url = `${BASE_URL}?json=${encodeURIComponent(JSON.stringify(payload))}&slideNum=${slideNum}`;
+
+  const div = document.createElement("div");
+  div.style.border = "1px solid #ccc";
+  div.style.borderRadius = "6px";
+  div.style.padding = "12px";
+  div.style.marginBottom = "20px";
+  div.style.maxWidth = "420px";
+
+  const label = document.createElement("div");
+  label.textContent = labelText;
+  label.style.fontFamily = "'Oswald', sans-serif";
+  label.style.fontWeight = "bold";
+  label.style.color = "#666666";
+  label.style.marginBottom = "10px";
+  div.appendChild(label);
+
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+    const htmlText = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, "text/html");
+    const img = doc.querySelector("img");
+
+    if (img && img.src.startsWith("data:image/png;base64,")) {
+      const image = document.createElement("img");
+      image.src = img.src;
+      image.style.width = "100%";
+      image.style.height = "auto";
+      image.style.borderRadius = "4px";
+      div.appendChild(image);
+    } else {
+      div.appendChild(document.createTextNode("Image not found in response."));
+    }
+  } catch (error) {
+    div.appendChild(document.createTextNode("Error loading image: " + error.message));
+  }
+
+  container.appendChild(div);
+}
+
+async function generateFinalOutput(notes = "N/A", newTitle) {
+  if (newTitle) window.overrideTitle = newTitle;
+
   const wagerRaw = window.currentWagerWithNum ||
                    (document.getElementById("wagerType")?.value.trim()) ||
                    (document.getElementById("wagerDropdown")?.value.trim()) || "";
@@ -16,7 +60,6 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   const unitInput = document.getElementById("unitDropdown")?.value.trim() || "";
   const allInputsRaw = `${teamSearchInput} ${wagerRaw} ${unitInput}`;
 
-  // Determine matched team
   let matchedTeam = "";
   const teamSearchLower = teamSearchInput.toLowerCase();
 
@@ -34,7 +77,6 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     matchedTeam = teamSearchInput;
   }
 
-  // Format game time
   let formattedTime = "Unavailable";
   if (selectedMatch?.["Commence Time (UTC)"]) {
     const date = new Date(selectedMatch["Commence Time (UTC)"]);
@@ -45,7 +87,6 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     }) + " ET";
   }
 
-  // Generate Pick ID based on time
   const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
   const nyDate = new Date(nowNY);
   const estString = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, '0')}-${String(nyDate.getDate()).padStart(2, '0')} ${String(nyDate.getHours()).padStart(2, '0')}:${String(nyDate.getMinutes()).padStart(2, '0')}:${String(nyDate.getSeconds()).padStart(2, '0')}`;
@@ -54,15 +95,12 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   const mmddyy = `${nyDate.getMonth() + 1}${nyDate.getDate()}${nyDate.getFullYear().toString().slice(2)}`;
   const pickId = `${secondsSinceEpoch}-${mmddyy}`;
 
-  // Pick Description
   let pickDescValue = "Unavailable";
   if (document.getElementById("wagerDropdown") && !window.overrideTeamName) {
     const selectedWager = document.getElementById("wagerDropdown").value;
     const wagerRow = (allData.wagers || []).find(row => row.wager_label_template === selectedWager);
     if (wagerRow?.pick_desc_template) {
-      pickDescValue = wagerRow.pick_desc_template
-        .replace(/\[\[TEAM\]\]/g, matchedTeam);
-
+      pickDescValue = wagerRow.pick_desc_template.replace(/\[\[TEAM\]\]/g, matchedTeam);
       const numberMatch = selectedWager.match(/\d+(\.\d+)?/);
       if (numberMatch) {
         const numericValue = numberMatch[0];
@@ -73,8 +111,7 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     }
   }
 
-  // Encode payload for image URLs
-  const encodedPayload = encodeURIComponent(JSON.stringify({
+  const payload = {
     "FULL_TEAM_ENTERED": matchedTeam,
     "FULL_BET_TYPE": wager,
     "FULL_WAGER_OUTPUT": `${unitInput} Unit(s)`,
@@ -90,21 +127,19 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     "CAPPERS NAME": capperName || "",
     "USER_INPUT_VALUE": allInputsRaw,
     "24HR_LONG_DATE_SECONDS": estString
-  }));
+  };
 
-  // Prepare container
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
   container.innerHTML = "";
 
-  // Loader container
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
   loaderContainer.style.margin = "5px 0 15px 0";
 
   const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // spinner CSS target
+  loaderSpinner.id = "loader";
   loaderSpinner.style.margin = "0 auto";
   loaderContainer.appendChild(loaderSpinner);
 
@@ -117,7 +152,6 @@ function generateFinalOutput(notes = "N/A", newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Helper: creates label + input with click-to-copy text
   function createCopyInput(labelText, value) {
     const label = document.createElement("label");
     label.textContent = labelText;
@@ -156,93 +190,23 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   createCopyInput("Post Title", window.selectedHypePostTitle || "No Hype Phrase Selected");
   createCopyInput("Hype Phrase Description", (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available");
 
-  // Track loaded iframes to hide loader after both finish loading
-  let loadedCount = 0;
-
-  function incrementLoadedCount() {
-    loadedCount++;
-    if (loadedCount === 2) {
+  let imagesLoaded = 0;
+  function checkLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded === 2) {
       loaderContainer.style.display = "none";
     }
   }
 
-  function createImageContainer(labelText, slideNum) {
-    const div = document.createElement("div");
-    div.style.border = "1px solid #ccc";
-    div.style.borderRadius = "6px";
-    div.style.padding = "12px";
-    div.style.marginBottom = "20px";
-    div.style.maxWidth = "420px";
-    div.style.position = "relative";
+  await fetchAndDisplayImage("Standard Version Image", 1, container, payload).then(checkLoaded);
+  await fetchAndDisplayImage("Paid Version Image", 2, container, payload).then(checkLoaded);
 
-    const label = document.createElement("div");
-    label.textContent = labelText;
-    label.style.fontFamily = "'Oswald', sans-serif";
-    label.style.fontWeight = "bold";
-    label.style.color = "#666666";
-    label.style.marginBottom = "10px";
-
-    const iframeSrc = `${BASE_URL}?json=${encodedPayload}&slideNum=${slideNum}`;
-
-    const iframe = document.createElement("iframe");
-    iframe.src = iframeSrc;
-    iframe.style.width = "100%";
-    iframe.style.height = "600px";
-    iframe.style.border = "none";
-
-    // Overlay div to capture long press for copying URL
-    const overlay = document.createElement("div");
-    overlay.style.position = "absolute";
-    overlay.style.top = label.offsetHeight + 12 + "px"; // label height + padding
-    overlay.style.left = "12px";  // container padding
-    overlay.style.right = "12px"; // container padding
-    overlay.style.height = "600px";
-    overlay.style.cursor = "pointer";
-    overlay.style.background = "transparent";
-    overlay.title = `Long press to copy ${labelText} URL`;
-
-    let pressTimer = null;
-
-    function copyUrl() {
-      navigator.clipboard.writeText(iframeSrc)
-        .then(() => alert(`${labelText} URL copied to clipboard!`))
-        .catch(() => alert(`Failed to copy ${labelText} URL.`));
-    }
-
-    overlay.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(copyUrl, 600); // 600ms long press
-    });
-
-    overlay.addEventListener("touchend", () => {
-      if (pressTimer) clearTimeout(pressTimer);
-    });
-
-    overlay.addEventListener("touchcancel", () => {
-      if (pressTimer) clearTimeout(pressTimer);
-    });
-
-    // Fallback click to copy
-    overlay.addEventListener("click", copyUrl);
-
-    iframe.onload = incrementLoadedCount;
-
-    div.appendChild(label);
-    div.appendChild(iframe);
-    div.appendChild(overlay);
-
-    return div;
-  }
-
-  container.appendChild(createImageContainer("Standard Version Image", 1));
-  container.appendChild(createImageContainer("Paid Version Image", 2));
-
-  // Hook up existing top Reset button with id="resetBtn"
   const resetBtn = document.getElementById("resetBtn");
   if (resetBtn) {
     resetBtn.onclick = () => {
       container.innerHTML = "";
       container.classList.add("hidden");
-      loadedCount = 0;
+      imagesLoaded = 0;
     };
   }
 }
