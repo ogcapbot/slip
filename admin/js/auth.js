@@ -1,41 +1,55 @@
-// login.js
-import { db } from '/admin/firebaseInit.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseInit.js"; // Adjust path if necessary
 
-const loginSection = document.getElementById('loginSection');
-const pickForm = document.getElementById('pickForm');
-const loginBtn = document.getElementById('loginBtn');
-const accessCodeInput = document.getElementById('accessCode');
-const loginError = document.getElementById('loginError');
-
-let currentUser = null;
-
-async function loginUser(accessCode) {
+// Check access code against Firestore Users collection
+async function checkAccessCode(inputCode) {
+  console.log("Checking access code:", inputCode);
   const usersRef = collection(db, "Users");
-  const q = query(usersRef, where("Access Code", "==", accessCode));
+  const q = query(usersRef, where("AccessCode", "==", inputCode));
   const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
-    throw new Error('Invalid access code');
+
+  console.log("Query snapshot size:", querySnapshot.size);
+
+  if (!querySnapshot.empty) {
+    const userData = querySnapshot.docs[0].data();
+    console.log("User found:", userData);
+    return true;
+  } else {
+    console.warn("No user found for access code:", inputCode);
+    return false;
   }
-  const userDoc = querySnapshot.docs[0];
-  return { id: userDoc.id, ...userDoc.data() };
 }
 
-loginBtn.addEventListener('click', async () => {
-  loginError.textContent = '';
-  const code = accessCodeInput.value.trim();
-  if (!code) {
-    loginError.textContent = 'Please enter your access code.';
+// Handle login button click
+export async function loginHandler(event) {
+  event.preventDefault();
+  const accessCodeInput = document.getElementById("accessCode");
+  const loginError = document.getElementById("loginError");
+
+  const inputCode = accessCodeInput.value.trim();
+
+  if (!inputCode) {
+    loginError.textContent = "Please enter an access code.";
     return;
   }
 
   try {
-    currentUser = await loginUser(code);
-    loginSection.style.display = 'none';
-    pickForm.style.display = 'block';
-  } catch (err) {
-    loginError.textContent = err.message;
+    const valid = await checkAccessCode(inputCode);
+    if (valid) {
+      loginError.textContent = "";
+      // TODO: Proceed to show pick form, hide login, etc.
+      console.log("Login successful!");
+      // For example:
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("pickForm").style.display = "block";
+    } else {
+      loginError.textContent = "Invalid access code";
+    }
+  } catch (error) {
+    console.error("Error during login:", error);
+    loginError.textContent = "An error occurred. Please try again.";
   }
-});
+}
 
-export { currentUser };
+// Attach loginHandler to login button click
+document.getElementById("loginBtn").addEventListener("click", loginHandler);
