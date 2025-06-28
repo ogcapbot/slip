@@ -21,6 +21,8 @@ sportSelect.addEventListener('change', () => {
   wagerTypeSelect.disabled = true;
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
+  numberInput.value = ''; // Clear number input on sport change
+  numberInput.disabled = true;
 });
 
 // Listen to gameSelect change (enable wagerType)
@@ -31,6 +33,8 @@ gameSelect.addEventListener('change', async () => {
     wagerTypeSelect.innerHTML = '<option>Select a game first</option>';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
+    numberInput.value = ''; // Clear number input if no game
+    numberInput.disabled = true;
     return;
   }
   await loadWagerTypes();
@@ -43,6 +47,8 @@ async function loadWagerTypes() {
   wagerTypeSelect.innerHTML = '<option>Loading wager types...</option>';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
+  numberInput.value = '';
+  numberInput.disabled = true;
 
   try {
     const wagerTypesRef = collection(db, 'WagerTypes');
@@ -88,6 +94,14 @@ async function loadWagerTypes() {
 // Update pick description and show number input if needed
 wagerTypeSelect.addEventListener('change', () => {
   const selectedOption = wagerTypeSelect.options[wagerTypeSelect.selectedIndex];
+  if (!selectedOption) {
+    numberInputContainer.style.display = 'none';
+    numberInput.value = '';
+    numberInput.disabled = true;
+    finalPickDescription.textContent = '';
+    return;
+  }
+
   const descTemplate = selectedOption.dataset.descTemplate || '';
   finalPickDescription.textContent = '';
   numberInputContainer.style.display = 'none';
@@ -106,15 +120,11 @@ wagerTypeSelect.addEventListener('change', () => {
 
   if (desc.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
+    numberInput.disabled = false;
     finalPickDescription.textContent = desc.replace(/\[\[NUM\]\]/g, '___');
   } else {
+    numberInput.disabled = true;
     finalPickDescription.textContent = desc;
-  }
-
-  // Enable or disable number input accordingly
-  numberInput.disabled = !desc.includes('[[NUM]]');
-  if (!desc.includes('[[NUM]]')) {
-    numberInput.value = '';
   }
 });
 
