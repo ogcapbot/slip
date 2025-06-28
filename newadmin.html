@@ -35,7 +35,9 @@
     <!-- Pick Entry Form (hidden until login) -->
     <form id="pickForm" style="display:none;">
       <label for="sportSelect">Choose Sport</label>
-      <select id="sportSelect" disabled><option>Loading...</option></select>
+      <select id="sportSelect" disabled>
+        <option>Loading...</option>
+      </select>
 
       <label for="leagueSelect">Choose League</label>
       <select id="leagueSelect" disabled>
@@ -50,7 +52,7 @@
       <label for="pickInput">Your Pick</label>
       <div id="pickOptionsContainer" style="display:flex; gap:10px; margin-bottom:15px;"></div>
 
-      <!-- New Wager Type Dropdown -->
+      <!-- Wager Type Dropdown -->
       <label for="wagerTypeSelect">Choose Wager Type</label>
       <select id="wagerTypeSelect" disabled>
         <option>Select a sport first</option>
@@ -70,7 +72,7 @@
 
   </div> <!-- End container -->
 
-  <!-- Your Firebase Initialization and App JS (with SDK imports inside) -->
+  <!-- Firebase Initialization and JS modules -->
   <script type="module" src="admin/firebaseInit.js"></script>
   <script type="module" src="admin/js/auth.js"></script>
   <script type="module" src="admin/js/sportSelector.js"></script>
