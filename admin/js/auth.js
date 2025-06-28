@@ -1,75 +1,41 @@
-// auth.js
-
+// login.js
 import { db } from './firebaseInit.js';
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+const loginSection = document.getElementById('loginSection');
+const pickForm = document.getElementById('pickForm');
+const loginBtn = document.getElementById('loginBtn');
+const accessCodeInput = document.getElementById('accessCode');
+const loginError = document.getElementById('loginError');
 
 let currentUser = null;
 
-async function login(accessCode) {
-  const usersRef = db.collection("users");
-  const querySnapshot = await usersRef.where("accessCode", "==", accessCode).get();
-
+async function loginUser(accessCode) {
+  const usersRef = collection(db, "Users");
+  const q = query(usersRef, where("Access Code", "==", accessCode));
+  const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) {
-    throw new Error("Invalid access code");
+    throw new Error('Invalid access code');
   }
-
   const userDoc = querySnapshot.docs[0];
-  currentUser = { id: userDoc.id, ...userDoc.data() };
-  sessionStorage.setItem('ogUser', JSON.stringify(currentUser));
-  return currentUser;
+  return { id: userDoc.id, ...userDoc.data() };
 }
 
-function logout() {
-  currentUser = null;
-  sessionStorage.removeItem('ogUser');
-}
-
-function getCurrentUser() {
-  if (!currentUser) {
-    const stored = sessionStorage.getItem('ogUser');
-    if (stored) {
-      currentUser = JSON.parse(stored);
-    }
+loginBtn.addEventListener('click', async () => {
+  loginError.textContent = '';
+  const code = accessCodeInput.value.trim();
+  if (!code) {
+    loginError.textContent = 'Please enter your access code.';
+    return;
   }
-  return currentUser;
-}
 
-function renderLogin(container) {
-  container.innerHTML = `
-    <label for="accessCodeInput">Enter Access Code</label>
-    <input
-      type="text"
-      id="accessCodeInput"
-      placeholder="Enter your access code"
-      maxlength="10"
-      pattern="\\d*"
-      inputmode="numeric"
-      autocomplete="off"
-      style="font-family: 'Oswald', sans-serif; padding: 10px; font-size: 1rem; width: 100%; box-sizing: border-box; margin-top: 6px;"
-    />
-    <button id="loginBtn" class="btn" style="margin-top: 15px;">Login</button>
-    <p id="loginError" style="color: red; font-weight: 600; margin-top: 10px;"></p>
-  `;
+  try {
+    currentUser = await loginUser(code);
+    loginSection.style.display = 'none';
+    pickForm.style.display = 'block';
+  } catch (err) {
+    loginError.textContent = err.message;
+  }
+});
 
-  const loginBtn = container.querySelector('#loginBtn');
-  const accessCodeInput = container.querySelector('#accessCodeInput');
-  const loginError = container.querySelector('#loginError');
-
-  loginBtn.addEventListener('click', async () => {
-    loginError.textContent = '';
-    const accessCode = accessCodeInput.value.trim();
-    if (!accessCode) {
-      loginError.textContent = 'Please enter your access code.';
-      return;
-    }
-
-    try {
-      const user = await login(accessCode);
-      alert(`Welcome, ${user.name} (${user.role})!`);
-      // TODO: Load dashboard or next UI step here.
-    } catch (err) {
-      loginError.textContent = err.message;
-    }
-  });
-}
-
-export { renderLogin, login, logout, getCurrentUser };
+export { currentUser };
