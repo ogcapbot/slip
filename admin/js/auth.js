@@ -3,7 +3,7 @@ import { collection, query, where, getDocs } from "https://www.gstatic.com/fireb
 import { loadSports } from './sportSelector.js';
 
 const loginBtn = document.getElementById('loginBtn');
-const accessCodeInput = document.getElementById('AccessCode');
+const accessCodeInput = document.getElementById('accessCode');
 const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
@@ -20,7 +20,7 @@ loginBtn.addEventListener('click', async () => {
 
   try {
     const usersRef = collection(db, 'Users');
-    const q = query(usersRef, where('Access Code', '==', accessCode));
+    const q = query(usersRef, where('AccessCode', '==', accessCode));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
