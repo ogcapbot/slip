@@ -5,15 +5,15 @@
   <title>OG Capper Bets - Official Pick Image Creator</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
   <link href="admin/css/styles.css" rel="stylesheet" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
-
   <div class="container">
 
     <!-- Global Header -->
@@ -24,16 +24,9 @@
     </div>
     <!-- End Global Header -->
 
-    <!-- Login Form -->
-    <div id="loginContainer" style="max-width: 400px; margin: 40px auto;">
-      <label for="emailInput">Email</label>
-      <input type="email" id="emailInput" placeholder="Enter your email" autocomplete="username" />
-      <label for="passwordInput">Password</label>
-      <input type="password" id="passwordInput" placeholder="Enter your password" autocomplete="current-password" />
-      <button id="loginBtn" class="btn">Login</button>
-      <p id="loginError" style="color: red; font-weight: 600; margin-top: 10px;"></p>
-    </div>
-    <!-- End Login Form -->
+    <!-- Login Container -->
+    <div id="loginContainer" style="max-width: 400px; margin: 40px auto;"></div>
+    <!-- End Login Container -->
 
     <!-- Global Footer -->
     <footer id="versionFooter">
@@ -41,74 +34,14 @@
     </footer>
     <!-- End Global Footer -->
 
-  </div> <!-- End of container -->
+  </div> <!-- End container -->
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { renderLogin } from './admin/js/auth.js';
 
-    // Your Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
-      authDomain: "ogcapperbets.firebaseapp.com",
-      projectId: "ogcapperbets",
-      storageBucket: "ogcapperbets.firebasestorage.app",
-      messagingSenderId: "442564970374",
-      appId: "1:442564970374:web:91e6e1e55eae8e5bc10e07",
-      measurementId: "G-71JGC4DVMG"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const loginBtn = document.getElementById("loginBtn");
-    const emailInput = document.getElementById("emailInput");
-    const passwordInput = document.getElementById("passwordInput");
-    const loginError = document.getElementById("loginError");
-
-    loginBtn.addEventListener("click", async () => {
-      loginError.textContent = "";
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-
-      if (!email || !password) {
-        loginError.textContent = "Please enter email and password.";
-        return;
-      }
-
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const userId = userCredential.user.uid;
-
-        // Fetch user role from Firestore 'users' collection
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (!userDoc.exists()) {
-          loginError.textContent = "User role not found. Contact admin.";
-          await signOut(auth);
-          return;
-        }
-
-        const userData = userDoc.data();
-
-        // TODO: Replace this alert with showing dashboard or next UI step
-        alert(`Welcome, ${userData.name} (${userData.role})! You are now logged in.`);
-
-        // Clear form and error
-        emailInput.value = "";
-        passwordInput.value = "";
-        loginError.textContent = "";
-
-        // TODO: Load dashboard UI here based on userData.role
-
-      } catch (error) {
-        loginError.textContent = error.message;
-      }
-    });
+    const container = document.getElementById('loginContainer');
+    renderLogin(container);
   </script>
-
 </body>
 
 </html>
