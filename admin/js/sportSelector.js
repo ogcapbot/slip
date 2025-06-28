@@ -4,16 +4,21 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 const sportSelect = document.getElementById('sportSelect');
 
 export async function loadSports() {
+  console.log('loadSports() started');
   sportSelect.innerHTML = '<option>Loading...</option>';
   sportSelect.disabled = true;
 
   try {
     const snapshot = await getDocs(collection(db, 'GameCache'));
+    console.log('Firestore GameCache docs fetched:', snapshot.size);
+
     const sports = new Set();
     snapshot.forEach(doc => {
       const sport = doc.data().Sport;
       if (sport) sports.add(sport);
     });
+
+    console.log('Unique sports found:', Array.from(sports));
 
     if (sports.size === 0) {
       sportSelect.innerHTML = '<option>No sports found</option>';
@@ -26,6 +31,7 @@ export async function loadSports() {
         sportSelect.appendChild(option);
       });
       sportSelect.disabled = false;
+      console.log('Sports dropdown enabled and populated');
     }
   } catch (error) {
     console.error('Error loading sports:', error);
