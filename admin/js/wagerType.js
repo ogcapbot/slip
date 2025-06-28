@@ -15,7 +15,7 @@ function getLastWord(teamName) {
   return words[words.length - 1];
 }
 
-// Reset wagerType dropdown and number input on sport change
+// Listen to sport change to reset wagerType dropdown
 sportSelect.addEventListener('change', () => {
   wagerTypeSelect.innerHTML = '<option>Select a sport first</option>';
   wagerTypeSelect.disabled = true;
@@ -23,7 +23,7 @@ sportSelect.addEventListener('change', () => {
   finalPickDescription.textContent = '';
 });
 
-// Enable wagerType and load options only when a game is selected
+// Listen to gameSelect change (enable wagerType)
 const gameSelect = document.getElementById('gameSelect');
 gameSelect.addEventListener('change', async () => {
   if (!gameSelect.value) {
@@ -36,7 +36,7 @@ gameSelect.addEventListener('change', async () => {
   await loadWagerTypes();
 });
 
-// Load wager types from Firestore, include 'All' and selected sport wagers, sorted by id
+// Load wager types
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   wagerTypeSelect.disabled = true;
@@ -46,8 +46,7 @@ async function loadWagerTypes() {
 
   try {
     const wagerTypesRef = collection(db, 'WagerTypes');
-
-    // Fetch wager types with Sport='All' OR selectedSport, active_status='active', ordered by Sport and then by id ascending
+    // Fetch wager types with Sport='All' OR selectedSport, ordered by Sport and id ascending
     const q = query(
       wagerTypesRef,
       where('active_status', '==', 'active'),
@@ -59,7 +58,8 @@ async function loadWagerTypes() {
 
     const wagerTypes = [];
     querySnapshot.forEach(doc => {
-      wagerTypes.push(doc.data());
+      const data = doc.data();
+      wagerTypes.push(data);
     });
 
     if (wagerTypes.length === 0) {
@@ -71,7 +71,7 @@ async function loadWagerTypes() {
     wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
     wagerTypes.forEach(wt => {
       const option = document.createElement('option');
-      option.value = wt.id;
+      option.value = wt.id; // Use id for selection
       option.textContent = wt.wager_label_template || 'Unknown';
       option.dataset.descTemplate = wt.pick_desc_template || '';
       wagerTypeSelect.appendChild(option);
@@ -85,19 +85,19 @@ async function loadWagerTypes() {
   }
 }
 
-// On wager type selection, update description and toggle number input visibility
+// Update pick description and show number input if needed
 wagerTypeSelect.addEventListener('change', () => {
   const selectedOption = wagerTypeSelect.options[wagerTypeSelect.selectedIndex];
-  const descTemplate = selectedOption?.dataset.descTemplate || '';
+  const descTemplate = selectedOption.dataset.descTemplate || '';
   finalPickDescription.textContent = '';
   numberInputContainer.style.display = 'none';
   numberInput.value = '';
 
-  // Get selected team name from green button
+  // Get currently selected team pick (the green button)
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const selectedTeam = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
 
-  // Replace [[TEAM]] with last word of team name
+  // Replace [[TEAM]] with last word of selected team
   let desc = descTemplate;
   if (desc.includes('[[TEAM]]')) {
     const teamName = getLastWord(selectedTeam);
@@ -110,9 +110,15 @@ wagerTypeSelect.addEventListener('change', () => {
   } else {
     finalPickDescription.textContent = desc;
   }
+
+  // Enable or disable number input accordingly
+  numberInput.disabled = !desc.includes('[[NUM]]');
+  if (!desc.includes('[[NUM]]')) {
+    numberInput.value = '';
+  }
 });
 
-// Live update final description on number input change
+// Update final description live when number input changes
 numberInput.addEventListener('input', () => {
   const selectedOption = wagerTypeSelect.options[wagerTypeSelect.selectedIndex];
   if (!selectedOption) return;
