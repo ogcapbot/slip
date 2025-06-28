@@ -1,122 +1,72 @@
-// gameSelector.js
-import { db } from "../firebaseInit.js"; // adjust path if needed
+import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const sportSelect = document.getElementById("sportSelect");
-const leagueSelect = document.getElementById("leagueSelect");
-const gameSelect = document.getElementById("gameSelect");
-const pickInput = document.getElementById("pickInput");
-const submitBtn = document.querySelector("button[type='submit']");
+const sportSelect = document.getElementById('sportSelect');
+const leagueSelect = document.getElementById('leagueSelect');
+const gameSelect = document.getElementById('gameSelect');
+const pickInput = document.getElementById('pickInput');
+const submitButton = document.querySelector('form#pickForm button[type="submit"]');
 
-// Clear and disable downstream selects/input/buttons
-function resetSelect(selectElement, defaultOptionText) {
-  selectElement.innerHTML = `<option>${defaultOptionText}</option>`;
-  selectElement.disabled = true;
-}
-
-function disablePickInputAndSubmit() {
-  pickInput.disabled = true;
-  submitBtn.disabled = true;
-}
-
-// Listen for change on leagueSelect to populate games
-leagueSelect.addEventListener("change", async () => {
-  resetSelect(gameSelect, "Loading games...");
-  disablePickInputAndSubmit();
-
+leagueSelect.addEventListener('change', async () => {
   const selectedSport = sportSelect.value;
   const selectedLeague = leagueSelect.value;
 
+  // Reset game select and pick input
+  gameSelect.innerHTML = '<option>Loading...</option>';
+  gameSelect.disabled = true;
+
+  pickInput.value = '';
+  pickInput.disabled = true;
+  submitButton.disabled = true;
+
   if (!selectedSport || !selectedLeague) {
-    resetSelect(gameSelect, "Select a sport and league first");
+    gameSelect.innerHTML = '<option>Select a league first</option>';
+    gameSelect.disabled = true;
     return;
   }
 
   try {
-    // Query games by sport and league
+    // Query GameCache for games with the chosen sport AND league
     const q = query(
-      collection(db, "GameCache"),
-      where("Sport", "==", selectedSport),
-      where("League", "==", selectedLeague)
+      collection(db, 'GameCache'),
+      where('Sport', '==', selectedSport),
+      where('League', '==', selectedLeague)
     );
     const querySnapshot = await getDocs(q);
 
+    gameSelect.innerHTML = '';
+
     if (querySnapshot.empty) {
-      resetSelect(gameSelect, "No games available");
-      return;
+      gameSelect.innerHTML = '<option>No games found</option>';
+      gameSelect.disabled = true;
+    } else {
+      gameSelect.disabled = false;
+      gameSelect.innerHTML = '<option value="">Select a game</option>';
+      querySnapshot.forEach(doc => {
+        const game = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id; // use document ID as value
+        option.textContent = `${game.HomeTeam} vs ${game.AwayTeam} (${new Date(game.StartTimeUTC.seconds * 1000).toLocaleString()})`;
+        gameSelect.appendChild(option);
+      });
     }
-
-    // Populate gameSelect
-    gameSelect.innerHTML = "";
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const option = document.createElement("option");
-      option.value = doc.id; // or data.id or something unique
-      option.textContent = `${data.HomeTeam} vs ${data.AwayTeam} (${data.StartTimeEST.toDateString()})`;
-      gameSelect.appendChild(option);
-    });
-
-    gameSelect.disabled = false;
-
   } catch (error) {
-    console.error("Error loading games:", error);
-    resetSelect(gameSelect, "Error loading games");
+    console.error('Error loading games:', error);
+    gameSelect.innerHTML = '<option>Error loading games</option>';
+    gameSelect.disabled = true;
   }
 });
 
-// Enable pick input and submit only when a game is selected
-gameSelect.addEventListener("change", () => {
+// Enable pick input and submit button only when game is selected
+gameSelect.addEventListener('change', () => {
   if (gameSelect.value) {
     pickInput.disabled = false;
-    submitBtn.disabled = false;
+    submitButton.disabled = false;
   } else {
-    disablePickInputAndSubmit();
+    pickInput.value = '';
+    pickInput.disabled = true;
+    submitButton.disabled = true;
   }
 });
 
-// On sport change, reset league and game selects, disable pick input and submit
-sportSelect.addEventListener("change", () => {
-  resetSelect(leagueSelect, "Select a sport first");
-  resetSelect(gameSelect, "Select a league first");
-  disablePickInputAndSubmit();
-
-  if (!sportSelect.value) {
-    return;
-  }
-
-  // Populate league select based on sport
-  (async () => {
-    try {
-      const q = query(
-        collection(db, "GameCache"),
-        where("Sport", "==", sportSelect.value)
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        resetSelect(leagueSelect, "No leagues found");
-        return;
-      }
-
-      // Get unique leagues
-      const leaguesSet = new Set();
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        leaguesSet.add(data.League);
-      });
-
-      leagueSelect.innerHTML = "";
-      leaguesSet.forEach((league) => {
-        const option = document.createElement("option");
-        option.value = league;
-        option.textContent = league;
-        leagueSelect.appendChild(option);
-      });
-
-      leagueSelect.disabled = false;
-    } catch (error) {
-      console.error("Error loading leagues:", error);
-      resetSelect(leagueSelect, "Error loading leagues");
-    }
-  })();
-});
+export default {};
