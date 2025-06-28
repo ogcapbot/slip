@@ -1,56 +1,43 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { db } from "../firebaseInit.js"; // Adjust path if necessary
+import { db } from '../firebaseInit.js';
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { loadSports } from './sportSelector.js';
 
-// Check access code against Firestore Users collection
-async function checkAccessCode(inputCode) {
-  console.log("Checking access code:", inputCode);
-  const usersRef = collection(db, "Users");
-  const q = query(usersRef, where("AccessCode", "==", inputCode));
-  const querySnapshot = await getDocs(q);
+const loginBtn = document.getElementById('loginBtn');
+const accessCodeInput = document.getElementById('accessCode');
+const loginError = document.getElementById('loginError');
+const loginSection = document.getElementById('loginSection');
+const pickForm = document.getElementById('pickForm');
+const sportSelect = document.getElementById('sportSelect');
 
-  console.log("Query snapshot size:", querySnapshot.size);
+loginBtn.addEventListener('click', async () => {
+  const accessCode = accessCodeInput.value.trim();
+  loginError.textContent = '';
 
-  if (!querySnapshot.empty) {
-    const userData = querySnapshot.docs[0].data();
-    console.log("User found:", userData);
-    return true;
-  } else {
-    console.warn("No user found for access code:", inputCode);
-    return false;
-  }
-}
-
-// Handle login button click
-export async function loginHandler(event) {
-  event.preventDefault();
-  const accessCodeInput = document.getElementById("accessCode");
-  const loginError = document.getElementById("loginError");
-
-  const inputCode = accessCodeInput.value.trim();
-
-  if (!inputCode) {
-    loginError.textContent = "Please enter an access code.";
+  if (!accessCode) {
+    loginError.textContent = 'Access code is required.';
     return;
   }
 
   try {
-    const valid = await checkAccessCode(inputCode);
-    if (valid) {
-      loginError.textContent = "";
-      // TODO: Proceed to show pick form, hide login, etc.
-      console.log("Login successful!");
-      // For example:
-      document.getElementById("loginSection").style.display = "none";
-      document.getElementById("pickForm").style.display = "block";
-    } else {
-      loginError.textContent = "Invalid access code";
-    }
-  } catch (error) {
-    console.error("Error during login:", error);
-    loginError.textContent = "An error occurred. Please try again.";
-  }
-}
+    const usersRef = collection(db, 'Users');
+    const q = query(usersRef, where('Access Code', '==', accessCode));
+    const querySnapshot = await getDocs(q);
 
-// Attach loginHandler to login button click
-document.getElementById("loginBtn").addEventListener("click", loginHandler);
+    if (querySnapshot.empty) {
+      loginError.textContent = 'Invalid access code.';
+      return;
+    }
+
+    // Successful login
+    loginSection.style.display = 'none';
+    pickForm.style.display = 'block';
+
+    // Enable sport select and load sports
+    sportSelect.disabled = false;
+    await loadSports();
+
+  } catch (error) {
+    loginError.textContent = 'Login failed. Please try again.';
+    console.error('Login error:', error);
+  }
+});
