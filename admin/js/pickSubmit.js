@@ -1,5 +1,5 @@
 // pickSubmit.js
-import { db } from './firebaseInit.js';
+import { db } from '/admin/firebaseInit.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const pickForm = document.getElementById('pickForm');
