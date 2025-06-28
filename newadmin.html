@@ -1,45 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OG Capper Bets - Pick Creator</title>
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OG Capper Bets - Pick Creator</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Load Google Fonts Oswald -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<h1>OG Capper Bets<br>Official Pick Image Creator</h1>
-<p class="subtext">Official Use Only</p>
+  <h1>OG Capper Bets<br>Official Pick Image Creator</h1>
+  <p class="subtext">Official Use Only</p>
 
-<!-- Login Section -->
-<div id="loginSection">
-  <label for="accessCode">Enter Access Code</label>
-  <input type="text" id="accessCode" placeholder="Enter your access code" />
-  <button id="loginBtn">Login</button>
-  <p id="loginError" class="error"></p>
-</div>
+  <!-- Login Section -->
+  <div id="loginSection">
+    <label for="accessCode">Enter Access Code</label>
+    <input type="text" id="accessCode" placeholder="Enter your access code" autocomplete="off" />
+    <button id="loginBtn">Login</button>
+    <p id="loginError" class="error"></p>
+  </div>
 
-<!-- Pick Form Section (hidden until login) -->
-<form id="pickForm">
-  <label for="sportSelect">Choose Sport</label>
-  <select id="sportSelect"><option>Loading...</option></select>
+  <!-- Pick Form Section (hidden until login) -->
+  <form id="pickForm">
+    <label for="sportSelect">Choose Sport</label>
+    <select id="sportSelect"><option>Loading...</option></select>
 
-  <label for="gameSelect">Choose Game</label>
-  <select id="gameSelect"><option>Select a sport first</option></select>
+    <label for="gameSelect">Choose Game</label>
+    <select id="gameSelect"><option>Select a sport first</option></select>
 
-  <label for="pickInput">Your Pick</label>
-  <input type="text" id="pickInput" placeholder="Enter your pick" />
+    <label for="pickInput">Your Pick</label>
+    <input type="text" id="pickInput" placeholder="Enter your pick" autocomplete="off" />
 
-  <button type="submit">Submit Pick</button>
-  <p id="pickError" class="error"></p>
-  <p id="pickSuccess" class="success"></p>
-</form>
+    <button type="submit">Submit Pick</button>
+    <p id="pickError" class="error"></p>
+    <p id="pickSuccess" class="success"></p>
+  </form>
 
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/login.js"></script>
-<script type="module" src="js/sportSelector.js"></script>
-<script type="module" src="js/gameSelector.js"></script>
-<script type="module" src="js/pickSubmit.js"></script>
+  <!-- Firebase and app scripts -->
+  <script type="module" src="firebaseInit.js"></script>
+  <script type="module" src="js/login.js"></script>
+  <script type="module" src="js/sportSelector.js"></script>
+  <script type="module" src="js/gameSelector.js"></script>
+  <script type="module" src="js/pickSubmit.js"></script>
 
 </body>
 </html>
