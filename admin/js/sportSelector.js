@@ -1,39 +1,42 @@
-// sportSelector.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { db } from "../firebaseInit.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-import { db } from '../firebaseInit.js';
+const sportSelect = document.getElementById("sportSelect");
 
-const sportSelect = document.getElementById('sportSelect');
-
-async function populateSportsDropdown() {
-  sportSelect.innerHTML = '<option value="">-- Select a Sport --</option>';
+export async function loadSports() {
+  sportSelect.innerHTML = "<option>Loading...</option>";
 
   try {
-    const gameCacheRef = collection(db, "GameCache");
-    const snapshot = await getDocs(gameCacheRef);
+    const querySnapshot = await getDocs(collection(db, "GameCache"));
 
     const sportsSet = new Set();
-    snapshot.forEach(doc => {
+    querySnapshot.forEach(doc => {
       const data = doc.data();
       if (data.Sport) {
         sportsSet.add(data.Sport);
       }
     });
 
-    const sports = Array.from(sportsSet).sort();
+    if (sportsSet.size === 0) {
+      sportSelect.innerHTML = "<option>No sports found</option>";
+      return;
+    }
 
-    sports.forEach(sport => {
+    // Clear dropdown and add default option
+    sportSelect.innerHTML = `<option value="" disabled selected>Choose Sport</option>`;
+
+    // Add unique sports as options
+    sportsSet.forEach(sport => {
       const option = document.createElement("option");
       option.value = sport;
       option.textContent = sport;
       sportSelect.appendChild(option);
     });
-  } catch (err) {
-    console.error("Error loading sports:", err);
-    sportSelect.innerHTML = '<option value="">Error loading sports</option>';
+  } catch (error) {
+    sportSelect.innerHTML = "<option>Error loading sports</option>";
+    console.error("Error loading sports:", error);
   }
 }
 
-// Call this when the pick form is shown, e.g., after login
-export { populateSportsDropdown };
+// Call loadSports immediately to populate on page load
+loadSports();
