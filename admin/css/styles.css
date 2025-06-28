@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald&display=swap');
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Oswald', sans-serif;
+  background: #f9f9f9;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  color: #222;
+}
+
+.container {
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+h3 {
+  margin: 0;
+  font-weight: 700;
+}
+
+h6 {
+  margin: 0;
+  color: red;
+  font-weight: 600;
+}
+
+button, .btn {
+  background-color: #4a90e2;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.25s ease-in-out;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  margin-top: 15px;
+}
+
+button:hover, .btn:hover {
+  background-color: #357ABD;
+}
+
+input[type=text], select, textarea {
+  font-family: 'Oswald', sans-serif;
+  width: 100%;
+  padding: 10px;
+  margin: 12px 0;
+  box-sizing: border-box;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 10px;
+  display: block;
+  color: #444;
+}
+
+.error-msg {
+  color: red;
+  font-weight: 700;
+  margin-top: 5px;
+}
+
+footer#versionFooter {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: center;
+  padding: 20px 0;
+  user-select: none;
+}
+
+/* Loading spinner */
+.spinner {
+  margin: 20px auto;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #4a90e2;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1.0s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  body, html {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}
