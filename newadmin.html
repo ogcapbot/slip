@@ -58,6 +58,15 @@
         <option>Select a sport first</option>
       </select>
 
+      <!-- Wager [[NUM]] Input -->
+      <div id="numberInputContainer" style="display:none; margin-top:10px;">
+      <label for="numberInput">Enter Points</label>
+      <input type="number" id="numberInput" min="0" disabled/>
+      </div>
+
+      <p id="finalPickDescription" style="font-weight:bold; margin-top:10px;"></p>
+
+
       <button type="submit" disabled>Submit Pick</button>
 
       <p id="pickError" class="error"></p>
