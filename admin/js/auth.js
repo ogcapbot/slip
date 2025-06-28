@@ -3,7 +3,7 @@ import { collection, query, where, getDocs } from "https://www.gstatic.com/fireb
 import { loadSports } from './sportSelector.js';
 
 const loginBtn = document.getElementById('loginBtn');
-const accessCodeInput = document.getElementById('accessCode');
+const accessCodeInput = document.getElementById('AccessCode');
 const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
