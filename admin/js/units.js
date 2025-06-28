@@ -3,7 +3,6 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 
 const unitsSelect = document.getElementById('unitsSelect');
 
-// Call this function only when user reaches the Units section
 export async function loadUnits() {
   unitsSelect.disabled = true;
   unitsSelect.innerHTML = '<option>Loading units...</option>';
