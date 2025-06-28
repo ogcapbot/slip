@@ -1,5 +1,5 @@
 import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseInit.js"; // Adjust path if necessary
+import { db } from "/admin/firebaseInit.js"; // Adjust path if necessary
 
 // Check access code against Firestore Users collection
 async function checkAccessCode(inputCode) {
