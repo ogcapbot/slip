@@ -1,8 +1,7 @@
 // pickSubmit.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-
 import { db } from '../firebaseInit.js';
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
