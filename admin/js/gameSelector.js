@@ -1,52 +1,52 @@
-// gameSelector.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { db } from "../firebaseInit.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
+const sportSelect = document.getElementById("sportSelect");
+const leagueSelect = document.getElementById("leagueSelect");
+const gameSelect = document.getElementById("gameSelect");
 
-import { db } from '../firebaseInit.js';
+leagueSelect.addEventListener("change", async () => {
+  const selectedSport = sportSelect.value;
+  const selectedLeague = leagueSelect.value;
 
-const sportSelect = document.getElementById('sportSelect');
-const gameSelect = document.getElementById('gameSelect');
+  gameSelect.disabled = true;
+  gameSelect.innerHTML = '<option>Loading games...</option>';
 
-async function populateGamesDropdown(sport) {
-  gameSelect.innerHTML = '<option value="">Loading games...</option>';
-
-  if (!sport) {
-    gameSelect.innerHTML = '<option value="">Select a sport first</option>';
+  if (!selectedSport || !selectedLeague) {
+    gameSelect.innerHTML = '<option>Select a league first</option>';
     return;
   }
 
   try {
-    const gameCacheRef = collection(db, "GameCache");
-    const q = query(gameCacheRef, where("Sport", "==", sport));
-    const snapshot = await getDocs(q);
+    const q = query(
+      collection(db, "GameCache"),
+      where("Sport", "==", selectedSport),
+      where("League", "==", selectedLeague)
+    );
+    const querySnapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      gameSelect.innerHTML = '<option value="">No games found</option>';
+    if (querySnapshot.empty) {
+      gameSelect.innerHTML = '<option>No games found</option>';
       return;
     }
 
-    gameSelect.innerHTML = '<option value="">-- Select a Game --</option>';
+    gameSelect.innerHTML = '<option value="" disabled selected>Choose Game</option>';
 
-    snapshot.forEach(doc => {
+    querySnapshot.forEach(doc => {
       const data = doc.data();
-      // Use a display string for the game, e.g., "HomeTeam vs AwayTeam @ StartTime"
-      const gameLabel = `${data.HomeTeam} vs ${data.AwayTeam} @ ${data.StartTimeEST || ''}`;
-      const option = document.createElement('option');
-      option.value = doc.id; // store doc id as value
-      option.textContent = gameLabel;
+
+      // Customize this to display game name or identifier
+      const gameName = data.GameName || data.Game || doc.id;
+
+      const option = document.createElement("option");
+      option.value = doc.id; // or data.Game if that’s unique and stable
+      option.textContent = gameName;
       gameSelect.appendChild(option);
     });
 
-  } catch (err) {
-    console.error("Error loading games:", err);
-    gameSelect.innerHTML = '<option value="">Error loading games</option>';
+    gameSelect.disabled = false;
+  } catch (error) {
+    gameSelect.innerHTML = '<option>Error loading games</option>';
+    console.error("Error loading games:", error);
   }
-}
-
-// Add event listener to sportSelect to update games when sport changes
-sportSelect.addEventListener('change', () => {
-  populateGamesDropdown(sportSelect.value);
 });
-
-export { populateGamesDropdown };
