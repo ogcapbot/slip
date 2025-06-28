@@ -24,20 +24,23 @@
   <!-- Pick Form Section (hidden until login) -->
   <form id="pickForm" style="display:none;">
     <label for="sportSelect">Choose Sport</label>
-    <select id="sportSelect"><option>Loading...</option></select>
+      <select id="sportSelect"><option>Loading...</option>
+      </select>
 
     <label for="leagueSelect">Choose League</label>
     <select id="leagueSelect" disabled>
-    <option>Select a sport first</option>
+      <option>Select a sport first</option>
     </select>
 
     <label for="gameSelect">Choose Game</label>
-    <select id="gameSelect"><option>Select a sport first</option></select>
+    <select id="gameSelect" disabled>>
+      <option>Select a sport first</option>
+    </select>
 
     <label for="pickInput">Your Pick</label>
-    <input type="text" id="pickInput" placeholder="Enter your pick" autocomplete="off" />
+    <input type="text" id="pickInput" placeholder="Enter your pick" autocomplete="off" disabled>/>
 
-    <button type="submit">Submit Pick</button>
+    <button type="submit" disabled>>Submit Pick</button>
     <p id="pickError" class="error"></p>
     <p id="pickSuccess" class="success"></p>
   </form>
