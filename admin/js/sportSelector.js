@@ -1,5 +1,5 @@
 // sportSelector.js
-import { db } from '/admin/firebaseInit.js';
+import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const sportSelect = document.getElementById('sportSelect');
