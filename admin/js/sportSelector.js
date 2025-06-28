@@ -1,42 +1,34 @@
-import { db } from "../firebaseInit.js";
+import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const sportSelect = document.getElementById("sportSelect");
+const sportSelect = document.getElementById('sportSelect');
 
 export async function loadSports() {
-  sportSelect.innerHTML = "<option>Loading...</option>";
+  sportSelect.innerHTML = '<option>Loading...</option>';
+  sportSelect.disabled = true;
 
   try {
-    const querySnapshot = await getDocs(collection(db, "GameCache"));
-
-    const sportsSet = new Set();
-    querySnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.Sport) {
-        sportsSet.add(data.Sport);
-      }
+    const snapshot = await getDocs(collection(db, 'GameCache'));
+    const sports = new Set();
+    snapshot.forEach(doc => {
+      const sport = doc.data().Sport;
+      if (sport) sports.add(sport);
     });
 
-    if (sportsSet.size === 0) {
-      sportSelect.innerHTML = "<option>No sports found</option>";
-      return;
+    if (sports.size === 0) {
+      sportSelect.innerHTML = '<option>No sports found</option>';
+    } else {
+      sportSelect.innerHTML = '<option value="">Select a sport</option>';
+      sports.forEach(sport => {
+        const option = document.createElement('option');
+        option.value = sport;
+        option.textContent = sport;
+        sportSelect.appendChild(option);
+      });
+      sportSelect.disabled = false;
     }
-
-    // Clear dropdown and add default option
-    sportSelect.innerHTML = `<option value="" disabled selected>Choose Sport</option>`;
-
-    // Add unique sports as options
-    sportsSet.forEach(sport => {
-      const option = document.createElement("option");
-      option.value = sport;
-      option.textContent = sport;
-      sportSelect.appendChild(option);
-    });
   } catch (error) {
-    sportSelect.innerHTML = "<option>Error loading sports</option>";
-    console.error("Error loading sports:", error);
+    console.error('Error loading sports:', error);
+    sportSelect.innerHTML = '<option>Error loading sports</option>';
   }
 }
-
-// Call loadSports immediately to populate on page load
-loadSports();
