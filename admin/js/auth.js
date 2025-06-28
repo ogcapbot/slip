@@ -1,5 +1,5 @@
 // login.js
-import { db } from './admin/firebaseInit.js';
+import { db } from '/admin/firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const loginSection = document.getElementById('loginSection');
