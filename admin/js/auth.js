@@ -1,4 +1,5 @@
-import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { db } from "../firebaseInit.js"; // Adjust path if necessary
 
 // Check access code against Firestore Users collection
