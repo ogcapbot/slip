@@ -1,47 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <title>OG Capper Bets - Official Pick Image Creator</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
-  <link href="admin/css/styles.css" rel="stylesheet" />
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OG Capper Bets - Pick Creator</title>
+<link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <div class="container">
 
-    <!-- Global Header -->
-    <div id="globalHeader" style="text-align: center; padding: 15px 0 6px;">
-      <h3 style="margin: 0;">OG Capper Bets</h3>
-      <h3 style="margin: 0;">Official Pick Image Creator</h3>
-      <h6 style="margin: 0; color: red;">Official Use Only</h6>
-    </div>
-    <!-- End Global Header -->
+<h1>OG Capper Bets<br>Official Pick Image Creator</h1>
+<p class="subtext">Official Use Only</p>
 
-    <!-- Login Container -->
-    <div id="loginContainer" style="max-width: 400px; margin: 40px auto;"></div>
-    <!-- End Login Container -->
+<!-- Login Section -->
+<div id="loginSection">
+  <label for="accessCode">Enter Access Code</label>
+  <input type="text" id="accessCode" placeholder="Enter your access code" />
+  <button id="loginBtn">Login</button>
+  <p id="loginError" class="error"></p>
+</div>
 
-    <!-- Global Footer -->
-    <footer id="versionFooter">
-      Version 7.25
-    </footer>
-    <!-- End Global Footer -->
+<!-- Pick Form Section (hidden until login) -->
+<form id="pickForm">
+  <label for="sportSelect">Choose Sport</label>
+  <select id="sportSelect"><option>Loading...</option></select>
 
-  </div> <!-- End container -->
+  <label for="gameSelect">Choose Game</label>
+  <select id="gameSelect"><option>Select a sport first</option></select>
 
-  <script type="module">
-    import { renderLogin } from './admin/js/auth.js';
+  <label for="pickInput">Your Pick</label>
+  <input type="text" id="pickInput" placeholder="Enter your pick" />
 
-    const container = document.getElementById('loginContainer');
-    renderLogin(container);
-  </script>
+  <button type="submit">Submit Pick</button>
+  <p id="pickError" class="error"></p>
+  <p id="pickSuccess" class="success"></p>
+</form>
+
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="js/login.js"></script>
+<script type="module" src="js/sportSelector.js"></script>
+<script type="module" src="js/gameSelector.js"></script>
+<script type="module" src="js/pickSubmit.js"></script>
+
 </body>
-
 </html>
