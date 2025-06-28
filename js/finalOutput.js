@@ -2,6 +2,8 @@ function generateFinalOutput(notes, newTitle) {
   notes = notes || "N/A";
   if (newTitle) window.overrideTitle = newTitle;
 
+  const BASE_URL = "https://script.google.com/macros/s/AKfycbxiXrBh0NrprTJqgYKquFmuUoPyS8fYP05jba1khnX1dOuk1GdhFOpFudScYXioWLAsng/exec";
+
   let wagerRaw = "";
   const wagerInput = document.getElementById("wagerType");
   const wagerDropdown = document.getElementById("wagerDropdown");
@@ -138,14 +140,13 @@ function generateFinalOutput(notes, newTitle) {
     "24HR_LONG_DATE_SECONDS": estString
   }));
 
-  // ====== Important: Get container BEFORE any usage ======
   const container = document.getElementById("confirmOutput");
   container.classList.remove("hidden");
 
-  // Clear container before adding content
+  // Clear container for fresh content
   container.innerHTML = "";
 
-  // Loader container (spinner + text)
+  // Create and show loader container with spinner + text
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
@@ -166,7 +167,7 @@ function generateFinalOutput(notes, newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Post Title label + input with click-to-copy
+  // Add Post Title label + input with click-to-copy
   const labelPostTitle = document.createElement("label");
   labelPostTitle.textContent = "Post Title";
   labelPostTitle.style.fontFamily = "'Oswald', sans-serif";
@@ -202,7 +203,7 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // Hype Phrase Description label + input with click-to-copy
+  // Add Hype Phrase Description label + input with click-to-copy
   const labelHypeDesc = document.createElement("label");
   labelHypeDesc.textContent = "Hype Phrase Description";
   labelHypeDesc.style.fontFamily = "'Oswald', sans-serif";
@@ -238,7 +239,7 @@ function generateFinalOutput(notes, newTitle) {
     });
   });
 
-  // ====== Image Creation With Long Tap Copy ======
+  // Image creation with long-tap copy support
   function createImageContainer(labelText, slideNum) {
     const containerDiv = document.createElement("div");
     containerDiv.style.border = "1px solid #ccc";
@@ -264,7 +265,7 @@ function generateFinalOutput(notes, newTitle) {
     img.style.borderRadius = "4px";
     img.style.userSelect = "none";
 
-    // Store image URL in a property for easy access
+    // Store image URL in a property
     img.imageUrl = imageUrl;
 
     let pressTimer = null;
