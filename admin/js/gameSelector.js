@@ -1,87 +1,135 @@
+// gameSelector.js
 import { db } from '../firebaseInit.js';
-import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const sportSelect = document.getElementById('sportSelect');
 const leagueSelect = document.getElementById('leagueSelect');
 const gameSelect = document.getElementById('gameSelect');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // new
+const pickInput = document.getElementById('pickInput');
 const submitButton = document.querySelector('form#pickForm button[type="submit"]');
+const pickButtonsContainerId = 'pickButtonsContainer';
 
 leagueSelect.addEventListener('change', async () => {
-  // existing code to load games ...
+  const selectedSport = sportSelect.value;
+  const selectedLeague = leagueSelect.value;
 
-  // Clear pick options on league change
-  pickOptionsContainer.innerHTML = '';
+  // Reset game select and pick input/buttons
+  gameSelect.innerHTML = '<option>Loading...</option>';
+  gameSelect.disabled = true;
+
+  clearPickButtons();
+  pickInput.value = '';
+  pickInput.disabled = true;
   submitButton.disabled = true;
-});
 
-gameSelect.addEventListener('change', async () => {
-  if (!gameSelect.value) {
-    pickOptionsContainer.innerHTML = '';
-    submitButton.disabled = true;
+  if (!selectedSport || !selectedLeague) {
+    gameSelect.innerHTML = '<option>Select a league first</option>';
+    gameSelect.disabled = true;
     return;
   }
 
   try {
-    const docRef = doc(db, 'GameCache', gameSelect.value);
-    const docSnap = await getDoc(docRef);
+    // Query GameCache for games with the chosen sport AND league
+    const q = query(
+      collection(db, 'GameCache'),
+      where('Sport', '==', selectedSport),
+      where('League', '==', selectedLeague)
+    );
+    const querySnapshot = await getDocs(q);
 
-    if (!docSnap.exists()) {
-      pickOptionsContainer.innerHTML = 'Game data not found.';
-      submitButton.disabled = true;
-      return;
-    }
+    gameSelect.innerHTML = '';
 
-    const game = docSnap.data();
-    const homeTeam = game.HomeTeam;
-    const awayTeam = game.AwayTeam;
-
-    // Build buttons for picks
-    pickOptionsContainer.innerHTML = `
-      <button type="button" class="pick-btn" data-pick="${homeTeam}">${homeTeam}</button>
-      <button type="button" class="pick-btn" data-pick="${awayTeam}">${awayTeam}</button>
-    `;
-
-    // Add event listeners to buttons for toggle effect
-    const buttons = pickOptionsContainer.querySelectorAll('.pick-btn');
-    buttons.forEach(btn => {
-      btn.style.flex = '1 1 45%';  // roughly half width with some space
-      btn.style.margin = '0 5px';  // horizontal spacing
-      btn.style.fontSize = '0.9rem'; // slightly smaller font
-      btn.style.padding = '8px 12px';
-      btn.style.border = 'none';
-      btn.style.borderRadius = '6px';
-      btn.style.backgroundColor = '#007BFF'; // default blue
-      btn.style.color = 'white';
-      btn.style.cursor = 'pointer';
-      btn.style.transition = 'background-color 0.3s ease';
-
-      btn.addEventListener('click', () => {
-        // Reset all buttons to blue
-        buttons.forEach(b => {
-          b.style.backgroundColor = '#007BFF';
-        });
-        // Highlight clicked button green
-        btn.style.backgroundColor = '#28a745';
-        // Store selection in dataset for submission use
-        pickOptionsContainer.dataset.selectedPick = btn.getAttribute('data-pick');
+    if (querySnapshot.empty) {
+      gameSelect.innerHTML = '<option>No games found</option>';
+      gameSelect.disabled = true;
+    } else {
+      gameSelect.disabled = false;
+      gameSelect.innerHTML = '<option value="">Select a game</option>';
+      querySnapshot.forEach(doc => {
+        const game = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id; // use document ID as value
+        option.textContent = `${game.HomeTeam} vs ${game.AwayTeam} (${new Date(game.StartTimeUTC.seconds * 1000).toLocaleString()})`;
+        // Save HomeTeam and AwayTeam data as dataset attributes for later use
+        option.dataset.homeTeam = game.HomeTeam;
+        option.dataset.awayTeam = game.AwayTeam;
+        gameSelect.appendChild(option);
       });
-    });
-
-    pickOptionsContainer.style.display = 'flex';
-    pickOptionsContainer.style.justifyContent = 'space-between';
-    submitButton.disabled = true;
-
-    // Enable submit button once user picks
-    pickOptionsContainer.addEventListener('click', () => {
-      if (pickOptionsContainer.dataset.selectedPick) {
-        submitButton.disabled = false;
-      }
-    });
-
+    }
   } catch (error) {
-    console.error('Error loading game data for picks:', error);
-    pickOptionsContainer.innerHTML = 'Error loading pick options.';
-    submitButton.disabled = true;
+    console.error('Error loading games:', error);
+    gameSelect.innerHTML = '<option>Error loading games</option>';
+    gameSelect.disabled = true;
   }
 });
+
+// Clear any existing pick buttons container
+function clearPickButtons() {
+  const existing = document.getElementById(pickButtonsContainerId);
+  if (existing) {
+    existing.remove();
+  }
+}
+
+// Create pick buttons dynamically for selected game teams
+function createPickButtons(homeTeam, awayTeam) {
+  clearPickButtons();
+
+  const container = document.createElement('div');
+  container.id = pickButtonsContainerId;
+  container.style.display = 'flex';
+  container.style.justifyContent = 'space-between';
+  container.style.margin = '10px 0';
+
+  const buttonStyle = `
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    color: white;
+    background-color: #4285f4; /* blue */
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  `;
+
+  const buttonSpacing = '8px';
+
+  // Home Team Button
+  const homeBtn = document.createElement('button');
+  homeBtn.textContent = homeTeam;
+  homeBtn.style.cssText = buttonStyle + `margin-right: ${buttonSpacing};`;
+  homeBtn.dataset.team = homeTeam;
+
+  // Away Team Button
+  const awayBtn = document.createElement('button');
+  awayBtn.textContent = awayTeam;
+  awayBtn.style.cssText = buttonStyle + `margin-left: ${buttonSpacing};`;
+  awayBtn.dataset.team = awayTeam;
+
+  // Append buttons to container
+  container.appendChild(homeBtn);
+  container.appendChild(awayBtn);
+
+  // Insert container right after gameSelect
+  gameSelect.parentNode.insertBefore(container, pickInput);
+
+  // Disable original pick input and submit button until selection
+  pickInput.style.display = 'none';
+  submitButton.disabled = true;
+
+  // Handle button clicks to toggle selection
+  let selectedTeam = null;
+
+  function selectTeam(button) {
+    if (selectedTeam === button) return; // no change
+
+    // Reset buttons to blue
+    homeBtn.style.backgroundColor = '#4285f4';
+    awayBtn.style.backgroundColor = '#4285f4';
+
+    // Set clicked button green
+    button.style.backgroundColor = '#0f9d58'; // green
+
+    selectedTeam = button;
