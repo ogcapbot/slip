@@ -1,4 +1,8 @@
 // main.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+
 // Handles page initialization, login screen, routing
 
 import { Auth } from './auth.js';
