@@ -1,27 +1,51 @@
-import { auth, db } from './firebaseInit.js';
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+// auth.js - access code login without Firebase Auth
 
-// Sign in user with email/password
-async function login(email, password) {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userId = userCredential.user.uid;
-    // Fetch user role from Firestore users collection
-    const userDoc = await getDoc(doc(db, "users", userId));
-    if (!userDoc.exists()) {
-      throw new Error("User role not found");
-    }
-    const userData = userDoc.data();
-    return { uid: userId, ...userData };
-  } catch (error) {
-    throw error;
+import { db } from './firebaseInit.js';
+import { collection, query, where, getDocs } from "firebase/firestore";
+
+let currentUser = null;
+
+/**
+ * Log in a user by their numeric access code.
+ * @param {string} accessCode - The numeric access code entered by the user.
+ * @returns {Promise<object>} The user data if access code is valid.
+ * @throws Will throw an error if the access code is invalid.
+ */
+async function login(accessCode) {
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("accessCode", "==", accessCode));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    throw new Error("Invalid access code");
   }
+
+  const userDoc = querySnapshot.docs[0];
+  currentUser = { id: userDoc.id, ...userDoc.data() };
+  sessionStorage.setItem('ogUser', JSON.stringify(currentUser));
+  return currentUser;
 }
 
-// Sign out user
-async function logout() {
-  await signOut(auth);
+/**
+ * Log out the current user and clear session.
+ */
+function logout() {
+  currentUser = null;
+  sessionStorage.removeItem('ogUser');
 }
 
-export { login, logout };
+/**
+ * Get the currently logged-in user from memory or sessionStorage.
+ * @returns {object|null} The current user data or null if not logged in.
+ */
+function getCurrentUser() {
+  if (!currentUser) {
+    const stored = sessionStorage.getItem('ogUser');
+    if (stored) {
+      currentUser = JSON.parse(stored);
+    }
+  }
+  return currentUser;
+}
+
+export { login, logout, getCurrentUser };
