@@ -1,22 +1,76 @@
-<form id="pickForm" style="display:none;">
-  <label for="sportSelect">Choose Sport</label>
-  <select id="sportSelect"><option>Loading...</option></select>
-
-  <label for="leagueSelect">Choose League</label>
-  <select id="leagueSelect" disabled>
-    <option>Select a sport first</option>
-  </select>
-
-  <label for="gameSelect">Choose Game</label>
-  <select id="gameSelect" disabled>
-    <option>Select a league first</option>
-  </select>
-
-  <label for="pickInput">Your Pick</label>
-  <input type="text" id="pickInput" placeholder="Enter your pick" autocomplete="off" disabled />
-
-  <button type="submit" disabled>Submit Pick</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OG Capper Bets - Official Pick Image Creator</title>
   
-  <p id="pickError" class="error"></p>
-  <p id="pickSuccess" class="success"></p>
-</form>
+  <!-- Google Fonts Oswald -->
+  <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
+
+  <!-- Your Styles -->
+  <link rel="stylesheet" href="admin/css/styles.css" />
+  
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Global Header -->
+    <header id="globalHeader" style="text-align: center; padding: 15px 0 6px;">
+      <h3 style="margin: 0;">OG Capper Bets</h3>
+      <h3 style="margin: 0;">Official Pick Image Creator</h3>
+      <h6 style="margin: 0; color: red;">Official Use Only</h6>
+    </header>
+    <!-- End Global Header -->
+
+    <!-- Login Section -->
+    <section id="loginSection">
+      <label for="accessCode">Enter Access Code</label>
+      <input type="text" id="accessCode" placeholder="Enter your access code" autocomplete="off" />
+      <button id="loginBtn">Login</button>
+      <p id="loginError" class="error"></p>
+    </section>
+
+    <!-- Pick Entry Form (hidden until login) -->
+    <form id="pickForm" style="display:none;">
+      <label for="sportSelect">Choose Sport</label>
+      <select id="sportSelect" disabled><option>Loading...</option></select>
+
+      <label for="leagueSelect">Choose League</label>
+      <select id="leagueSelect" disabled>
+        <option>Select a sport first</option>
+      </select>
+
+      <label for="gameSelect">Choose Game</label>
+      <select id="gameSelect" disabled>
+        <option>Select a league first</option>
+      </select>
+
+      <label for="pickInput">Your Pick</label>
+      <input type="text" id="pickInput" placeholder="Enter your pick" autocomplete="off" disabled />
+
+      <button type="submit" disabled>Submit Pick</button>
+
+      <p id="pickError" class="error"></p>
+      <p id="pickSuccess" class="success"></p>
+    </form>
+
+    <!-- Global Footer -->
+    <footer id="versionFooter" style="text-align:center; margin-top:30px; font-size:0.9rem; color:#666;">
+      Version 7.25
+    </footer>
+    <!-- End Global Footer -->
+
+  </div> <!-- End container -->
+
+  <!-- Your Firebase Initialization and App JS (with SDK imports inside) -->
+  <script type="module" src="admin/firebaseInit.js"></script>
+  <script type="module" src="admin/js/auth.js"></script>
+  <script type="module" src="admin/js/sportSelector.js"></script>
+  <script type="module" src="admin/js/leagueSelector.js"></script>
+  <script type="module" src="admin/js/gameSelector.js"></script>
+  <script type="module" src="admin/js/pickSubmit.js"></script>
+
+</body>
+</html>
