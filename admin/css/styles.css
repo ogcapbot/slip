@@ -1,110 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald&display=swap');
+/* styles.css */
 
-body, html {
-  margin: 0;
-  padding: 0;
-  font-family: 'Oswald', sans-serif;
-  background: #f9f9f9;
+body {
+  font-family: 'Oswald', Arial, sans-serif;
+  padding: 20px;
   max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: auto;
+  background-color: #f9f9f9;
   color: #222;
 }
 
-.container {
-  padding: 15px;
-  box-sizing: border-box;
+h1 {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
-h3 {
-  margin: 0;
-  font-weight: 700;
-}
-
-h6 {
-  margin: 0;
+.subtext {
+  text-align: center;
   color: red;
+  margin-top: 0;
+  margin-bottom: 24px;
   font-weight: 600;
-}
-
-button, .btn {
-  background-color: #4a90e2;
-  border: none;
-  border-radius: 5px;
-  color: white;
-  font-weight: 600;
-  font-size: 1.1rem;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: background-color 0.25s ease-in-out;
-  width: 100%;
-  max-width: 400px;
-  box-sizing: border-box;
-  margin-top: 15px;
-}
-
-button:hover, .btn:hover {
-  background-color: #357ABD;
-}
-
-input[type=text], select, textarea {
-  font-family: 'Oswald', sans-serif;
-  width: 100%;
-  padding: 10px;
-  margin: 12px 0;
-  box-sizing: border-box;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 80px;
-  max-height: 200px;
 }
 
 label {
   font-weight: 600;
-  margin-top: 10px;
+  margin-top: 16px;
   display: block;
-  color: #444;
 }
 
-.error-msg {
-  color: red;
+input[type="text"],
+select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  font-family: 'Oswald', Arial, sans-serif;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+button {
+  margin-top: 20px;
+  padding: 12px;
+  width: 100%;
+  font-family: 'Oswald', Arial, sans-serif;
+  font-size: 1.1rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-weight: 700;
-  margin-top: 5px;
+  transition: background-color 0.3s ease;
 }
 
-footer#versionFooter {
-  font-size: 0.75rem;
-  color: #999;
-  text-align: center;
-  padding: 20px 0;
-  user-select: none;
+button:hover {
+  background-color: #357ABD;
 }
 
-/* Loading spinner */
-.spinner {
-  margin: 20px auto;
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #4a90e2;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1.0s linear infinite;
+#error, .error {
+  color: #c00;
+  margin-top: 8px;
+  font-weight: 700;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.success {
+  color: green;
+  margin-top: 8px;
+  font-weight: 700;
 }
 
-/* Responsive adjustments */
-@media (max-width: 400px) {
-  body, html {
-    max-width: 100%;
-    padding: 0 10px;
-  }
+#pickForm {
+  display: none;
 }
