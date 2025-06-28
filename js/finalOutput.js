@@ -1,3 +1,7 @@
+// finalOutput.js — FULL updated version
+
+// Assuming all global vars like selectedMatch, capperName, allData, etc. are defined elsewhere
+
 function generateFinalOutput(notes = "N/A", newTitle) {
   if (newTitle) window.overrideTitle = newTitle;
 
@@ -95,14 +99,14 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   container.classList.remove("hidden");
   container.innerHTML = "";
 
-  // Create loader container
+  // Loader
   const loaderContainer = document.createElement("div");
   loaderContainer.id = "loaderContainer";
   loaderContainer.style.textAlign = "center";
   loaderContainer.style.margin = "5px 0 15px 0";
 
   const loaderSpinner = document.createElement("div");
-  loaderSpinner.id = "loader"; // your spinner CSS target
+  loaderSpinner.id = "loader"; // spinner CSS target
   loaderSpinner.style.margin = "0 auto";
   loaderContainer.appendChild(loaderSpinner);
 
@@ -115,7 +119,7 @@ function generateFinalOutput(notes = "N/A", newTitle) {
 
   container.appendChild(loaderContainer);
 
-  // Helper: creates label + input with click-to-copy
+  // Helper: creates label + input with click-to-copy text
   function createCopyInput(labelText, value) {
     const label = document.createElement("label");
     label.textContent = labelText;
@@ -154,8 +158,15 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   createCopyInput("Post Title", window.selectedHypePostTitle || "No Hype Phrase Selected");
   createCopyInput("Hype Phrase Description", (window.selectedHypeRow && window.selectedHypeRow.Promo) || "No Description Available");
 
-  // Track loaded images to hide loader after both finish
+  // Track loaded images (success or error) to hide loader after both finish
   let loadedCount = 0;
+
+  function incrementLoadedCount() {
+    loadedCount++;
+    if (loadedCount === 2) {
+      loaderContainer.style.display = "none";
+    }
+  }
 
   function createImageContainer(labelText, slideNum) {
     const div = document.createElement("div");
@@ -182,42 +193,8 @@ function generateFinalOutput(notes = "N/A", newTitle) {
     img.style.borderRadius = "4px";
     img.style.userSelect = "none";
 
-    img.imageUrl = imageUrl;
-
-    let pressTimer = null;
-
-    function copyImageUrl() {
-      navigator.clipboard.writeText(img.imageUrl)
-        .then(() => alert(`${labelText} URL copied to clipboard!`))
-        .catch(() => alert(`Failed to copy ${labelText} URL.`));
-    }
-
-    img.addEventListener("touchstart", () => {
-      pressTimer = setTimeout(copyImageUrl, 600);
-    });
-
-    img.addEventListener("touchend", () => {
-      if (pressTimer) clearTimeout(pressTimer);
-    });
-
-    img.addEventListener("touchcancel", () => {
-      if (pressTimer) clearTimeout(pressTimer);
-    });
-
-    img.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      copyImageUrl();
-    });
-
-    img.addEventListener("click", copyImageUrl);
-
-    // Hide loader after image loads
-    img.onload = () => {
-      loadedCount++;
-      if (loadedCount === 2) {
-        loaderContainer.style.display = "none";
-      }
-    };
+    img.onload = incrementLoadedCount;
+    img.onerror = incrementLoadedCount;
 
     div.appendChild(label);
     div.appendChild(img);
@@ -228,19 +205,16 @@ function generateFinalOutput(notes = "N/A", newTitle) {
   container.appendChild(createImageContainer("Standard Version Image", 1));
   container.appendChild(createImageContainer("Paid Version Image", 2));
 
-  // Optional Reset Button to clear output and reset UI
-  const resetBtn = document.createElement("button");
-  resetBtn.textContent = "Reset";
-  resetBtn.style.display = "block";
-  resetBtn.style.marginTop = "20px";
-  resetBtn.style.padding = "8px 16px";
-  resetBtn.style.fontSize = "14px";
-  resetBtn.style.cursor = "pointer";
-  resetBtn.addEventListener("click", () => {
-    container.innerHTML = "";
-    container.classList.add("hidden");
-    loadedCount = 0;
-  });
-
-  container.appendChild(resetBtn);
+  // Hook up existing top Reset button with id="resetBtn"
+  const resetBtn = document.getElementById("resetBtn");
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      container.innerHTML = "";
+      container.classList.add("hidden");
+      loadedCount = 0;
+    };
+  }
 }
+
+// Export or expose generateFinalOutput if using modules or attach to window if needed
+window.generateFinalOutput = generateFinalOutput;
