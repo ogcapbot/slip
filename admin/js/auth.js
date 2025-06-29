@@ -1,7 +1,7 @@
 // admin/js/auth.js
 import { initRecaptcha } from '../firebaseInit.js';
 
-const auth = firebase.auth();
+const auth = firebase.auth();  // This is safe now because init runs on import
 
 const loginSection = document.getElementById('phoneLoginSection');
 const pickForm = document.getElementById('pickForm');
@@ -79,7 +79,6 @@ function verifyCode() {
     .then((result) => {
       loginSection.style.display = 'none';
       pickForm.style.display = 'block';
-      // Your loadSports or any other init function here
 
       window.currentUser = {
         uid: result.user.uid,
