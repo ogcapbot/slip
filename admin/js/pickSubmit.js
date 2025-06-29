@@ -66,7 +66,7 @@ function styleButtons() {
     btn.style.justifyContent = 'center';
     btn.style.alignItems = 'center';
     btn.style.minHeight = '44px';
-    btn.style.transition = 'background-color 0.3s ease';
+    btn.style.transition = 'background-color 0.3s ease, box-shadow 0.2s ease';
   });
 
   // Start Over button: blue style
@@ -80,7 +80,7 @@ function styleButtons() {
   };
 
   // Submit button: light red when disabled, green when enabled
-  submitBtn.style.backgroundColor = '#e57373'; // light red
+  submitBtn.style.backgroundColor = '#d9534f'; // deeper red default disabled
   submitBtn.style.color = '#fff';
   submitBtn.disabled = true;
   submitBtn.style.opacity = '0.7';
@@ -91,7 +91,7 @@ function styleButtons() {
   };
   submitBtn.onmouseout = () => {
     if (!submitBtn.disabled) submitBtn.style.backgroundColor = '#4caf50';
-    else submitBtn.style.backgroundColor = '#e57373';
+    else submitBtn.style.backgroundColor = '#d9534f';
   };
 }
 styleButtons();
@@ -116,7 +116,7 @@ function checkFormValidity() {
     submitBtn.style.cursor = 'pointer';
   } else {
     submitBtn.disabled = true;
-    submitBtn.style.backgroundColor = '#e57373'; // light red
+    submitBtn.style.backgroundColor = '#d9534f'; // deeper red
     submitBtn.style.opacity = '0.7';
     submitBtn.style.cursor = 'not-allowed';
   }
@@ -170,7 +170,7 @@ startOverBtn.addEventListener('click', () => {
 
   // Disable submit button and reset styling
   submitBtn.disabled = true;
-  submitBtn.style.backgroundColor = '#e57373';
+  submitBtn.style.backgroundColor = '#d9534f';
   submitBtn.style.opacity = '0.7';
   submitBtn.style.cursor = 'not-allowed';
 
@@ -207,7 +207,7 @@ function resetAllSelections() {
   sportSelect.disabled = false;
 
   submitBtn.disabled = true;
-  submitBtn.style.backgroundColor = '#e57373';
+  submitBtn.style.backgroundColor = '#d9534f';
   submitBtn.style.opacity = '0.7';
   submitBtn.style.cursor = 'not-allowed';
 
