@@ -13,19 +13,26 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
+// Initialize Firebase app and services
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 function initRecaptcha() {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-      size: 'invisible',
-      callback: (response) => {
-        // reCAPTCHA solved - can proceed with sendVerificationCode
-        console.log('reCAPTCHA resolved');
-      }
-    }, auth);
+    console.log('Creating new RecaptchaVerifier...');
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      'recaptcha-container',
+      {
+        size: 'invisible',
+        callback: (response) => {
+          console.log('reCAPTCHA solved:', response);
+        }
+      },
+      auth
+    );
+  } else {
+    console.log('RecaptchaVerifier already exists.');
   }
 }
 
