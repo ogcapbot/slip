@@ -54,8 +54,8 @@ function sendVerificationCode() {
       sendCodeBtn.disabled = false;
     })
     .catch((error) => {
-      console.error('Error during signInWithPhoneNumber', error);
-      loginError.textContent = 'Failed to send verification code. Try again.';
+      console.error('Error during signInWithPhoneNumber:', error);
+      loginError.textContent = `Failed to send verification code. ${error.message}`;
       sendCodeBtn.disabled = false;
     });
 }
@@ -84,8 +84,8 @@ function verifyCode() {
       verifyCodeBtn.disabled = false;
     })
     .catch((error) => {
-      console.error('Error verifying code', error);
-      loginError.textContent = 'Invalid verification code.';
+      console.error('Error verifying code:', error);
+      loginError.textContent = `Invalid verification code. ${error.message}`;
       verifyCodeBtn.disabled = false;
     });
 }
