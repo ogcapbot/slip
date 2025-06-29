@@ -18,20 +18,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 function initRecaptcha() {
+  console.log('Auth in initRecaptcha:', auth);
   if (!window.recaptchaVerifier) {
     console.log('Creating RecaptchaVerifier...');
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      'recaptcha-container',
-      {
-        size: 'invisible',
-        callback: (response) => {
-          console.log('reCAPTCHA solved:', response);
-        }
-      },
-      auth
-    );
-  } else {
-    console.log('RecaptchaVerifier already exists.');
+    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: (response) => {
+        console.log('reCAPTCHA solved:', response);
+      }
+    }, auth);
   }
 }
 
