@@ -1,185 +1,137 @@
-// admin/js/sportSelector.js
 import { db } from '../firebaseInit.js';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const originalSportSelect = document.getElementById('sportSelect');
+const sportSelect = document.getElementById('sportSelect');
+const leagueSelect = document.getElementById('leagueSelect');
+const gameSelect = document.getElementById('gameSelect');
+const pickOptionsContainer = document.getElementById('pickOptionsContainer');
 
-let sportButtonsContainer;
-let hiddenSelect;
-let selectedSport = null;
-let changeSportBtn = null;
+const sportButtonsContainerId = 'sportButtonsContainer';
 
-if (originalSportSelect) {
-  const parent = originalSportSelect.parentNode;
-  parent.removeChild(originalSportSelect);
-
-  hiddenSelect = document.createElement('select');
-  hiddenSelect.id = 'sportSelect';
-  hiddenSelect.style.display = 'none';
-  parent.appendChild(hiddenSelect);
-
-  sportButtonsContainer = document.createElement('div');
-  sportButtonsContainer.id = 'sportButtonsContainer';
-
-  const sportLabel = parent.querySelector('label[for="sportSelect"]');
-  if (sportLabel) {
-    sportLabel.parentNode.insertBefore(sportButtonsContainer, sportLabel.nextSibling);
-  } else {
-    parent.appendChild(sportButtonsContainer);
+// Clear and disable dependent selectors
+function resetLeagueAndGame() {
+  if (leagueSelect) {
+    leagueSelect.innerHTML = '<option>Select a sport first</option>';
+    leagueSelect.disabled = true;
   }
-} else {
-  sportButtonsContainer = document.getElementById('sportButtonsContainer');
-  if (!sportButtonsContainer) {
-    sportButtonsContainer = document.createElement('div');
-    sportButtonsContainer.id = 'sportButtonsContainer';
-    document.body.appendChild(sportButtonsContainer);
+  if (gameSelect) {
+    gameSelect.innerHTML = '<option>Select a league first</option>';
+    gameSelect.disabled = true;
   }
-  hiddenSelect = document.getElementById('sportSelect');
-  if (!hiddenSelect) {
-    hiddenSelect = document.createElement('select');
-    hiddenSelect.id = 'sportSelect';
-    hiddenSelect.style.display = 'none';
-    document.body.appendChild(hiddenSelect);
+  if (pickOptionsContainer) {
+    pickOptionsContainer.innerHTML = '';
   }
 }
 
-export async function loadSports() {
-  console.log('[sportSelector] loadSports started');
-  sportButtonsContainer.innerHTML = '';
-  selectedSport = null;
-  if (changeSportBtn) {
-    changeSportBtn.remove();
-    changeSportBtn = null;
+// Create sport buttons container and insert after sportSelect label
+function createSportButtonsContainer() {
+  let container = document.getElementById(sportButtonsContainerId);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = sportButtonsContainerId;
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    container.style.gap = '8px';
+    container.style.margin = '8px 0 12px 0';
+
+    const sportLabel = document.querySelector('label[for="sportSelect"]');
+    if (sportLabel) {
+      sportLabel.parentNode.insertBefore(container, sportLabel.nextSibling);
+    } else if (sportSelect) {
+      sportSelect.parentNode.insertBefore(container, sportSelect.nextSibling);
+    } else {
+      document.body.appendChild(container);
+    }
   }
-  hiddenSelect.innerHTML = '';
-  hiddenSelect.dispatchEvent(new Event('change'));
+  return container;
+}
+
+// Load and display sports as buttons and populate sportSelect dropdown
+async function loadSports() {
+  if (!sportSelect) return;
+
+  sportSelect.innerHTML = '';
+  resetLeagueAndGame();
+
+  const container = createSportButtonsContainer();
+  container.innerHTML = 'Loading sports...';
 
   try {
-    const snapshot = await getDocs(collection(db, 'GameCache'));
+    const gamesSnapshot = await getDocs(collection(db, 'GameCache'));
     const sportsSet = new Set();
 
-    snapshot.forEach(doc => {
-      const sport = doc.data().Sport;
-      if (sport) sportsSet.add(sport);
+    gamesSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data && data.Sport) {
+        sportsSet.add(data.Sport);
+      }
     });
 
-    const sports = Array.from(sportsSet).sort((a, b) => a.localeCompare(b));
-    console.log('[sportSelector] Unique sports:', sports);
+    const uniqueSports = Array.from(sportsSet).sort();
+    console.log('[sportSelector] Unique sports:', uniqueSports);
 
-    if (sports.length === 0) {
-      sportButtonsContainer.textContent = 'No sports found';
-      return;
-    }
+    container.innerHTML = '';
 
-    // Style container as 3-column grid with tight gaps
-    sportButtonsContainer.style.display = 'grid';
-    sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    sportButtonsContainer.style.gridAutoRows = 'min-content';
-    sportButtonsContainer.style.gap = '4px 6px';
-    sportButtonsContainer.style.marginTop = '8px';
-    sportButtonsContainer.style.alignItems = 'start';
+    uniqueSports.forEach(sport => {
+      // Create and append sport button
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pick-btn blue';
+      btn.textContent = sport;
+      btn.style.whiteSpace = 'normal';
+      btn.addEventListener('click', () => {
+        selectSport(sport);
+      });
+      container.appendChild(btn);
 
-    sports.forEach(sport => {
-      sportButtonsContainer.appendChild(createSportButton(sport));
+      // Add option to sportSelect dropdown as well
+      const option = document.createElement('option');
+      option.value = sport;
+      option.textContent = sport;
+      sportSelect.appendChild(option);
     });
+
+    sportSelect.disabled = false;
   } catch (error) {
-    console.error('Error loading sports:', error);
-    sportButtonsContainer.textContent = 'Error loading sports';
+    console.error('[sportSelector] Error loading sports:', error);
+    container.textContent = 'Failed to load sports';
+    sportSelect.innerHTML = '<option>Failed to load sports</option>';
+    sportSelect.disabled = true;
   }
 }
 
-function updateHiddenSelect(sport) {
-  hiddenSelect.innerHTML = '';
-  const option = document.createElement('option');
-  option.value = sport;
-  option.selected = true;
-  hiddenSelect.appendChild(option);
-  hiddenSelect.dispatchEvent(new Event('change'));
-}
+// When sport is selected (via button or dropdown)
+function selectSport(selectedSport) {
+  if (!sportSelect) return;
 
-function clearHiddenSelect() {
-  hiddenSelect.innerHTML = '';
-  hiddenSelect.dispatchEvent(new Event('change'));
-}
+  // Update sportSelect dropdown
+  sportSelect.value = selectedSport;
 
-function selectSport(button, sport) {
-  if (selectedSport === sport) return;
-
-  selectedSport = sport;
-
-  sportButtonsContainer.innerHTML = '';
-
-  sportButtonsContainer.style.display = 'grid';
-  sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  sportButtonsContainer.style.gridAutoRows = 'min-content';
-  sportButtonsContainer.style.gap = '4px 6px';
-  sportButtonsContainer.style.marginTop = '8px';
-  sportButtonsContainer.style.alignItems = 'start';
-
-  // Selected sport button green, top-left grid cell
-  const selectedBtn = createSportButton(sport);
-  selectedBtn.classList.remove('blue');
-  selectedBtn.classList.add('green');
-  sportButtonsContainer.appendChild(selectedBtn);
-
-  // Invisible placeholder button for middle cell
-  const placeholderBtn = createSportButton('');
-  placeholderBtn.style.visibility = 'hidden';
-  placeholderBtn.style.pointerEvents = 'none';
-  placeholderBtn.style.margin = '0';
-  placeholderBtn.style.padding = '0';
-  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
-  sportButtonsContainer.appendChild(placeholderBtn);
-
-  // Change Sport button in third cell
-  if (!changeSportBtn) {
-    changeSportBtn = document.createElement('button');
-    changeSportBtn.type = 'button';
-    changeSportBtn.textContent = 'Change Sport';
-    changeSportBtn.className = 'pick-btn blue';
-    changeSportBtn.style.minWidth = '120px';
-    changeSportBtn.style.width = '100%';
-    changeSportBtn.style.boxSizing = 'border-box';
-    changeSportBtn.style.alignSelf = 'flex-start';
-    changeSportBtn.style.marginTop = '0';
-
-    changeSportBtn.addEventListener('click', () => {
-      resetSportSelection();
+  // Highlight selected button
+  const container = document.getElementById(sportButtonsContainerId);
+  if (container) {
+    [...container.children].forEach(btn => {
+      btn.classList.toggle('green', btn.textContent === selectedSport);
+      btn.classList.toggle('blue', btn.textContent !== selectedSport);
     });
   }
-  sportButtonsContainer.appendChild(changeSportBtn);
 
-  updateHiddenSelect(sport);
+  // Reset dependent selectors and options
+  resetLeagueAndGame();
+
+  // TODO: Load leagues for selected sport (handled in leagueSelector.js)
+  leagueSelect.disabled = false;
+  leagueSelect.innerHTML = '<option>Select a league first</option>';
+  gameSelect.innerHTML = '<option>Select a league first</option>';
+  gameSelect.disabled = true;
 }
 
-function resetSportSelection() {
-  selectedSport = null;
-
-  if (changeSportBtn) {
-    changeSportBtn.remove();
-    changeSportBtn = null;
-  }
-
-  loadSports();
-
-  clearHiddenSelect();
+// Bind event to sportSelect dropdown change to sync with buttons
+if (sportSelect) {
+  sportSelect.addEventListener('change', (e) => {
+    selectSport(e.target.value);
+  });
 }
 
-function createSportButton(sport) {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.textContent = sport;
-  btn.className = 'pick-btn blue';
-
-  // Tighter vertical spacing for consistent button sizing
-  btn.style.paddingTop = '6px';
-  btn.style.paddingBottom = '6px';
-  btn.style.marginTop = '2px';
-  btn.style.marginBottom = '2px';
-
-  btn.style.width = '100%';
-  btn.style.minWidth = '0';
-  btn.style.boxSizing = 'border-box';
-  btn.addEventListener('click', () => selectSport(btn, sport));
-  return btn;
-}
+// Export loadSports to be called on login success
+export { loadSports };
