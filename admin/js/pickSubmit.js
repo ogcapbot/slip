@@ -1,6 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getNotesData, resetNotes } from '/admin/js/notesSection.js';  // Import notes getter + resetter if exists
+import { getNotesData } from '/admin/js/notesSection.js';  // ONLY getNotesData imported
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
@@ -16,13 +16,10 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
 
-// Add this function to fully reset all selections and UI to initial sports-only state
 function resetAllSelections() {
-  // Clear error/success messages
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  // Reset selects to initial state
   sportSelect.value = '';
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
@@ -33,38 +30,29 @@ function resetAllSelections() {
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
-  // Clear pick options buttons and final pick description
   pickOptionsContainer.innerHTML = '';
   finalPickDescription.textContent = '';
 
-  // Reset number input and container
   numberInput.value = '';
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
-  // Clear green selection highlights in pick options
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
-  // Reset notes section if you have a reset function exported
-  if (typeof resetNotes === 'function') {
-    resetNotes();
-  }
+  // NOTE: Removed resetNotes call because it's not exported from notesSection.js
 
-  // If you have a function to load/show sports buttons, call it here
-  // For example: loadSportsButtons();
-  // If you don’t have one, you can trigger the sportSelect UI or build those buttons here.
-
-  // Enable sportSelect so user can start fresh
   sportSelect.disabled = false;
+
+  // If you have a function to load sports buttons or populate sportSelect, call it here
+  // e.g., loadSportsButtons();
 }
 
-// Main submit event listener
 pickForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  submitBtn.disabled = true; // Prevent double submits
+  submitBtn.disabled = true;
 
   const sport = sportSelect.value;
   const league = leagueSelect.value;
@@ -77,10 +65,9 @@ pickForm.addEventListener('submit', async (e) => {
 
   const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
 
-  // Get notes data from notesSection.js
   const notes = getNotesData() || '';
 
-  // Validation
+  // Validation checks
   if (!sport) return (pickError.textContent = 'Please select a sport.', submitBtn.disabled = false);
   if (!league) return (pickError.textContent = 'Please select a league.', submitBtn.disabled = false);
   if (!gameId) return (pickError.textContent = 'Please select a game.', submitBtn.disabled = false);
@@ -92,7 +79,6 @@ pickForm.addEventListener('submit', async (e) => {
   if (!unit) return (pickError.textContent = 'Please select a unit.', submitBtn.disabled = false);
 
   try {
-    // Fetch game data
     const gameDocRef = doc(db, 'GameCache', gameId);
     const gameDocSnap = await getDoc(gameDocRef);
     if (!gameDocSnap.exists()) {
@@ -100,7 +86,6 @@ pickForm.addEventListener('submit', async (e) => {
     }
     const gameData = gameDocSnap.data();
 
-    // Fetch wager type data
     const wagerTypeDocRef = doc(db, 'WagerTypes', wagerTypeId);
     const wagerTypeDocSnap = await getDoc(wagerTypeDocRef);
     if (!wagerTypeDocSnap.exists()) {
@@ -108,7 +93,6 @@ pickForm.addEventListener('submit', async (e) => {
     }
     const wagerTypeData = wagerTypeDocSnap.data();
 
-    // Build wager description
     let wagerDesc = wagerTypeData.pick_desc_template || '';
     const pickLastWord = pickText.split(' ').slice(-1)[0];
     if (wagerDesc.includes('[[TEAM]]')) {
@@ -118,11 +102,9 @@ pickForm.addEventListener('submit', async (e) => {
       wagerDesc = wagerDesc.replace(/\[\[NUM\]\]/g, wagerNum !== null ? wagerNum : '___');
     }
 
-    // User info from global window.currentUser (adjust if needed)
     const userAccessCode = window.currentUser?.AccessCode || null;
     const userDisplayName = window.currentUser?.DisplayName || null;
 
-    // Compose submission document
     const submissionDoc = {
       userAccessCode,
       userDisplayName,
@@ -154,13 +136,12 @@ pickForm.addEventListener('submit', async (e) => {
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset all selections and UI to initial state
     resetAllSelections();
 
   } catch (err) {
     console.error('Error submitting pick:', err);
     pickError.textContent = 'Error submitting pick. Please try again.';
   } finally {
-    submitBtn.disabled = false; // Re-enable submit button
+    submitBtn.disabled = false;
   }
 });
