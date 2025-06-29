@@ -4,6 +4,9 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 
 const originalSportSelect = document.getElementById('sportSelect');
 
+// Minimal addition: get league section container to show/hide
+const leagueSection = document.getElementById('leagueSelect')?.parentNode || null;
+
 let sportButtonsContainer;
 let hiddenSelect;
 let selectedSport = null;
@@ -52,6 +55,11 @@ export async function loadSports() {
   }
   hiddenSelect.innerHTML = '';
   hiddenSelect.dispatchEvent(new Event('change'));
+
+  // Minimal addition: hide league section initially
+  if (leagueSection) {
+    leagueSection.style.display = 'none';
+  }
 
   try {
     const snapshot = await getDocs(collection(db, 'GameCache'));
@@ -149,6 +157,11 @@ function selectSport(button, sport) {
   sportButtonsContainer.appendChild(changeSportBtn);
 
   updateHiddenSelect(sport);
+
+  // Minimal addition: show league section once sport selected
+  if (leagueSection) {
+    leagueSection.style.display = ''; // clear inline display to show normally
+  }
 }
 
 function resetSportSelection() {
@@ -162,6 +175,11 @@ function resetSportSelection() {
   loadSports();
 
   clearHiddenSelect();
+
+  // Minimal addition: hide league section on reset
+  if (leagueSection) {
+    leagueSection.style.display = 'none';
+  }
 }
 
 function createSportButton(sport) {
