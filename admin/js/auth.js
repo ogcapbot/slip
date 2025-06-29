@@ -28,6 +28,7 @@ function createPhoneLoginUI() {
   verifyCodeBtn = document.getElementById('verifyCodeBtn');
   loginError = document.getElementById('loginError');
 
+  // Initialize reCAPTCHA after UI is ready
   initRecaptcha();
 
   sendCodeBtn.addEventListener('click', sendVerificationCode);
@@ -46,6 +47,12 @@ function sendVerificationCode() {
   sendCodeBtn.disabled = true;
 
   const appVerifier = window.recaptchaVerifier;
+  if (!appVerifier) {
+    loginError.textContent = 'reCAPTCHA is not ready. Please try again later.';
+    sendCodeBtn.disabled = false;
+    return;
+  }
+
   signInWithPhoneNumber(auth, phoneNumber, appVerifier)
     .then((result) => {
       confirmationResult = result;
