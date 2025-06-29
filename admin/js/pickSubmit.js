@@ -1,3 +1,4 @@
+// pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -21,7 +22,7 @@ pickForm.addEventListener('submit', async (e) => {
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  submitBtn.disabled = true; // Disable submit to prevent double submits
+  submitBtn.disabled = true; // Prevent double submits
 
   const sport = sportSelect.value;
   const league = leagueSelect.value;
@@ -29,16 +30,13 @@ pickForm.addEventListener('submit', async (e) => {
   const wagerTypeId = wagerTypeSelect.value;
   const unit = unitsSelect.value;
 
-  // Find the selected pick (the green button text)
   const selectedPickButton = pickOptionsContainer.querySelector('button.green');
   const pickText = selectedPickButton ? selectedPickButton.textContent.trim() : '';
 
-  // Number input if needed
   const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
-
-  // Get notes text
   const notes = notesInput ? notesInput.value.trim() : '';
 
+  // Validation
   if (!sport) return (pickError.textContent = 'Please select a sport.');
   if (!league) return (pickError.textContent = 'Please select a league.');
   if (!gameId) return (pickError.textContent = 'Please select a game.');
@@ -50,7 +48,7 @@ pickForm.addEventListener('submit', async (e) => {
   if (!unit) return (pickError.textContent = 'Please select a unit.');
 
   try {
-    // Fetch current game doc snapshot
+    // Fetch game data
     const gameDocRef = doc(db, 'GameCache', gameId);
     const gameDocSnap = await getDoc(gameDocRef);
     if (!gameDocSnap.exists()) {
@@ -58,7 +56,7 @@ pickForm.addEventListener('submit', async (e) => {
     }
     const gameData = gameDocSnap.data();
 
-    // Fetch wager type doc snapshot
+    // Fetch wager type data
     const wagerTypeDocRef = doc(db, 'WagerTypes', wagerTypeId);
     const wagerTypeDocSnap = await getDoc(wagerTypeDocRef);
     if (!wagerTypeDocSnap.exists()) {
@@ -66,7 +64,7 @@ pickForm.addEventListener('submit', async (e) => {
     }
     const wagerTypeData = wagerTypeDocSnap.data();
 
-    // Build final wager description replacing [[NUM]] and [[TEAM]] as done in wagerType module
+    // Build wager description
     let wagerDesc = wagerTypeData.pick_desc_template || '';
     const pickLastWord = pickText.split(' ').slice(-1)[0];
     if (wagerDesc.includes('[[TEAM]]')) {
@@ -76,7 +74,7 @@ pickForm.addEventListener('submit', async (e) => {
       wagerDesc = wagerDesc.replace(/\[\[NUM\]\]/g, wagerNum !== null ? wagerNum : '___');
     }
 
-    // Prepare user info from global or window.currentUser - adjust as your login setup
+    // User info from global window.currentUser (adjust if needed)
     const userAccessCode = window.currentUser?.AccessCode || null;
     const userDisplayName = window.currentUser?.DisplayName || null;
 
@@ -112,14 +110,14 @@ pickForm.addEventListener('submit', async (e) => {
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset UI states as needed
+    // Reset UI states
     wagerTypeSelect.disabled = true;
     unitsSelect.disabled = true;
     numberInput.value = '';
     numberInput.disabled = true;
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
-    notesInput.value = '';
+    if (notesInput) notesInput.value = '';
 
     pickOptionsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('green'));
     gameSelect.innerHTML = '<option value="">Select a league first</option>';
