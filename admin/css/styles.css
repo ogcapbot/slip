@@ -1,7 +1,7 @@
 /* styles.css */
 
 html {
-  font-size: 14px;
+  font-size: 14px; /* global smaller base font size */
 }
 
 body {
@@ -11,129 +11,153 @@ body {
   margin: auto;
   background-color: #f9f9f9;
   color: #222;
-  font-size: 1rem;
+  font-size: 1rem; /* equals 14px now */
   line-height: 1.3;
 }
 
-/* ... your other styles above remain unchanged ... */
+h1 {
+  text-align: center;
+  margin-bottom: 6px;
+  font-size: 1.8rem; /* smaller heading */
+}
 
-/* BUTTONS BASE */
+.subtext {
+  text-align: center;
+  color: red;
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 14px;
+  display: block;
+  font-size: 0.95rem;
+}
+
+input[type="text"],
+select {
+  width: 100%;
+  padding: 8px 10px; /* smaller padding */
+  margin-top: 5px;
+  font-family: 'Oswald', Arial, sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+button {
+  margin-top: 16px;
+  padding: 10px;
+  width: 100%;
+  font-family: 'Oswald', Arial, sans-serif;
+  font-size: 1rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #357ABD;
+}
+
+#error, .error {
+  color: #c00;
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.success {
+  color: green;
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+#pickForm {
+  display: none;
+}
+
 .pick-btn {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
   font-size: 0.8rem;
-  padding: 7px 12px;
-  min-height: 44px;
-  border-radius: 4px;
-  color: white;
+  padding: 8px 12px;
   border: none;
+  color: white;
   cursor: pointer;
-  box-sizing: border-box;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  user-select: none;
-  transition: background-color 0.3s ease, box-shadow 0.2s ease, transform 0.1s ease;
-  background-image: linear-gradient(rgba(255,255,255,0.15), rgba(0,0,0,0.1));
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.3);
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
 }
 
-.pick-btn:hover:not(:disabled) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-.pick-btn:active:not(:disabled),
-.pick-btn.green:active {
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
-  transform: scale(0.97);
-}
-
-/* COLOR VARIANTS */
 .pick-btn.blue {
   background-color: #4285f4;
 }
 
-.pick-btn.blue:hover:not(:disabled) {
-  background-color: #357ABD;
-}
-
 .pick-btn.green {
-  background-color: #34a853 !important;
-  background-image: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.pick-btn.green:active {
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-  transform: scale(0.97);
-}
-
-.pick-btn.red {
-  background-color: #b33a3a; /* deeper warm red */
-  opacity: 0.6;
-  cursor: not-allowed;
-  transition: background-color 0.3s ease, opacity 0.3s ease;
-}
-
-.pick-btn.red.enabled {
   background-color: #34a853;
-  opacity: 1;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
-.pick-btn.red.enabled:active {
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-  transform: translateY(1px);
+#numberInput {
+  width: 50px;
+  padding: 5px 7px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-top: 4px;
 }
 
-.pick-btn:disabled {
+#numberInput:disabled {
+  background-color: #f0f0f0;
   cursor: not-allowed;
-  opacity: 0.5;
-  box-shadow: none;
-  transform: none;
 }
 
-/* ACTION BUTTONS CONTAINER */
-#actionButtonsContainer {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px 4px;
-  margin: 12px 8px 16px;
-  padding: 0 8px;
-  width: 100%;
-  box-sizing: border-box;
+.pick-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-}
 
-#startOverBtn {
-  justify-self: start;
-  max-width: 120px;
+  /* Approximate height for 2 lines of text */
+  line-height: 1.2em;
+  max-height: calc(1.2em * 2 + 12px); /* 2 lines + vertical padding */
+  min-height: calc(1.2em * 2 + 12px);
+
+  padding: 6px 10px;
+  margin: 4px 0;
+
+  white-space: normal;
+  overflow: hidden;
+
+  text-align: center;
+  box-sizing: border-box;
   width: 100%;
-  margin: 0;
+
+  /* Optional: clip overflow text with ellipsis if too long */
+  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
-#submitBtn {
-  justify-self: end !important;
-  max-width: 120px;
-  width: 100%;
-  margin: 0;
-}
-
-/* Responsive - stack buttons on narrow screens */
-@media (max-width: 380px) {
-  #actionButtonsContainer {
-    grid-template-columns: 1fr !important;
-    gap: 8px;
-    padding: 0 12px;
-  }
-  #startOverBtn,
-  #submitBtn {
-    max-width: none;
-    width: 100%;
-    justify-self: stretch !important;
-  }
+.pick-btn span {
+  display: block;
+  font-size: 0.85em;
+  margin-top: 2px;
+  line-height: 1.1em;
+  color: inherit;
 }
