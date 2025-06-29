@@ -3,6 +3,8 @@ import { auth, initRecaptcha } from '../firebaseInit.js';
 import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { loadSports } from './sportSelector.js';
 
+console.log('Auth in auth.js:', auth);
+
 const loginSection = document.getElementById('phoneLoginSection');
 const pickForm = document.getElementById('pickForm');
 
@@ -28,7 +30,6 @@ function createPhoneLoginUI() {
   verifyCodeBtn = document.getElementById('verifyCodeBtn');
   loginError = document.getElementById('loginError');
 
-  // Initialize reCAPTCHA widget
   initRecaptcha();
 
   sendCodeBtn.addEventListener('click', sendVerificationCode);
@@ -48,7 +49,7 @@ function sendVerificationCode() {
 
   const appVerifier = window.recaptchaVerifier;
   if (!appVerifier) {
-    loginError.textContent = 'reCAPTCHA is not ready. Please try again later.';
+    loginError.textContent = 'reCAPTCHA is not ready. Please refresh the page.';
     sendCodeBtn.disabled = false;
     return;
   }
@@ -96,5 +97,5 @@ function verifyCode() {
     });
 }
 
-// Start UI on load
+// Initialize UI on script load
 createPhoneLoginUI();
