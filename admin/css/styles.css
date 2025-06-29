@@ -267,20 +267,21 @@ button:hover {
   z-index: auto;
 }
 
-/* Container for the two bottom buttons (Start Over and Submit Pick) */
+/* --- NEW FIXES for Bottom Buttons Container & Buttons --- */
+
 #actionButtonsContainer {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
-  gap: 1rem 2rem; /* vertical gap 1rem, horizontal gap 2rem */
-  margin-top: 2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px; /* horizontal gap only */
   max-width: 400px;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 2rem auto 0 auto;
 }
 
-/* Buttons inside this container fill their grid column */
-#actionButtonsContainer button.pick-btn {
+#actionButtonsContainer button {
+  margin: 0;
+  max-width: none;
+  display: inline-block;
   width: 100%;
   padding: 12px;
   font-size: 16px;
@@ -293,7 +294,6 @@ button:hover {
   transition: background-color 0.3s ease;
 }
 
-/* Start Over button left aligned (default in grid) */
 #startOverBtn {
   background-color: #2a9fd6;
   color: white;
@@ -302,22 +302,13 @@ button:hover {
   background-color: #2179a5;
 }
 
-/* Submit button right aligned */
 #submitBtn {
-  background-color: #b87f7f; /* your previous red-ish */
-  color: white;
-}
-
-/* Disabled submit button style */
-#submitBtn:disabled {
-  background-color: #ccc !important;
+  background-color: #b87f7f;
   cursor: not-allowed;
   color: #666;
 }
-
-/* Enabled submit button style */
 #submitBtn.enabled {
-  background-color: #4CAF50 !important; /* green */
+  background-color: #4caf50;
   color: white;
   cursor: pointer;
 }
