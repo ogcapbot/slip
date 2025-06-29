@@ -1,6 +1,11 @@
 // admin/firebaseInit.js
 
-// No imports — using global firebase variable loaded via HTML scripts
+// Import Firestore modular SDK normally
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+
+// No imports for auth and recaptcha — use global firebase compat
+// So you MUST load compat SDK scripts in HTML <head> as before
 
 const firebaseConfig = {
   apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
@@ -12,12 +17,15 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+// Export app and db normally
+export { app, db };
+
+// Export auth and initRecaptcha from global firebase compat
 function initRecaptcha() {
   if (!window.recaptchaVerifier) {
-    console.log('Creating RecaptchaVerifier...');
     window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
       size: 'invisible',
       callback: (response) => {
@@ -27,4 +35,5 @@ function initRecaptcha() {
   }
 }
 
-export { app, auth, initRecaptcha };
+// Export initRecaptcha function
+export { initRecaptcha };
