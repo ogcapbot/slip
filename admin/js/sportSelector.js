@@ -69,12 +69,13 @@ export async function loadSports() {
       return;
     }
 
-    // Style as grid for 3 columns
+    // Style as grid for 3 columns with tight gaps and top alignment
     sportButtonsContainer.style.display = 'grid';
     sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     sportButtonsContainer.style.gridAutoRows = 'min-content';
-    sportButtonsContainer.style.gap = '6px 8px';
+    sportButtonsContainer.style.gap = '4px 6px'; // 4px vertical, 6px horizontal gap
     sportButtonsContainer.style.marginTop = '8px';
+    sportButtonsContainer.style.alignItems = 'start';
 
     // Add buttons in order for natural row-wise grid flow
     sports.forEach(sport => {
@@ -107,12 +108,13 @@ function selectSport(button, sport) {
 
   sportButtonsContainer.innerHTML = '';
 
-  // Apply grid style
+  // Apply grid style with tight gaps and top alignment
   sportButtonsContainer.style.display = 'grid';
   sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   sportButtonsContainer.style.gridAutoRows = 'min-content';
-  sportButtonsContainer.style.gap = '6px 8px';
+  sportButtonsContainer.style.gap = '4px 6px';
   sportButtonsContainer.style.marginTop = '8px';
+  sportButtonsContainer.style.alignItems = 'start';
 
   // Selected sport button green, top-left grid cell
   const selectedBtn = createSportButton(sport);
@@ -120,8 +122,9 @@ function selectSport(button, sport) {
   selectedBtn.classList.add('green');
   sportButtonsContainer.appendChild(selectedBtn);
 
-  // Placeholder empty div for middle cell
+  // Placeholder empty div for middle cell with fixed height
   const emptyDiv = document.createElement('div');
+  emptyDiv.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '40px';
   sportButtonsContainer.appendChild(emptyDiv);
 
   // Change Sport button in third cell
