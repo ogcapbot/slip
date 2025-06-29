@@ -6,6 +6,9 @@ const sportSelect = document.getElementById("sportSelect");
 const leagueSelect = document.getElementById("leagueSelect");
 const gameSelect = document.getElementById("gameSelect");
 
+// Minimal addition: get game section container (assuming same pattern: parent of gameSelect)
+const gameSection = gameSelect?.parentNode || null;
+
 // Hide the original leagueSelect dropdown but keep it for compatibility
 if (leagueSelect) {
   leagueSelect.style.display = "none";
@@ -30,6 +33,11 @@ if (!leagueButtonsContainer) {
   }
 }
 
+// Minimal addition: hide game section initially
+if (gameSection) {
+  gameSection.style.display = "none";
+}
+
 let selectedLeague = null;
 let changeLeagueBtn = null;
 
@@ -45,6 +53,11 @@ sportSelect.addEventListener("change", async () => {
   // Reset game select
   gameSelect.innerHTML = '<option>Select a league first</option>';
   gameSelect.disabled = true;
+
+  // Minimal addition: hide game section on sport change
+  if (gameSection) {
+    gameSection.style.display = "none";
+  }
 
   if (!selectedSport) {
     leagueSelect.value = "";
@@ -175,6 +188,11 @@ function selectLeague(button, league) {
     });
   }
   leagueButtonsContainer.appendChild(changeLeagueBtn);
+
+  // Minimal addition: show game section when league selected
+  if (gameSection) {
+    gameSection.style.display = ""; // show game section (clear inline display)
+  }
 }
 
 function resetLeagueSelection() {
@@ -190,6 +208,11 @@ function resetLeagueSelection() {
   leagueSelect.dispatchEvent(new Event("change"));
 
   leagueButtonsContainer.innerHTML = "";
+
+  // Minimal addition: hide game section on reset
+  if (gameSection) {
+    gameSection.style.display = "none";
+  }
 }
 
 export default {};
