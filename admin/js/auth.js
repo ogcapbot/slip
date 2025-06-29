@@ -79,7 +79,7 @@ function verifyCode() {
     .then((result) => {
       loginSection.style.display = 'none';
       pickForm.style.display = 'block';
-      // Call your loadSports or any other setup here
+      // Your loadSports or any other init function here
 
       window.currentUser = {
         uid: result.user.uid,
