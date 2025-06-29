@@ -127,3 +127,23 @@ button:hover {
   background-color: #f0f0f0;
   cursor: not-allowed;
 }
+
+.pick-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px; /* adjust as needed */
+  text-align: center;
+  white-space: normal;
+  /* width: 100%; optional */
+}
+
+.pick-btn span {
+  font-size: 0.85em;
+  font-weight: normal;
+  margin-top: 2px;
+  line-height: 1.2;
+  color: inherit; /* or specify color */
+}
+
