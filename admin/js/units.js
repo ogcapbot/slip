@@ -29,6 +29,8 @@ let selectedUnit = null;
 let changeUnitBtn = null;
 
 export async function loadUnits() {
+  console.log('loadUnits called');  // Debug log
+
   unitButtonsContainer.innerHTML = '';
   selectedUnit = null;
   if (changeUnitBtn) {
@@ -51,6 +53,8 @@ export async function loadUnits() {
         units.push(data);
       }
     });
+
+    console.log('units fetched:', units.length);  // Debug log
 
     if (units.length === 0) {
       unitButtonsContainer.textContent = 'No units found';
@@ -176,5 +180,3 @@ function resetUnitSelection() {
 
   unitButtonsContainer.innerHTML = '';
 }
-
-// export { loadUnits };
