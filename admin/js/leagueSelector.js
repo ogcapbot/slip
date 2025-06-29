@@ -6,36 +6,26 @@ const sportSelect = document.getElementById("sportSelect");
 const leagueSelect = document.getElementById("leagueSelect");
 const gameSelect = document.getElementById("gameSelect");
 
-// Minimal addition: get game section container (assuming same pattern: parent of gameSelect)
-const gameSection = gameSelect?.parentNode || null;
+const leagueButtonsContainer = document.getElementById("leagueButtonsContainer");
+const gameButtonsContainer = document.getElementById("gameButtonsContainer");
 
 // Hide the original leagueSelect dropdown but keep it for compatibility
 if (leagueSelect) {
   leagueSelect.style.display = "none";
 }
 
-let leagueButtonsContainer = document.getElementById("leagueButtonsContainer");
-if (!leagueButtonsContainer) {
-  leagueButtonsContainer = document.createElement("div");
-  leagueButtonsContainer.id = "leagueButtonsContainer";
-
-  // Insert the container after the league label
-  const leagueLabel = document.querySelector('label[for="leagueSelect"]');
-  if (leagueLabel) {
-    leagueLabel.parentNode.insertBefore(leagueButtonsContainer, leagueLabel.nextSibling);
-  } else {
-    // fallback append to parent of leagueSelect or body
-    if (leagueSelect && leagueSelect.parentNode) {
-      leagueSelect.parentNode.appendChild(leagueButtonsContainer);
-    } else {
-      document.body.appendChild(leagueButtonsContainer);
-    }
-  }
+// Hide league buttons container initially if exists
+if (leagueButtonsContainer) {
+  leagueButtonsContainer.style.display = "none";
 }
 
-// Minimal addition: hide game section initially
-if (gameSection) {
-  gameSection.style.display = "none";
+// Hide game select and buttons initially
+if (gameSelect) {
+  gameSelect.style.display = "none";
+  gameSelect.disabled = true;
+}
+if (gameButtonsContainer) {
+  gameButtonsContainer.style.display = "none";
 }
 
 let selectedLeague = null;
@@ -50,25 +40,26 @@ sportSelect.addEventListener("change", async () => {
     changeLeagueBtn = null;
   }
 
-  // Reset game select
+  // Reset game select & hide game section
   gameSelect.innerHTML = '<option>Select a league first</option>';
   gameSelect.disabled = true;
-
-  // Minimal addition: hide game section on sport change
-  if (gameSection) {
-    gameSection.style.display = "none";
-  }
+  if (gameSelect) gameSelect.style.display = "none";
+  if (gameButtonsContainer) gameButtonsContainer.style.display = "none";
 
   if (!selectedSport) {
     leagueSelect.value = "";
     leagueSelect.disabled = true;
+    if (leagueSelect) leagueSelect.style.display = "none";
+    if (leagueButtonsContainer) leagueButtonsContainer.style.display = "none";
     return;
   }
 
   leagueSelect.disabled = true;
   leagueSelect.value = "";
+  leagueSelect.style.display = "none"; // Hide the select, show buttons only
 
   leagueButtonsContainer.textContent = "Loading leagues...";
+  leagueButtonsContainer.style.display = "";
 
   try {
     const q = query(collection(db, "GameCache"), where("Sport", "==", selectedSport));
@@ -144,6 +135,7 @@ function selectLeague(button, league) {
   option.selected = true;
   leagueSelect.appendChild(option);
   leagueSelect.disabled = false;
+  leagueSelect.style.display = "none"; // keep hidden, use buttons only
   leagueSelect.dispatchEvent(new Event("change"));
 
   // Clear and rebuild leagueButtonsContainer with only selected and change button
@@ -189,9 +181,13 @@ function selectLeague(button, league) {
   }
   leagueButtonsContainer.appendChild(changeLeagueBtn);
 
-  // Minimal addition: show game section when league selected
-  if (gameSection) {
-    gameSection.style.display = ""; // show game section (clear inline display)
+  // Show game select and game buttons container
+  if (gameSelect) {
+    gameSelect.style.display = '';
+    gameSelect.disabled = false;
+  }
+  if (gameButtonsContainer) {
+    gameButtonsContainer.style.display = '';
   }
 }
 
@@ -205,13 +201,19 @@ function resetLeagueSelection() {
 
   leagueSelect.innerHTML = '<option value="" disabled selected>Choose League</option>';
   leagueSelect.disabled = true;
+  leagueSelect.style.display = 'none';
   leagueSelect.dispatchEvent(new Event("change"));
 
   leagueButtonsContainer.innerHTML = "";
+  leagueButtonsContainer.style.display = "none";
 
-  // Minimal addition: hide game section on reset
-  if (gameSection) {
-    gameSection.style.display = "none";
+  // Hide game select and buttons too
+  if (gameSelect) {
+    gameSelect.style.display = "none";
+    gameSelect.disabled = true;
+  }
+  if (gameButtonsContainer) {
+    gameButtonsContainer.style.display = "none";
   }
 }
 
