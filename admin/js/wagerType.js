@@ -1,3 +1,4 @@
+// wagerType.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadUnits } from './units.js';
@@ -8,6 +9,7 @@ const numberInputContainer = document.getElementById('numberInputContainer');
 const numberInput = document.getElementById('numberInput');
 const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // To get team buttons
+const gameSelect = document.getElementById('gameSelect'); // added here since it listens
 
 // Utility to get last word of a team name
 function getLastWord(teamName) {
@@ -16,7 +18,7 @@ function getLastWord(teamName) {
   return words[words.length - 1];
 }
 
-// Listen to sport change to reset wagerType dropdown
+// Reset wagerType dropdown on sport change
 sportSelect.addEventListener('change', () => {
   wagerTypeSelect.innerHTML = '<option>Select a sport first</option>';
   wagerTypeSelect.disabled = true;
@@ -24,8 +26,7 @@ sportSelect.addEventListener('change', () => {
   finalPickDescription.textContent = '';
 });
 
-// Listen to gameSelect change (enable wagerType)
-const gameSelect = document.getElementById('gameSelect');
+// Enable wagerType load on game selection change
 gameSelect.addEventListener('change', async () => {
   if (!gameSelect.value) {
     wagerTypeSelect.disabled = true;
@@ -37,7 +38,7 @@ gameSelect.addEventListener('change', async () => {
   await loadWagerTypes();
 });
 
-// Load wager types
+// Load wager types filtered by sport or 'All'
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   wagerTypeSelect.disabled = true;
@@ -46,22 +47,21 @@ async function loadWagerTypes() {
   finalPickDescription.textContent = '';
 
   try {
+    // Firestore does NOT support multiple where on same field combined by OR.
+    // So we query for 'All' first, then for selectedSport, then merge results.
     const wagerTypesRef = collection(db, 'WagerTypes');
-    // Fetch wager types with Sport='All' OR selectedSport, ordered by Sport and id ascending
-    const q = query(
-      wagerTypesRef,
-      where('active_status', '==', 'active'),
-      where('Sport', 'in', ['All', selectedSport]),
-      orderBy('Sport'),
-      orderBy('id')
-    );
-    const querySnapshot = await getDocs(q);
 
-    const wagerTypes = [];
-    querySnapshot.forEach(doc => {
-      const data = doc.data();
-      wagerTypes.push(data);
-    });
+    const qAll = query(wagerTypesRef, where('active_status', '==', 'active'), where('Sport', '==', 'All'), orderBy('id'));
+    const qSport = query(wagerTypesRef, where('active_status', '==', 'active'), where('Sport', '==', selectedSport), orderBy('id'));
+
+    const [allSnap, sportSnap] = await Promise.all([getDocs(qAll), getDocs(qSport)]);
+
+    const wagerTypesMap = new Map();
+
+    allSnap.forEach(doc => wagerTypesMap.set(doc.id, doc.data()));
+    sportSnap.forEach(doc => wagerTypesMap.set(doc.id, doc.data()));
+
+    const wagerTypes = Array.from(wagerTypesMap.values());
 
     if (wagerTypes.length === 0) {
       wagerTypeSelect.innerHTML = '<option>No wager types found</option>';
@@ -86,15 +86,15 @@ async function loadWagerTypes() {
   }
 }
 
-// Update pick description and show number input if needed
+// Update pick description and number input visibility on wagerType change
 wagerTypeSelect.addEventListener('change', () => {
   const selectedOption = wagerTypeSelect.options[wagerTypeSelect.selectedIndex];
-  const descTemplate = selectedOption.dataset.descTemplate || '';
+  const descTemplate = selectedOption?.dataset.descTemplate || '';
   finalPickDescription.textContent = '';
   numberInputContainer.style.display = 'none';
   numberInput.value = '';
 
-  // Get currently selected team pick (the green button)
+  // Get selected team button text
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const selectedTeam = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
 
@@ -118,7 +118,7 @@ wagerTypeSelect.addEventListener('change', () => {
     numberInput.value = '';
   }
 
-  // Load Units dropdown once wager type selected
+  // Load Units dropdown after wager type selection
   loadUnits();
 });
 
