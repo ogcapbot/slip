@@ -4,17 +4,17 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 
 const unitsSelect = document.getElementById('unitsSelect');
 
-// Hide the original select for units but keep it for form compatibility
+// Hide the original select for units but keep for compatibility
 if (unitsSelect) {
   unitsSelect.style.display = 'none';
 }
 
+// Create or reuse container for unit buttons, insert after label or select
 let unitButtonsContainer = document.getElementById('unitButtonsContainer');
 if (!unitButtonsContainer) {
   unitButtonsContainer = document.createElement('div');
   unitButtonsContainer.id = 'unitButtonsContainer';
 
-  // Insert container right after unitsSelect label
   const unitsLabel = document.querySelector('label[for="unitsSelect"]');
   if (unitsLabel) {
     unitsLabel.parentNode.insertBefore(unitButtonsContainer, unitsLabel.nextSibling);
@@ -29,8 +29,9 @@ let selectedUnit = null;
 let changeUnitBtn = null;
 
 export async function loadUnits() {
-  console.log('loadUnits called');  // Debug log
+  console.log('loadUnits called');
 
+  // Clear previous buttons and reset state
   unitButtonsContainer.innerHTML = '';
   selectedUnit = null;
   if (changeUnitBtn) {
@@ -54,7 +55,7 @@ export async function loadUnits() {
       }
     });
 
-    console.log('units fetched:', units.length);  // Debug log
+    console.log('units fetched:', units.length);
 
     if (units.length === 0) {
       unitButtonsContainer.textContent = 'No units found';
@@ -68,7 +69,7 @@ export async function loadUnits() {
 
     unitButtonsContainer.textContent = '';
 
-    // Style container as 3-column grid with tight spacing
+    // Apply grid layout for buttons
     unitButtonsContainer.style.display = 'grid';
     unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     unitButtonsContainer.style.gridAutoRows = 'min-content';
@@ -76,6 +77,7 @@ export async function loadUnits() {
     unitButtonsContainer.style.marginTop = '8px';
     unitButtonsContainer.style.alignItems = 'start';
 
+    // Add buttons for each unit
     units.forEach(unit => {
       unitButtonsContainer.appendChild(createUnitButton(unit.display_unit));
     });
@@ -104,16 +106,16 @@ function createUnitButton(unitName) {
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
 
-  btn.addEventListener('click', () => selectUnit(btn, unitName));
+  btn.addEventListener('click', () => selectUnit(unitName));
 
   return btn;
 }
 
-function selectUnit(button, unitName) {
+function selectUnit(unitName) {
   if (selectedUnit === unitName) return;
-
   selectedUnit = unitName;
 
+  // Clear container and reset layout for selected + change button
   unitButtonsContainer.innerHTML = '';
 
   unitButtonsContainer.style.display = 'grid';
@@ -123,13 +125,13 @@ function selectUnit(button, unitName) {
   unitButtonsContainer.style.marginTop = '8px';
   unitButtonsContainer.style.alignItems = 'start';
 
-  // Selected unit button green, top-left grid cell
+  // Add the selected unit button with green style
   const selectedBtn = createUnitButton(unitName);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   unitButtonsContainer.appendChild(selectedBtn);
 
-  // Invisible placeholder button for middle cell
+  // Invisible placeholder button for grid spacing in middle column
   const placeholderBtn = createUnitButton('');
   placeholderBtn.style.visibility = 'hidden';
   placeholderBtn.style.pointerEvents = 'none';
@@ -138,7 +140,7 @@ function selectUnit(button, unitName) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   unitButtonsContainer.appendChild(placeholderBtn);
 
-  // Change Unit button in third grid cell
+  // Add Change Unit button in third column
   if (!changeUnitBtn) {
     changeUnitBtn = document.createElement('button');
     changeUnitBtn.type = 'button';
@@ -150,13 +152,11 @@ function selectUnit(button, unitName) {
     changeUnitBtn.style.alignSelf = 'flex-start';
     changeUnitBtn.style.marginTop = '0';
 
-    changeUnitBtn.addEventListener('click', () => {
-      resetUnitSelection();
-    });
+    changeUnitBtn.addEventListener('click', resetUnitSelection);
   }
   unitButtonsContainer.appendChild(changeUnitBtn);
 
-  // Update hidden unitsSelect for compatibility
+  // Update the hidden select for form compatibility and submission
   unitsSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = unitName;
