@@ -13,14 +13,13 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-// Initialize Firebase app and services
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 function initRecaptcha() {
   if (!window.recaptchaVerifier) {
-    console.log('Creating new RecaptchaVerifier...');
+    console.log('Creating RecaptchaVerifier...');
     window.recaptchaVerifier = new RecaptchaVerifier(
       'recaptcha-container',
       {
