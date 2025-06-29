@@ -92,10 +92,10 @@ async function loadUnits() {
 
     unitsSelect.disabled = false;
 
-    // Select first unit by default (make it green)
-    if (units.length > 0) {
-      selectUnit(units[0].display_unit);
-    }
+    // Select "1 Unit" by default if it exists, else first unit
+    const defaultUnit = units.find(u => u.display_unit === '1 Unit')?.display_unit || units[0].display_unit;
+    selectUnit(defaultUnit);
+
   } catch (error) {
     console.error('Error loading units:', error);
     unitButtonsContainer.textContent = 'Error loading units';
