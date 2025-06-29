@@ -28,7 +28,7 @@ function createPhoneLoginUI() {
   verifyCodeBtn = document.getElementById('verifyCodeBtn');
   loginError = document.getElementById('loginError');
 
-  // Initialize reCAPTCHA after UI is ready
+  // Initialize reCAPTCHA widget
   initRecaptcha();
 
   sendCodeBtn.addEventListener('click', sendVerificationCode);
@@ -78,7 +78,6 @@ function verifyCode() {
 
   confirmationResult.confirm(code)
     .then((result) => {
-      // User signed in successfully
       loginSection.style.display = 'none';
       pickForm.style.display = 'block';
       loadSports();
@@ -97,5 +96,5 @@ function verifyCode() {
     });
 }
 
-// Initialize UI on script load
+// Start UI on load
 createPhoneLoginUI();
