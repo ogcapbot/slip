@@ -4,12 +4,10 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 
 const unitsSelect = document.getElementById('unitsSelect');
 
-// Hide the original select for units but keep for form compatibility
 if (unitsSelect) {
   unitsSelect.style.display = 'none';
 }
 
-// Create or reuse container for unit buttons, insert after label or select
 let unitButtonsContainer = document.getElementById('unitButtonsContainer');
 if (!unitButtonsContainer) {
   unitButtonsContainer = document.createElement('div');
@@ -129,7 +127,6 @@ function createUnitButton(unitName) {
   btn.type = 'button';
   btn.className = 'pick-btn blue';
 
-  // Split main text and parentheses to separate lines
   const match = unitName.match(/^(.+?)\s*(\(.+\))?$/);
   if (match) {
     btn.innerHTML = match[1].trim();
