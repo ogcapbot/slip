@@ -1,7 +1,6 @@
 // admin/js/auth.js
-import { initRecaptcha } from '../firebaseInit.js';
-
-const auth = firebase.auth();  // This is safe now because init runs on import
+import { auth, initRecaptcha } from '../firebaseInit.js';
+import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
 const loginSection = document.getElementById('phoneLoginSection');
 const pickForm = document.getElementById('pickForm');
@@ -52,7 +51,7 @@ function sendVerificationCode() {
     return;
   }
 
-  auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+  signInWithPhoneNumber(auth, phoneNumber, appVerifier)
     .then((result) => {
       confirmationResult = result;
       loginError.textContent = 'Verification code sent. Check your phone.';
