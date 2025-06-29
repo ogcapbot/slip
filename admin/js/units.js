@@ -4,7 +4,7 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 
 const unitsSelect = document.getElementById('unitsSelect');
 
-// Hide the original select for units but keep for compatibility
+// Hide the original select for units but keep for form compatibility
 if (unitsSelect) {
   unitsSelect.style.display = 'none';
 }
@@ -28,7 +28,7 @@ if (!unitButtonsContainer) {
 let selectedUnit = null;
 let changeUnitBtn = null;
 
-export async function loadUnits() {
+async function loadUnits() {
   console.log('loadUnits called');
 
   // Clear previous buttons and reset state
@@ -67,9 +67,10 @@ export async function loadUnits() {
     // Sort units by Rank ascending
     units.sort((a, b) => a.Rank - b.Rank);
 
+    // Clear loading text before rendering buttons
     unitButtonsContainer.textContent = '';
 
-    // Apply grid layout for buttons
+    // Setup grid styling for buttons
     unitButtonsContainer.style.display = 'grid';
     unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     unitButtonsContainer.style.gridAutoRows = 'min-content';
@@ -77,9 +78,10 @@ export async function loadUnits() {
     unitButtonsContainer.style.marginTop = '8px';
     unitButtonsContainer.style.alignItems = 'start';
 
-    // Add buttons for each unit
+    // Append buttons
     units.forEach(unit => {
-      unitButtonsContainer.appendChild(createUnitButton(unit.display_unit));
+      const btn = createUnitButton(unit.display_unit);
+      unitButtonsContainer.appendChild(btn);
     });
 
     unitsSelect.disabled = false;
@@ -115,7 +117,7 @@ function selectUnit(unitName) {
   if (selectedUnit === unitName) return;
   selectedUnit = unitName;
 
-  // Clear container and reset layout for selected + change button
+  // Clear and reset container with selected unit + change button
   unitButtonsContainer.innerHTML = '';
 
   unitButtonsContainer.style.display = 'grid';
@@ -125,13 +127,13 @@ function selectUnit(unitName) {
   unitButtonsContainer.style.marginTop = '8px';
   unitButtonsContainer.style.alignItems = 'start';
 
-  // Add the selected unit button with green style
+  // Selected unit button green
   const selectedBtn = createUnitButton(unitName);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   unitButtonsContainer.appendChild(selectedBtn);
 
-  // Invisible placeholder button for grid spacing in middle column
+  // Placeholder for spacing in middle column
   const placeholderBtn = createUnitButton('');
   placeholderBtn.style.visibility = 'hidden';
   placeholderBtn.style.pointerEvents = 'none';
@@ -140,7 +142,7 @@ function selectUnit(unitName) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   unitButtonsContainer.appendChild(placeholderBtn);
 
-  // Add Change Unit button in third column
+  // Change Unit button
   if (!changeUnitBtn) {
     changeUnitBtn = document.createElement('button');
     changeUnitBtn.type = 'button';
@@ -156,7 +158,7 @@ function selectUnit(unitName) {
   }
   unitButtonsContainer.appendChild(changeUnitBtn);
 
-  // Update the hidden select for form compatibility and submission
+  // Sync hidden select for submission
   unitsSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = unitName;
@@ -180,3 +182,5 @@ function resetUnitSelection() {
 
   unitButtonsContainer.innerHTML = '';
 }
+
+export { loadUnits };
