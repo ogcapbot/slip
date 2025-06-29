@@ -31,9 +31,15 @@ let changeUnitBtn = null;
 async function loadUnits() {
   console.log('loadUnits called');
 
+  if (!unitButtonsContainer || !unitsSelect) {
+    console.error('Required elements missing.');
+    return;
+  }
+
   // Clear previous buttons and reset state
   unitButtonsContainer.innerHTML = '';
   selectedUnit = null;
+
   if (changeUnitBtn) {
     changeUnitBtn.remove();
     changeUnitBtn = null;
@@ -117,6 +123,8 @@ function selectUnit(unitName) {
   if (selectedUnit === unitName) return;
   selectedUnit = unitName;
 
+  if (!unitButtonsContainer) return;
+
   // Clear and reset container with selected unit + change button
   unitButtonsContainer.innerHTML = '';
 
@@ -171,6 +179,8 @@ function selectUnit(unitName) {
 function resetUnitSelection() {
   selectedUnit = null;
 
+  if (!unitButtonsContainer || !unitsSelect) return;
+
   if (changeUnitBtn) {
     changeUnitBtn.remove();
     changeUnitBtn = null;
@@ -181,6 +191,13 @@ function resetUnitSelection() {
   unitsSelect.dispatchEvent(new Event('change'));
 
   unitButtonsContainer.innerHTML = '';
+  unitButtonsContainer.style.display = ''; // Reset display style
+
+  // Reload units so buttons re-appear after reset
+  loadUnits();
 }
+
+// INITIAL CALL to load units on script load
+loadUnits();
 
 export { loadUnits };
