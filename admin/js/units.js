@@ -1,3 +1,4 @@
+// units.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -10,9 +11,12 @@ export async function loadUnits() {
   try {
     const unitsSnapshot = await getDocs(collection(db, 'Units'));
     const units = [];
+
     unitsSnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.display_unit) units.push(data.display_unit);
+      if (data && data.display_unit) {
+        units.push(data.display_unit);
+      }
     });
 
     if (units.length === 0) {
