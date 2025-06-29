@@ -42,6 +42,22 @@ function getLastWord(teamName) {
   return words[words.length - 1];
 }
 
+// Clears wager buttons and resets state
+function clearWagerButtons() {
+  selectedWagerId = null;
+  wagerButtonsContainer.innerHTML = '';
+  numberInputContainer.style.display = 'none';
+  finalPickDescription.textContent = '';
+  numberInput.value = '';
+  if (changeWagerBtn) {
+    changeWagerBtn.remove();
+    changeWagerBtn = null;
+  }
+  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
+  wagerTypeSelect.disabled = true;
+  wagerTypeSelect.dispatchEvent(new Event('change'));
+}
+
 // Reset wager buttons on sport change
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
