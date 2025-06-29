@@ -1,7 +1,7 @@
 // admin/js/pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getNotesData } from './notesSection.js';  // Import notes getter
+import { getNotesData } from '../notesSection.js';  // Import notes getter
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
