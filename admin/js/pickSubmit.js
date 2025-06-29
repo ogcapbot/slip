@@ -1,4 +1,3 @@
-// admin/js/pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getNotesData, reset as resetNotes } from '/admin/js/notesSection.js';
@@ -35,7 +34,7 @@ if (!startOverBtn) {
   startOverBtn.className = 'pick-btn blue';
   actionButtonsContainer.appendChild(startOverBtn);
 } else {
-  // Ensure inside container
+  // Make sure it's inside container
   if (startOverBtn.parentNode !== actionButtonsContainer) {
     actionButtonsContainer.appendChild(startOverBtn);
   }
@@ -83,15 +82,12 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Start Over button handler: reset all inputs, clear selections, reset notes, no page reload
+// Fixed: Proper Start Over button handler to reset form and UI without full page reload
 startOverBtn.addEventListener('click', () => {
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  // Reset all selects and disable except sportSelect
   sportSelect.value = '';
-  sportSelect.disabled = false;
-
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
 
@@ -104,27 +100,25 @@ startOverBtn.addEventListener('click', () => {
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
-  // Clear pick options
   pickOptionsContainer.innerHTML = '';
   finalPickDescription.textContent = '';
 
-  // Reset number input
   numberInput.value = '';
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
-  // Remove any green selections from pick buttons
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
-  // Reset notes section
   if (typeof resetNotes === 'function') {
     resetNotes();
   }
 
+  sportSelect.disabled = false;
+
   updateSubmitButtonState();
 });
 
-// Initial submit button update
+// Initial submit button state update
 updateSubmitButtonState();
 
 pickForm.addEventListener('submit', async (e) => {
