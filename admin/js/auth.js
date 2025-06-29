@@ -1,12 +1,12 @@
 // auth.js
 import { auth, initRecaptcha } from '../firebaseInit.js';
-import { signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { loadSports } from './sportSelector.js';
 
-const loginSection = document.getElementById('loginSection');
+const loginSection = document.getElementById('phoneLoginSection');
 const pickForm = document.getElementById('pickForm');
 
-let phoneInput, sendCodeBtn, codeInput, verifyCodeBtn, recaptchaContainer, loginError;
+let phoneInput, sendCodeBtn, codeInput, verifyCodeBtn, loginError;
 
 function createPhoneLoginUI() {
   loginSection.innerHTML = `
@@ -26,10 +26,9 @@ function createPhoneLoginUI() {
   sendCodeBtn = document.getElementById('sendCodeBtn');
   codeInput = document.getElementById('codeInput');
   verifyCodeBtn = document.getElementById('verifyCodeBtn');
-  recaptchaContainer = document.getElementById('recaptcha-container');
   loginError = document.getElementById('loginError');
 
-  initRecaptcha(); // Initialize invisible reCAPTCHA
+  initRecaptcha();
 
   sendCodeBtn.addEventListener('click', sendVerificationCode);
   verifyCodeBtn.addEventListener('click', verifyCode);
@@ -77,7 +76,6 @@ function verifyCode() {
       pickForm.style.display = 'block';
       loadSports();
 
-      // Optionally, you can store user info globally:
       window.currentUser = {
         uid: result.user.uid,
         phoneNumber: result.user.phoneNumber
@@ -92,5 +90,5 @@ function verifyCode() {
     });
 }
 
-// Initialize on load
+// Initialize UI on script load
 createPhoneLoginUI();
