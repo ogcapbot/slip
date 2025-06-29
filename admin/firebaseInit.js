@@ -1,7 +1,6 @@
-// firebaseInit.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-import { getAuth, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+// admin/firebaseInit.js
+
+// No imports — using global firebase variable loaded via HTML scripts
 
 const firebaseConfig = {
   apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
@@ -13,21 +12,19 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
 function initRecaptcha() {
-  console.log('Auth in initRecaptcha:', auth);
   if (!window.recaptchaVerifier) {
     console.log('Creating RecaptchaVerifier...');
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
       size: 'invisible',
       callback: (response) => {
         console.log('reCAPTCHA solved:', response);
       }
-    }, auth);
+    });
   }
 }
 
-export { app, auth, db, initRecaptcha };
+export { app, auth, initRecaptcha };
