@@ -27,9 +27,10 @@ if (!unitButtonsContainer) {
 
 let selectedUnit = null;
 let changeUnitBtn = null;
+let allUnitsCache = [];  // cache units data for toggling
 
-async function loadUnits() {
-  console.log('loadUnits called');
+async function loadUnits(showAll = true) {
+  console.log('loadUnits called with showAll =', showAll);
 
   if (!unitButtonsContainer || !unitsSelect) {
     console.error('Required elements missing.');
@@ -51,27 +52,28 @@ async function loadUnits() {
   unitButtonsContainer.textContent = 'Loading units...';
 
   try {
-    const unitsSnapshot = await getDocs(collection(db, 'Units'));
-    const units = [];
+    if (allUnitsCache.length === 0) {
+      // Load once and cache units
+      const unitsSnapshot = await getDocs(collection(db, 'Units'));
+      allUnitsCache = [];
 
-    unitsSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data && data.display_unit !== undefined && data.Rank !== undefined) {
-        units.push(data);
-      }
-    });
+      unitsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data && data.display_unit !== undefined && data.Rank !== undefined) {
+          allUnitsCache.push(data);
+        }
+      });
 
-    console.log('units fetched:', units.length);
+      // Sort units by Rank ascending
+      allUnitsCache.sort((a, b) => a.Rank - b.Rank);
+    }
 
-    if (units.length === 0) {
+    if (allUnitsCache.length === 0) {
       unitButtonsContainer.textContent = 'No units found';
       unitsSelect.innerHTML = '<option>No units found</option>';
       unitsSelect.disabled = true;
       return;
     }
-
-    // Sort units by Rank ascending
-    units.sort((a, b) => a.Rank - b.Rank);
 
     // Clear loading text before rendering buttons
     unitButtonsContainer.textContent = '';
@@ -84,18 +86,48 @@ async function loadUnits() {
     unitButtonsContainer.style.marginTop = '8px';
     unitButtonsContainer.style.alignItems = 'start';
 
-    // Append buttons
-    units.forEach(unit => {
-      const btn = createUnitButton(unit.display_unit);
-      unitButtonsContainer.appendChild(btn);
-    });
+    if (showAll) {
+      // Show all units as buttons
+      allUnitsCache.forEach(unit => {
+        const btn = createUnitButton(unit.display_unit);
+        unitButtonsContainer.appendChild(btn);
+      });
 
-    unitsSelect.disabled = false;
+      unitsSelect.disabled = false;
 
-    // Select "1 Unit" by default if it exists, else first unit
-    const defaultUnit = units.find(u => u.display_unit === '1 Unit')?.display_unit || units[0].display_unit;
-    selectUnit(defaultUnit);
+    } else {
+      // Show only "1 Unit" selected + Change Unit button
 
+      const oneUnitData = allUnitsCache.find(u => u.display_unit === '1 Unit') || allUnitsCache[0];
+      const oneUnitName = oneUnitData.display_unit;
+
+      // Selected unit button green
+      const selectedBtn = createUnitButton(oneUnitName);
+      selectedBtn.classList.remove('blue');
+      selectedBtn.classList.add('green');
+      unitButtonsContainer.appendChild(selectedBtn);
+
+      // Placeholder for spacing in middle column (optional)
+      const placeholderBtn = createUnitButton('');
+      placeholderBtn.style.visibility = 'hidden';
+      placeholderBtn.style.pointerEvents = 'none';
+      placeholderBtn.style.margin = '0';
+      placeholderBtn.style.padding = '0';
+      placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
+      unitButtonsContainer.appendChild(placeholderBtn);
+
+      unitsSelect.disabled = false;
+
+      // Sync hidden select for submission with "1 Unit"
+      unitsSelect.innerHTML = '';
+      const option = document.createElement('option');
+      option.value = oneUnitName;
+      option.selected = true;
+      unitsSelect.appendChild(option);
+
+      // Append Change Unit button
+      createAndAppendChangeUnitBtn();
+    }
   } catch (error) {
     console.error('Error loading units:', error);
     unitButtonsContainer.textContent = 'Error loading units';
@@ -155,7 +187,20 @@ function selectUnit(unitName) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   unitButtonsContainer.appendChild(placeholderBtn);
 
-  // Change Unit button
+  // Append Change Unit button
+  createAndAppendChangeUnitBtn();
+
+  // Sync hidden select for submission
+  unitsSelect.innerHTML = '';
+  const option = document.createElement('option');
+  option.value = unitName;
+  option.selected = true;
+  unitsSelect.appendChild(option);
+  unitsSelect.disabled = false;
+  unitsSelect.dispatchEvent(new Event('change'));
+}
+
+function createAndAppendChangeUnitBtn() {
   if (!changeUnitBtn) {
     changeUnitBtn = document.createElement('button');
     changeUnitBtn.type = 'button';
@@ -167,18 +212,12 @@ function selectUnit(unitName) {
     changeUnitBtn.style.alignSelf = 'flex-start';
     changeUnitBtn.style.marginTop = '0';
 
-    changeUnitBtn.addEventListener('click', resetUnitSelection);
+    changeUnitBtn.addEventListener('click', () => {
+      // On clicking change unit, show all units and reset selection
+      loadUnits(true);
+    });
   }
   unitButtonsContainer.appendChild(changeUnitBtn);
-
-  // Sync hidden select for submission
-  unitsSelect.innerHTML = '';
-  const option = document.createElement('option');
-  option.value = unitName;
-  option.selected = true;
-  unitsSelect.appendChild(option);
-  unitsSelect.disabled = false;
-  unitsSelect.dispatchEvent(new Event('change'));
 }
 
 function resetUnitSelection() {
@@ -196,11 +235,11 @@ function resetUnitSelection() {
   unitButtonsContainer.innerHTML = '';
   unitButtonsContainer.style.display = ''; // Reset display style
 
-  // Reload units so buttons re-appear after reset
-  loadUnits();
+  // Load just the "1 Unit" button selected by default
+  loadUnits(false);
 }
 
-// INITIAL CALL to load units on script load
-loadUnits();
+// INITIAL CALL to load units on script load, start with only "1 Unit" selected
+loadUnits(false);
 
 export { loadUnits };
