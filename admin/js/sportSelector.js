@@ -5,18 +5,20 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/f
 const sportSelect = document.getElementById('sportSelect');
 
 export async function loadSports() {
-  console.log('loadSports() started');
-  sportSelect.innerHTML = '<option>Loading...</option>';
-  sportSelect.disabled = true;
-
   try {
+    console.log('loadSports() started');
+    sportSelect.innerHTML = '<option>Loading...</option>';
+    sportSelect.disabled = true;
+
     const snapshot = await getDocs(collection(db, 'GameCache'));
     console.log('Firestore GameCache docs fetched:', snapshot.size);
 
     const sports = new Set();
     snapshot.forEach(doc => {
-      const sport = doc.data().Sport;
-      if (sport) sports.add(sport);
+      const data = doc.data();
+      if (data && data.Sport) {
+        sports.add(data.Sport);
+      }
     });
 
     console.log('Unique sports found:', Array.from(sports));
