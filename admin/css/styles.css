@@ -266,3 +266,58 @@ button:hover {
   box-sizing: content-box;
   z-index: auto;
 }
+
+/* Container for the two bottom buttons (Start Over and Submit Pick) */
+#actionButtonsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 1rem 2rem; /* vertical gap 1rem, horizontal gap 2rem */
+  margin-top: 2rem;
+  max-width: 400px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Buttons inside this container fill their grid column */
+#actionButtonsContainer button.pick-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Start Over button left aligned (default in grid) */
+#startOverBtn {
+  background-color: #2a9fd6;
+  color: white;
+}
+#startOverBtn:hover {
+  background-color: #2179a5;
+}
+
+/* Submit button right aligned */
+#submitBtn {
+  background-color: #b87f7f; /* your previous red-ish */
+  color: white;
+}
+
+/* Disabled submit button style */
+#submitBtn:disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+  color: #666;
+}
+
+/* Enabled submit button style */
+#submitBtn.enabled {
+  background-color: #4CAF50 !important; /* green */
+  color: white;
+  cursor: pointer;
+}
