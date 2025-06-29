@@ -170,4 +170,26 @@ function selectSport(button, sport) {
       resetSportSelection();
     });
 
-    sportButtonsCo
+    sportButtonsContainer.appendChild(changeSportBtn);
+  }
+
+  updateHiddenSelect(sport);
+}
+
+function resetSportSelection() {
+  selectedSport = null;
+
+  if (changeSportBtn) {
+    changeSportBtn.remove();
+    changeSportBtn = null;
+  }
+
+  const allButtons = Array.from(sportButtonsContainer.querySelectorAll('button'));
+  allButtons.forEach(btn => {
+    btn.style.display = '';
+    btn.classList.remove('green');
+    btn.classList.add('blue');
+  });
+
+  clearHiddenSelect();
+}
