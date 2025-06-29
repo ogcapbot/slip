@@ -11,9 +11,17 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // To get team buttons
 const gameSelect = document.getElementById('gameSelect'); // listens for enabling wager loading
 
+// Minimal addition: get units section container (assumed parent of unitsSelect)
+const unitsSection = document.getElementById('unitsSelect')?.parentNode || null;
+
 // Hide original wagerTypeSelect but keep for compatibility
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
+}
+
+// Minimal addition: hide units section initially
+if (unitsSection) {
+  unitsSection.style.display = 'none';
 }
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -56,6 +64,11 @@ function clearWagerButtons() {
   wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
+
+  // Minimal addition: hide units section on clear
+  if (unitsSection) {
+    unitsSection.style.display = 'none';
+  }
 }
 
 // Reset wager buttons on sport change
@@ -63,6 +76,10 @@ sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
+  // Minimal addition: hide units section on sport change
+  if (unitsSection) {
+    unitsSection.style.display = 'none';
+  }
 });
 
 // Enable wagerType load on game selection change
@@ -72,6 +89,10 @@ gameSelect.addEventListener('change', async () => {
     wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
+    // Minimal addition: hide units section on no game
+    if (unitsSection) {
+      unitsSection.style.display = 'none';
+    }
     return;
   }
   await loadWagerTypes();
@@ -212,6 +233,13 @@ function selectWager(button, id, descTemplate) {
   wagerTypeSelect.appendChild(option);
   wagerTypeSelect.disabled = false;
   wagerTypeSelect.dispatchEvent(new Event('change'));
+
+  // Minimal addition: show units section on wager select
+  if (unitsSection) {
+    unitsSection.style.display = ''; // show units section
+    // Optionally load units now
+    loadUnits();
+  }
 }
 
 function resetWagerSelection() {
@@ -230,6 +258,11 @@ function resetWagerSelection() {
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
+
+  // Minimal addition: hide units section on reset
+  if (unitsSection) {
+    unitsSection.style.display = 'none';
+  }
 }
 
 // Update final description live when number input changes
