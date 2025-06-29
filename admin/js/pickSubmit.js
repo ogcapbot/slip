@@ -11,11 +11,17 @@ const numberInput = document.getElementById('numberInput');
 const unitsSelect = document.getElementById('unitsSelect');
 const pickError = document.getElementById('pickError');
 const pickSuccess = document.getElementById('pickSuccess');
+const finalPickDescription = document.getElementById('finalPickDescription');
+const numberInputContainer = document.getElementById('numberInputContainer');
+const submitBtn = pickForm.querySelector('button[type="submit"]');
+const notesInput = document.getElementById('notesInput'); // from notes.js textarea
 
 pickForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   pickError.textContent = '';
   pickSuccess.textContent = '';
+
+  submitBtn.disabled = true; // Disable submit to prevent double submits
 
   const sport = sportSelect.value;
   const league = leagueSelect.value;
@@ -29,6 +35,9 @@ pickForm.addEventListener('submit', async (e) => {
 
   // Number input if needed
   const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
+
+  // Get notes text
+  const notes = notesInput ? notesInput.value.trim() : '';
 
   if (!sport) return (pickError.textContent = 'Please select a sport.');
   if (!league) return (pickError.textContent = 'Please select a league.');
@@ -87,7 +96,7 @@ pickForm.addEventListener('submit', async (e) => {
       wagerTypeDesc: wagerDesc,
       wagerNum,
       unit,
-      notes: '',
+      notes,
       originalGameSnapshot: {
         HomeTeam: gameData.HomeTeam || null,
         AwayTeam: gameData.AwayTeam || null,
@@ -108,12 +117,19 @@ pickForm.addEventListener('submit', async (e) => {
     unitsSelect.disabled = true;
     numberInput.value = '';
     numberInput.disabled = true;
+    numberInputContainer.style.display = 'none';
+    finalPickDescription.textContent = '';
+    notesInput.value = '';
+
     pickOptionsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('green'));
     gameSelect.innerHTML = '<option value="">Select a league first</option>';
     leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
     sportSelect.value = '';
+
   } catch (err) {
     console.error('Error submitting pick:', err);
     pickError.textContent = 'Error submitting pick. Please try again.';
+  } finally {
+    submitBtn.disabled = false; // Re-enable submit button
   }
 });
