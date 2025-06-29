@@ -16,7 +16,7 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
 
-// Create container for action buttons if not present
+// Create container for action buttons if missing
 let actionButtonsContainer = document.getElementById('actionButtonsContainer');
 if (!actionButtonsContainer) {
   actionButtonsContainer = document.createElement('div');
@@ -37,12 +37,12 @@ if (!startOverBtn) {
   actionButtonsContainer.appendChild(startOverBtn);
 }
 
-// Move Submit button into container and set styling
+// Move Submit button inside container and style it
 actionButtonsContainer.appendChild(submitBtn);
 submitBtn.classList.add('pick-btn', 'red');
 submitBtn.disabled = true;
 
-// Check if form is valid
+// Check if all required fields/selections are valid
 function isFormValid() {
   const sport = sportSelect.value;
   const league = leagueSelect.value;
@@ -56,7 +56,7 @@ function isFormValid() {
   return sport && league && gameId && wagerTypeId && unit && pickText && (numberInput.disabled || wagerNumValid);
 }
 
-// Update Submit button state
+// Update submit button enable state and color
 function updateSubmitButtonState() {
   if (isFormValid()) {
     submitBtn.disabled = false;
@@ -67,7 +67,7 @@ function updateSubmitButtonState() {
   }
 }
 
-// Listen for changes to update submit button state
+// Listen for changes on inputs/selects and pick buttons to update submit state
 const watchedElements = [sportSelect, leagueSelect, gameSelect, wagerTypeSelect, unitsSelect, numberInput];
 watchedElements.forEach(el => {
   if (!el) return;
@@ -82,43 +82,53 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Start Over button resets the form and selections
+// Properly reset all fields and UI to fresh start on Start Over click
 startOverBtn.addEventListener('click', () => {
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
+  // Reset selects and inputs to initial state
   sportSelect.value = '';
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
+
   gameSelect.innerHTML = '<option value="">Select a league first</option>';
   gameSelect.disabled = true;
+
   wagerTypeSelect.innerHTML = '<option value="">Select a game first</option>';
   wagerTypeSelect.disabled = true;
+
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
+  // Clear pick buttons container and any selected picks
   pickOptionsContainer.innerHTML = '';
+
   finalPickDescription.textContent = '';
 
+  // Reset number input
   numberInput.value = '';
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
+  // Remove any green highlight from pick buttons
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
+  // Reset notes section completely
   if (typeof resetNotes === 'function') {
     resetNotes();
   }
 
+  // Enable sport select for fresh start
   sportSelect.disabled = false;
 
   updateSubmitButtonState();
 });
 
-// Initial update on load
+// Initial update of submit button on load
 updateSubmitButtonState();
 
-// Form submission handler
+// Handle form submit
 pickForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   pickError.textContent = '';
@@ -208,7 +218,7 @@ pickForm.addEventListener('submit', async (e) => {
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset to fresh state on submit success
+    // Reset to fresh state on successful submit
     startOverBtn.click();
 
   } catch (err) {
