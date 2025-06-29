@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "https://www.gstatic.com/fireb
 
 const sportSelect = document.getElementById("sportSelect");
 const leagueSelect = document.getElementById("leagueSelect");
+const gameSelect = document.getElementById("gameSelect");
 
 sportSelect.addEventListener("change", async () => {
   const selectedSport = sportSelect.value;
@@ -17,7 +18,7 @@ sportSelect.addEventListener("change", async () => {
     const leaguesSet = new Set();
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.League) {
+      if (data && data.League) {
         leaguesSet.add(data.League);
       }
     });
@@ -39,8 +40,7 @@ sportSelect.addEventListener("change", async () => {
     console.error("Error loading leagues:", error);
   }
 
-  // Reset gameSelect as league changed
-  const gameSelect = document.getElementById("gameSelect");
+  // Reset gameSelect when league changes
   gameSelect.innerHTML = '<option>Select a league first</option>';
   gameSelect.disabled = true;
 });
