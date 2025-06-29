@@ -78,7 +78,6 @@ function clearButtonStates() {
 
 // Show the notesContainer when appropriate (after units selected)
 unitsSelect.addEventListener('change', () => {
-  // Only show notesContainer if unitsSelect has a value
   if (unitsSelect.value) {
     notesContainer.style.display = 'block';
     submitButton.disabled = true; // disable submit until notes question answered
@@ -110,7 +109,6 @@ noBtn.addEventListener('click', () => {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
 
-  // Enable submit, no notes to input
   submitButton.disabled = false;
 });
 
@@ -125,9 +123,9 @@ yesBtn.addEventListener('click', () => {
   charCounter.style.display = 'block';
 
   notesTextarea.focus();
-  submitButton.disabled = true; // disable submit until textarea input
+  submitButton.disabled = true;
 
-  updateCharCounter(); // init counter
+  updateCharCounter();
 });
 
 // Update character counter display
@@ -135,7 +133,6 @@ function updateCharCounter() {
   const remaining = 100 - notesTextarea.value.length;
   charCounter.textContent = `${remaining} characters left`;
 
-  // Enable submit if textarea has text, disable if empty
   submitButton.disabled = notesTextarea.value.trim().length === 0;
 }
 
