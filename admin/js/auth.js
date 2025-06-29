@@ -1,50 +1,96 @@
 // auth.js
-import { db } from '../firebaseInit.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { auth, initRecaptcha } from '../firebaseInit.js';
+import { signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { loadSports } from './sportSelector.js';
 
-const loginBtn = document.getElementById('loginBtn');
-const accessCodeInput = document.getElementById('AccessCode'); // Correct casing here!
-const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
-const sportSelect = document.getElementById('sportSelect');
 
-loginBtn.addEventListener('click', async () => {
-  if (!accessCodeInput) {
-    console.error('Access code input element not found!');
-    loginError.textContent = 'Internal error: access code input missing.';
-    return;
-  }
+let phoneInput, sendCodeBtn, codeInput, verifyCodeBtn, recaptchaContainer, loginError;
 
-  const accessCode = accessCodeInput.value?.trim();
+function createPhoneLoginUI() {
+  loginSection.innerHTML = `
+    <label for="phoneInput">Enter Phone Number</label>
+    <input type="tel" id="phoneInput" placeholder="+1234567890" autocomplete="tel" />
+    <button id="sendCodeBtn">Send Verification Code</button>
+    <div id="recaptcha-container"></div>
+    <div id="verificationCodeSection" style="display:none; margin-top:15px;">
+      <label for="codeInput">Enter Verification Code</label>
+      <input type="text" id="codeInput" placeholder="123456" maxlength="6" />
+      <button id="verifyCodeBtn">Verify Code</button>
+    </div>
+    <p id="loginError" class="error"></p>
+  `;
+
+  phoneInput = document.getElementById('phoneInput');
+  sendCodeBtn = document.getElementById('sendCodeBtn');
+  codeInput = document.getElementById('codeInput');
+  verifyCodeBtn = document.getElementById('verifyCodeBtn');
+  recaptchaContainer = document.getElementById('recaptcha-container');
+  loginError = document.getElementById('loginError');
+
+  initRecaptcha(); // Initialize invisible reCAPTCHA
+
+  sendCodeBtn.addEventListener('click', sendVerificationCode);
+  verifyCodeBtn.addEventListener('click', verifyCode);
+}
+
+let confirmationResult = null;
+
+function sendVerificationCode() {
   loginError.textContent = '';
-
-  if (!accessCode) {
-    loginError.textContent = 'Access code is required.';
+  const phoneNumber = phoneInput.value.trim();
+  if (!phoneNumber.match(/^\+\d{10,15}$/)) {
+    loginError.textContent = 'Enter a valid phone number in E.164 format (e.g., +1234567890).';
     return;
   }
+  sendCodeBtn.disabled = true;
 
-  try {
-    const usersRef = collection(db, 'Users');
-    const q = query(usersRef, where('AccessCode', '==', accessCode)); // EXACT field name here!
-    const querySnapshot = await getDocs(q);
+  const appVerifier = window.recaptchaVerifier;
+  signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+    .then((result) => {
+      confirmationResult = result;
+      loginError.textContent = 'Verification code sent. Check your phone.';
+      document.getElementById('verificationCodeSection').style.display = 'block';
+      sendCodeBtn.disabled = false;
+    })
+    .catch((error) => {
+      console.error('Error during signInWithPhoneNumber', error);
+      loginError.textContent = 'Failed to send verification code. Try again.';
+      sendCodeBtn.disabled = false;
+    });
+}
 
-    if (querySnapshot.empty) {
-      loginError.textContent = 'Invalid access code.';
-      return;
-    }
-
-    // Successful login
-    loginSection.style.display = 'none';
-    pickForm.style.display = 'block';
-
-    // Enable sport select and load sports
-    sportSelect.disabled = false;
-    await loadSports();
-
-  } catch (error) {
-    loginError.textContent = 'Login failed. Please try again.';
-    console.error('Login error:', error);
+function verifyCode() {
+  loginError.textContent = '';
+  const code = codeInput.value.trim();
+  if (code.length !== 6) {
+    loginError.textContent = 'Enter the 6-digit verification code.';
+    return;
   }
-});
+  verifyCodeBtn.disabled = true;
+
+  confirmationResult.confirm(code)
+    .then((result) => {
+      // User signed in successfully
+      loginSection.style.display = 'none';
+      pickForm.style.display = 'block';
+      loadSports();
+
+      // Optionally, you can store user info globally:
+      window.currentUser = {
+        uid: result.user.uid,
+        phoneNumber: result.user.phoneNumber
+      };
+
+      verifyCodeBtn.disabled = false;
+    })
+    .catch((error) => {
+      console.error('Error verifying code', error);
+      loginError.textContent = 'Invalid verification code.';
+      verifyCodeBtn.disabled = false;
+    });
+}
+
+// Initialize on load
+createPhoneLoginUI();
