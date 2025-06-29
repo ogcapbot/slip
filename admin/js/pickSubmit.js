@@ -1,6 +1,7 @@
-// pickSubmit.js
+// admin/js/pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { getNotesData } from './notesSection.js';  // Import notes getter
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
@@ -15,7 +16,6 @@ const pickSuccess = document.getElementById('pickSuccess');
 const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
-const notesInput = document.getElementById('notesInput'); // from notes.js textarea
 
 pickForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -34,7 +34,9 @@ pickForm.addEventListener('submit', async (e) => {
   const pickText = selectedPickButton ? selectedPickButton.textContent.trim() : '';
 
   const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
-  const notes = notesInput ? notesInput.value.trim() : '';
+
+  // Get notes data from notesSection.js
+  const notes = getNotesData() || '';
 
   // Validation
   if (!sport) return (pickError.textContent = 'Please select a sport.');
@@ -117,7 +119,9 @@ pickForm.addEventListener('submit', async (e) => {
     numberInput.disabled = true;
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
-    if (notesInput) notesInput.value = '';
+
+    // Reset notes section is handled inside notesSection.js if needed, 
+    // but form reset will clear it; you may want to export a reset function and call here if implemented.
 
     pickOptionsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('green'));
     gameSelect.innerHTML = '<option value="">Select a league first</option>';
