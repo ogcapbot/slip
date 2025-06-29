@@ -8,20 +8,11 @@ const wagerTypeSelect = document.getElementById('wagerTypeSelect');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const numberInput = document.getElementById('numberInput');
 const finalPickDescription = document.getElementById('finalPickDescription');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // To get team buttons
-const gameSelect = document.getElementById('gameSelect'); // listens for enabling wager loading
+const pickOptionsContainer = document.getElementById('pickOptionsContainer');
+const gameSelect = document.getElementById('gameSelect');
 
-// Minimal addition: get units section container (assumed parent of unitsSelect)
-const unitsSection = document.getElementById('unitsSelect')?.parentNode || null;
-
-// Hide original wagerTypeSelect but keep for compatibility
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
-}
-
-// Minimal addition: hide units section initially
-if (unitsSection) {
-  unitsSection.style.display = 'none';
 }
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -29,7 +20,6 @@ if (!wagerButtonsContainer) {
   wagerButtonsContainer = document.createElement('div');
   wagerButtonsContainer.id = 'wagerButtonsContainer';
 
-  // Insert wagerButtonsContainer after wagerTypeSelect's label
   const wagerLabel = document.querySelector('label[for="wagerTypeSelect"]');
   if (wagerLabel) {
     wagerLabel.parentNode.insertBefore(wagerButtonsContainer, wagerLabel.nextSibling);
@@ -43,14 +33,12 @@ if (!wagerButtonsContainer) {
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
-// Utility to get last word of a team name
 function getLastWord(teamName) {
   if (!teamName) return '';
   const words = teamName.trim().split(' ');
   return words[words.length - 1];
 }
 
-// Clears wager buttons and resets state
 function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
@@ -64,35 +52,20 @@ function clearWagerButtons() {
   wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
-
-  // Minimal addition: hide units section on clear
-  if (unitsSection) {
-    unitsSection.style.display = 'none';
-  }
 }
 
-// Reset wager buttons on sport change
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
-  // Minimal addition: hide units section on sport change
-  if (unitsSection) {
-    unitsSection.style.display = 'none';
-  }
 });
 
-// Enable wagerType load on game selection change
 gameSelect.addEventListener('change', async () => {
   if (!gameSelect.value) {
     clearWagerButtons();
     wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
-    // Minimal addition: hide units section on no game
-    if (unitsSection) {
-      unitsSection.style.display = 'none';
-    }
     return;
   }
   await loadWagerTypes();
@@ -127,11 +100,10 @@ async function loadWagerTypes() {
 
     wagerButtonsContainer.textContent = '';
 
-    // Setup grid container
     wagerButtonsContainer.style.display = 'grid';
     wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     wagerButtonsContainer.style.gridAutoRows = 'min-content';
-    wagerButtonsContainer.style.gap = '4px 6px'; // vertical 4px, horizontal 6px gap
+    wagerButtonsContainer.style.gap = '4px 6px';
     wagerButtonsContainer.style.marginTop = '8px';
     wagerButtonsContainer.style.alignItems = 'start';
 
@@ -173,7 +145,6 @@ function selectWager(button, id, descTemplate) {
 
   selectedWagerId = id;
 
-  // Clear container and show only selected wager button + Change button
   wagerButtonsContainer.innerHTML = '';
 
   wagerButtonsContainer.style.display = 'grid';
@@ -183,13 +154,11 @@ function selectWager(button, id, descTemplate) {
   wagerButtonsContainer.style.marginTop = '8px';
   wagerButtonsContainer.style.alignItems = 'start';
 
-  // Selected wager button green, top-left grid cell
   const selectedBtn = createWagerButton(id, button.textContent, descTemplate);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   wagerButtonsContainer.appendChild(selectedBtn);
 
-  // Invisible placeholder button for middle cell
   const placeholderBtn = createWagerButton('', '');
   placeholderBtn.style.visibility = 'hidden';
   placeholderBtn.style.pointerEvents = 'none';
@@ -198,7 +167,6 @@ function selectWager(button, id, descTemplate) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   wagerButtonsContainer.appendChild(placeholderBtn);
 
-  // Change Wager button in third cell
   if (!changeWagerBtn) {
     changeWagerBtn = document.createElement('button');
     changeWagerBtn.type = 'button';
@@ -219,13 +187,11 @@ function selectWager(button, id, descTemplate) {
   updateFinalPickDescription(descTemplate);
   numberInputContainer.style.display = descTemplate.includes('[[NUM]]') ? 'block' : 'none';
 
-  // Enable or disable number input accordingly
   numberInput.disabled = !descTemplate.includes('[[NUM]]');
   if (!descTemplate.includes('[[NUM]]')) {
     numberInput.value = '';
   }
 
-  // Update hidden wagerTypeSelect for compatibility
   wagerTypeSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = id;
@@ -233,13 +199,6 @@ function selectWager(button, id, descTemplate) {
   wagerTypeSelect.appendChild(option);
   wagerTypeSelect.disabled = false;
   wagerTypeSelect.dispatchEvent(new Event('change'));
-
-  // Minimal addition: show units section on wager select
-  if (unitsSection) {
-    unitsSection.style.display = ''; // show units section
-    // Optionally load units now
-    loadUnits();
-  }
 }
 
 function resetWagerSelection() {
@@ -258,14 +217,8 @@ function resetWagerSelection() {
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
-
-  // Minimal addition: hide units section on reset
-  if (unitsSection) {
-    unitsSection.style.display = 'none';
-  }
 }
 
-// Update final description live when number input changes
 numberInput.addEventListener('input', () => {
   if (!selectedWagerId) return;
   const selectedBtn = wagerButtonsContainer.querySelector('button.green');
