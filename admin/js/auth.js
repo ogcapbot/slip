@@ -1,3 +1,4 @@
+// auth.js
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadSports } from '/admin/js/sportSelector.js';
@@ -36,7 +37,11 @@ loginBtn.addEventListener('click', async () => {
 
     // Successful login
     loginSection.style.display = 'none';
-    pickForm.style.display = 'block';
+
+    // Show pick form with a slight delay for reliability
+    setTimeout(() => {
+      pickForm.style.display = 'block';
+    }, 10);
 
     // Enable sport select and load sports
     sportSelect.disabled = false;
@@ -47,12 +52,3 @@ loginBtn.addEventListener('click', async () => {
     console.error('Login error:', error);
   }
 });
-
-// Add Enter key support on AccessCode input
-if (accessCodeInput) {
-  accessCodeInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      loginBtn.click();
-    }
-  });
-}
