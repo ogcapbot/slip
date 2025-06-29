@@ -1,3 +1,4 @@
+// admin/js/gameSelector.js
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -7,15 +8,15 @@ const gameSelect = document.getElementById('gameSelect');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer');
 const submitButton = document.querySelector('form#pickForm button[type="submit"]');
 
+// Load games when league changes
 leagueSelect.addEventListener('change', async () => {
   const selectedSport = sportSelect.value;
   const selectedLeague = leagueSelect.value;
 
-  // Reset game select and pick input
+  // Reset game select and pick buttons
   gameSelect.innerHTML = '<option>Loading...</option>';
   gameSelect.disabled = true;
-
-  pickOptionsContainer.innerHTML = '';  // Clear pick buttons
+  pickOptionsContainer.innerHTML = '';
   submitButton.disabled = true;
 
   if (!selectedSport || !selectedLeague) {
@@ -25,7 +26,6 @@ leagueSelect.addEventListener('change', async () => {
   }
 
   try {
-    // Query GameCache for games with the chosen sport AND league
     const q = query(
       collection(db, 'GameCache'),
       where('Sport', '==', selectedSport),
@@ -33,24 +33,24 @@ leagueSelect.addEventListener('change', async () => {
     );
     const querySnapshot = await getDocs(q);
 
-    gameSelect.innerHTML = '';
-
     if (querySnapshot.empty) {
       gameSelect.innerHTML = '<option>No games found</option>';
       gameSelect.disabled = true;
-    } else {
-      gameSelect.disabled = false;
-      gameSelect.innerHTML = '<option value="">Select a game</option>';
-      querySnapshot.forEach(doc => {
-        const game = doc.data();
-        const option = document.createElement('option');
-        option.value = doc.id; // use document ID as value
-        option.textContent = `${game.HomeTeam} vs ${game.AwayTeam} (${new Date(game.StartTimeUTC.seconds * 1000).toLocaleString()})`;
-        option.dataset.homeTeam = game.HomeTeam;
-        option.dataset.awayTeam = game.AwayTeam;
-        gameSelect.appendChild(option);
-      });
+      return;
     }
+
+    gameSelect.innerHTML = '<option value="">Select a game</option>';
+    gameSelect.disabled = false;
+
+    querySnapshot.forEach(doc => {
+      const game = doc.data();
+      const option = document.createElement('option');
+      option.value = doc.id;
+      option.textContent = `${game.HomeTeam} vs ${game.AwayTeam} (${new Date(game.StartTimeUTC.seconds * 1000).toLocaleString()})`;
+      option.dataset.homeTeam = game.HomeTeam;
+      option.dataset.awayTeam = game.AwayTeam;
+      gameSelect.appendChild(option);
+    });
   } catch (error) {
     console.error('Error loading games:', error);
     gameSelect.innerHTML = '<option>Error loading games</option>';
@@ -58,9 +58,9 @@ leagueSelect.addEventListener('change', async () => {
   }
 });
 
-// Manage pick buttons and Submit button enablement
+// Manage pick buttons and enable submit button when a pick is selected
 gameSelect.addEventListener('change', () => {
-  pickOptionsContainer.innerHTML = ''; // Clear previous buttons
+  pickOptionsContainer.innerHTML = '';
   submitButton.disabled = true;
 
   if (!gameSelect.value) return;
@@ -71,7 +71,7 @@ gameSelect.addEventListener('change', () => {
   const homeTeam = selectedOption.dataset.homeTeam || 'Home';
   const awayTeam = selectedOption.dataset.awayTeam || 'Away';
 
-  // Create buttons
+  // Create pick buttons for home and away teams
   const homeBtn = document.createElement('button');
   homeBtn.type = 'button';
   homeBtn.textContent = homeTeam;
