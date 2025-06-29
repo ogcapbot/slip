@@ -1,7 +1,5 @@
 // admin/firebaseInit.js
 
-// NO imports here — use global firebase
-
 const firebaseConfig = {
   apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
   authDomain: "ogcapperbets.firebaseapp.com",
@@ -12,7 +10,7 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-// Initialize Firebase App once
+// Initialize Firebase app immediately (runs once on import)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
