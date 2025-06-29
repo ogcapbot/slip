@@ -1,4 +1,3 @@
-// admin/js/auth.js
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadSports } from '/admin/js/sportSelector.js';
@@ -8,30 +7,26 @@ const accessCodeInput = document.getElementById('AccessCode');
 const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
-
 const sportSelect = document.getElementById('sportSelect');
-const leagueSelect = document.getElementById('leagueSelect');
-const gameSelect = document.getElementById('gameSelect');
-const wagerTypeSelect = document.getElementById('wagerTypeSelect');
-const unitsSelect = document.getElementById('unitsSelect');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer');
-const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
-const numberInputContainer = document.getElementById('numberInputContainer');
-const notesContainer = document.getElementById('notesContainer');
-const actionButtonsContainer = document.getElementById('actionButtonsContainer');
-const pickError = document.getElementById('pickError');
-const pickSuccess = document.getElementById('pickSuccess');
+
+// On page load, ensure only login section is visible, everything else hidden or disabled
+window.addEventListener('DOMContentLoaded', () => {
+  loginSection.style.display = 'block';
+  pickForm.style.display = 'none';
+
+  // Sport select visible but disabled and empty until login
+  sportSelect.innerHTML = '';
+  sportSelect.disabled = true;
+
+  // Hide all other pick form elements except sport selector label + container
+  // We'll assume your HTML labels and containers are properly structured to show/hide next
+  // Here we do minimal: hide pickForm except sportSelect label + container visible after login
+});
 
 loginBtn.addEventListener('click', async () => {
-  if (!accessCodeInput) {
-    console.error('Access code input element not found!');
-    loginError.textContent = 'Internal error: access code input missing.';
-    return;
-  }
-
-  const accessCode = accessCodeInput.value?.trim();
   loginError.textContent = '';
 
+  const accessCode = accessCodeInput.value?.trim();
   if (!accessCode) {
     loginError.textContent = 'Access code is required.';
     return;
@@ -47,57 +42,17 @@ loginBtn.addEventListener('click', async () => {
       return;
     }
 
-    // Successful login: Hide login, show form
+    // Successful login
     loginSection.style.display = 'none';
     pickForm.style.display = 'block';
 
-    // Enable sport select only
+    // Enable sport select and load sports
     sportSelect.disabled = false;
-    sportSelect.style.display = ''; // show sport select dropdown
-    // Show sport buttons container if exists
-    const sportButtonsContainer = document.getElementById('sportButtonsContainer');
-    if (sportButtonsContainer) sportButtonsContainer.style.display = '';
-
-    // Hide everything else at this stage:
-    leagueSelect.disabled = true;
-    leagueSelect.style.display = 'none';
-
-    const leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
-    if (leagueButtonsContainer) leagueButtonsContainer.style.display = 'none';
-
-    gameSelect.disabled = true;
-    gameSelect.style.display = 'none';
-
-    const gameButtonsContainer = document.getElementById('gameButtonsContainer');
-    if (gameButtonsContainer) gameButtonsContainer.style.display = 'none';
-
-    wagerTypeSelect.disabled = true;
-    wagerTypeSelect.style.display = 'none';
-
-    if (wagerButtonsContainer) wagerButtonsContainer.style.display = 'none';
-
-    unitsSelect.disabled = true;
-    unitsSelect.style.display = 'none';
-
-    const unitButtonsContainer = document.getElementById('unitButtonsContainer');
-    if (unitButtonsContainer) unitButtonsContainer.style.display = 'none';
-
-    pickOptionsContainer.style.display = 'none';
-
-    if (numberInputContainer) numberInputContainer.style.display = 'none';
-
-    if (notesContainer) notesContainer.style.display = 'none';
-
-    if (actionButtonsContainer) actionButtonsContainer.style.display = 'none';
-
-    pickError.textContent = '';
-    pickSuccess.textContent = '';
-
-    // Load sports buttons
+    sportSelect.innerHTML = ''; // Clear placeholder/loading option
     await loadSports();
 
   } catch (error) {
-    loginError.textContent = 'Login failed. Please try again.';
     console.error('Login error:', error);
+    loginError.textContent = 'Login failed. Please try again.';
   }
 });
