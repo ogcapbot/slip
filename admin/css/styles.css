@@ -133,17 +133,31 @@ button:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 60px; /* adjust as needed */
-  text-align: center;
+
+  /* Approximate height for 2 lines of text */
+  line-height: 1.2em;
+  max-height: calc(1.2em * 2 + 12px); /* 2 lines + vertical padding */
+  min-height: calc(1.2em * 2 + 12px);
+
+  padding: 6px 10px;
+  margin: 4px 0;
+
   white-space: normal;
-  /* width: 100%; optional */
+  overflow: hidden;
+
+  text-align: center;
+  box-sizing: border-box;
+  width: 100%;
+
+  /* Optional: clip overflow text with ellipsis if too long */
+  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
 .pick-btn span {
+  display: block;
   font-size: 0.85em;
-  font-weight: normal;
   margin-top: 2px;
-  line-height: 1.2;
-  color: inherit; /* or specify color */
+  line-height: 1.1em;
+  color: inherit;
 }
-
