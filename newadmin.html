@@ -24,21 +24,9 @@
     </header>
     <!-- End Global Header -->
 
-    <!-- Login Section -->
-    <section id="phoneLoginSection">
-  <label for="phoneNumberInput">Enter Phone Number</label>
-  <input type="tel" id="phoneNumberInput" placeholder="+1 555 123 4567" autocomplete="off" />
-  <div id="recaptcha-container"></div>
-  <button id="sendCodeBtn">Send Verification Code</button>
+    <!-- Login Section (empty — will be filled dynamically) -->
+    <section id="phoneLoginSection"></section>
 
-  <div id="codeVerification" style="display:none; margin-top: 10px;">
-    <label for="verificationCodeInput">Enter Verification Code</label>
-    <input type="text" id="verificationCodeInput" placeholder="6-digit code" autocomplete="off" />
-    <button id="verifyCodeBtn">Verify Code</button>
-  </div>
-
-  <p id="phoneLoginError" class="error"></p>
-</section>
     <!-- Pick Entry Form (hidden until login) -->
     <form id="pickForm" style="display:none;">
       <label for="sportSelect">Choose Sport</label>
@@ -101,7 +89,6 @@
   <script type="module" src="admin/js/gameSelector.js"></script>
   <script type="module" src="admin/js/pickSubmit.js"></script>
   <script type="module" src="admin/js/units.js"></script>
-
 
 </body>
 </html>
