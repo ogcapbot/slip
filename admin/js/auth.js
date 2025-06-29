@@ -1,5 +1,6 @@
 // auth.js
 import { auth, initRecaptcha } from '../firebaseInit.js';
+import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { loadSports } from './sportSelector.js';
 
 const loginSection = document.getElementById('phoneLoginSection');
@@ -51,7 +52,7 @@ function sendVerificationCode() {
     return;
   }
 
-  auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+  signInWithPhoneNumber(auth, phoneNumber, appVerifier)
     .then((result) => {
       confirmationResult = result;
       loginError.textContent = 'Verification code sent. Check your phone.';
@@ -84,7 +85,7 @@ function verifyCode() {
         phoneNumber: result.user.phoneNumber
       };
 
-      loadSports(); // <---- Load sports dropdown after login success
+      loadSports();  // Load sports dropdown on login success
 
       verifyCodeBtn.disabled = false;
     })
@@ -95,5 +96,5 @@ function verifyCode() {
     });
 }
 
-// Initialize UI on script load
+// Initialize UI immediately
 createPhoneLoginUI();
