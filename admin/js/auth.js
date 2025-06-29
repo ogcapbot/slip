@@ -1,5 +1,7 @@
 // admin/js/auth.js
-import { auth, initRecaptcha } from '../firebaseInit.js';
+import { initRecaptcha } from '../firebaseInit.js';
+
+const auth = firebase.auth();
 
 const loginSection = document.getElementById('phoneLoginSection');
 const pickForm = document.getElementById('pickForm');
