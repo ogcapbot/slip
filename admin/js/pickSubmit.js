@@ -1,6 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getNotesData } from '/admin/js/notesSection.js';  // ONLY getNotesData imported
+import { getNotesData, reset as resetNotes } from '/admin/js/notesSection.js';
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
@@ -39,11 +39,13 @@ function resetAllSelections() {
 
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
-  // NOTE: Removed resetNotes call because it's not exported from notesSection.js
+  if (typeof resetNotes === 'function') {
+    resetNotes();
+  }
 
   sportSelect.disabled = false;
 
-  // If you have a function to load sports buttons or populate sportSelect, call it here
+  // Optional: call your function here to reload sports buttons if you have one
   // e.g., loadSportsButtons();
 }
 
@@ -67,7 +69,6 @@ pickForm.addEventListener('submit', async (e) => {
 
   const notes = getNotesData() || '';
 
-  // Validation checks
   if (!sport) return (pickError.textContent = 'Please select a sport.', submitBtn.disabled = false);
   if (!league) return (pickError.textContent = 'Please select a league.', submitBtn.disabled = false);
   if (!gameId) return (pickError.textContent = 'Please select a game.', submitBtn.disabled = false);
