@@ -91,6 +91,11 @@ async function loadUnits() {
     });
 
     unitsSelect.disabled = false;
+
+    // Select first unit by default (make it green)
+    if (units.length > 0) {
+      selectUnit(units[0].display_unit);
+    }
   } catch (error) {
     console.error('Error loading units:', error);
     unitButtonsContainer.textContent = 'Error loading units';
@@ -147,57 +152,4 @@ function selectUnit(unitName) {
   placeholderBtn.style.pointerEvents = 'none';
   placeholderBtn.style.margin = '0';
   placeholderBtn.style.padding = '0';
-  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
-  unitButtonsContainer.appendChild(placeholderBtn);
-
-  // Change Unit button
-  if (!changeUnitBtn) {
-    changeUnitBtn = document.createElement('button');
-    changeUnitBtn.type = 'button';
-    changeUnitBtn.textContent = 'Change Unit';
-    changeUnitBtn.className = 'pick-btn blue';
-    changeUnitBtn.style.minWidth = '120px';
-    changeUnitBtn.style.width = '100%';
-    changeUnitBtn.style.boxSizing = 'border-box';
-    changeUnitBtn.style.alignSelf = 'flex-start';
-    changeUnitBtn.style.marginTop = '0';
-
-    changeUnitBtn.addEventListener('click', resetUnitSelection);
-  }
-  unitButtonsContainer.appendChild(changeUnitBtn);
-
-  // Sync hidden select for submission
-  unitsSelect.innerHTML = '';
-  const option = document.createElement('option');
-  option.value = unitName;
-  option.selected = true;
-  unitsSelect.appendChild(option);
-  unitsSelect.disabled = false;
-  unitsSelect.dispatchEvent(new Event('change'));
-}
-
-function resetUnitSelection() {
-  selectedUnit = null;
-
-  if (!unitButtonsContainer || !unitsSelect) return;
-
-  if (changeUnitBtn) {
-    changeUnitBtn.remove();
-    changeUnitBtn = null;
-  }
-
-  unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
-  unitsSelect.disabled = true;
-  unitsSelect.dispatchEvent(new Event('change'));
-
-  unitButtonsContainer.innerHTML = '';
-  unitButtonsContainer.style.display = ''; // Reset display style
-
-  // Reload units so buttons re-appear after reset
-  loadUnits();
-}
-
-// INITIAL CALL to load units on script load
-loadUnits();
-
-export { loadUnits };
+  placeholderBtn.style.height = selected
