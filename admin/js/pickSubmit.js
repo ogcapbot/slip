@@ -16,7 +16,7 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
 
-// Create container for action buttons if missing
+// Create or get container for action buttons
 let actionButtonsContainer = document.getElementById('actionButtonsContainer');
 if (!actionButtonsContainer) {
   actionButtonsContainer = document.createElement('div');
@@ -24,7 +24,7 @@ if (!actionButtonsContainer) {
   pickForm.appendChild(actionButtonsContainer);
 }
 
-// Create Start Over button if missing
+// Create or get Start Over button
 let startOverBtn = document.getElementById('startOverBtn');
 if (!startOverBtn) {
   startOverBtn = document.createElement('button');
@@ -34,15 +34,17 @@ if (!startOverBtn) {
   startOverBtn.className = 'pick-btn blue';
   actionButtonsContainer.appendChild(startOverBtn);
 } else {
-  actionButtonsContainer.appendChild(startOverBtn);
+  // Make sure it's inside container
+  if (startOverBtn.parentNode !== actionButtonsContainer) {
+    actionButtonsContainer.appendChild(startOverBtn);
+  }
 }
 
-// Move Submit button inside container and style it
+// Append submit button to container and style it
 actionButtonsContainer.appendChild(submitBtn);
 submitBtn.classList.add('pick-btn', 'red');
 submitBtn.disabled = true;
 
-// Check if all required fields/selections are valid
 function isFormValid() {
   const sport = sportSelect.value;
   const league = leagueSelect.value;
@@ -56,7 +58,6 @@ function isFormValid() {
   return sport && league && gameId && wagerTypeId && unit && pickText && (numberInput.disabled || wagerNumValid);
 }
 
-// Update submit button enable state and color
 function updateSubmitButtonState() {
   if (isFormValid()) {
     submitBtn.disabled = false;
@@ -67,7 +68,6 @@ function updateSubmitButtonState() {
   }
 }
 
-// Listen for changes on inputs/selects and pick buttons to update submit state
 const watchedElements = [sportSelect, leagueSelect, gameSelect, wagerTypeSelect, unitsSelect, numberInput];
 watchedElements.forEach(el => {
   if (!el) return;
@@ -82,12 +82,13 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Properly reset all fields and UI to fresh start on Start Over click
+// FIXED: Proper Start Over button handler
 startOverBtn.addEventListener('click', () => {
+  console.log('Start Over clicked - resetting form');  // Debug
+
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  // Reset selects and inputs to initial state
   sportSelect.value = '';
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
@@ -101,34 +102,27 @@ startOverBtn.addEventListener('click', () => {
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
-  // Clear pick buttons container and any selected picks
   pickOptionsContainer.innerHTML = '';
-
   finalPickDescription.textContent = '';
 
-  // Reset number input
   numberInput.value = '';
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
-  // Remove any green highlight from pick buttons
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
-  // Reset notes section completely
   if (typeof resetNotes === 'function') {
     resetNotes();
   }
 
-  // Enable sport select for fresh start
   sportSelect.disabled = false;
 
   updateSubmitButtonState();
 });
 
-// Initial update of submit button on load
+// Initial submit button update
 updateSubmitButtonState();
 
-// Handle form submit
 pickForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   pickError.textContent = '';
@@ -218,7 +212,7 @@ pickForm.addEventListener('submit', async (e) => {
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset to fresh state on successful submit
+    // Reset UI to fresh start after submit
     startOverBtn.click();
 
   } catch (err) {
