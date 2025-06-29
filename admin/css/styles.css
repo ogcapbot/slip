@@ -98,104 +98,64 @@ button:hover {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
   font-size: 0.8rem;
-  padding: 8px 12px;
+  padding: 7px 10px; /* tightened padding */
   border: none;
   color: white;
   cursor: pointer;
   transition: background-color 0.3s ease;
   border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(1.2em * 2 + 12px); /* 2 lines approx */
+  white-space: normal;
+  overflow: hidden;
+  text-align: center;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 2px 0; /* reduced vertical margin */
+  transition: background-color 0.3s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.pick-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.pick-btn:active:not(:disabled),
+.pick-btn.green:active {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(0.97);
 }
 
 .pick-btn.blue {
   background-color: #4285f4;
 }
 
+.pick-btn.blue:hover:not(:disabled) {
+  background-color: #357ABD;
+}
+
 .pick-btn.green {
-  background-color: #34a853;
+  background-color: #34a853 !important;
 }
 
-#numberInput {
-  width: 50px;
-  padding: 5px 7px;
-  font-size: 0.9rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-top: 4px;
+.pick-btn.green:active {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  transform: translateY(1px);
 }
 
-#numberInput:disabled {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
-}
-
-.pick-btn {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  /* Approximate height for 2 lines of text */
-  line-height: 1.2em;
-  max-height: calc(1.2em * 2 + 12px); /* 2 lines + vertical padding */
-  min-height: calc(1.2em * 2 + 12px);
-
-  padding: 6px 10px;
-  margin: 4px 0;
-
-  white-space: normal;
-  overflow: hidden;
-
-  text-align: center;
-  box-sizing: border-box;
-  width: 100%;
-
-  /* Optional: clip overflow text with ellipsis if too long */
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-}
-
-.pick-btn span {
-  display: block;
-  font-size: 0.85em;
-  margin-top: 2px;
-  line-height: 1.1em;
-  color: inherit;
-}
-
-/* New styles for action buttons container and buttons */
-
-/* Container for Start Over and Submit buttons */
-#actionButtonsContainer {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-top: 16px;
-  align-items: center;
-}
-
-#startOverBtn {
-  justify-self: start;
-}
-
-#submitBtn {
-  justify-self: end;
-}
-
-/* Submit button base style */
 .pick-btn.red {
-  background-color: #d9534f; /* deeper red */
-  color: white;
-  cursor: not-allowed;
+  background-color: #c0392b; /* deeper red */
   opacity: 0.7;
-  transition: background-color 0.3s ease, box-shadow 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  user-select: none;
+  cursor: not-allowed;
 }
 
-/* Submit button enabled (green) */
-.pick-btn.red.enabled, 
+.pick-btn.red.enabled,
 .pick-btn.red:enabled:hover {
-  background-color: #34a853; /* green matching your .pick-btn.green */
+  background-color: #34a853;
   cursor: pointer;
   opacity: 1;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
@@ -206,26 +166,52 @@ button:hover {
   transform: translateY(1px);
 }
 
-/* Start Over button pressed style */
-.pick-btn.blue:active:not(:disabled) {
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-  transform: translateY(1px);
-}
-
-/* General press effect for all pick-btn */
-.pick-btn:hover:not(:disabled) {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
-}
-
-.pick-btn:active:not(:disabled) {
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-  transform: translateY(1px);
-}
-
-/* Disabled buttons style override */
 .pick-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
   transform: none;
+}
+
+/* Container for Start Over and Submit buttons */
+#actionButtonsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 4px; /* 6px vertical gap, 4px horizontal */
+  margin: 12px 8px 16px;
+  padding: 0 8px; /* breathing room on sides */
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#startOverBtn,
+#submitBtn {
+  max-width: 120px;
+  width: 100%;
+  margin: 0;
+}
+
+#startOverBtn {
+  justify-self: start;
+}
+
+#submitBtn {
+  justify-self: end;
+}
+
+/* Responsive: stack buttons on very small screens */
+@media (max-width: 380px) {
+  #actionButtonsContainer {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  #startOverBtn,
+  #submitBtn {
+    max-width: none;
+    width: 100%;
+    justify-self: stretch !important;
+  }
 }
