@@ -40,8 +40,13 @@ if (!startOverBtn) {
   }
 }
 
+// Assign ID to submit button for CSS targeting
+submitBtn.id = 'submitBtn';
+
 // Append submit button to container and style it
-actionButtonsContainer.appendChild(submitBtn);
+if (submitBtn.parentNode !== actionButtonsContainer) {
+  actionButtonsContainer.appendChild(submitBtn);
+}
 submitBtn.classList.add('pick-btn', 'red');
 submitBtn.disabled = true;
 
@@ -68,6 +73,7 @@ function updateSubmitButtonState() {
   }
 }
 
+// Add event listeners to watch for changes to update submit button state
 const watchedElements = [sportSelect, leagueSelect, gameSelect, wagerTypeSelect, unitsSelect, numberInput];
 watchedElements.forEach(el => {
   if (!el) return;
@@ -82,10 +88,8 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// FIXED: Proper Start Over button handler
+// Start Over button resets form and UI without reloading
 startOverBtn.addEventListener('click', () => {
-  console.log('Start Over clicked - resetting form');  // Debug
-
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
@@ -120,7 +124,7 @@ startOverBtn.addEventListener('click', () => {
   updateSubmitButtonState();
 });
 
-// Initial submit button update
+// Initial submit button state update
 updateSubmitButtonState();
 
 pickForm.addEventListener('submit', async (e) => {
