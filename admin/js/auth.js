@@ -1,4 +1,3 @@
-// auth.js
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadSports } from '/admin/js/sportSelector.js';
@@ -48,3 +47,12 @@ loginBtn.addEventListener('click', async () => {
     console.error('Login error:', error);
   }
 });
+
+// Add Enter key support on AccessCode input
+if (accessCodeInput) {
+  accessCodeInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      loginBtn.click();
+    }
+  });
+}
