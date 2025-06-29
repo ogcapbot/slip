@@ -60,18 +60,23 @@
 
       <!-- Wager [[NUM]] Input -->
       <div id="numberInputContainer" style="display:none; margin-top:10px;">
-      <label for="numberInput">Enter Points</label>
-      <input type="number" id="numberInput" min="0" disabled/>
+        <label for="numberInput">Enter Points</label>
+        <input type="number" id="numberInput" min="0" disabled/>
       </div>
 
       <p id="finalPickDescription" style="font-weight:bold; margin-top:10px;"></p>
 
       <label for="unitsSelect">Choose Unit</label>
       <select id="unitsSelect" disabled>
-      <option>Select a section first</option>
+        <option>Select a section first</option>
       </select>
 
-      <button type="submit" disabled>Submit Pick</button>
+      <!-- Action Buttons Container -->
+      <div id="actionButtonsContainer" style="margin-top: 20px;">
+        <button id="startOverBtn" type="button" class="pick-btn blue">Start Over</button>
+        <div></div> <!-- Empty middle column -->
+        <button id="submitBtn" type="submit" class="pick-btn red" disabled>Submit Pick</button>
+      </div>
 
       <p id="pickError" class="error"></p>
       <p id="pickSuccess" class="success"></p>
