@@ -1,3 +1,4 @@
+// admin/js/pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getNotesData, reset as resetNotes } from '/admin/js/notesSection.js';
@@ -34,7 +35,7 @@ if (!startOverBtn) {
   startOverBtn.className = 'pick-btn blue';
   actionButtonsContainer.appendChild(startOverBtn);
 } else {
-  // Make sure it's inside container
+  // Ensure inside container
   if (startOverBtn.parentNode !== actionButtonsContainer) {
     actionButtonsContainer.appendChild(startOverBtn);
   }
@@ -82,16 +83,15 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Updated Start Over button handler with full reset but no page reload
+// Start Over button handler: reset all inputs, clear selections, reset notes, no page reload
 startOverBtn.addEventListener('click', () => {
-  console.log('Start Over clicked - resetting form');  // Debug
-
-  // Clear any error or success messages
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
-  // Reset selects and disable downstream selects
+  // Reset all selects and disable except sportSelect
   sportSelect.value = '';
+  sportSelect.disabled = false;
+
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
 
@@ -104,7 +104,7 @@ startOverBtn.addEventListener('click', () => {
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
-  // Clear pick options and final description
+  // Clear pick options
   pickOptionsContainer.innerHTML = '';
   finalPickDescription.textContent = '';
 
@@ -113,25 +113,16 @@ startOverBtn.addEventListener('click', () => {
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
-  // Remove green highlight on any pick buttons
+  // Remove any green selections from pick buttons
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
-  // Reset notes section UI and hide it
+  // Reset notes section
   if (typeof resetNotes === 'function') {
     resetNotes();
   }
 
-  // Enable sport select again for new selection
-  sportSelect.disabled = false;
-
-  // Reset submit button state
   updateSubmitButtonState();
-
-  // OPTIONAL: If you have any cached or global app state, reset here
-
-  // NOTE: No page reload to avoid logging user out
 });
-
 
 // Initial submit button update
 updateSubmitButtonState();
