@@ -266,3 +266,48 @@ button:hover {
   box-sizing: content-box;
   z-index: auto;
 }
+
+/* Container for bottom buttons: 2 columns */
+#actionButtonsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 1rem 2rem; /* vertical gap 1rem, horizontal gap 2rem */
+  margin-top: 2rem;
+}
+
+/* Make buttons fill the column width */
+#actionButtonsContainer button.pick-btn {
+  width: 100%;
+  padding: 1rem;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-radius: 0.5rem;
+  box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border: none;
+}
+
+/* Start Over: blue */
+#startOverBtn {
+  justify-self: start; /* left aligned */
+}
+
+/* Submit button styles */
+#submitBtn {
+  justify-self: end; /* right aligned */
+}
+
+/* Disabled submit button style */
+button.pick-btn:disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+}
+
+/* Enabled submit button style */
+button.pick-btn.enabled {
+  background-color: #4CAF50 !important; /* green */
+  color: white;
+  cursor: pointer;
+}
