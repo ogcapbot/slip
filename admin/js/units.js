@@ -27,7 +27,7 @@ if (!unitButtonsContainer) {
 
 let selectedUnit = null;
 let changeUnitBtn = null;
-let allUnitsCache = [];  // cache units data for toggling
+let allUnitsCache = [];
 
 async function loadUnits(showAll = true) {
   console.log('loadUnits called with showAll =', showAll);
@@ -37,7 +37,6 @@ async function loadUnits(showAll = true) {
     return;
   }
 
-  // Clear previous buttons and reset state
   unitButtonsContainer.innerHTML = '';
   selectedUnit = null;
 
@@ -53,7 +52,6 @@ async function loadUnits(showAll = true) {
 
   try {
     if (allUnitsCache.length === 0) {
-      // Load once and cache units
       const unitsSnapshot = await getDocs(collection(db, 'Units'));
       allUnitsCache = [];
 
@@ -64,7 +62,6 @@ async function loadUnits(showAll = true) {
         }
       });
 
-      // Sort units by Rank ascending
       allUnitsCache.sort((a, b) => a.Rank - b.Rank);
     }
 
@@ -75,10 +72,8 @@ async function loadUnits(showAll = true) {
       return;
     }
 
-    // Clear loading text before rendering buttons
     unitButtonsContainer.textContent = '';
 
-    // Setup grid styling for buttons
     unitButtonsContainer.style.display = 'grid';
     unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     unitButtonsContainer.style.gridAutoRows = 'min-content';
@@ -87,7 +82,6 @@ async function loadUnits(showAll = true) {
     unitButtonsContainer.style.alignItems = 'start';
 
     if (showAll) {
-      // Show all units as buttons
       allUnitsCache.forEach(unit => {
         const btn = createUnitButton(unit.display_unit);
         unitButtonsContainer.appendChild(btn);
@@ -96,18 +90,14 @@ async function loadUnits(showAll = true) {
       unitsSelect.disabled = false;
 
     } else {
-      // Show only "1 Unit" selected + Change Unit button
-
       const oneUnitData = allUnitsCache.find(u => u.display_unit === '1 Unit') || allUnitsCache[0];
       const oneUnitName = oneUnitData.display_unit;
 
-      // Selected unit button green
       const selectedBtn = createUnitButton(oneUnitName);
       selectedBtn.classList.remove('blue');
       selectedBtn.classList.add('green');
       unitButtonsContainer.appendChild(selectedBtn);
 
-      // Placeholder for spacing in middle column (optional)
       const placeholderBtn = createUnitButton('');
       placeholderBtn.style.visibility = 'hidden';
       placeholderBtn.style.pointerEvents = 'none';
@@ -118,14 +108,12 @@ async function loadUnits(showAll = true) {
 
       unitsSelect.disabled = false;
 
-      // Sync hidden select for submission with "1 Unit"
       unitsSelect.innerHTML = '';
       const option = document.createElement('option');
       option.value = oneUnitName;
       option.selected = true;
       unitsSelect.appendChild(option);
 
-      // Append Change Unit button
       createAndAppendChangeUnitBtn();
     }
   } catch (error) {
@@ -139,8 +127,21 @@ async function loadUnits(showAll = true) {
 function createUnitButton(unitName) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = unitName;
   btn.className = 'pick-btn blue';
+
+  // Split main text and parentheses to separate lines
+  const match = unitName.match(/^(.+?)\s*(\(.+\))?$/);
+  if (match) {
+    btn.innerHTML = match[1].trim();
+    if (match[2]) {
+      const span = document.createElement('span');
+      span.textContent = match[2];
+      span.style.display = 'block';
+      btn.appendChild(span);
+    }
+  } else {
+    btn.textContent = unitName;
+  }
 
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
@@ -150,6 +151,7 @@ function createUnitButton(unitName) {
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
+  btn.style.whiteSpace = 'normal';
 
   btn.addEventListener('click', () => selectUnit(unitName));
 
@@ -162,7 +164,6 @@ function selectUnit(unitName) {
 
   if (!unitButtonsContainer) return;
 
-  // Clear and reset container with selected unit + change button
   unitButtonsContainer.innerHTML = '';
 
   unitButtonsContainer.style.display = 'grid';
@@ -172,13 +173,11 @@ function selectUnit(unitName) {
   unitButtonsContainer.style.marginTop = '8px';
   unitButtonsContainer.style.alignItems = 'start';
 
-  // Selected unit button green
   const selectedBtn = createUnitButton(unitName);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   unitButtonsContainer.appendChild(selectedBtn);
 
-  // Placeholder for spacing in middle column
   const placeholderBtn = createUnitButton('');
   placeholderBtn.style.visibility = 'hidden';
   placeholderBtn.style.pointerEvents = 'none';
@@ -187,10 +186,8 @@ function selectUnit(unitName) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   unitButtonsContainer.appendChild(placeholderBtn);
 
-  // Append Change Unit button
   createAndAppendChangeUnitBtn();
 
-  // Sync hidden select for submission
   unitsSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = unitName;
@@ -213,7 +210,6 @@ function createAndAppendChangeUnitBtn() {
     changeUnitBtn.style.marginTop = '0';
 
     changeUnitBtn.addEventListener('click', () => {
-      // On clicking change unit, show all units and reset selection
       loadUnits(true);
     });
   }
@@ -233,13 +229,11 @@ function resetUnitSelection() {
   unitsSelect.dispatchEvent(new Event('change'));
 
   unitButtonsContainer.innerHTML = '';
-  unitButtonsContainer.style.display = ''; // Reset display style
+  unitButtonsContainer.style.display = '';
 
-  // Load just the "1 Unit" button selected by default
   loadUnits(false);
 }
 
-// INITIAL CALL to load units on script load, start with only "1 Unit" selected
 loadUnits(false);
 
 export { loadUnits };
