@@ -56,12 +56,10 @@ export async function loadSports() {
 
   try {
     const snapshot = await getDocs(collection(db, 'GameCache'));
-    console.log('[sportSelector] Games fetched:', snapshot.size);
-
     const sportsSet = new Set();
+
     snapshot.forEach(doc => {
       const sport = doc.data().Sport;
-      console.log('[sportSelector] Sport found:', sport);
       if (sport) sportsSet.add(sport);
     });
 
@@ -73,6 +71,7 @@ export async function loadSports() {
       return;
     }
 
+    // Style container as 3-column grid with tight gaps
     sportButtonsContainer.style.display = 'grid';
     sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     sportButtonsContainer.style.gridAutoRows = 'min-content';
@@ -83,13 +82,8 @@ export async function loadSports() {
     sports.forEach(sport => {
       sportButtonsContainer.appendChild(createSportButton(sport));
     });
-
-    // Ensure container is visible
-    sportButtonsContainer.style.visibility = 'visible';
-    sportButtonsContainer.style.opacity = '1';
-
   } catch (error) {
-    console.error('[sportSelector] Error loading sports:', error);
+    console.error('Error loading sports:', error);
     sportButtonsContainer.textContent = 'Error loading sports';
   }
 }
@@ -122,11 +116,13 @@ function selectSport(button, sport) {
   sportButtonsContainer.style.marginTop = '8px';
   sportButtonsContainer.style.alignItems = 'start';
 
+  // Selected sport button green, top-left grid cell
   const selectedBtn = createSportButton(sport);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   sportButtonsContainer.appendChild(selectedBtn);
 
+  // Invisible placeholder button for middle cell
   const placeholderBtn = createSportButton('');
   placeholderBtn.style.visibility = 'hidden';
   placeholderBtn.style.pointerEvents = 'none';
@@ -135,6 +131,7 @@ function selectSport(button, sport) {
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
   sportButtonsContainer.appendChild(placeholderBtn);
 
+  // Change Sport button in third cell
   if (!changeSportBtn) {
     changeSportBtn = document.createElement('button');
     changeSportBtn.type = 'button';
@@ -174,6 +171,7 @@ function createSportButton(sport) {
   btn.textContent = sport;
   btn.className = 'pick-btn blue';
 
+  // Tighter vertical spacing for consistent button sizing
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
