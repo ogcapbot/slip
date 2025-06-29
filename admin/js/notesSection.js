@@ -1,4 +1,3 @@
-// admin/js/notesSection.js
 const form = document.getElementById('pickForm');
 const unitsSelect = document.getElementById('unitsSelect');
 const submitButton = form.querySelector('button[type="submit"]');
@@ -109,6 +108,7 @@ noBtn.addEventListener('click', () => {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
 
+  // Enable submit, no notes to input
   submitButton.disabled = false;
 });
 
@@ -123,7 +123,7 @@ yesBtn.addEventListener('click', () => {
   charCounter.style.display = 'block';
 
   notesTextarea.focus();
-  submitButton.disabled = true;
+  submitButton.disabled = true; // disable submit until textarea input
 
   updateCharCounter();
 });
