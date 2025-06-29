@@ -115,7 +115,6 @@ export async function loadSports() {
       rightContainer.appendChild(btn);
     });
 
-    // Set main container flex to row and append both containers
     sportButtonsContainer.style.display = 'flex';
     sportButtonsContainer.style.justifyContent = 'space-between';
     sportButtonsContainer.style.alignItems = 'flex-start';
@@ -147,9 +146,28 @@ function selectSport(button, sport) {
 
   selectedSport = sport;
 
-  // Reset all buttons: hide all except selected, selected green
   const allButtons = Array.from(sportButtonsContainer.querySelectorAll('button'));
   allButtons.forEach(btn => {
     if (btn === button) {
       btn.classList.remove('blue');
-      btn.classList.add('gree
+      btn.classList.add('green');
+      btn.style.display = '';
+    } else {
+      btn.style.display = 'none';
+    }
+  });
+
+  if (!changeSportBtn) {
+    changeSportBtn = document.createElement('button');
+    changeSportBtn.type = 'button';
+    changeSportBtn.textContent = 'Change Sport';
+    changeSportBtn.className = 'pick-btn blue';
+    changeSportBtn.style.minWidth = '120px';
+    changeSportBtn.style.alignSelf = 'center';
+    changeSportBtn.style.marginLeft = '10px';
+
+    changeSportBtn.addEventListener('click', () => {
+      resetSportSelection();
+    });
+
+    sportButtonsCo
