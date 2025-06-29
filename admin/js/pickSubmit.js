@@ -82,13 +82,15 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// FIXED: Proper Start Over button handler
+// Updated Start Over button handler with full reset but no page reload
 startOverBtn.addEventListener('click', () => {
   console.log('Start Over clicked - resetting form');  // Debug
 
+  // Clear any error or success messages
   pickError.textContent = '';
   pickSuccess.textContent = '';
 
+  // Reset selects and disable downstream selects
   sportSelect.value = '';
   leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
   leagueSelect.disabled = true;
@@ -102,23 +104,34 @@ startOverBtn.addEventListener('click', () => {
   unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
   unitsSelect.disabled = true;
 
+  // Clear pick options and final description
   pickOptionsContainer.innerHTML = '';
   finalPickDescription.textContent = '';
 
+  // Reset number input
   numberInput.value = '';
   numberInput.disabled = true;
   numberInputContainer.style.display = 'none';
 
+  // Remove green highlight on any pick buttons
   pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
 
+  // Reset notes section UI and hide it
   if (typeof resetNotes === 'function') {
     resetNotes();
   }
 
+  // Enable sport select again for new selection
   sportSelect.disabled = false;
 
+  // Reset submit button state
   updateSubmitButtonState();
+
+  // OPTIONAL: If you have any cached or global app state, reset here
+
+  // NOTE: No page reload to avoid logging user out
 });
+
 
 // Initial submit button update
 updateSubmitButtonState();
