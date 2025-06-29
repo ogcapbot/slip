@@ -1,6 +1,6 @@
 // auth.js
 import { auth, initRecaptcha } from '../firebaseInit.js';
-import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
 import { loadSports } from './sportSelector.js';
 
 console.log('Auth in auth.js:', auth);
