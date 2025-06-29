@@ -312,3 +312,49 @@ button:hover {
   color: white;
   cursor: pointer;
 }
+
+#actionButtonsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+  max-width: 400px;
+  width: 100%;
+  margin: 2rem auto 0 auto;
+}
+
+#actionButtonsContainer button {
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#startOverBtn {
+  background-color: #2a9fd6;
+  color: white;
+}
+
+#startOverBtn:hover {
+  background-color: #2179a5;
+}
+
+#submitBtn {
+  background-color: #b87f7f;
+  cursor: not-allowed;
+  color: #666;
+}
+
+#submitBtn.enabled {
+  background-color: #4caf50;
+  color: white;
+  cursor: pointer;
+}
+
