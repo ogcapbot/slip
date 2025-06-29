@@ -1,5 +1,10 @@
 // admin/firebaseInit.js
 
+// Modular imports for app and Firestore ONLY
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
   authDomain: "ogcapperbets.firebaseapp.com",
@@ -10,7 +15,11 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-// Initialize Firebase app immediately (runs once on import)
+// Initialize app modularly (for Firestore)
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Initialize Firebase compat auth app once globally (auth uses global firebase)
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -26,4 +35,5 @@ function initRecaptcha() {
   }
 }
 
-export { initRecaptcha };
+// Export Firestore modular db and recaptcha init function
+export { db, initRecaptcha };
