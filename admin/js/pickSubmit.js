@@ -1,15 +1,14 @@
-// pickSubmit.js
 import { db } from '../firebaseInit.js';
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
 const leagueSelect = document.getElementById('leagueSelect');
 const gameSelect = document.getElementById('gameSelect');
+const pickOptionsContainer = document.getElementById('pickOptionsContainer');
 const wagerTypeSelect = document.getElementById('wagerTypeSelect');
 const numberInput = document.getElementById('numberInput');
 const unitsSelect = document.getElementById('unitsSelect');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer');
 const pickError = document.getElementById('pickError');
 const pickSuccess = document.getElementById('pickSuccess');
 
@@ -24,68 +23,95 @@ pickForm.addEventListener('submit', async (e) => {
   const wagerTypeId = wagerTypeSelect.value;
   const unit = unitsSelect.value;
 
-  // Get selected pick text from pickOptionsContainer (the green button)
-  const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
-  const pickText = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
+  // Find the selected pick (the green button text)
+  const selectedPickButton = pickOptionsContainer.querySelector('button.green');
+  const pickText = selectedPickButton ? selectedPickButton.textContent.trim() : '';
 
-  const numberValue = numberInput.value.trim();
+  // Number input if needed
+  const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
 
-  // Validate inputs
-  if (!sport) {
-    pickError.textContent = 'Please select a sport.';
-    return;
+  if (!sport) return (pickError.textContent = 'Please select a sport.');
+  if (!league) return (pickError.textContent = 'Please select a league.');
+  if (!gameId) return (pickError.textContent = 'Please select a game.');
+  if (!pickText) return (pickError.textContent = 'Please make your pick by selecting a team.');
+  if (!wagerTypeId) return (pickError.textContent = 'Please select a wager type.');
+  if (numberInput && !numberInput.disabled && (wagerNum === null || isNaN(wagerNum))) {
+    return (pickError.textContent = 'Please enter a valid number for the wager.');
   }
-  if (!league) {
-    pickError.textContent = 'Please select a league.';
-    return;
-  }
-  if (!gameId) {
-    pickError.textContent = 'Please select a game.';
-    return;
-  }
-  if (!wagerTypeId) {
-    pickError.textContent = 'Please select a wager type.';
-    return;
-  }
-  if (!pickText) {
-    pickError.textContent = 'Please select your pick.';
-    return;
-  }
-  if (numberInput.style.display !== 'none' && numberValue === '') {
-    pickError.textContent = 'Please enter a number for the wager.';
-    return;
-  }
-  if (!unit) {
-    pickError.textContent = 'Please select a unit.';
-    return;
-  }
+  if (!unit) return (pickError.textContent = 'Please select a unit.');
 
   try {
-    // Add pick document to Picks collection
-    await addDoc(collection(db, 'Picks'), {
+    // Fetch current game doc snapshot
+    const gameDocRef = doc(db, 'GameCache', gameId);
+    const gameDocSnap = await getDoc(gameDocRef);
+    if (!gameDocSnap.exists()) {
+      return (pickError.textContent = 'Selected game data not found.');
+    }
+    const gameData = gameDocSnap.data();
+
+    // Fetch wager type doc snapshot
+    const wagerTypeDocRef = doc(db, 'WagerTypes', wagerTypeId);
+    const wagerTypeDocSnap = await getDoc(wagerTypeDocRef);
+    if (!wagerTypeDocSnap.exists()) {
+      return (pickError.textContent = 'Selected wager type data not found.');
+    }
+    const wagerTypeData = wagerTypeDocSnap.data();
+
+    // Build final wager description replacing [[NUM]] and [[TEAM]] as done in wagerType module
+    let wagerDesc = wagerTypeData.pick_desc_template || '';
+    const pickLastWord = pickText.split(' ').slice(-1)[0];
+    if (wagerDesc.includes('[[TEAM]]')) {
+      wagerDesc = wagerDesc.replace(/\[\[TEAM\]\]/g, pickLastWord);
+    }
+    if (wagerDesc.includes('[[NUM]]')) {
+      wagerDesc = wagerDesc.replace(/\[\[NUM\]\]/g, wagerNum !== null ? wagerNum : '___');
+    }
+
+    // Prepare user info from global or window.currentUser - adjust as your login setup
+    const userAccessCode = window.currentUser?.AccessCode || null;
+    const userDisplayName = window.currentUser?.DisplayName || null;
+
+    // Compose submission document
+    const submissionDoc = {
+      userAccessCode,
+      userDisplayName,
+      timestampSubmitted: serverTimestamp(),
+      timestampStatusUpdated: null,
+      statusUpdatedBy: null,
       sport,
       league,
       gameId,
-      wagerTypeId,
+      gameWinLossDraw: null,
       pick: pickText,
-      numberValue: numberValue || null,
+      wagerTypeId,
+      wagerTypeDesc: wagerDesc,
+      wagerNum,
       unit,
-      timestamp: serverTimestamp(),
-      // Add user info if you keep current user globally
-      userAccessCode: window.currentUser?.AccessCode || null,
-      userDisplayName: window.currentUser?.DisplayName || null,
-    });
+      notes: '',
+      originalGameSnapshot: {
+        HomeTeam: gameData.HomeTeam || null,
+        AwayTeam: gameData.AwayTeam || null,
+        StartTimeUTC: gameData.StartTimeUTC || null,
+        location: gameData.location || null,
+        status: gameData.status || null,
+      },
+      originalWagerTypeSnapshot: wagerTypeData,
+    };
+
+    await addDoc(collection(db, 'OfficialPicks'), submissionDoc);
 
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset dependent fields
-    pickOptionsContainer.innerHTML = '';
+    // Reset UI states as needed
     wagerTypeSelect.disabled = true;
     unitsSelect.disabled = true;
     numberInput.value = '';
-    numberInput.style.display = 'none';
-
+    numberInput.disabled = true;
+    pickOptionsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('green'));
+    gameSelect.innerHTML = '<option value="">Select a league first</option>';
+    leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
+    sportSelect.value = '';
   } catch (err) {
     console.error('Error submitting pick:', err);
     pickError.textContent = 'Error submitting pick. Please try again.';
