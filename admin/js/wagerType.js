@@ -1,7 +1,7 @@
 // admin/js/wagerType.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadUnits } from '/admin/js/units.js';
+import { loadUnits } from '../units.js';
 
 const sportSelect = document.getElementById('sportSelect');
 const wagerTypeSelect = document.getElementById('wagerTypeSelect');
