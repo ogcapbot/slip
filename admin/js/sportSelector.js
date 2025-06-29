@@ -108,7 +108,6 @@ function selectSport(button, sport) {
 
   sportButtonsContainer.innerHTML = '';
 
-  // Apply grid style with tight gaps and top alignment
   sportButtonsContainer.style.display = 'grid';
   sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   sportButtonsContainer.style.gridAutoRows = 'min-content';
@@ -122,10 +121,14 @@ function selectSport(button, sport) {
   selectedBtn.classList.add('green');
   sportButtonsContainer.appendChild(selectedBtn);
 
-  // Placeholder empty div for middle cell with fixed height
-  const emptyDiv = document.createElement('div');
-  emptyDiv.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '40px';
-  sportButtonsContainer.appendChild(emptyDiv);
+  // Invisible placeholder button for middle cell
+  const placeholderBtn = createSportButton('');
+  placeholderBtn.style.visibility = 'hidden';
+  placeholderBtn.style.pointerEvents = 'none';
+  placeholderBtn.style.margin = '0';
+  placeholderBtn.style.padding = '0';
+  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px'; // slightly smaller fallback
+  sportButtonsContainer.appendChild(placeholderBtn);
 
   // Change Sport button in third cell
   if (!changeSportBtn) {
@@ -166,6 +169,13 @@ function createSportButton(sport) {
   btn.type = 'button';
   btn.textContent = sport;
   btn.className = 'pick-btn blue';
+
+  // Reduced padding and margin for tighter vertical spacing
+  btn.style.paddingTop = '6px';
+  btn.style.paddingBottom = '6px';
+  btn.style.marginTop = '2px';
+  btn.style.marginBottom = '2px';
+
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
