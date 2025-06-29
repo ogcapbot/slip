@@ -1,31 +1,33 @@
-// admin/firebaseInit.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getAuth, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+// firebaseInit.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
+import { getAuth, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-auth.js";
 
+// Your Firebase config here
 const firebaseConfig = {
-  apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
-  authDomain: "ogcapperbets.firebaseapp.com",
-  projectId: "ogcapperbets",
-  storageBucket: "ogcapperbets.firebasestorage.app",
-  messagingSenderId: "442564970374",
-  appId: "1:442564970374:web:91e6e1e55eae8e5bc10e07",
-  measurementId: "G-71JGC4DVMG"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  // ...rest of your config
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-function initRecaptcha() {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-      size: 'invisible',
-      callback: (response) => {
-        console.log('reCAPTCHA resolved');
+let recaptchaVerifier;
+
+export function initRecaptcha() {
+  if (!recaptchaVerifier) {
+    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response) => {
+        console.log('reCAPTCHA solved:', response);
       }
     }, auth);
   }
+  recaptchaVerifier.clear(); // clear any existing instance
+  recaptchaVerifier.render();
 }
 
-export { app, auth, db, initRecaptcha };
+export { app, db, auth, recaptchaVerifier };
