@@ -1,6 +1,5 @@
 // firebaseInit.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getAuth, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -13,19 +12,10 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
+// Initialize Firestore DB
 const db = getFirestore(app);
 
-function initRecaptcha() {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-      size: 'invisible',
-      callback: () => {
-        console.log('reCAPTCHA resolved');
-      }
-    }, auth);
-  }
-}
-
-export { app, auth, db, initRecaptcha };
+export { db };
