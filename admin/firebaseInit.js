@@ -1,10 +1,8 @@
 // admin/firebaseInit.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { getAuth, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-// Modular imports for app and Firestore ONLY
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore.js";
-
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
   authDomain: "ogcapperbets.firebaseapp.com",
@@ -15,25 +13,19 @@ const firebaseConfig = {
   measurementId: "G-71JGC4DVMG"
 };
 
-// Initialize app modularly (for Firestore)
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
-
-// Initialize Firebase compat auth app once globally (auth uses global firebase)
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
 
 function initRecaptcha() {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
       size: 'invisible',
       callback: (response) => {
-        console.log('reCAPTCHA solved:', response);
+        console.log('reCAPTCHA resolved');
       }
-    });
+    }, auth);
   }
 }
 
-// Export Firestore modular db and recaptcha init function
-export { db, initRecaptcha };
+export { app, auth, db, initRecaptcha };
