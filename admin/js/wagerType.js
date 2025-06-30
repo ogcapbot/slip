@@ -9,12 +9,10 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // For team buttons
 const gameSelect = document.getElementById('gameSelect');
 
-// Hide wagerTypeSelect dropdown as per original
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
 
-// Hide number input container initially
 numberInputContainer.style.display = 'none';
 
 // Add * Required label below numberInput inside numberInputContainer if not already present
@@ -27,25 +25,26 @@ if (!requiredLabel) {
   requiredLabel.style.fontWeight = 'bold';
   requiredLabel.style.fontSize = '0.8em';
   requiredLabel.style.marginTop = '2px';
-  requiredLabel.style.display = 'none'; // hidden initially
+  requiredLabel.style.display = 'none';
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// Hide original label to avoid duplication and DOM insertion errors
+// Hide original wagerTypeLabel to avoid duplication and DOM insertion errors
 const wagerTypeLabelOriginal = document.querySelector('label[for="wagerTypeSelect"]');
 if (wagerTypeLabelOriginal) {
   wagerTypeLabelOriginal.style.display = 'none';
 }
 
-// Create container for the labels (new Choose Wager Type + Number Input label)
+// Create container for labels ("Choose Wager Type" + "Number Input:")
 const wagerSectionContainer = document.createElement('div');
 wagerSectionContainer.style.display = 'flex';
 wagerSectionContainer.style.justifyContent = 'space-between';
 wagerSectionContainer.style.alignItems = 'center';
-wagerSectionContainer.style.marginBottom = '4px';
+wagerSectionContainer.style.marginBottom = '8px';
 wagerSectionContainer.style.width = '100%';
+wagerSectionContainer.style.maxWidth = '600px';
 
-// Create new Choose Wager Type label inside container
+// New "Choose Wager Type" label inside container
 const wagerTypeLabelNew = document.createElement('label');
 wagerTypeLabelNew.textContent = 'Choose Wager Type';
 wagerTypeLabelNew.style.fontWeight = 'bold';
@@ -53,20 +52,27 @@ wagerTypeLabelNew.style.display = 'inline-block';
 
 wagerSectionContainer.appendChild(wagerTypeLabelNew);
 
-// Create number input label (shown only when wager with [[NUM]] selected)
+// Number input label
 let numberInputTitle = document.createElement('label');
 numberInputTitle.textContent = 'Number Input:';
 numberInputTitle.style.fontWeight = 'bold';
-numberInputTitle.style.display = 'none'; // Hidden initially
+numberInputTitle.style.display = 'none';
 wagerSectionContainer.appendChild(numberInputTitle);
 
-// Insert container into DOM where original wagerTypeLabel was
+// Style numberInputContainer for alignment and size
+numberInputContainer.style.display = 'block';
+numberInputContainer.style.width = '100%';
+numberInputContainer.style.maxWidth = '300px';
+numberInputContainer.style.marginTop = '4px';
+numberInputContainer.style.marginBottom = '12px';
+
+// Insert labels container and number input container before wagerTypeSelect element
 if (wagerTypeSelect && wagerTypeSelect.parentNode) {
   wagerTypeSelect.parentNode.insertBefore(wagerSectionContainer, wagerTypeSelect);
-  wagerTypeSelect.parentNode.insertBefore(numberInputContainer, wagerSectionContainer.nextSibling);
+  wagerTypeSelect.parentNode.insertBefore(numberInputContainer, wagerTypeSelect);
 } else {
   document.body.appendChild(wagerSectionContainer);
-  document.body.insertBefore(numberInputContainer, wagerButtonsContainer);
+  document.body.appendChild(numberInputContainer);
 }
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -81,14 +87,16 @@ if (!wagerButtonsContainer) {
   }
 }
 
-// Style wager buttons container as grid with 3 equal columns
+// Style wager buttons container as 3-column grid full width
 wagerButtonsContainer.style.display = 'grid';
 wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
 wagerButtonsContainer.style.gap = '8px 12px';
 wagerButtonsContainer.style.marginTop = '8px';
 wagerButtonsContainer.style.alignItems = 'start';
+wagerButtonsContainer.style.width = '100%';
+wagerButtonsContainer.style.maxWidth = '600px';
 
-// Initially hide wager buttons container until a team is selected
+// Initially hide wager buttons container
 wagerButtonsContainer.style.display = 'none';
 
 let selectedWagerId = null;
@@ -101,7 +109,6 @@ function toggleWagerSection() {
 
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
   console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
-  // No clearing here — just toggling visibility
 }
 
 sportSelect.addEventListener('change', () => {
