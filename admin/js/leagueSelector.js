@@ -57,14 +57,16 @@ sportSelect.addEventListener("change", async () => {
   leagueButtonsContainer.textContent = "Loading leagues...";
 
   try {
-    const q = query(collection(db, "GameCache"), where("Sport", "==", selectedSport));
+    // Updated to use 'leagueGroup' field to filter by sport
+    const q = query(collection(db, "GameCache"), where("leagueGroup", "==", selectedSport));
     const querySnapshot = await getDocs(q);
 
     const leaguesSet = new Set();
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data && data.sportName) { //this is whats odds api calls leagues
-        leaguesSet.add(data.League);
+      // Use sportName field as league identifier
+      if (data && data.sportName) {
+        leaguesSet.add(data.sportName);
       }
     });
 
