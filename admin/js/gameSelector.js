@@ -114,8 +114,7 @@ function createGameButton(id, gameData) {
 
   btn.textContent = `${gameData.homeTeam || "Home"} vs ${gameData.awayTeam || "Away"} — ${timeString}`;
 
-  // Use direct assignment to avoid event listener issues
-  btn.onclick = function() {
+  btn.onclick = function () {
     console.log("Game button clicked:", id);
     selectGame(btn, id);
   };
@@ -129,9 +128,11 @@ function selectGame(button, gameId) {
 
   selectedGameId = gameId;
 
+  // Hide the game buttons list
   gameButtonsContainer.innerHTML = "";
   gameButtonsContainer.style.display = "block";
 
+  // Prepare but DO NOT show Change Game button yet
   if (!changeGameBtn) {
     changeGameBtn = document.createElement("button");
     changeGameBtn.type = "button";
@@ -148,20 +149,29 @@ function selectGame(button, gameId) {
       resetGameSelection();
     };
   }
-  gameButtonsContainer.appendChild(changeGameBtn);
-  console.log("Appended Change Game button");
+  // Hide change button initially (will show after team pick)
+  changeGameBtn.style.display = "none";
 
+  // Clear pickOptionsContainer and show the two team buttons side by side
   const [home, rest] = button.textContent.split(" vs ");
   const away = rest ? rest.split(" — ")[0] : "Away";
 
   console.log("Showing teams:", home, away);
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
+    // Create a container with grid styling for 2 columns
+    pickOptionsContainer.style.display = "grid";
+    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr";
+    pickOptionsContainer.style.gap = "8px";
+    pickOptionsContainer.style.marginTop = "8px";
+
+    // Append team buttons side by side
     pickOptionsContainer.appendChild(createTeamButton(home));
     pickOptionsContainer.appendChild(createTeamButton(away));
     selectedTeam = null;
   }
 
+  // Update hidden select for form compatibility
   gameSelect.innerHTML = "";
   const option = document.createElement("option");
   option.value = gameId;
@@ -169,6 +179,9 @@ function selectGame(button, gameId) {
   gameSelect.appendChild(option);
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
+
+  // Append Change Game button to pickOptionsContainer but keep hidden for now
+  pickOptionsContainer.appendChild(changeGameBtn);
 }
 
 function createTeamButton(teamName) {
@@ -198,8 +211,8 @@ function selectTeam(button, teamName) {
   selectedTeam = teamName;
 
   if (pickOptionsContainer) {
-    const buttons = pickOptionsContainer.querySelectorAll("button");
-    buttons.forEach(b => {
+    const buttons = pickOptionsContainer.querySelectorAll("button.pick-btn");
+    buttons.forEach((b) => {
       b.classList.remove("green");
       b.classList.add("blue");
     });
@@ -208,7 +221,41 @@ function selectTeam(button, teamName) {
   button.classList.remove("blue");
   button.classList.add("green");
 
-  // TODO: Add logic for pick selection here if needed
+  // Move the selected team button to the left column, and Change Game to right column
+
+  if (pickOptionsContainer) {
+    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr";
+    pickOptionsContainer.style.alignItems = "center";
+    pickOptionsContainer.style.gap = "8px";
+
+    // Remove all buttons except selected team & changeGameBtn
+    pickOptionsContainer.innerHTML = "";
+    // Append selected team button first (left column)
+    pickOptionsContainer.appendChild(button);
+    // Show and append Change Game button (right column)
+    changeGameBtn.style.display = "inline-block";
+    pickOptionsContainer.appendChild(changeGameBtn);
+
+    // Style selected team button to match other buttons size (example width 120px, height 40px)
+    button.style.width = "120px";
+    button.style.minWidth = "120px";
+    button.style.height = "40px";
+    button.style.margin = "0";
+    button.style.paddingTop = "6px";
+    button.style.paddingBottom = "6px";
+    button.style.fontSize = "1rem";
+    button.classList.remove("blue");
+    button.classList.add("green");
+
+    // Style Change Game button to match (same width & height)
+    changeGameBtn.style.width = "120px";
+    changeGameBtn.style.minWidth = "120px";
+    changeGameBtn.style.height = "40px";
+    changeGameBtn.style.margin = "0";
+    changeGameBtn.style.paddingTop = "6px";
+    changeGameBtn.style.paddingBottom = "6px";
+    changeGameBtn.style.fontSize = "1rem";
+  }
 }
 
 function resetGameSelection() {
@@ -226,15 +273,20 @@ function resetGameSelection() {
   gameSelect.dispatchEvent(new Event("change"));
 
   gameButtonsContainer.innerHTML = "";
+  gameButtonsContainer.style.display = "grid";
 
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
+    pickOptionsContainer.style.display = "block";
+    pickOptionsContainer.style.gridTemplateColumns = "";
   }
 }
 
 function clearPickOptions() {
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
+    pickOptionsContainer.style.display = "block";
+    pickOptionsContainer.style.gridTemplateColumns = "";
   }
 }
 
