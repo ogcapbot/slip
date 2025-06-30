@@ -57,7 +57,7 @@ export async function loadSports() {
     const sportsSet = new Set();
 
     snapshot.forEach(doc => {
-      const sport = doc.data().sport;
+      const sport = doc.data().Sport;
       if (sport) sportsSet.add(sport);
     });
 
