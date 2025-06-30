@@ -1,7 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-// IMPORTANT: Adjust the import path below to your actual units JS file location
-import { showUnitSection } from './units.js';  // <-- Change './units.js' to the real path of your units file
+import { showUnitSection, updateUnitSummaryText } from './units.js'; // Adjust path accordingly
 
 const sportSelect = document.getElementById('sportSelect');
 const wagerTypeSelect = document.getElementById('wagerTypeSelect');
@@ -17,7 +16,6 @@ if (wagerTypeSelect) {
 
 numberInputContainer.style.display = 'none';
 
-// Add * Required label below numberInput inside numberInputContainer if not already present
 let requiredLabel = numberInputContainer.querySelector('.required-label');
 if (!requiredLabel) {
   requiredLabel = document.createElement('div');
@@ -31,13 +29,11 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// Hide original wagerTypeLabel to avoid duplication and DOM insertion errors
 const wagerTypeLabelOriginal = document.querySelector('label[for="wagerTypeSelect"]');
 if (wagerTypeLabelOriginal) {
   wagerTypeLabelOriginal.style.display = 'none';
 }
 
-// Create container for labels ("Choose Wager Type" + "Number Input:")
 const wagerSectionContainer = document.createElement('div');
 wagerSectionContainer.style.display = 'flex';
 wagerSectionContainer.style.justifyContent = 'space-between';
@@ -46,7 +42,6 @@ wagerSectionContainer.style.marginBottom = '8px';
 wagerSectionContainer.style.width = '100%';
 wagerSectionContainer.style.maxWidth = '600px';
 
-// New "Choose Wager Type" label inside container
 const wagerTypeLabelNew = document.createElement('label');
 wagerTypeLabelNew.textContent = 'Choose Wager Type';
 wagerTypeLabelNew.style.fontWeight = 'bold';
@@ -54,18 +49,15 @@ wagerTypeLabelNew.style.display = 'inline-block';
 
 wagerSectionContainer.appendChild(wagerTypeLabelNew);
 
-// Number input label
 let numberInputTitle = document.createElement('label');
 numberInputTitle.textContent = 'Number Input:';
 numberInputTitle.style.fontWeight = 'bold';
 numberInputTitle.style.display = 'none';
 wagerSectionContainer.appendChild(numberInputTitle);
 
-// Style numberInputContainer for alignment and size inside grid (no margin to fit grid cell)
 numberInputContainer.style.margin = '0';
 numberInputContainer.style.width = '100%';
 
-// Insert labels container and number input container before wagerTypeSelect element
 if (wagerTypeSelect && wagerTypeSelect.parentNode) {
   wagerTypeSelect.parentNode.insertBefore(wagerSectionContainer, wagerTypeSelect);
   wagerTypeSelect.parentNode.insertBefore(numberInputContainer, wagerTypeSelect);
@@ -86,16 +78,14 @@ if (!wagerButtonsContainer) {
   }
 }
 
-// Style wager buttons container as 3-column grid full width
 wagerButtonsContainer.style.display = 'grid';
 wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
 wagerButtonsContainer.style.gap = '8px 12px';
 wagerButtonsContainer.style.marginTop = '8px';
-wagerButtonsContainer.style.alignItems = 'center'; // vertically center items
+wagerButtonsContainer.style.alignItems = 'center';
 wagerButtonsContainer.style.width = '100%';
 wagerButtonsContainer.style.maxWidth = '600px';
 
-// Initially hide wager buttons container
 wagerButtonsContainer.style.display = 'none';
 
 let selectedWagerId = null;
@@ -104,14 +94,10 @@ let changeWagerBtn = null;
 function toggleWagerSection() {
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
-  console.log(`[toggleWagerSection] Team selected: ${teamSelected ? selectedTeamButton.textContent : 'None'}`);
-
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
-  console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
 }
 
 sportSelect.addEventListener('change', () => {
-  console.log('[sportSelect] Sport changed:', sportSelect.value);
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
@@ -119,7 +105,6 @@ sportSelect.addEventListener('change', () => {
 });
 
 gameSelect.addEventListener('change', async () => {
-  console.log('[gameSelect] Game changed:', gameSelect.value);
   if (!gameSelect.value) {
     clearWagerButtons();
     wagerButtonsContainer.textContent = 'Select a game first';
@@ -136,13 +121,11 @@ pickOptionsContainer.addEventListener('click', e => {
   if (e.target.tagName === 'BUTTON') {
     Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
     e.target.classList.add('green');
-    console.log('[pickOptionsContainer] Team selected:', e.target.textContent);
     toggleWagerSection();
   }
 });
 
 function clearWagerButtons() {
-  console.log('[clearWagerButtons] Clearing wager buttons and resetting state.');
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -163,13 +146,10 @@ function clearWagerButtons() {
 
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
-  console.log('[loadWagerTypes] Loading wager types for sport:', selectedSport);
 
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   if (!selectedTeamButton) {
     clearWagerButtons();
-  } else {
-    console.log('[loadWagerTypes] Team already selected, skipping clearing wager buttons.');
   }
 
   wagerButtonsContainer.textContent = 'Loading wager types...';
@@ -190,8 +170,6 @@ async function loadWagerTypes() {
 
     const wagerTypes = Array.from(wagerTypesMap.values());
 
-    console.log(`[loadWagerTypes] Found ${wagerTypes.length} wager types.`);
-
     if (wagerTypes.length === 0) {
       wagerButtonsContainer.textContent = 'No wager types found';
       return;
@@ -202,11 +180,9 @@ async function loadWagerTypes() {
     wagerTypes.forEach(wt => {
       const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
       wagerButtonsContainer.appendChild(btn);
-      console.log(`[loadWagerTypes] Appended wager button: ${wt.wager_label_template || 'Unknown'}`);
     });
 
   } catch (error) {
-    console.error('Error loading wager types:', error);
     wagerButtonsContainer.textContent = 'Error loading wager types';
   }
 
@@ -224,7 +200,6 @@ function formatLabelWithLineBreaks(label) {
 }
 
 function createWagerButton(id, label, descTemplate) {
-  console.log(`[createWagerButton] Creating button: ${label} (ID: ${id})`);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = label;
@@ -250,14 +225,12 @@ function createWagerButton(id, label, descTemplate) {
 function selectWager(button, id, descTemplate) {
   if (selectedWagerId === id) return;
 
-  console.log('[selectWager] Wager selected:', id, button.textContent);
-
   selectedWagerId = id;
 
   wagerButtonsContainer.innerHTML = '';
 
   wagerButtonsContainer.style.display = 'grid';
-  wagerButtonsContainer.style.gridTemplateColumns = '1fr 150px 1fr'; // fixed width middle column for input
+  wagerButtonsContainer.style.gridTemplateColumns = '1fr 150px 1fr';
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
   wagerButtonsContainer.style.gap = '4px 6px';
   wagerButtonsContainer.style.marginTop = '0';
@@ -282,7 +255,6 @@ function selectWager(button, id, descTemplate) {
 
     numberInput.value = '0';
 
-    // Match input height to button height
     const btnHeight = selectedBtn.getBoundingClientRect().height;
     numberInput.style.height = btnHeight + 'px';
     numberInput.style.marginLeft = '6px';
@@ -331,12 +303,14 @@ function selectWager(button, id, descTemplate) {
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
-  // Show unit section after wager selection
+  // Sync explanatory text with units line:
+  updateUnitSummaryText();
+
+  // Show unit selection area after wager chosen
   showUnitSection();
 }
 
 function resetWagerSelection() {
-  console.log('[resetWagerSelection] Resetting wager selection.');
   selectedWagerId = null;
 
   if (changeWagerBtn) {
@@ -376,6 +350,9 @@ numberInput.addEventListener('input', () => {
     desc = desc.replace(/\[\[NUM\]\]/g, num);
   }
   finalPickDescription.textContent = desc;
+
+  // Sync explanatory text with units line on number input change
+  updateUnitSummaryText();
 });
 
 function getLastWord(teamName) {
@@ -397,6 +374,9 @@ function updateFinalPickDescription(descTemplate) {
     desc = desc.replace(/\[\[NUM\]\]/g, '___');
   }
   finalPickDescription.textContent = desc;
+
+  // Sync explanatory text with units line
+  updateUnitSummaryText();
 }
 
 export default {};
