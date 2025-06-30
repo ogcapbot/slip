@@ -145,7 +145,15 @@ function clearWagerButtons() {
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   console.log('[loadWagerTypes] Loading wager types for sport:', selectedSport);
-  clearWagerButtons();
+
+  // Only clear wager buttons if NO team selected (prevent wiping buttons after team pick)
+  const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
+  if (!selectedTeamButton) {
+    clearWagerButtons();
+  } else {
+    console.log('[loadWagerTypes] Team is already selected, skipping clearWagerButtons()');
+  }
+
   wagerButtonsContainer.textContent = 'Loading wager types...';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
@@ -173,6 +181,12 @@ async function loadWagerTypes() {
 
     wagerButtonsContainer.textContent = '';
 
+    wagerTypes.forEach(wt => {
+      const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
+      wagerButtonsContainer.appendChild(btn);
+      console.log(`[loadWagerTypes] Appended wager button: ${wt.wager_label_template || 'Unknown'}`);
+    });
+
     wagerButtonsContainer.style.display = 'grid';
     wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     wagerButtonsContainer.style.gridAutoRows = 'min-content';
@@ -180,18 +194,12 @@ async function loadWagerTypes() {
     wagerButtonsContainer.style.marginTop = '8px';
     wagerButtonsContainer.style.alignItems = 'start';
 
-    wagerTypes.forEach(wt => {
-      const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
-      wagerButtonsContainer.appendChild(btn);
-      console.log(`[loadWagerTypes] Appended wager button: ${wt.wager_label_template || 'Unknown'}`);
-    });
-
   } catch (error) {
     console.error('Error loading wager types:', error);
     wagerButtonsContainer.textContent = 'Error loading wager types';
   }
 
-  // ENSURE wagerButtonsContainer visibility based on team selected
+  // Ensure wagerButtonsContainer visibility based on team selected
   toggleWagerSection();
 }
 
