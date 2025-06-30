@@ -31,7 +31,7 @@ let changeGameBtn = null;
 let selectedTeam = null;
 
 leagueSelect.addEventListener("change", async () => {
-  clearGameSelection();
+  resetGameSelection();
 });
 
 gameSelect.addEventListener("change", async () => {
