@@ -31,7 +31,13 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// Create container for the labels (choose wager and number input label)
+// Hide original label to avoid duplication and DOM insertion errors
+const wagerTypeLabelOriginal = document.querySelector('label[for="wagerTypeSelect"]');
+if (wagerTypeLabelOriginal) {
+  wagerTypeLabelOriginal.style.display = 'none';
+}
+
+// Create container for the labels (new Choose Wager Type + Number Input label)
 const wagerSectionContainer = document.createElement('div');
 wagerSectionContainer.style.display = 'flex';
 wagerSectionContainer.style.justifyContent = 'space-between';
@@ -39,39 +45,28 @@ wagerSectionContainer.style.alignItems = 'center';
 wagerSectionContainer.style.marginBottom = '4px';
 wagerSectionContainer.style.width = '100%';
 
-// Robust insertion of wagerTypeLabel inside wagerSectionContainer
-const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
+// Create new Choose Wager Type label inside container
+const wagerTypeLabelNew = document.createElement('label');
+wagerTypeLabelNew.textContent = 'Choose Wager Type';
+wagerTypeLabelNew.style.fontWeight = 'bold';
+wagerTypeLabelNew.style.display = 'inline-block';
 
-if (wagerTypeLabel) {
-  wagerTypeLabel.style.display = 'inline-block';
-  const parent = wagerTypeLabel.parentNode;
+wagerSectionContainer.appendChild(wagerTypeLabelNew);
 
-  if (parent) {
-    if (Array.from(parent.childNodes).includes(wagerTypeLabel)) {
-      parent.insertBefore(wagerSectionContainer, wagerTypeLabel);
-    } else {
-      parent.appendChild(wagerSectionContainer);
-    }
-    wagerSectionContainer.appendChild(wagerTypeLabel);
-  } else {
-    // Fallback if no parent
-    document.body.appendChild(wagerSectionContainer);
-  }
-} else {
-  // Fallback if label not found
-  document.body.appendChild(wagerSectionContainer);
-}
-
-// Number input label (shown only when wager with [[NUM]] selected)
+// Create number input label (shown only when wager with [[NUM]] selected)
 let numberInputTitle = document.createElement('label');
 numberInputTitle.textContent = 'Number Input:';
 numberInputTitle.style.fontWeight = 'bold';
 numberInputTitle.style.display = 'none'; // Hidden initially
 wagerSectionContainer.appendChild(numberInputTitle);
 
-// Place the number input container below the labels container (not inside wagerButtonsContainer)
-if (wagerTypeLabel && wagerTypeLabel.parentNode) {
-  wagerTypeLabel.parentNode.insertBefore(numberInputContainer, wagerSectionContainer.nextSibling);
+// Insert container into DOM where original wagerTypeLabel was
+if (wagerTypeSelect && wagerTypeSelect.parentNode) {
+  wagerTypeSelect.parentNode.insertBefore(wagerSectionContainer, wagerTypeSelect);
+  wagerTypeSelect.parentNode.insertBefore(numberInputContainer, wagerSectionContainer.nextSibling);
+} else {
+  document.body.appendChild(wagerSectionContainer);
+  document.body.insertBefore(numberInputContainer, wagerButtonsContainer);
 }
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -79,10 +74,7 @@ if (!wagerButtonsContainer) {
   wagerButtonsContainer = document.createElement('div');
   wagerButtonsContainer.id = 'wagerButtonsContainer';
 
-  const wagerLabel = document.querySelector('label[for="wagerTypeSelect"]');
-  if (wagerLabel) {
-    wagerLabel.parentNode.insertBefore(wagerButtonsContainer, wagerLabel.nextSibling);
-  } else if (wagerTypeSelect && wagerTypeSelect.parentNode) {
+  if (wagerTypeSelect && wagerTypeSelect.parentNode) {
     wagerTypeSelect.parentNode.insertBefore(wagerButtonsContainer, wagerTypeSelect.nextSibling);
   } else {
     document.body.appendChild(wagerButtonsContainer);
