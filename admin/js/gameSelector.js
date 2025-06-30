@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from "https://www.gstatic.com/fireb
 
 const leagueSelect = document.getElementById("leagueSelect");
 const gameSelect = document.getElementById("gameSelect");
+const pickOptionsContainer = document.getElementById("pickOptionsContainer"); // Container for team pick buttons
 
 // Hide the original gameSelect dropdown but keep it for compatibility
 if (gameSelect) {
@@ -27,8 +28,13 @@ if (!gameButtonsContainer) {
 
 let selectedGameId = null;
 let changeGameBtn = null;
+let selectedTeam = null;
 
 leagueSelect.addEventListener("change", async () => {
+  clearGameSelection();
+});
+
+gameSelect.addEventListener("change", async () => {
   const selectedLeague = leagueSelect.value;
   gameButtonsContainer.innerHTML = "";
   selectedGameId = null;
@@ -40,6 +46,7 @@ leagueSelect.addEventListener("change", async () => {
   if (!selectedLeague) {
     gameSelect.innerHTML = '<option>Select a league first</option>';
     gameSelect.disabled = true;
+    clearPickOptions();
     return;
   }
 
@@ -47,9 +54,10 @@ leagueSelect.addEventListener("change", async () => {
   gameSelect.innerHTML = "";
 
   gameButtonsContainer.textContent = "Loading games...";
+  clearPickOptions();
 
   try {
-    // Updated to use sportName field for league filter
+    // Use sportName field to filter by league
     const q = query(collection(db, "GameCache"), where("sportName", "==", selectedLeague));
     const querySnapshot = await getDocs(q);
 
@@ -57,6 +65,7 @@ leagueSelect.addEventListener("change", async () => {
       gameButtonsContainer.textContent = "No games found";
       gameSelect.innerHTML = '<option>No games found</option>';
       gameSelect.disabled = true;
+      clearPickOptions();
       return;
     }
 
@@ -88,6 +97,7 @@ leagueSelect.addEventListener("change", async () => {
   } catch (error) {
     gameButtonsContainer.textContent = "Error loading games";
     console.error("Error loading games:", error);
+    clearPickOptions();
   }
 });
 
@@ -128,7 +138,7 @@ function selectGame(button, gameId) {
   gameButtonsContainer.style.gridAutoRows = "min-content";
   gameButtonsContainer.style.marginTop = "8px";
 
-  // Extract Home and Away from button text for the selected button
+  // Extract home and away from button text
   const [home, rest] = button.textContent.split(" vs ");
   const away = rest ? rest.split(" — ")[0] : "Away";
 
@@ -176,10 +186,63 @@ function selectGame(button, gameId) {
   gameSelect.appendChild(option);
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
+
+  // *** New code: Show the two team pick buttons ***
+  if (pickOptionsContainer) {
+    pickOptionsContainer.innerHTML = "";
+
+    pickOptionsContainer.appendChild(createTeamButton(home));
+    pickOptionsContainer.appendChild(createTeamButton(away));
+
+    // Reset team selection state
+    selectedTeam = null;
+  }
+}
+
+// New helper: create buttons for team picks
+function createTeamButton(teamName) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = teamName;
+  btn.className = "pick-btn blue";
+
+  btn.style.paddingTop = "6px";
+  btn.style.paddingBottom = "6px";
+  btn.style.marginTop = "2px";
+  btn.style.marginBottom = "2px";
+  btn.style.width = "100%";
+  btn.style.minWidth = "0";
+  btn.style.boxSizing = "border-box";
+
+  btn.addEventListener("click", () => selectTeam(btn, teamName));
+
+  return btn;
+}
+
+function selectTeam(button, teamName) {
+  if (selectedTeam === teamName) return;
+
+  selectedTeam = teamName;
+
+  // Clear previous selection styling
+  if (pickOptionsContainer) {
+    const buttons = pickOptionsContainer.querySelectorAll("button");
+    buttons.forEach(b => {
+      b.classList.remove("green");
+      b.classList.add("blue");
+    });
+  }
+
+  // Mark selected button green
+  button.classList.remove("blue");
+  button.classList.add("green");
+
+  // Here you can add code to update hidden inputs or form data with the selected team
 }
 
 function resetGameSelection() {
   selectedGameId = null;
+  selectedTeam = null;
 
   if (changeGameBtn) {
     changeGameBtn.remove();
@@ -191,6 +254,16 @@ function resetGameSelection() {
   gameSelect.dispatchEvent(new Event("change"));
 
   gameButtonsContainer.innerHTML = "";
+
+  if (pickOptionsContainer) {
+    pickOptionsContainer.innerHTML = "";
+  }
+}
+
+function clearPickOptions() {
+  if (pickOptionsContainer) {
+    pickOptionsContainer.innerHTML = "";
+  }
 }
 
 export default {};
