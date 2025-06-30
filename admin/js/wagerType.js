@@ -9,6 +9,17 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // For team buttons
 const gameSelect = document.getElementById('gameSelect');
 
+const wagerLabel = document.querySelector('label[for="wagerTypeSelect"]');
+const numberInputLabel = document.createElement('label');
+numberInputLabel.textContent = 'Enter Points';
+numberInputLabel.style.fontWeight = 'bold';
+numberInputLabel.style.marginRight = '10px';
+numberInputLabel.style.alignSelf = 'center';
+
+// Insert the "Enter Points" label to the left of the numberInputContainer, hidden initially
+numberInputContainer.parentNode.insertBefore(numberInputLabel, numberInputContainer);
+numberInputLabel.style.display = 'none';
+
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
@@ -21,7 +32,6 @@ if (!wagerButtonsContainer) {
   wagerButtonsContainer = document.createElement('div');
   wagerButtonsContainer.id = 'wagerButtonsContainer';
 
-  const wagerLabel = document.querySelector('label[for="wagerTypeSelect"]');
   if (wagerLabel) {
     wagerLabel.parentNode.insertBefore(wagerButtonsContainer, wagerLabel.nextSibling);
   } else if (wagerTypeSelect && wagerTypeSelect.parentNode) {
@@ -37,6 +47,7 @@ let changeWagerBtn = null;
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
+  numberInputLabel.style.display = 'none';
   finalPickDescription.textContent = '';
 });
 
@@ -45,6 +56,7 @@ gameSelect.addEventListener('change', async () => {
     clearWagerButtons();
     wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
+    numberInputLabel.style.display = 'none';
     finalPickDescription.textContent = '';
     return;
   }
@@ -56,6 +68,7 @@ function clearWagerButtons() {
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset to 3 col grid default
   numberInputContainer.style.display = 'none';
+  numberInputLabel.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
   if (changeWagerBtn) {
@@ -72,6 +85,7 @@ async function loadWagerTypes() {
   clearWagerButtons();
   wagerButtonsContainer.textContent = 'Loading wager types...';
   numberInputContainer.style.display = 'none';
+  numberInputLabel.style.display = 'none';
   finalPickDescription.textContent = '';
 
   try {
@@ -155,7 +169,7 @@ function selectWager(button, id, descTemplate) {
 
   // Set container to 3-column grid to place wager, input, change btn side-by-side
   wagerButtonsContainer.style.display = 'grid';
-  wagerButtonsContainer.style.gridTemplateColumns = '1fr auto 1fr';
+  wagerButtonsContainer.style.gridTemplateColumns = 'auto auto auto';
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
   wagerButtonsContainer.style.gap = '4px 6px';
   wagerButtonsContainer.style.marginTop = '8px';
@@ -174,14 +188,42 @@ function selectWager(button, id, descTemplate) {
 
   // Number input
   if (descTemplate.includes('[[NUM]]')) {
-    numberInputContainer.style.display = 'block';
+    numberInputContainer.style.display = 'flex'; // use flex for label/input inline alignment
+    numberInputLabel.style.display = 'block'; // show label
+
+    // Style the numberInputContainer to fit nicely in grid middle column
     numberInputContainer.style.gridColumn = '2 / 3';
     numberInputContainer.style.margin = '0';
-    numberInputContainer.style.width = '100%';
+    numberInputContainer.style.width = '75%'; // 25% shrink
+
+    numberInput.style.height = selectedBtn.offsetHeight + 'px'; // match button height
     numberInput.style.width = '100%';
+
+    wagerButtonsContainer.appendChild(numberInputLabel);
     wagerButtonsContainer.appendChild(numberInputContainer);
+
+    // Auto-fill 0 and focus/select
+    numberInput.value = '0';
+    numberInput.focus();
+    numberInput.select();
+
+    // Create or update required note below input
+    let requiredNote = document.getElementById('numberRequiredNote');
+    if (!requiredNote) {
+      requiredNote = document.createElement('div');
+      requiredNote.id = 'numberRequiredNote';
+      requiredNote.style.color = 'red';
+      requiredNote.style.fontSize = '0.8rem';
+      requiredNote.style.marginTop = '4px';
+      requiredNote.textContent = '* Required';
+      numberInputContainer.appendChild(requiredNote);
+    }
   } else {
     numberInputContainer.style.display = 'none';
+    numberInputLabel.style.display = 'none';
+    // Remove required note if exists
+    const requiredNote = document.getElementById('numberRequiredNote');
+    if (requiredNote) requiredNote.remove();
   }
 
   // Change wager button
@@ -193,7 +235,7 @@ function selectWager(button, id, descTemplate) {
     changeWagerBtn.style.minWidth = '120px';
     changeWagerBtn.style.width = '100%';
     changeWagerBtn.style.boxSizing = 'border-box';
-    changeWagerBtn.style.alignSelf = 'flex-start';
+    changeWagerBtn.style.alignSelf = 'center'; // vertically center
     changeWagerBtn.style.marginTop = '0';
     changeWagerBtn.style.gridColumn = '3 / 4';
 
@@ -234,8 +276,13 @@ function resetWagerSelection() {
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset grid cols
   numberInputContainer.style.display = 'none';
+  numberInputLabel.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
+
+  // Remove required note if exists
+  const requiredNote = document.getElementById('numberRequiredNote');
+  if (requiredNote) requiredNote.remove();
 }
 
 numberInput.addEventListener('input', () => {
