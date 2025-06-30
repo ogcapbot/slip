@@ -1,6 +1,4 @@
 // admin/js/notesSection.js
-import { initPhraseSelector } from '/admin/js/phraseSelector.js';
-
 const form = document.getElementById('pickForm');
 const unitsSelect = document.getElementById('unitsSelect');
 const submitButton = form.querySelector('button[type="submit"]');
@@ -80,11 +78,13 @@ function clearButtonStates() {
 
 // Show the notesContainer when appropriate (after units selected)
 unitsSelect.addEventListener('change', () => {
-  // Only show notesContainer if unitsSelect has a value
   if (unitsSelect.value) {
     notesContainer.style.display = 'block';
     submitButton.disabled = true; // disable submit until notes question answered
     resetNotesSection();
+    // Hide phrase selector on units change (reset)
+    const phraseSection = document.getElementById('phraseSelectorSection');
+    if (phraseSection) phraseSection.style.display = 'none';
   } else {
     notesContainer.style.display = 'none';
     submitButton.disabled = true;
@@ -100,12 +100,6 @@ function resetNotesSection() {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
   submitButton.disabled = true;
-
-  // Also hide phrase selector container on reset
-  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
-  if (phraseSelectorContainer) {
-    phraseSelectorContainer.style.display = 'none';
-  }
 }
 
 // Handle No button click
@@ -118,11 +112,12 @@ noBtn.addEventListener('click', () => {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
 
-  // Enable submit, no notes to input
-  submitButton.disabled = false;
+  // Enable submit only after phrase selection done
+  checkEnableSubmit();
 
-  // Show phrase selector after notes decision
-  showPhraseSelector();
+  // Show Phrase Selector section after notes decision
+  const phraseSection = document.getElementById('phraseSelectorSection');
+  if (phraseSection) phraseSection.style.display = 'block';
 });
 
 // Handle Yes button click
@@ -138,32 +133,18 @@ yesBtn.addEventListener('click', () => {
   notesTextarea.focus();
   submitButton.disabled = true; // disable submit until textarea input
 
-  updateCharCounter(); // init counter
+  updateCharCounter();
 
-  // Hide phrase selector while editing notes
-  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
-  if (phraseSelectorContainer) {
-    phraseSelectorContainer.style.display = 'none';
-  }
+  // Hide phrase selector until notes typed
+  const phraseSection = document.getElementById('phraseSelectorSection');
+  if (phraseSection) phraseSection.style.display = 'none';
 });
 
 // Update character counter display
 function updateCharCounter() {
   const remaining = 100 - notesTextarea.value.length;
   charCounter.textContent = `${remaining} characters left`;
-
-  // Enable submit if textarea has text, disable if empty
-  submitButton.disabled = notesTextarea.value.trim().length === 0;
-
-  // Hide or show phrase selector depending on input filled or not
-  if (!submitButton.disabled) {
-    showPhraseSelector();
-  } else {
-    const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
-    if (phraseSelectorContainer) {
-      phraseSelectorContainer.style.display = 'none';
-    }
-  }
+  checkEnableSubmit();
 }
 
 // Listen for textarea input changes
@@ -179,28 +160,24 @@ function getNotesData() {
   return null;
 }
 
-// Export init function to allow manual reset if needed
+// Reset notes section (also hides phrase selector)
 function reset() {
   resetNotesSection();
   notesContainer.style.display = 'none';
-
-  // Hide phrase selector on reset
-  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
-  if (phraseSelectorContainer) {
-    phraseSelectorContainer.style.display = 'none';
-  }
+  const phraseSection = document.getElementById('phraseSelectorSection');
+  if (phraseSection) phraseSection.style.display = 'none';
+  submitButton.disabled = true;
 }
 
-// Show phrase selector, passing current sport if available
-function showPhraseSelector() {
-  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
-  if (phraseSelectorContainer) {
-    // Assuming you track current selected sport in your app as window.currentSport
-    // If not, you can pass it or set it here accordingly
-    phraseSelectorContainer.style.display = 'block';
-    const currentSport = window.currentSport || null;
-    initPhraseSelector(currentSport);
-  }
+// Utility to enable submit only when all required fields including phrase selected
+function checkEnableSubmit() {
+  const phraseSection = document.getElementById('phraseSelectorSection');
+  if (!phraseSection) return;
+
+  const phraseSelected = window.phraseSelector?.isPhraseSelected() || false;
+  const notesOk = (notesSelected === 'no') || (notesSelected === 'yes' && notesTextarea.value.trim().length > 0);
+
+  submitButton.disabled = !(notesOk && phraseSelected);
 }
 
-export { getNotesData, reset };
+export { getNotesData, reset, checkEnableSubmit };
