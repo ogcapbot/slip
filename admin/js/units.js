@@ -21,7 +21,6 @@ if (!unitButtonsContainer) {
   }
 }
 
-// Container for summary text and update button
 let unitSummaryContainer = document.getElementById('unitSummaryContainer');
 if (!unitSummaryContainer) {
   unitSummaryContainer = document.createElement('div');
@@ -45,24 +44,23 @@ let updateUnitBtn = document.createElement('button');
 updateUnitBtn.type = 'button';
 updateUnitBtn.textContent = 'Update';
 updateUnitBtn.className = 'pick-btn blue';
-// Styling: about 35% less wide and matching line height + padding
-updateUnitBtn.style.minWidth = '78px'; // ~65% of original width 120px
+
+updateUnitBtn.style.minWidth = '78px'; // ~65% width of default 120px
 updateUnitBtn.style.width = 'auto';
 updateUnitBtn.style.padding = '2px 8px';
 updateUnitBtn.style.fontSize = '14px';
 updateUnitBtn.style.lineHeight = '18px';
 updateUnitBtn.style.boxSizing = 'border-box';
 updateUnitBtn.style.cursor = 'pointer';
+
 unitSummaryContainer.appendChild(updateUnitBtn);
 
 let selectedUnit = null;
 let allUnitsCache = [];
 
-// Dynamic explanatory text container already in your page, e.g.:
-// <div id="explanatoryTextContainer">Yankees must win game to win.</div>
 const explanatoryTextContainer = document.getElementById('explanatoryTextContainer');
 
-unitButtonsContainer.style.display = 'none'; // hide buttons initially
+unitButtonsContainer.style.display = 'none';
 
 async function loadUnits(showAll = true) {
   if (!unitButtonsContainer || !unitsSelect) {
@@ -231,4 +229,4 @@ updateUnitBtn.addEventListener('click', () => {
 
 loadUnits(false);
 
-export { loadUnits, showUnitSection, hideUnitSection };
+export { loadUnits, showUnitSection, hideUnitSection, updateUnitSummaryText };
