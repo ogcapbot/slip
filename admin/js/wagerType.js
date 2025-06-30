@@ -31,25 +31,27 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// --- Create container for labels "Choose Wager Type" and "Number Input" to align horizontally ---
-
+// Create container for the "Choose Wager Type" label and number input label, side by side, full width
 const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
 let labelsContainer = document.createElement('div');
 labelsContainer.style.display = 'flex';
 labelsContainer.style.alignItems = 'center';
-labelsContainer.style.gap = '12px'; // space between labels
-labelsContainer.style.marginBottom = '4px'; // space below labels container
+labelsContainer.style.justifyContent = 'space-between';  // Push labels to left and right
+labelsContainer.style.width = '100%';
+labelsContainer.style.marginBottom = '8px'; // Some space below labels container
 
 if (wagerTypeLabel && wagerTypeLabel.parentNode) {
   wagerTypeLabel.parentNode.insertBefore(labelsContainer, wagerTypeLabel);
+  wagerTypeLabel.style.display = 'inline-block';  // Ensure inline for proper layout
   labelsContainer.appendChild(wagerTypeLabel);
 }
 
-// Create the number input label (above input box)
+// Number input label (shown only when wager with [[NUM]] selected)
 let numberInputTitle = document.createElement('label');
 numberInputTitle.textContent = 'Number Input:';
 numberInputTitle.style.fontWeight = 'bold';
-numberInputTitle.style.display = 'none'; // hidden initially
+numberInputTitle.style.display = 'none'; // Hidden initially
+numberInputTitle.style.marginLeft = 'auto'; // Push to right side
 labelsContainer.appendChild(numberInputTitle);
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -70,10 +72,17 @@ if (!wagerButtonsContainer) {
 // Initially hide wager buttons container until a team is selected
 wagerButtonsContainer.style.display = 'none';
 
+// Style wager buttons container as a grid with 3 equal columns and gap, matching other sections
+wagerButtonsContainer.style.display = 'grid';
+wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+wagerButtonsContainer.style.gridAutoRows = 'min-content';
+wagerButtonsContainer.style.gap = '8px 12px';
+wagerButtonsContainer.style.marginTop = '0';
+wagerButtonsContainer.style.alignItems = 'start';
+
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
-// Show/hide wager buttons container only if a team is selected
 function toggleWagerSection() {
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
@@ -82,7 +91,7 @@ function toggleWagerSection() {
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
   console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
 
-  // Removed clearing wager buttons here to prevent wiping them after loading
+  // No clearing here — just toggling visibility
 }
 
 sportSelect.addEventListener('change', () => {
@@ -107,15 +116,11 @@ gameSelect.addEventListener('change', async () => {
   toggleWagerSection();
 });
 
-// Listen for team button selection and toggle wager buttons container
 pickOptionsContainer.addEventListener('click', e => {
   if (e.target.tagName === 'BUTTON') {
-    // Remove green from all buttons first
     Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
-    // Add green to clicked button
     e.target.classList.add('green');
     console.log('[pickOptionsContainer] Team selected:', e.target.textContent);
-    // Show wager section if team selected
     toggleWagerSection();
   }
 });
@@ -124,13 +129,13 @@ function clearWagerButtons() {
   console.log('[clearWagerButtons] Clearing wager buttons and resetting state.');
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
-  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset to 3 col grid default
-  wagerButtonsContainer.style.marginTop = '8px'; // Reset marginTop to default
+  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  wagerButtonsContainer.style.marginTop = '8px';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
   requiredLabel.style.display = 'none';
-  numberInputTitle.style.display = 'none'; // hide number input label
+  numberInputTitle.style.display = 'none';
   if (changeWagerBtn) {
     changeWagerBtn.remove();
     changeWagerBtn = null;
@@ -144,7 +149,6 @@ async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   console.log('[loadWagerTypes] Loading wager types for sport:', selectedSport);
 
-  // Clear wager buttons only if no team is selected (optional safety)
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   if (!selectedTeamButton) {
     clearWagerButtons();
@@ -184,13 +188,6 @@ async function loadWagerTypes() {
       wagerButtonsContainer.appendChild(btn);
       console.log(`[loadWagerTypes] Appended wager button: ${wt.wager_label_template || 'Unknown'}`);
     });
-
-    wagerButtonsContainer.style.display = 'grid';
-    wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    wagerButtonsContainer.style.gridAutoRows = 'min-content';
-    wagerButtonsContainer.style.gap = '4px 6px';
-    wagerButtonsContainer.style.marginTop = '8px';
-    wagerButtonsContainer.style.alignItems = 'start';
 
   } catch (error) {
     console.error('Error loading wager types:', error);
@@ -242,6 +239,8 @@ function selectWager(button, id, descTemplate) {
   selectedWagerId = id;
 
   wagerButtonsContainer.innerHTML = '';
+
+  // The wager buttons container will now show only the selected wager button, input (if needed), and change wager button
 
   wagerButtonsContainer.style.display = 'grid';
   wagerButtonsContainer.style.gridTemplateColumns = '1fr auto auto';
