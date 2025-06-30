@@ -3,9 +3,8 @@ import { collection, getDocs, query, where } from "https://www.gstatic.com/fireb
 
 const leagueSelect = document.getElementById("leagueSelect");
 const gameSelect = document.getElementById("gameSelect");
-const pickOptionsContainer = document.getElementById("pickOptionsContainer"); // Container for team pick buttons
+const pickOptionsContainer = document.getElementById("pickOptionsContainer");
 
-// Hide the original gameSelect dropdown but keep it for compatibility
 if (gameSelect) {
   gameSelect.style.display = "none";
 }
@@ -15,7 +14,6 @@ if (!gameButtonsContainer) {
   gameButtonsContainer = document.createElement("div");
   gameButtonsContainer.id = "gameButtonsContainer";
 
-  // Insert container after label for gameSelect
   const gameLabel = document.querySelector('label[for="gameSelect"]');
   if (gameLabel) {
     gameLabel.parentNode.insertBefore(gameButtonsContainer, gameLabel.nextSibling);
@@ -31,33 +29,31 @@ let changeGameBtn = null;
 let selectedTeam = null;
 
 leagueSelect.addEventListener("change", async () => {
+  console.log("League changed:", leagueSelect.value);
   resetGameSelection();
+  clearPickOptions();
+  await loadGamesForSelectedLeague();
 });
 
 gameSelect.addEventListener("change", async () => {
-  const selectedLeague = leagueSelect.value;
-  gameButtonsContainer.innerHTML = "";
-  selectedGameId = null;
-  if (changeGameBtn) {
-    changeGameBtn.remove();
-    changeGameBtn = null;
-  }
+  console.log("Game select changed:", gameSelect.value);
+  // No special action needed here for now
+});
 
+async function loadGamesForSelectedLeague() {
+  const selectedLeague = leagueSelect.value;
   if (!selectedLeague) {
     gameSelect.innerHTML = '<option>Select a league first</option>';
     gameSelect.disabled = true;
-    clearPickOptions();
+    gameButtonsContainer.innerHTML = '';
     return;
   }
 
   gameSelect.disabled = true;
-  gameSelect.innerHTML = "";
-
+  gameSelect.innerHTML = '';
   gameButtonsContainer.textContent = "Loading games...";
-  clearPickOptions();
 
   try {
-    // Use sportName field to filter by league
     const q = query(collection(db, "GameCache"), where("sportName", "==", selectedLeague));
     const querySnapshot = await getDocs(q);
 
@@ -65,7 +61,6 @@ gameSelect.addEventListener("change", async () => {
       gameButtonsContainer.textContent = "No games found";
       gameSelect.innerHTML = '<option>No games found</option>';
       gameSelect.disabled = true;
-      clearPickOptions();
       return;
     }
 
@@ -77,14 +72,12 @@ gameSelect.addEventListener("change", async () => {
       games.push({ id: doc.id, data });
     });
 
-    // Sort games by commenceTimeUTC ascending (string ISO date)
     games.sort((a, b) => {
       const aTime = a.data.commenceTimeUTC ? new Date(a.data.commenceTimeUTC).getTime() : 0;
       const bTime = b.data.commenceTimeUTC ? new Date(b.data.commenceTimeUTC).getTime() : 0;
       return aTime - bTime;
     });
 
-    // Style container as grid 1-column, tight rows, no gap needed here
     gameButtonsContainer.style.display = "grid";
     gameButtonsContainer.style.gridTemplateColumns = "1fr";
     gameButtonsContainer.style.gridAutoRows = "min-content";
@@ -94,14 +87,15 @@ gameSelect.addEventListener("change", async () => {
       gameButtonsContainer.appendChild(createGameButton(id, data));
     });
 
+    gameSelect.disabled = false;
   } catch (error) {
-    gameButtonsContainer.textContent = "Error loading games";
     console.error("Error loading games:", error);
-    clearPickOptions();
+    gameButtonsContainer.textContent = "Error loading games";
   }
-});
+}
 
 function createGameButton(id, gameData) {
+  console.log("Creating game button:", id);
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "pick-btn blue";
@@ -115,27 +109,29 @@ function createGameButton(id, gameData) {
   btn.style.minWidth = "0";
   btn.style.boxSizing = "border-box";
 
-  // Display HomeTeam vs AwayTeam and start time formatted
   const startTime = gameData.commenceTimeUTC ? new Date(gameData.commenceTimeUTC) : null;
   const timeString = startTime ? startTime.toLocaleString() : "Unknown time";
 
   btn.textContent = `${gameData.homeTeam || "Home"} vs ${gameData.awayTeam || "Away"} — ${timeString}`;
 
-  btn.addEventListener("click", () => selectGame(btn, id));
+  // Use direct assignment to avoid event listener issues
+  btn.onclick = function() {
+    console.log("Game button clicked:", id);
+    selectGame(btn, id);
+  };
 
   return btn;
 }
 
 function selectGame(button, gameId) {
+  console.log("selectGame fired for gameId:", gameId);
   if (selectedGameId === gameId) return;
 
   selectedGameId = gameId;
 
-  // Clear all game buttons - game list disappears
   gameButtonsContainer.innerHTML = "";
-  gameButtonsContainer.style.display = "block"; // simple block display for change button
+  gameButtonsContainer.style.display = "block";
 
-  // Create and append the Change Game button ONLY
   if (!changeGameBtn) {
     changeGameBtn = document.createElement("button");
     changeGameBtn.type = "button";
@@ -147,17 +143,18 @@ function selectGame(button, gameId) {
     changeGameBtn.style.alignSelf = "flex-start";
     changeGameBtn.style.marginTop = "0";
 
-    changeGameBtn.addEventListener("click", () => {
+    changeGameBtn.onclick = () => {
+      console.log("Change Game button clicked");
       resetGameSelection();
-    });
+    };
   }
   gameButtonsContainer.appendChild(changeGameBtn);
+  console.log("Appended Change Game button");
 
-  // Extract home and away teams from selected button text
   const [home, rest] = button.textContent.split(" vs ");
   const away = rest ? rest.split(" — ")[0] : "Away";
 
-  // Show the two team pick buttons inside pickOptionsContainer
+  console.log("Showing teams:", home, away);
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
     pickOptionsContainer.appendChild(createTeamButton(home));
@@ -165,7 +162,6 @@ function selectGame(button, gameId) {
     selectedTeam = null;
   }
 
-  // Update hidden select for form compatibility
   gameSelect.innerHTML = "";
   const option = document.createElement("option");
   option.value = gameId;
@@ -176,6 +172,7 @@ function selectGame(button, gameId) {
 }
 
 function createTeamButton(teamName) {
+  console.log("Creating team button for:", teamName);
   const btn = document.createElement("button");
   btn.type = "button";
   btn.textContent = teamName;
@@ -189,12 +186,13 @@ function createTeamButton(teamName) {
   btn.style.minWidth = "0";
   btn.style.boxSizing = "border-box";
 
-  btn.addEventListener("click", () => selectTeam(btn, teamName));
+  btn.onclick = () => selectTeam(btn, teamName);
 
   return btn;
 }
 
 function selectTeam(button, teamName) {
+  console.log("Team selected:", teamName);
   if (selectedTeam === teamName) return;
 
   selectedTeam = teamName;
@@ -210,10 +208,11 @@ function selectTeam(button, teamName) {
   button.classList.remove("blue");
   button.classList.add("green");
 
-  // Add your pick handling logic here if needed
+  // TODO: Add logic for pick selection here if needed
 }
 
 function resetGameSelection() {
+  console.log("Resetting game selection");
   selectedGameId = null;
   selectedTeam = null;
 
