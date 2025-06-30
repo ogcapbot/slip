@@ -39,19 +39,27 @@ wagerSectionContainer.style.alignItems = 'center';
 wagerSectionContainer.style.marginBottom = '4px';
 wagerSectionContainer.style.width = '100%';
 
-// Grab the existing wager type label and move it inside wagerSectionContainer safely
+// Robust insertion of wagerTypeLabel inside wagerSectionContainer
 const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
 
-if (wagerTypeLabel && wagerTypeLabel.parentNode) {
+if (wagerTypeLabel) {
   wagerTypeLabel.style.display = 'inline-block';
+  const parent = wagerTypeLabel.parentNode;
 
-  if (Array.from(wagerTypeLabel.parentNode.childNodes).includes(wagerTypeLabel)) {
-    wagerTypeLabel.parentNode.insertBefore(wagerSectionContainer, wagerTypeLabel);
+  if (parent) {
+    if (Array.from(parent.childNodes).includes(wagerTypeLabel)) {
+      parent.insertBefore(wagerSectionContainer, wagerTypeLabel);
+    } else {
+      parent.appendChild(wagerSectionContainer);
+    }
+    wagerSectionContainer.appendChild(wagerTypeLabel);
   } else {
-    wagerTypeLabel.parentNode.appendChild(wagerSectionContainer);
+    // Fallback if no parent
+    document.body.appendChild(wagerSectionContainer);
   }
-
-  wagerSectionContainer.appendChild(wagerTypeLabel);
+} else {
+  // Fallback if label not found
+  document.body.appendChild(wagerSectionContainer);
 }
 
 // Number input label (shown only when wager with [[NUM]] selected)
