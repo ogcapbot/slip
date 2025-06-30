@@ -131,11 +131,11 @@ function selectGame(button, gameId) {
 
   selectedGameId = gameId;
 
-  // Clear the entire game buttons container — no game buttons remain visible
+  // Clear all game buttons - game list disappears
   gameButtonsContainer.innerHTML = "";
   gameButtonsContainer.style.display = "block"; // simple block display for change button
 
-  // Change Game button only
+  // Create and append the Change Game button ONLY
   if (!changeGameBtn) {
     changeGameBtn = document.createElement("button");
     changeGameBtn.type = "button";
@@ -153,20 +153,19 @@ function selectGame(button, gameId) {
   }
   gameButtonsContainer.appendChild(changeGameBtn);
 
-  // Extract home and away from button text for team pick buttons
+  // Extract home and away teams from selected button text
   const [home, rest] = button.textContent.split(" vs ");
   const away = rest ? rest.split(" — ")[0] : "Away";
 
-  // Show the two team pick buttons
+  // Show the two team pick buttons inside pickOptionsContainer
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
     pickOptionsContainer.appendChild(createTeamButton(home));
     pickOptionsContainer.appendChild(createTeamButton(away));
-
     selectedTeam = null;
   }
 
-  // Update hidden select for compatibility
+  // Update hidden select for form compatibility
   gameSelect.innerHTML = "";
   const option = document.createElement("option");
   option.value = gameId;
