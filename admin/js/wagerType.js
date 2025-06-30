@@ -36,6 +36,17 @@ finalPickDescription.textContent = '';
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
+// Utility: Insert <br> before specific keywords in label
+function formatLabelWithLineBreaks(label) {
+  const keywords = ['OVER', 'UNDER', 'PLUS', 'MINUS'];
+  let formatted = label;
+  keywords.forEach(keyword => {
+    const regex = new RegExp(`\\s${keyword}`, 'gi');
+    formatted = formatted.replace(regex, `<br>${keyword}`);
+  });
+  return formatted;
+}
+
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
@@ -43,30 +54,23 @@ sportSelect.addEventListener('change', () => {
   wagerButtonsContainer.style.display = 'none';  // hide wager buttons on sport change
 });
 
-gameSelect.addEventListener('change', () => {
-  // When game changes, clear wagers & hide wager buttons
-  clearWagerButtons();
-  wagerButtonsContainer.style.display = 'none';
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
-});
-
-// NEW: Show wager buttons ONLY after a team is selected
-pickOptionsContainer.addEventListener('click', async (e) => {
-  const target = e.target;
-  if (target.tagName === 'BUTTON' && target.classList.contains('pick-btn')) {
-    // Wait a tiny bit to ensure team selection updates before loading wagers
-    setTimeout(async () => {
-      wagerButtonsContainer.style.display = 'grid';
-      await loadWagerTypes();
-    }, 10);
+gameSelect.addEventListener('change', async () => {
+  if (!gameSelect.value) {
+    clearWagerButtons();
+    wagerButtonsContainer.textContent = 'Select a game first';
+    numberInputContainer.style.display = 'none';
+    finalPickDescription.textContent = '';
+    wagerButtonsContainer.style.display = 'none';  // hide wager buttons if no game
+    return;
   }
+  wagerButtonsContainer.style.display = 'grid'; // show wager buttons only after game selected
+  await loadWagerTypes();
 });
 
 function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
-  wagerButtonsContainer.style.display = 'none'; // hide wagers on clear
+  wagerButtonsContainer.style.display = 'none';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
@@ -107,13 +111,6 @@ async function loadWagerTypes() {
 
     wagerButtonsContainer.textContent = '';
 
-    wagerButtonsContainer.style.display = 'grid';
-    wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    wagerButtonsContainer.style.gridAutoRows = 'min-content';
-    wagerButtonsContainer.style.gap = '4px 6px';
-    wagerButtonsContainer.style.marginTop = '8px';
-    wagerButtonsContainer.style.alignItems = 'start';
-
     wagerTypes.forEach(wt => {
       const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
       wagerButtonsContainer.appendChild(btn);
@@ -129,14 +126,8 @@ function createWagerButton(id, label, descTemplate) {
   const btn = document.createElement('button');
   btn.type = 'button';
 
-  // Insert line break before specific keywords (OVER, UNDER, PLUS, MINUS)
-  const breakBeforeKeywords = ['OVER', 'UNDER', 'PLUS', 'MINUS'];
-  let formattedLabel = label;
-  breakBeforeKeywords.forEach(keyword => {
-    const regex = new RegExp(`\\s${keyword}`, 'i'); // match space + keyword case insensitive
-    formattedLabel = formattedLabel.replace(regex, `<br>${keyword}`);
-  });
-  btn.innerHTML = formattedLabel; // use innerHTML to allow <br>
+  const formattedLabel = formatLabelWithLineBreaks(label);
+  btn.innerHTML = formattedLabel;
 
   btn.className = 'pick-btn blue';
 
@@ -164,26 +155,35 @@ function selectWager(button, id, descTemplate) {
 
   wagerButtonsContainer.innerHTML = '';
 
-  wagerButtonsContainer.style.display = 'grid';
-  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  wagerButtonsContainer.style.gridAutoRows = 'min-content';
-  wagerButtonsContainer.style.gap = '4px 6px';
-  wagerButtonsContainer.style.marginTop = '8px';
-  wagerButtonsContainer.style.alignItems = 'start';
+  // Container to hold selected wager, number input, and change button inline
+  const container = document.createElement('div');
+  container.style.display = 'grid';
+  container.style.gridTemplateColumns = '1fr auto 1fr';
+  container.style.gridGap = '6px';
+  container.style.marginTop = '8px';
+  container.style.alignItems = 'center';
 
-  const selectedBtn = createWagerButton(id, button.textContent, descTemplate);
+  // Selected wager button
+  const selectedBtn = createWagerButton(id, button.innerHTML, descTemplate);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
-  wagerButtonsContainer.appendChild(selectedBtn);
+  selectedBtn.style.gridColumn = '1 / 2';
+  container.appendChild(selectedBtn);
 
-  const placeholderBtn = createWagerButton('', '');
-  placeholderBtn.style.visibility = 'hidden';
-  placeholderBtn.style.pointerEvents = 'none';
-  placeholderBtn.style.margin = '0';
-  placeholderBtn.style.padding = '0';
-  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px';
-  wagerButtonsContainer.appendChild(placeholderBtn);
+  // Number input container - show/hide based on [[NUM]]
+  if (descTemplate.includes('[[NUM]]')) {
+    numberInputContainer.style.display = 'block';
+    numberInputContainer.style.gridColumn = '2 / 3';
+    numberInputContainer.style.margin = '0';
+    numberInputContainer.style.width = '100%';
+    // Ensure input fits nicely
+    numberInput.style.width = '100%';
+    container.appendChild(numberInputContainer);
+  } else {
+    numberInputContainer.style.display = 'none';
+  }
 
+  // Change wager button
   if (!changeWagerBtn) {
     changeWagerBtn = document.createElement('button');
     changeWagerBtn.type = 'button';
@@ -194,15 +194,17 @@ function selectWager(button, id, descTemplate) {
     changeWagerBtn.style.boxSizing = 'border-box';
     changeWagerBtn.style.alignSelf = 'flex-start';
     changeWagerBtn.style.marginTop = '0';
+    changeWagerBtn.style.gridColumn = '3 / 4';
 
     changeWagerBtn.addEventListener('click', () => {
       resetWagerSelection();
     });
   }
-  wagerButtonsContainer.appendChild(changeWagerBtn);
+  container.appendChild(changeWagerBtn);
+
+  wagerButtonsContainer.appendChild(container);
 
   updateFinalPickDescription(descTemplate);
-  numberInputContainer.style.display = descTemplate.includes('[[NUM]]') ? 'block' : 'none';
 
   numberInput.disabled = !descTemplate.includes('[[NUM]]');
   if (!descTemplate.includes('[[NUM]]')) {
