@@ -31,7 +31,7 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// --- NEW: Create container for labels "Choose Wager Type" and "Number Input" to align horizontally ---
+// --- Create container for labels "Choose Wager Type" and "Number Input" to align horizontally ---
 
 const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
 let labelsContainer = document.createElement('div');
@@ -82,9 +82,7 @@ function toggleWagerSection() {
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
   console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
 
-  if (!teamSelected) {
-    clearWagerButtons();  // reset wager buttons when no team selected
-  }
+  // Removed clearing wager buttons here to prevent wiping them after loading
 }
 
 sportSelect.addEventListener('change', () => {
@@ -146,12 +144,12 @@ async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   console.log('[loadWagerTypes] Loading wager types for sport:', selectedSport);
 
-  // Only clear wager buttons if NO team selected (prevent wiping buttons after team pick)
+  // Clear wager buttons only if no team is selected (optional safety)
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   if (!selectedTeamButton) {
     clearWagerButtons();
   } else {
-    console.log('[loadWagerTypes] Team is already selected, skipping clearWagerButtons()');
+    console.log('[loadWagerTypes] Team already selected, skipping clearing wager buttons.');
   }
 
   wagerButtonsContainer.textContent = 'Loading wager types...';
@@ -199,7 +197,6 @@ async function loadWagerTypes() {
     wagerButtonsContainer.textContent = 'Error loading wager types';
   }
 
-  // Ensure wagerButtonsContainer visibility based on team selected
   toggleWagerSection();
 }
 
@@ -246,21 +243,15 @@ function selectWager(button, id, descTemplate) {
 
   wagerButtonsContainer.innerHTML = '';
 
-  // Set container to 3-column grid to place wager, input, change btn side-by-side
   wagerButtonsContainer.style.display = 'grid';
-
-  // ALIGNMENT FIX: Use same grid columns as the team buttons container (1fr for wager button)
-  // and set input and change wager button to auto width, all aligned vertically center
   wagerButtonsContainer.style.gridTemplateColumns = '1fr auto auto';
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
   wagerButtonsContainer.style.gap = '4px 6px';
-  wagerButtonsContainer.style.marginTop = '0';  // move up closer to title
+  wagerButtonsContainer.style.marginTop = '0';
   wagerButtonsContainer.style.alignItems = 'center';
 
-  // Format label with line breaks
   const formattedLabel = formatLabelWithLineBreaks(button.textContent);
 
-  // Selected wager button
   const selectedBtn = createWagerButton(id, formattedLabel, descTemplate);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
@@ -268,38 +259,30 @@ function selectWager(button, id, descTemplate) {
   selectedBtn.innerHTML = formattedLabel;
   wagerButtonsContainer.appendChild(selectedBtn);
 
-  // Number input
   if (descTemplate.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
     numberInputContainer.style.gridColumn = '2 / 3';
     numberInputContainer.style.margin = '0';
-    numberInputContainer.style.width = '120px';  // fixed width to align nicely
+    numberInputContainer.style.width = '120px';
     numberInput.style.width = '100%';
 
-    // Set input height to match button's computed height
     const btnHeight = selectedBtn.getBoundingClientRect().height;
     numberInput.style.height = btnHeight + 'px';
 
     wagerButtonsContainer.appendChild(numberInputContainer);
 
-    // Show the required label
     requiredLabel.style.display = 'block';
-
-    // Show number input label (above input box, aligned horizontally with wager type label)
     numberInputTitle.style.display = 'inline-block';
 
-    // Set default value to 0 and focus input with select
     numberInput.value = '0';
     numberInput.focus();
     numberInput.select();
-
   } else {
     numberInputContainer.style.display = 'none';
     requiredLabel.style.display = 'none';
     numberInputTitle.style.display = 'none';
   }
 
-  // Change wager button
   if (!changeWagerBtn) {
     changeWagerBtn = document.createElement('button');
     changeWagerBtn.type = 'button';
@@ -308,7 +291,7 @@ function selectWager(button, id, descTemplate) {
     changeWagerBtn.style.minWidth = '120px';
     changeWagerBtn.style.width = '100%';
     changeWagerBtn.style.boxSizing = 'border-box';
-    changeWagerBtn.style.alignSelf = 'center'; // align vertically center
+    changeWagerBtn.style.alignSelf = 'center';
     changeWagerBtn.style.marginTop = '0';
     changeWagerBtn.style.gridColumn = '3 / 4';
 
@@ -330,7 +313,7 @@ function selectWager(button, id, descTemplate) {
   option.value = id;
   option.selected = true;
   wagerTypeSelect.appendChild(option);
-  wagerTypeSelect.disabled = true; // keep dropdown disabled and hidden as original
+  wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
 }
 
@@ -348,8 +331,8 @@ function resetWagerSelection() {
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
   wagerButtonsContainer.innerHTML = '';
-  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset grid cols
-  wagerButtonsContainer.style.marginTop = '8px'; // reset marginTop
+  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  wagerButtonsContainer.style.marginTop = '8px';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
