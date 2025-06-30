@@ -1,6 +1,7 @@
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getNotesData, reset as resetNotes } from '/admin/js/notesSection.js';
+import { getSelectedPhrase } from '/admin/js/phraseSelector.js';
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
@@ -82,7 +83,7 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Fixed: Proper Start Over button handler to reset form and UI without full page reload
+// Proper Start Over button handler
 startOverBtn.addEventListener('click', () => {
   pickError.textContent = '';
   pickSuccess.textContent = '';
@@ -113,12 +114,17 @@ startOverBtn.addEventListener('click', () => {
     resetNotes();
   }
 
+  // Reset phraseSelector section (if you implement a reset there)
+  if (typeof window.resetPhraseSelector === 'function') {
+    window.resetPhraseSelector();
+  }
+
   sportSelect.disabled = false;
 
   updateSubmitButtonState();
 });
 
-// Initial submit button state update
+// Initial submit button update
 updateSubmitButtonState();
 
 pickForm.addEventListener('submit', async (e) => {
@@ -141,6 +147,9 @@ pickForm.addEventListener('submit', async (e) => {
   const wagerNum = numberInput && !numberInput.disabled ? Number(numberInput.value) : null;
 
   const notes = getNotesData() || '';
+
+  // Get selected hype phrase from phraseSelector
+  const selectedPhrase = getSelectedPhrase() || null;
 
   if (!sport) return (pickError.textContent = 'Please select a sport.', updateSubmitButtonState());
   if (!league) return (pickError.textContent = 'Please select a league.', updateSubmitButtonState());
@@ -195,6 +204,7 @@ pickForm.addEventListener('submit', async (e) => {
       wagerNum,
       unit,
       notes,
+      selectedPhrase,  // <<< added phrase data here
       originalGameSnapshot: {
         HomeTeam: gameData.HomeTeam || null,
         AwayTeam: gameData.AwayTeam || null,
