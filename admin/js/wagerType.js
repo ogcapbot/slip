@@ -92,6 +92,8 @@ let selectedWagerId = null;
 let changeWagerBtn = null;
 
 function toggleWagerSection() {
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
@@ -107,7 +109,8 @@ sportSelect.addEventListener('change', () => {
 gameSelect.addEventListener('change', async () => {
   if (!gameSelect.value) {
     clearWagerButtons();
-    wagerButtonsContainer.textContent = 'Select a game first';
+    const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+    if (wagerButtonsContainer) wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
     toggleWagerSection();
@@ -127,6 +130,8 @@ pickOptionsContainer.addEventListener('click', e => {
 
 function clearWagerButtons() {
   selectedWagerId = null;
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   wagerButtonsContainer.style.marginTop = '8px';
@@ -145,6 +150,9 @@ function clearWagerButtons() {
 }
 
 async function loadWagerTypes() {
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
+
   const selectedSport = sportSelect.value;
 
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
@@ -226,6 +234,9 @@ function selectWager(button, id, descTemplate) {
   if (selectedWagerId === id) return;
 
   selectedWagerId = id;
+
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
 
   wagerButtonsContainer.innerHTML = '';
 
@@ -322,6 +333,9 @@ function resetWagerSelection() {
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
+
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   wagerButtonsContainer.style.marginTop = '8px';
@@ -334,6 +348,9 @@ function resetWagerSelection() {
 
 numberInput.addEventListener('input', () => {
   if (!selectedWagerId) return;
+  const wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
+  if (!wagerButtonsContainer) return;
+
   const selectedBtn = wagerButtonsContainer.querySelector('button.green');
   if (!selectedBtn) return;
   const descTemplate = selectedBtn.dataset.descTemplate || '';
