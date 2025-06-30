@@ -27,8 +27,6 @@ let changeUnitBtn = null;
 let allUnitsCache = [];
 
 async function loadUnits(showAll = true) {
-  console.log('loadUnits called with showAll =', showAll);
-
   if (!unitButtonsContainer || !unitsSelect) {
     console.error('Required elements missing.');
     return;
