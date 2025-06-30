@@ -1,137 +1,183 @@
 import { db } from '../firebaseInit.js';
-import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const sportSelect = document.getElementById('sportSelect');
-const leagueSelect = document.getElementById('leagueSelect');
-const gameSelect = document.getElementById('gameSelect');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer');
+const originalSportSelect = document.getElementById('sportSelect');
 
-const sportButtonsContainerId = 'sportButtonsContainer';
+let sportButtonsContainer;
+let hiddenSelect;
+let selectedSport = null;
+let changeSportBtn = null;
 
-// Clear and disable dependent selectors
-function resetLeagueAndGame() {
-  if (leagueSelect) {
-    leagueSelect.innerHTML = '<option>Select a sport first</option>';
-    leagueSelect.disabled = true;
+if (originalSportSelect) {
+  const parent = originalSportSelect.parentNode;
+  parent.removeChild(originalSportSelect);
+
+  hiddenSelect = document.createElement('select');
+  hiddenSelect.id = 'sportSelect';
+  hiddenSelect.style.display = 'none';
+  parent.appendChild(hiddenSelect);
+
+  sportButtonsContainer = document.createElement('div');
+  sportButtonsContainer.id = 'sportButtonsContainer';
+
+  const sportLabel = parent.querySelector('label[for="sportSelect"]');
+  if (sportLabel) {
+    sportLabel.parentNode.insertBefore(sportButtonsContainer, sportLabel.nextSibling);
+  } else {
+    parent.appendChild(sportButtonsContainer);
   }
-  if (gameSelect) {
-    gameSelect.innerHTML = '<option>Select a league first</option>';
-    gameSelect.disabled = true;
+} else {
+  sportButtonsContainer = document.getElementById('sportButtonsContainer');
+  if (!sportButtonsContainer) {
+    sportButtonsContainer = document.createElement('div');
+    sportButtonsContainer.id = 'sportButtonsContainer';
+    document.body.appendChild(sportButtonsContainer);
   }
-  if (pickOptionsContainer) {
-    pickOptionsContainer.innerHTML = '';
+  hiddenSelect = document.getElementById('sportSelect');
+  if (!hiddenSelect) {
+    hiddenSelect = document.createElement('select');
+    hiddenSelect.id = 'sportSelect';
+    hiddenSelect.style.display = 'none';
+    document.body.appendChild(hiddenSelect);
   }
 }
 
-// Create sport buttons container and insert after sportSelect label
-function createSportButtonsContainer() {
-  let container = document.getElementById(sportButtonsContainerId);
-  if (!container) {
-    container = document.createElement('div');
-    container.id = sportButtonsContainerId;
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    container.style.gap = '8px';
-    container.style.margin = '8px 0 12px 0';
-
-    const sportLabel = document.querySelector('label[for="sportSelect"]');
-    if (sportLabel) {
-      sportLabel.parentNode.insertBefore(container, sportLabel.nextSibling);
-    } else if (sportSelect) {
-      sportSelect.parentNode.insertBefore(container, sportSelect.nextSibling);
-    } else {
-      document.body.appendChild(container);
-    }
+export async function loadSports() {
+  sportButtonsContainer.innerHTML = '';
+  selectedSport = null;
+  if (changeSportBtn) {
+    changeSportBtn.remove();
+    changeSportBtn = null;
   }
-  return container;
-}
-
-// Load and display sports as buttons and populate sportSelect dropdown
-async function loadSports() {
-  if (!sportSelect) return;
-
-  sportSelect.innerHTML = '';
-  resetLeagueAndGame();
-
-  const container = createSportButtonsContainer();
-  container.innerHTML = 'Loading sports...';
+  hiddenSelect.innerHTML = '';
+  hiddenSelect.dispatchEvent(new Event('change'));
 
   try {
-    const gamesSnapshot = await getDocs(collection(db, 'GameCache'));
+    const snapshot = await getDocs(collection(db, 'GameCache'));
     const sportsSet = new Set();
 
-    gamesSnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data && data.Sport) {
-        sportsSet.add(data.Sport);
-      }
+    snapshot.forEach(doc => {
+      const sport = doc.data().Sport;
+      if (sport) sportsSet.add(sport);
     });
 
-    const uniqueSports = Array.from(sportsSet).sort();
-    console.log('[sportSelector] Unique sports:', uniqueSports);
+    const sports = Array.from(sportsSet).sort((a, b) => a.localeCompare(b));
 
-    container.innerHTML = '';
+    if (sports.length === 0) {
+      sportButtonsContainer.textContent = 'No sports found';
+      return;
+    }
 
-    uniqueSports.forEach(sport => {
-      // Create and append sport button
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'pick-btn blue';
-      btn.textContent = sport;
-      btn.style.whiteSpace = 'normal';
-      btn.addEventListener('click', () => {
-        selectSport(sport);
-      });
-      container.appendChild(btn);
+    // Style as grid for 3 columns with tight gaps and top alignment
+    sportButtonsContainer.style.display = 'grid';
+    sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    sportButtonsContainer.style.gridAutoRows = 'min-content';
+    sportButtonsContainer.style.gap = '4px 6px'; // 4px vertical, 6px horizontal gap
+    sportButtonsContainer.style.marginTop = '8px';
+    sportButtonsContainer.style.alignItems = 'start';
 
-      // Add option to sportSelect dropdown as well
-      const option = document.createElement('option');
-      option.value = sport;
-      option.textContent = sport;
-      sportSelect.appendChild(option);
+    // Add buttons in order for natural row-wise grid flow
+    sports.forEach(sport => {
+      sportButtonsContainer.appendChild(createSportButton(sport));
     });
-
-    sportSelect.disabled = false;
   } catch (error) {
-    console.error('[sportSelector] Error loading sports:', error);
-    container.textContent = 'Failed to load sports';
-    sportSelect.innerHTML = '<option>Failed to load sports</option>';
-    sportSelect.disabled = true;
+    console.error('Error loading sports:', error);
+    sportButtonsContainer.textContent = 'Error loading sports';
   }
 }
 
-// When sport is selected (via button or dropdown)
-function selectSport(selectedSport) {
-  if (!sportSelect) return;
+function updateHiddenSelect(sport) {
+  hiddenSelect.innerHTML = '';
+  const option = document.createElement('option');
+  option.value = sport;
+  option.selected = true;
+  hiddenSelect.appendChild(option);
+  hiddenSelect.dispatchEvent(new Event('change'));
+}
 
-  // Update sportSelect dropdown
-  sportSelect.value = selectedSport;
+function clearHiddenSelect() {
+  hiddenSelect.innerHTML = '';
+  hiddenSelect.dispatchEvent(new Event('change'));
+}
 
-  // Highlight selected button
-  const container = document.getElementById(sportButtonsContainerId);
-  if (container) {
-    [...container.children].forEach(btn => {
-      btn.classList.toggle('green', btn.textContent === selectedSport);
-      btn.classList.toggle('blue', btn.textContent !== selectedSport);
+function selectSport(button, sport) {
+  if (selectedSport === sport) return;
+
+  selectedSport = sport;
+
+  sportButtonsContainer.innerHTML = '';
+
+  sportButtonsContainer.style.display = 'grid';
+  sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  sportButtonsContainer.style.gridAutoRows = 'min-content';
+  sportButtonsContainer.style.gap = '4px 6px';
+  sportButtonsContainer.style.marginTop = '8px';
+  sportButtonsContainer.style.alignItems = 'start';
+
+  // Selected sport button green, top-left grid cell
+  const selectedBtn = createSportButton(sport);
+  selectedBtn.classList.remove('blue');
+  selectedBtn.classList.add('green');
+  sportButtonsContainer.appendChild(selectedBtn);
+
+  // Invisible placeholder button for middle cell
+  const placeholderBtn = createSportButton('');
+  placeholderBtn.style.visibility = 'hidden';
+  placeholderBtn.style.pointerEvents = 'none';
+  placeholderBtn.style.margin = '0';
+  placeholderBtn.style.padding = '0';
+  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px'; // slightly smaller fallback
+  sportButtonsContainer.appendChild(placeholderBtn);
+
+  // Change Sport button in third cell
+  if (!changeSportBtn) {
+    changeSportBtn = document.createElement('button');
+    changeSportBtn.type = 'button';
+    changeSportBtn.textContent = 'Change Sport';
+    changeSportBtn.className = 'pick-btn blue';
+    changeSportBtn.style.minWidth = '120px';
+    changeSportBtn.style.width = '100%';
+    changeSportBtn.style.boxSizing = 'border-box';
+    changeSportBtn.style.alignSelf = 'flex-start';
+    changeSportBtn.style.marginTop = '0';
+
+    changeSportBtn.addEventListener('click', () => {
+      resetSportSelection();
     });
   }
+  sportButtonsContainer.appendChild(changeSportBtn);
 
-  // Reset dependent selectors and options
-  resetLeagueAndGame();
-
-  // TODO: Load leagues for selected sport (handled in leagueSelector.js)
-  leagueSelect.disabled = false;
-  leagueSelect.innerHTML = '<option>Select a league first</option>';
-  gameSelect.innerHTML = '<option>Select a league first</option>';
-  gameSelect.disabled = true;
+  updateHiddenSelect(sport);
 }
 
-// Bind event to sportSelect dropdown change to sync with buttons
-if (sportSelect) {
-  sportSelect.addEventListener('change', (e) => {
-    selectSport(e.target.value);
-  });
+function resetSportSelection() {
+  selectedSport = null;
+
+  if (changeSportBtn) {
+    changeSportBtn.remove();
+    changeSportBtn = null;
+  }
+
+  loadSports();
+
+  clearHiddenSelect();
 }
 
-// Export loadSports to be called on login success
-export { loadSports };
+function createSportButton(sport) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = sport;
+  btn.className = 'pick-btn blue';
+
+  // Reduced padding and margin for tighter vertical spacing
+  btn.style.paddingTop = '6px';
+  btn.style.paddingBottom = '6px';
+  btn.style.marginTop = '2px';
+  btn.style.marginBottom = '2px';
+
+  btn.style.width = '100%';
+  btn.style.minWidth = '0';
+  btn.style.boxSizing = 'border-box';
+  btn.addEventListener('click', () => selectSport(btn, sport));
+  return btn;
+}
