@@ -69,6 +69,7 @@ function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset to 3 col grid default
+  wagerButtonsContainer.style.marginTop = '8px'; // Reset marginTop to default
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
@@ -173,7 +174,7 @@ function selectWager(button, id, descTemplate) {
   wagerButtonsContainer.style.gridTemplateColumns = '1fr auto 1fr';
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
   wagerButtonsContainer.style.gap = '4px 6px';
-  wagerButtonsContainer.style.marginTop = '8px';
+  wagerButtonsContainer.style.marginTop = '0';  // move up closer to title
   wagerButtonsContainer.style.alignItems = 'center';
 
   // Format label with line breaks
@@ -263,6 +264,7 @@ function resetWagerSelection() {
 
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset grid cols
+  wagerButtonsContainer.style.marginTop = '8px'; // reset marginTop
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
