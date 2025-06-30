@@ -1,79 +1,191 @@
-import { db } from '../firebaseInit.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { db } from "../firebaseInit.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const sportSelect = document.getElementById('sportSelect');
-const leagueSelect = document.getElementById('leagueSelect');
-const gameSelect = document.getElementById('gameSelect');
+const leagueSelect = document.getElementById("leagueSelect");
+const gameSelect = document.getElementById("gameSelect");
 
-async function loadGames(sport, league) {
-  if (!gameSelect) return;
+// Hide the original gameSelect dropdown but keep it for compatibility
+if (gameSelect) {
+  gameSelect.style.display = "none";
+}
 
-  gameSelect.innerHTML = '';
-  
-  if (!sport) {
-    gameSelect.innerHTML = '<option>Select a sport first</option>';
-    gameSelect.disabled = true;
-    return;
+let gameButtonsContainer = document.getElementById("gameButtonsContainer");
+if (!gameButtonsContainer) {
+  gameButtonsContainer = document.createElement("div");
+  gameButtonsContainer.id = "gameButtonsContainer";
+
+  // Insert container after label for gameSelect
+  const gameLabel = document.querySelector('label[for="gameSelect"]');
+  if (gameLabel) {
+    gameLabel.parentNode.insertBefore(gameButtonsContainer, gameLabel.nextSibling);
+  } else if (gameSelect && gameSelect.parentNode) {
+    gameSelect.parentNode.insertBefore(gameButtonsContainer, gameSelect.nextSibling);
+  } else {
+    document.body.appendChild(gameButtonsContainer);
+  }
+}
+
+let selectedGameId = null;
+let changeGameBtn = null;
+
+leagueSelect.addEventListener("change", async () => {
+  const selectedLeague = leagueSelect.value;
+  gameButtonsContainer.innerHTML = "";
+  selectedGameId = null;
+  if (changeGameBtn) {
+    changeGameBtn.remove();
+    changeGameBtn = null;
   }
 
-  if (!league) {
+  if (!selectedLeague) {
     gameSelect.innerHTML = '<option>Select a league first</option>';
     gameSelect.disabled = true;
     return;
   }
 
   gameSelect.disabled = true;
-  gameSelect.innerHTML = '<option>Loading games...</option>';
+  gameSelect.innerHTML = "";
+
+  gameButtonsContainer.textContent = "Loading games...";
 
   try {
-    // Query games filtered by sport and league
-    const gamesQuery = query(collection(db, 'GameCache'), where('Sport', '==', sport), where('League', '==', league));
-    const gamesSnapshot = await getDocs(gamesQuery);
+    const q = query(collection(db, "GameCache"), where("League", "==", selectedLeague));
+    const querySnapshot = await getDocs(q);
 
-    if (gamesSnapshot.empty) {
+    if (querySnapshot.empty) {
+      gameButtonsContainer.textContent = "No games found";
       gameSelect.innerHTML = '<option>No games found</option>';
       gameSelect.disabled = true;
       return;
     }
 
-    gameSelect.innerHTML = '';
+    gameButtonsContainer.textContent = "";
 
-    // Sort games by StartTimeUTC if available, else by id
-    const gamesArray = [];
-    gamesSnapshot.forEach(doc => {
+    const games = [];
+    querySnapshot.forEach(doc => {
       const data = doc.data();
-      gamesArray.push({ id: doc.id, ...data });
-    });
-    gamesArray.sort((a, b) => {
-      if (a.StartTimeUTC && b.StartTimeUTC) {
-        return a.StartTimeUTC.seconds - b.StartTimeUTC.seconds;
-      }
-      return a.id.localeCompare(b.id);
+      games.push({ id: doc.id, data });
     });
 
-    gamesArray.forEach(game => {
-      const option = document.createElement('option');
-      option.value = game.id;
-      option.textContent = `${game.HomeTeam || 'Home'} vs ${game.AwayTeam || 'Away'}`;
-      gameSelect.appendChild(option);
+    // Sort games by start time ascending
+    games.sort((a, b) => {
+      const aTime = a.data.StartTimeUTC || 0;
+      const bTime = b.data.StartTimeUTC || 0;
+      return aTime - bTime;
     });
 
-    gameSelect.disabled = false;
+    // Style container as grid 1-column, tight rows, no gap needed here
+    gameButtonsContainer.style.display = "grid";
+    gameButtonsContainer.style.gridTemplateColumns = "1fr";
+    gameButtonsContainer.style.gridAutoRows = "min-content";
+    gameButtonsContainer.style.marginTop = "8px";
+
+    games.forEach(({ id, data }) => {
+      gameButtonsContainer.appendChild(createGameButton(id, data));
+    });
+
   } catch (error) {
-    console.error('Error loading games:', error);
-    gameSelect.innerHTML = '<option>Error loading games</option>';
-    gameSelect.disabled = true;
+    gameButtonsContainer.textContent = "Error loading games";
+    console.error("Error loading games:", error);
   }
+});
+
+function createGameButton(id, gameData) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "pick-btn blue";
+
+  btn.style.paddingTop = "6px";
+  btn.style.paddingBottom = "6px";
+  btn.style.marginTop = "2px";
+  btn.style.marginBottom = "2px";
+
+  btn.style.width = "100%";
+  btn.style.minWidth = "0";
+  btn.style.boxSizing = "border-box";
+
+  // Display HomeTeam vs AwayTeam and start time formatted
+  const startTime = gameData.StartTimeUTC ? new Date(gameData.StartTimeUTC.seconds * 1000) : null;
+  const timeString = startTime ? startTime.toLocaleString() : "Unknown time";
+
+  btn.textContent = `${gameData.HomeTeam || "Home"} vs ${gameData.AwayTeam || "Away"} — ${timeString}`;
+
+  btn.addEventListener("click", () => selectGame(btn, id));
+
+  return btn;
 }
 
-// Bind event to leagueSelect changes to load games accordingly
-if (leagueSelect) {
-  leagueSelect.addEventListener('change', () => {
-    const sport = sportSelect?.value || '';
-    const league = leagueSelect.value;
-    loadGames(sport, league);
+function selectGame(button, gameId) {
+  if (selectedGameId === gameId) return;
+
+  selectedGameId = gameId;
+
+  gameButtonsContainer.innerHTML = "";
+
+  gameButtonsContainer.style.display = "grid";
+  gameButtonsContainer.style.gridTemplateColumns = "1fr";
+  gameButtonsContainer.style.gridAutoRows = "min-content";
+  gameButtonsContainer.style.marginTop = "8px";
+
+  const selectedBtn = createGameButton(gameId, {
+    HomeTeam: button.textContent.split(" vs ")[0],
+    AwayTeam: button.textContent.split(" vs ")[1].split(" — ")[0],
+    StartTimeUTC: null
   });
+  selectedBtn.classList.remove("blue");
+  selectedBtn.classList.add("green");
+  gameButtonsContainer.appendChild(selectedBtn);
+
+  // Invisible placeholder for spacing
+  const placeholderBtn = createGameButton("", {});
+  placeholderBtn.style.visibility = "hidden";
+  placeholderBtn.style.pointerEvents = "none";
+  placeholderBtn.style.margin = "0";
+  placeholderBtn.style.padding = "0";
+  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + "px" : "36px";
+  gameButtonsContainer.appendChild(placeholderBtn);
+
+  // Change Game button in third cell
+  if (!changeGameBtn) {
+    changeGameBtn = document.createElement("button");
+    changeGameBtn.type = "button";
+    changeGameBtn.textContent = "Change Game";
+    changeGameBtn.className = "pick-btn blue";
+    changeGameBtn.style.minWidth = "120px";
+    changeGameBtn.style.width = "100%";
+    changeGameBtn.style.boxSizing = "border-box";
+    changeGameBtn.style.alignSelf = "flex-start";
+    changeGameBtn.style.marginTop = "0";
+
+    changeGameBtn.addEventListener("click", () => {
+      resetGameSelection();
+    });
+  }
+  gameButtonsContainer.appendChild(changeGameBtn);
+
+  // Update hidden select for compatibility
+  gameSelect.innerHTML = "";
+  const option = document.createElement("option");
+  option.value = gameId;
+  option.selected = true;
+  gameSelect.appendChild(option);
+  gameSelect.disabled = false;
+  gameSelect.dispatchEvent(new Event("change"));
 }
 
-// Export for external calls if needed
-export { loadGames };
+function resetGameSelection() {
+  selectedGameId = null;
+
+  if (changeGameBtn) {
+    changeGameBtn.remove();
+    changeGameBtn = null;
+  }
+
+  gameSelect.innerHTML = '<option value="" disabled selected>Select a game</option>';
+  gameSelect.disabled = true;
+  gameSelect.dispatchEvent(new Event("change"));
+
+  gameButtonsContainer.innerHTML = "";
+}
+
+export default {};
