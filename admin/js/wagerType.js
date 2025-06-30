@@ -28,30 +28,13 @@ if (!wagerButtonsContainer) {
   }
 }
 
-// Hide wager section initially
-wagerButtonsContainer.style.display = 'none';
-numberInputContainer.style.display = 'none';
-finalPickDescription.textContent = '';
-
 let selectedWagerId = null;
 let changeWagerBtn = null;
-
-// Utility: Insert <br> before specific keywords in label
-function formatLabelWithLineBreaks(label) {
-  const keywords = ['OVER', 'UNDER', 'PLUS', 'MINUS'];
-  let formatted = label;
-  keywords.forEach(keyword => {
-    const regex = new RegExp(`\\s${keyword}`, 'gi');
-    formatted = formatted.replace(regex, `<br>${keyword}`);
-  });
-  return formatted;
-}
 
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
-  wagerButtonsContainer.style.display = 'none';  // hide wager buttons on sport change
 });
 
 gameSelect.addEventListener('change', async () => {
@@ -60,17 +43,14 @@ gameSelect.addEventListener('change', async () => {
     wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
-    wagerButtonsContainer.style.display = 'none';  // hide wager buttons if no game
     return;
   }
-  wagerButtonsContainer.style.display = 'grid'; // show wager buttons only after game selected
   await loadWagerTypes();
 });
 
 function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
-  wagerButtonsContainer.style.display = 'none';
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
@@ -111,6 +91,13 @@ async function loadWagerTypes() {
 
     wagerButtonsContainer.textContent = '';
 
+    wagerButtonsContainer.style.display = 'grid';
+    wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    wagerButtonsContainer.style.gridAutoRows = 'min-content';
+    wagerButtonsContainer.style.gap = '4px 6px';
+    wagerButtonsContainer.style.marginTop = '8px';
+    wagerButtonsContainer.style.alignItems = 'start';
+
     wagerTypes.forEach(wt => {
       const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
       wagerButtonsContainer.appendChild(btn);
@@ -122,13 +109,20 @@ async function loadWagerTypes() {
   }
 }
 
+function formatLabelWithLineBreaks(label) {
+  const keywords = ['OVER', 'UNDER', 'PLUS', 'MINUS'];
+  let formatted = label;
+  keywords.forEach(keyword => {
+    const regex = new RegExp(`\\s${keyword}`, 'gi');
+    formatted = formatted.replace(regex, `<br>${keyword}`);
+  });
+  return formatted;
+}
+
 function createWagerButton(id, label, descTemplate) {
   const btn = document.createElement('button');
   btn.type = 'button';
-
-  const formattedLabel = formatLabelWithLineBreaks(label);
-  btn.innerHTML = formattedLabel;
-
+  btn.textContent = label;
   btn.className = 'pick-btn blue';
 
   btn.style.paddingTop = '6px';
@@ -163,11 +157,16 @@ function selectWager(button, id, descTemplate) {
   container.style.marginTop = '8px';
   container.style.alignItems = 'center';
 
-  // Selected wager button
-  const selectedBtn = createWagerButton(id, button.innerHTML, descTemplate);
+  // Apply formatting to label to add <br>
+  const formattedLabel = formatLabelWithLineBreaks(button.textContent);
+
+  // Selected wager button (with formatted label)
+  const selectedBtn = createWagerButton(id, formattedLabel, descTemplate);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   selectedBtn.style.gridColumn = '1 / 2';
+  // Use innerHTML to allow <br> line breaks in label
+  selectedBtn.innerHTML = formattedLabel;
   container.appendChild(selectedBtn);
 
   // Number input container - show/hide based on [[NUM]]
@@ -233,7 +232,6 @@ function resetWagerSelection() {
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
   wagerButtonsContainer.innerHTML = '';
-  wagerButtonsContainer.style.display = 'none';  // hide wager section on reset
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
