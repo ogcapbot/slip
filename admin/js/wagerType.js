@@ -39,11 +39,18 @@ wagerSectionContainer.style.alignItems = 'center';
 wagerSectionContainer.style.marginBottom = '4px';
 wagerSectionContainer.style.width = '100%';
 
-// Grab the existing wager type label and move it inside wagerSectionContainer
+// Grab the existing wager type label and move it inside wagerSectionContainer safely
 const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
+
 if (wagerTypeLabel && wagerTypeLabel.parentNode) {
   wagerTypeLabel.style.display = 'inline-block';
-  wagerTypeLabel.parentNode.insertBefore(wagerSectionContainer, wagerTypeLabel);
+
+  if (Array.from(wagerTypeLabel.parentNode.childNodes).includes(wagerTypeLabel)) {
+    wagerTypeLabel.parentNode.insertBefore(wagerSectionContainer, wagerTypeLabel);
+  } else {
+    wagerTypeLabel.parentNode.appendChild(wagerSectionContainer);
+  }
+
   wagerSectionContainer.appendChild(wagerTypeLabel);
 }
 
