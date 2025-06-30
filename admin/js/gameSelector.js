@@ -132,7 +132,6 @@ function selectGame(button, gameId) {
   gameButtonsContainer.innerHTML = "";
   gameButtonsContainer.style.display = "block";
 
-  // Prepare but DO NOT show Change Game button yet
   if (!changeGameBtn) {
     changeGameBtn = document.createElement("button");
     changeGameBtn.type = "button";
@@ -149,26 +148,24 @@ function selectGame(button, gameId) {
       resetGameSelection();
     };
   }
-  // Hide change button initially (will show after team pick)
+  // Hide the Change Game button until a team is picked
   changeGameBtn.style.display = "none";
 
-  // Clear pickOptionsContainer and show the two team buttons side by side
   const [home, rest] = button.textContent.split(" vs ");
   const away = rest ? rest.split(" — ")[0] : "Away";
 
   console.log("Showing teams:", home, away);
   if (pickOptionsContainer) {
     pickOptionsContainer.innerHTML = "";
-    // Create a container with grid styling for 2 columns
+    // Use a 3-column grid (like league selector) for layout
     pickOptionsContainer.style.display = "grid";
-    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr";
+    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr 1fr";
     pickOptionsContainer.style.gap = "8px";
     pickOptionsContainer.style.marginTop = "8px";
+    pickOptionsContainer.style.alignItems = "start";
 
-    // Append team buttons side by side
     pickOptionsContainer.appendChild(createTeamButton(home));
     pickOptionsContainer.appendChild(createTeamButton(away));
-    selectedTeam = null;
   }
 
   // Update hidden select for form compatibility
@@ -180,7 +177,7 @@ function selectGame(button, gameId) {
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
 
-  // Append Change Game button to pickOptionsContainer but keep hidden for now
+  // Append Change Game button to pickOptionsContainer but keep it hidden for now
   pickOptionsContainer.appendChild(changeGameBtn);
 }
 
@@ -211,6 +208,7 @@ function selectTeam(button, teamName) {
   selectedTeam = teamName;
 
   if (pickOptionsContainer) {
+    // Clear green styles from all buttons
     const buttons = pickOptionsContainer.querySelectorAll("button.pick-btn");
     buttons.forEach((b) => {
       b.classList.remove("green");
@@ -221,40 +219,46 @@ function selectTeam(button, teamName) {
   button.classList.remove("blue");
   button.classList.add("green");
 
-  // Move the selected team button to the left column, and Change Game to right column
-
   if (pickOptionsContainer) {
-    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr";
-    pickOptionsContainer.style.alignItems = "center";
-    pickOptionsContainer.style.gap = "8px";
-
-    // Remove all buttons except selected team & changeGameBtn
+    // Clear and create the 3-column grid for alignment
     pickOptionsContainer.innerHTML = "";
-    // Append selected team button first (left column)
-    pickOptionsContainer.appendChild(button);
-    // Show and append Change Game button (right column)
-    changeGameBtn.style.display = "inline-block";
-    pickOptionsContainer.appendChild(changeGameBtn);
+    pickOptionsContainer.style.display = "grid";
+    pickOptionsContainer.style.gridTemplateColumns = "1fr 1fr 1fr";
+    pickOptionsContainer.style.gap = "8px";
+    pickOptionsContainer.style.marginTop = "8px";
+    pickOptionsContainer.style.alignItems = "start";
 
-    // Style selected team button to match other buttons size (example width 120px, height 40px)
-    button.style.width = "120px";
-    button.style.minWidth = "120px";
-    button.style.height = "40px";
-    button.style.margin = "0";
+    // Left column: selected team button (normal size, full width)
+    button.style.width = "100%";
+    button.style.minWidth = "0";
+    button.style.height = "";
+    button.style.margin = "";
     button.style.paddingTop = "6px";
     button.style.paddingBottom = "6px";
-    button.style.fontSize = "1rem";
-    button.classList.remove("blue");
-    button.classList.add("green");
+    button.style.fontSize = "";  // remove overrides so CSS controls font-size
 
-    // Style Change Game button to match (same width & height)
-    changeGameBtn.style.width = "120px";
-    changeGameBtn.style.minWidth = "120px";
-    changeGameBtn.style.height = "40px";
+    pickOptionsContainer.appendChild(button);
+
+    // Middle column: invisible placeholder button for spacing
+    const placeholderBtn = createTeamButton("");
+    placeholderBtn.style.visibility = "hidden";
+    placeholderBtn.style.pointerEvents = "none";
+    placeholderBtn.style.margin = "0";
+    placeholderBtn.style.padding = "0";
+    placeholderBtn.style.height = button.offsetHeight ? button.offsetHeight + "px" : "36px";
+    pickOptionsContainer.appendChild(placeholderBtn);
+
+    // Right column: Change Game button, visible and matching style
+    changeGameBtn.style.display = "inline-block";
+    changeGameBtn.style.width = "100%";
+    changeGameBtn.style.minWidth = "0";
+    changeGameBtn.style.height = button.offsetHeight ? button.offsetHeight + "px" : "36px";
     changeGameBtn.style.margin = "0";
     changeGameBtn.style.paddingTop = "6px";
     changeGameBtn.style.paddingBottom = "6px";
-    changeGameBtn.style.fontSize = "1rem";
+    changeGameBtn.style.fontSize = "";  // remove overrides so CSS controls font-size
+
+    pickOptionsContainer.appendChild(changeGameBtn);
   }
 }
 
