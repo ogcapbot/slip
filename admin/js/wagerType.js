@@ -9,7 +9,7 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // For team buttons
 const gameSelect = document.getElementById('gameSelect');
 
-// Hide wagerTypeSelect initially (will show after team selection)
+// Hide wagerTypeSelect dropdown as per original
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
@@ -31,18 +31,26 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// Add inline label for number input title next to 'Choose wager type' title (hidden initially)
+// --- NEW: Create container for labels "Choose Wager Type" and "Number Input" to align horizontally ---
+
 const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
-let numberInputTitleInline = document.createElement('span');
-numberInputTitleInline.textContent = 'Number Input:';
-numberInputTitleInline.style.fontWeight = 'bold';
-numberInputTitleInline.style.marginLeft = '12px';
-numberInputTitleInline.style.display = 'none';
-if (wagerTypeLabel) {
-  wagerTypeLabel.style.display = 'inline-block';  // ensure label and input inline
-  wagerTypeLabel.style.verticalAlign = 'middle';
-  wagerTypeLabel.parentNode.insertBefore(numberInputTitleInline, wagerTypeSelect);
+let labelsContainer = document.createElement('div');
+labelsContainer.style.display = 'flex';
+labelsContainer.style.alignItems = 'center';
+labelsContainer.style.gap = '12px'; // space between labels
+labelsContainer.style.marginBottom = '4px'; // space below labels container
+
+if (wagerTypeLabel && wagerTypeLabel.parentNode) {
+  wagerTypeLabel.parentNode.insertBefore(labelsContainer, wagerTypeLabel);
+  labelsContainer.appendChild(wagerTypeLabel);
 }
+
+// Create the number input label (above input box)
+let numberInputTitle = document.createElement('label');
+numberInputTitle.textContent = 'Number Input:';
+numberInputTitle.style.fontWeight = 'bold';
+numberInputTitle.style.display = 'none'; // hidden initially
+labelsContainer.appendChild(numberInputTitle);
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
 if (!wagerButtonsContainer) {
@@ -59,15 +67,17 @@ if (!wagerButtonsContainer) {
   }
 }
 
+// Initially hide wager buttons container until a team is selected
+wagerButtonsContainer.style.display = 'none';
+
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
-// Hide wager section if no team selected (initially)
+// Show/hide wager buttons container only if a team is selected
 function toggleWagerSection() {
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
-  wagerTypeSelect.style.display = teamSelected ? 'inline-block' : 'none';
   if (!teamSelected) {
     clearWagerButtons();  // reset wager buttons when no team selected
   }
@@ -93,14 +103,14 @@ gameSelect.addEventListener('change', async () => {
   toggleWagerSection();
 });
 
-// New: Watch team selection buttons for changes to toggle wager section
+// Listen for team button selection and toggle wager buttons container
 pickOptionsContainer.addEventListener('click', e => {
   if (e.target.tagName === 'BUTTON') {
     // Remove green from all buttons first
     Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
     // Add green to clicked button
     e.target.classList.add('green');
-    // Now show wager section
+    // Show wager section if team selected
     toggleWagerSection();
   }
 });
@@ -114,7 +124,7 @@ function clearWagerButtons() {
   finalPickDescription.textContent = '';
   numberInput.value = '';
   requiredLabel.style.display = 'none';
-  numberInputTitleInline.style.display = 'none'; // hide inline input title
+  numberInputTitle.style.display = 'none'; // hide number input label
   if (changeWagerBtn) {
     changeWagerBtn.remove();
     changeWagerBtn = null;
@@ -249,8 +259,8 @@ function selectWager(button, id, descTemplate) {
     // Show the required label
     requiredLabel.style.display = 'block';
 
-    // Show inline number input title next to wager type title
-    numberInputTitleInline.style.display = 'inline-block';
+    // Show number input label (above input box, aligned horizontally with wager type label)
+    numberInputTitle.style.display = 'inline-block';
 
     // Set default value to 0 and focus input with select
     numberInput.value = '0';
@@ -260,7 +270,7 @@ function selectWager(button, id, descTemplate) {
   } else {
     numberInputContainer.style.display = 'none';
     requiredLabel.style.display = 'none';
-    numberInputTitleInline.style.display = 'none';
+    numberInputTitle.style.display = 'none';
   }
 
   // Change wager button
@@ -294,7 +304,7 @@ function selectWager(button, id, descTemplate) {
   option.value = id;
   option.selected = true;
   wagerTypeSelect.appendChild(option);
-  wagerTypeSelect.disabled = false;
+  wagerTypeSelect.disabled = true; // keep dropdown disabled and hidden as original
   wagerTypeSelect.dispatchEvent(new Event('change'));
 }
 
@@ -317,7 +327,7 @@ function resetWagerSelection() {
   finalPickDescription.textContent = '';
   numberInput.value = '';
   requiredLabel.style.display = 'none';
-  numberInputTitleInline.style.display = 'none';
+  numberInputTitle.style.display = 'none';
 }
 
 numberInput.addEventListener('input', () => {
