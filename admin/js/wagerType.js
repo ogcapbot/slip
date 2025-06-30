@@ -77,13 +77,18 @@ let changeWagerBtn = null;
 function toggleWagerSection() {
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
+  console.log(`[toggleWagerSection] Team selected: ${teamSelected ? selectedTeamButton.textContent : 'None'}`);
+
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
+  console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
+
   if (!teamSelected) {
     clearWagerButtons();  // reset wager buttons when no team selected
   }
 }
 
 sportSelect.addEventListener('change', () => {
+  console.log('[sportSelect] Sport changed:', sportSelect.value);
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
@@ -91,6 +96,7 @@ sportSelect.addEventListener('change', () => {
 });
 
 gameSelect.addEventListener('change', async () => {
+  console.log('[gameSelect] Game changed:', gameSelect.value);
   if (!gameSelect.value) {
     clearWagerButtons();
     wagerButtonsContainer.textContent = 'Select a game first';
@@ -110,12 +116,14 @@ pickOptionsContainer.addEventListener('click', e => {
     Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
     // Add green to clicked button
     e.target.classList.add('green');
+    console.log('[pickOptionsContainer] Team selected:', e.target.textContent);
     // Show wager section if team selected
     toggleWagerSection();
   }
 });
 
 function clearWagerButtons() {
+  console.log('[clearWagerButtons] Clearing wager buttons and resetting state.');
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset to 3 col grid default
@@ -136,6 +144,7 @@ function clearWagerButtons() {
 
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
+  console.log('[loadWagerTypes] Loading wager types for sport:', selectedSport);
   clearWagerButtons();
   wagerButtonsContainer.textContent = 'Loading wager types...';
   numberInputContainer.style.display = 'none';
@@ -154,6 +163,8 @@ async function loadWagerTypes() {
     sportSnap.forEach(doc => wagerTypesMap.set(doc.id, doc.data()));
 
     const wagerTypes = Array.from(wagerTypesMap.values());
+
+    console.log(`[loadWagerTypes] Found ${wagerTypes.length} wager types.`);
 
     if (wagerTypes.length === 0) {
       wagerButtonsContainer.textContent = 'No wager types found';
@@ -178,6 +189,9 @@ async function loadWagerTypes() {
     console.error('Error loading wager types:', error);
     wagerButtonsContainer.textContent = 'Error loading wager types';
   }
+
+  // ENSURE wagerButtonsContainer visibility based on team selected
+  toggleWagerSection();
 }
 
 function formatLabelWithLineBreaks(label) {
@@ -215,6 +229,8 @@ function createWagerButton(id, label, descTemplate) {
 
 function selectWager(button, id, descTemplate) {
   if (selectedWagerId === id) return;
+
+  console.log('[selectWager] Wager selected:', id, button.textContent);
 
   selectedWagerId = id;
 
@@ -309,6 +325,7 @@ function selectWager(button, id, descTemplate) {
 }
 
 function resetWagerSelection() {
+  console.log('[resetWagerSelection] Resetting wager selection.');
   selectedWagerId = null;
 
   if (changeWagerBtn) {
