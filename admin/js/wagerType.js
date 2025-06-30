@@ -1,5 +1,7 @@
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+// IMPORTANT: Adjust the import path below to your actual units JS file location
+import { showUnitSection } from './units.js';  // <-- Change './units.js' to the real path of your units file
 
 const sportSelect = document.getElementById('sportSelect');
 const wagerTypeSelect = document.getElementById('wagerTypeSelect');
@@ -328,6 +330,9 @@ function selectWager(button, id, descTemplate) {
   wagerTypeSelect.appendChild(option);
   wagerTypeSelect.disabled = true;
   wagerTypeSelect.dispatchEvent(new Event('change'));
+
+  // Show unit section after wager selection
+  showUnitSection();
 }
 
 function resetWagerSelection() {
