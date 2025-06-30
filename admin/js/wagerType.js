@@ -28,6 +28,11 @@ if (!wagerButtonsContainer) {
   }
 }
 
+// Hide wager section initially
+wagerButtonsContainer.style.display = 'none';
+numberInputContainer.style.display = 'none';
+finalPickDescription.textContent = '';
+
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
@@ -35,6 +40,7 @@ sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
+  wagerButtonsContainer.style.display = 'none';  // hide wager buttons on sport change
 });
 
 gameSelect.addEventListener('change', async () => {
@@ -43,8 +49,10 @@ gameSelect.addEventListener('change', async () => {
     wagerButtonsContainer.textContent = 'Select a game first';
     numberInputContainer.style.display = 'none';
     finalPickDescription.textContent = '';
+    wagerButtonsContainer.style.display = 'none';  // hide wager buttons if no game
     return;
   }
+  wagerButtonsContainer.style.display = 'grid'; // show wager buttons only after team selected (game selected here)
   await loadWagerTypes();
 });
 
@@ -112,7 +120,16 @@ async function loadWagerTypes() {
 function createWagerButton(id, label, descTemplate) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = label;
+
+  // Insert line break before specific keywords (OVER, UNDER, PLUS, MINUS)
+  const breakBeforeKeywords = ['OVER', 'UNDER', 'PLUS', 'MINUS'];
+  let formattedLabel = label;
+  breakBeforeKeywords.forEach(keyword => {
+    const regex = new RegExp(`\\s${keyword}`, 'i'); // match space + keyword case insensitive
+    formattedLabel = formattedLabel.replace(regex, `<br>${keyword}`);
+  });
+  btn.innerHTML = formattedLabel; // use innerHTML to allow <br>
+
   btn.className = 'pick-btn blue';
 
   btn.style.paddingTop = '6px';
@@ -206,6 +223,7 @@ function resetWagerSelection() {
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
   wagerButtonsContainer.innerHTML = '';
+  wagerButtonsContainer.style.display = 'none';  // hide wager section on reset
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
