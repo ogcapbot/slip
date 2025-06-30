@@ -59,12 +59,9 @@ numberInputTitle.style.fontWeight = 'bold';
 numberInputTitle.style.display = 'none';
 wagerSectionContainer.appendChild(numberInputTitle);
 
-// Style numberInputContainer for alignment and size
-numberInputContainer.style.display = 'block';
+// Style numberInputContainer for alignment and size inside grid (no margin to fit grid cell)
+numberInputContainer.style.margin = '0';
 numberInputContainer.style.width = '100%';
-numberInputContainer.style.maxWidth = '300px';
-numberInputContainer.style.marginTop = '4px';
-numberInputContainer.style.marginBottom = '12px';
 
 // Insert labels container and number input container before wagerTypeSelect element
 if (wagerTypeSelect && wagerTypeSelect.parentNode) {
@@ -92,7 +89,7 @@ wagerButtonsContainer.style.display = 'grid';
 wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
 wagerButtonsContainer.style.gap = '8px 12px';
 wagerButtonsContainer.style.marginTop = '8px';
-wagerButtonsContainer.style.alignItems = 'start';
+wagerButtonsContainer.style.alignItems = 'center'; // vertically center items
 wagerButtonsContainer.style.width = '100%';
 wagerButtonsContainer.style.maxWidth = '600px';
 
@@ -275,6 +272,7 @@ function selectWager(button, id, descTemplate) {
 
   if (descTemplate.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
+    numberInputContainer.style.gridColumn = '2 / 3';
     requiredLabel.style.display = 'block';
     numberInputTitle.style.display = 'inline-block';
 
@@ -282,6 +280,7 @@ function selectWager(button, id, descTemplate) {
     numberInput.focus();
     numberInput.select();
 
+    wagerButtonsContainer.appendChild(numberInputContainer);
   } else {
     numberInputContainer.style.display = 'none';
     requiredLabel.style.display = 'none';
