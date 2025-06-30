@@ -1,4 +1,3 @@
-// admin/js/notesSection.js
 const form = document.getElementById('pickForm');
 const unitsSelect = document.getElementById('unitsSelect');
 const submitButton = form.querySelector('button[type="submit"]');
@@ -82,9 +81,6 @@ unitsSelect.addEventListener('change', () => {
     notesContainer.style.display = 'block';
     submitButton.disabled = true; // disable submit until notes question answered
     resetNotesSection();
-    // Hide phrase selector on units change (reset)
-    const phraseSection = document.getElementById('phraseSelectorSection');
-    if (phraseSection) phraseSection.style.display = 'none';
   } else {
     notesContainer.style.display = 'none';
     submitButton.disabled = true;
@@ -112,12 +108,8 @@ noBtn.addEventListener('click', () => {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
 
-  // Enable submit only after phrase selection done
-  checkEnableSubmit();
-
-  // Show Phrase Selector section after notes decision
-  const phraseSection = document.getElementById('phraseSelectorSection');
-  if (phraseSection) phraseSection.style.display = 'block';
+  // Enable submit, no notes to input
+  submitButton.disabled = false;
 });
 
 // Handle Yes button click
@@ -133,18 +125,16 @@ yesBtn.addEventListener('click', () => {
   notesTextarea.focus();
   submitButton.disabled = true; // disable submit until textarea input
 
-  updateCharCounter();
-
-  // Hide phrase selector until notes typed
-  const phraseSection = document.getElementById('phraseSelectorSection');
-  if (phraseSection) phraseSection.style.display = 'none';
+  updateCharCounter(); // init counter
 });
 
 // Update character counter display
 function updateCharCounter() {
   const remaining = 100 - notesTextarea.value.length;
   charCounter.textContent = `${remaining} characters left`;
-  checkEnableSubmit();
+
+  // Enable submit if textarea has text, disable if empty
+  submitButton.disabled = notesTextarea.value.trim().length === 0;
 }
 
 // Listen for textarea input changes
@@ -160,24 +150,10 @@ function getNotesData() {
   return null;
 }
 
-// Reset notes section (also hides phrase selector)
+// Export init function to allow manual reset if needed
 function reset() {
   resetNotesSection();
   notesContainer.style.display = 'none';
-  const phraseSection = document.getElementById('phraseSelectorSection');
-  if (phraseSection) phraseSection.style.display = 'none';
-  submitButton.disabled = true;
 }
 
-// Utility to enable submit only when all required fields including phrase selected
-function checkEnableSubmit() {
-  const phraseSection = document.getElementById('phraseSelectorSection');
-  if (!phraseSection) return;
-
-  const phraseSelected = window.phraseSelector?.isPhraseSelected() || false;
-  const notesOk = (notesSelected === 'no') || (notesSelected === 'yes' && notesTextarea.value.trim().length > 0);
-
-  submitButton.disabled = !(notesOk && phraseSelected);
-}
-
-export { getNotesData, reset, checkEnableSubmit };
+export { getNotesData, reset };
