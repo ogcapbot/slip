@@ -1,3 +1,6 @@
+// admin/js/notesSection.js
+import { initPhraseSelector } from '/admin/js/phraseSelector.js';
+
 const form = document.getElementById('pickForm');
 const unitsSelect = document.getElementById('unitsSelect');
 const submitButton = form.querySelector('button[type="submit"]');
@@ -77,6 +80,7 @@ function clearButtonStates() {
 
 // Show the notesContainer when appropriate (after units selected)
 unitsSelect.addEventListener('change', () => {
+  // Only show notesContainer if unitsSelect has a value
   if (unitsSelect.value) {
     notesContainer.style.display = 'block';
     submitButton.disabled = true; // disable submit until notes question answered
@@ -96,6 +100,12 @@ function resetNotesSection() {
   notesTextarea.style.display = 'none';
   charCounter.style.display = 'none';
   submitButton.disabled = true;
+
+  // Also hide phrase selector container on reset
+  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
+  if (phraseSelectorContainer) {
+    phraseSelectorContainer.style.display = 'none';
+  }
 }
 
 // Handle No button click
@@ -110,6 +120,9 @@ noBtn.addEventListener('click', () => {
 
   // Enable submit, no notes to input
   submitButton.disabled = false;
+
+  // Show phrase selector after notes decision
+  showPhraseSelector();
 });
 
 // Handle Yes button click
@@ -125,7 +138,13 @@ yesBtn.addEventListener('click', () => {
   notesTextarea.focus();
   submitButton.disabled = true; // disable submit until textarea input
 
-  updateCharCounter();
+  updateCharCounter(); // init counter
+
+  // Hide phrase selector while editing notes
+  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
+  if (phraseSelectorContainer) {
+    phraseSelectorContainer.style.display = 'none';
+  }
 });
 
 // Update character counter display
@@ -133,7 +152,18 @@ function updateCharCounter() {
   const remaining = 100 - notesTextarea.value.length;
   charCounter.textContent = `${remaining} characters left`;
 
+  // Enable submit if textarea has text, disable if empty
   submitButton.disabled = notesTextarea.value.trim().length === 0;
+
+  // Hide or show phrase selector depending on input filled or not
+  if (!submitButton.disabled) {
+    showPhraseSelector();
+  } else {
+    const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
+    if (phraseSelectorContainer) {
+      phraseSelectorContainer.style.display = 'none';
+    }
+  }
 }
 
 // Listen for textarea input changes
@@ -153,6 +183,24 @@ function getNotesData() {
 function reset() {
   resetNotesSection();
   notesContainer.style.display = 'none';
+
+  // Hide phrase selector on reset
+  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
+  if (phraseSelectorContainer) {
+    phraseSelectorContainer.style.display = 'none';
+  }
+}
+
+// Show phrase selector, passing current sport if available
+function showPhraseSelector() {
+  const phraseSelectorContainer = document.getElementById('phraseSelectorContainer');
+  if (phraseSelectorContainer) {
+    // Assuming you track current selected sport in your app as window.currentSport
+    // If not, you can pass it or set it here accordingly
+    phraseSelectorContainer.style.display = 'block';
+    const currentSport = window.currentSport || null;
+    initPhraseSelector(currentSport);
+  }
 }
 
 export { getNotesData, reset };
