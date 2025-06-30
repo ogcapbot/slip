@@ -24,7 +24,7 @@ if (!requiredLabel) {
   requiredLabel.style.color = 'red';
   requiredLabel.style.fontWeight = 'bold';
   requiredLabel.style.fontSize = '0.8em';
-  requiredLabel.style.marginTop = '2px';
+  requiredLabel.style.marginTop = '4px';
   requiredLabel.style.display = 'none';
   numberInputContainer.appendChild(requiredLabel);
 }
@@ -255,7 +255,7 @@ function selectWager(button, id, descTemplate) {
   wagerButtonsContainer.innerHTML = '';
 
   wagerButtonsContainer.style.display = 'grid';
-  wagerButtonsContainer.style.gridTemplateColumns = '1fr auto auto';
+  wagerButtonsContainer.style.gridTemplateColumns = '1fr 150px 1fr'; // fixed width middle column for input
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
   wagerButtonsContainer.style.gap = '4px 6px';
   wagerButtonsContainer.style.marginTop = '0';
@@ -273,10 +273,19 @@ function selectWager(button, id, descTemplate) {
   if (descTemplate.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
     numberInputContainer.style.gridColumn = '2 / 3';
+    numberInputContainer.style.maxWidth = '150px';
     requiredLabel.style.display = 'block';
+    requiredLabel.style.marginTop = '4px';
     numberInputTitle.style.display = 'inline-block';
 
     numberInput.value = '0';
+
+    // Match input height to button height
+    const btnHeight = selectedBtn.getBoundingClientRect().height;
+    numberInput.style.height = btnHeight + 'px';
+    numberInput.style.marginLeft = '6px';
+    numberInput.style.marginRight = '6px';
+
     numberInput.focus();
     numberInput.select();
 
