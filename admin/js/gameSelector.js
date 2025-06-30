@@ -131,36 +131,11 @@ function selectGame(button, gameId) {
 
   selectedGameId = gameId;
 
+  // Clear the entire game buttons container — no game buttons remain visible
   gameButtonsContainer.innerHTML = "";
+  gameButtonsContainer.style.display = "block"; // simple block display for change button
 
-  gameButtonsContainer.style.display = "grid";
-  gameButtonsContainer.style.gridTemplateColumns = "1fr";
-  gameButtonsContainer.style.gridAutoRows = "min-content";
-  gameButtonsContainer.style.marginTop = "8px";
-
-  // Extract home and away from button text
-  const [home, rest] = button.textContent.split(" vs ");
-  const away = rest ? rest.split(" — ")[0] : "Away";
-
-  const selectedBtn = createGameButton(gameId, {
-    homeTeam: home,
-    awayTeam: away,
-    commenceTimeUTC: null
-  });
-  selectedBtn.classList.remove("blue");
-  selectedBtn.classList.add("green");
-  gameButtonsContainer.appendChild(selectedBtn);
-
-  // Invisible placeholder for spacing
-  const placeholderBtn = createGameButton("", {});
-  placeholderBtn.style.visibility = "hidden";
-  placeholderBtn.style.pointerEvents = "none";
-  placeholderBtn.style.margin = "0";
-  placeholderBtn.style.padding = "0";
-  placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + "px" : "36px";
-  gameButtonsContainer.appendChild(placeholderBtn);
-
-  // Change Game button in third cell
+  // Change Game button only
   if (!changeGameBtn) {
     changeGameBtn = document.createElement("button");
     changeGameBtn.type = "button";
@@ -178,6 +153,19 @@ function selectGame(button, gameId) {
   }
   gameButtonsContainer.appendChild(changeGameBtn);
 
+  // Extract home and away from button text for team pick buttons
+  const [home, rest] = button.textContent.split(" vs ");
+  const away = rest ? rest.split(" — ")[0] : "Away";
+
+  // Show the two team pick buttons
+  if (pickOptionsContainer) {
+    pickOptionsContainer.innerHTML = "";
+    pickOptionsContainer.appendChild(createTeamButton(home));
+    pickOptionsContainer.appendChild(createTeamButton(away));
+
+    selectedTeam = null;
+  }
+
   // Update hidden select for compatibility
   gameSelect.innerHTML = "";
   const option = document.createElement("option");
@@ -186,20 +174,8 @@ function selectGame(button, gameId) {
   gameSelect.appendChild(option);
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
-
-  // *** New code: Show the two team pick buttons ***
-  if (pickOptionsContainer) {
-    pickOptionsContainer.innerHTML = "";
-
-    pickOptionsContainer.appendChild(createTeamButton(home));
-    pickOptionsContainer.appendChild(createTeamButton(away));
-
-    // Reset team selection state
-    selectedTeam = null;
-  }
 }
 
-// New helper: create buttons for team picks
 function createTeamButton(teamName) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -224,7 +200,6 @@ function selectTeam(button, teamName) {
 
   selectedTeam = teamName;
 
-  // Clear previous selection styling
   if (pickOptionsContainer) {
     const buttons = pickOptionsContainer.querySelectorAll("button");
     buttons.forEach(b => {
@@ -233,11 +208,10 @@ function selectTeam(button, teamName) {
     });
   }
 
-  // Mark selected button green
   button.classList.remove("blue");
   button.classList.add("green");
 
-  // Here you can add code to update hidden inputs or form data with the selected team
+  // Add your pick handling logic here if needed
 }
 
 function resetGameSelection() {
