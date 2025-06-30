@@ -43,22 +43,30 @@ sportSelect.addEventListener('change', () => {
   wagerButtonsContainer.style.display = 'none';  // hide wager buttons on sport change
 });
 
-gameSelect.addEventListener('change', async () => {
-  if (!gameSelect.value) {
-    clearWagerButtons();
-    wagerButtonsContainer.textContent = 'Select a game first';
-    numberInputContainer.style.display = 'none';
-    finalPickDescription.textContent = '';
-    wagerButtonsContainer.style.display = 'none';  // hide wager buttons if no game
-    return;
+gameSelect.addEventListener('change', () => {
+  // When game changes, clear wagers & hide wager buttons
+  clearWagerButtons();
+  wagerButtonsContainer.style.display = 'none';
+  numberInputContainer.style.display = 'none';
+  finalPickDescription.textContent = '';
+});
+
+// NEW: Show wager buttons ONLY after a team is selected
+pickOptionsContainer.addEventListener('click', async (e) => {
+  const target = e.target;
+  if (target.tagName === 'BUTTON' && target.classList.contains('pick-btn')) {
+    // Wait a tiny bit to ensure team selection updates before loading wagers
+    setTimeout(async () => {
+      wagerButtonsContainer.style.display = 'grid';
+      await loadWagerTypes();
+    }, 10);
   }
-  wagerButtonsContainer.style.display = 'grid'; // show wager buttons only after team selected (game selected here)
-  await loadWagerTypes();
 });
 
 function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
+  wagerButtonsContainer.style.display = 'none'; // hide wagers on clear
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
