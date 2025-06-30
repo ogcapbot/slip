@@ -2,9 +2,8 @@ import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const unitsSelect = document.getElementById('unitsSelect');
-
 if (unitsSelect) {
-  unitsSelect.style.display = 'none';
+  unitsSelect.style.display = 'none'; // hide native select
 }
 
 let unitButtonsContainer = document.getElementById('unitButtonsContainer');
@@ -22,7 +21,7 @@ if (!unitButtonsContainer) {
   }
 }
 
-// Container for the summary text and update button
+// Container for summary text and update button
 let unitSummaryContainer = document.getElementById('unitSummaryContainer');
 if (!unitSummaryContainer) {
   unitSummaryContainer = document.createElement('div');
@@ -31,9 +30,8 @@ if (!unitSummaryContainer) {
   unitSummaryContainer.style.display = 'flex';
   unitSummaryContainer.style.justifyContent = 'space-between';
   unitSummaryContainer.style.alignItems = 'center';
-  unitSummaryContainer.style.display = 'none'; // Hidden initially
+  unitSummaryContainer.style.display = 'none'; // hidden initially
 
-  // Insert before buttons container for layout
   unitButtonsContainer.parentNode.insertBefore(unitSummaryContainer, unitButtonsContainer);
 }
 
@@ -47,25 +45,24 @@ let updateUnitBtn = document.createElement('button');
 updateUnitBtn.type = 'button';
 updateUnitBtn.textContent = 'Update';
 updateUnitBtn.className = 'pick-btn blue';
-
-// Styling the button as requested
-updateUnitBtn.style.minWidth = '78px'; // about 65% of 120px
+// Styling: about 35% less wide and matching line height + padding
+updateUnitBtn.style.minWidth = '78px'; // ~65% of original width 120px
 updateUnitBtn.style.width = 'auto';
 updateUnitBtn.style.padding = '2px 8px';
 updateUnitBtn.style.fontSize = '14px';
 updateUnitBtn.style.lineHeight = '18px';
 updateUnitBtn.style.boxSizing = 'border-box';
 updateUnitBtn.style.cursor = 'pointer';
-
 unitSummaryContainer.appendChild(updateUnitBtn);
 
 let selectedUnit = null;
 let allUnitsCache = [];
 
-// Dynamic explanatory text container - your existing element with explanatory text
+// Dynamic explanatory text container already in your page, e.g.:
+// <div id="explanatoryTextContainer">Yankees must win game to win.</div>
 const explanatoryTextContainer = document.getElementById('explanatoryTextContainer');
 
-unitButtonsContainer.style.display = 'none'; // Hide unit buttons initially
+unitButtonsContainer.style.display = 'none'; // hide buttons initially
 
 async function loadUnits(showAll = true) {
   if (!unitButtonsContainer || !unitsSelect) {
@@ -106,7 +103,6 @@ async function loadUnits(showAll = true) {
     unitButtonsContainer.textContent = '';
 
     if (showAll) {
-      // Show all unit buttons
       unitButtonsContainer.style.display = 'grid';
       unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
       unitButtonsContainer.style.gridAutoRows = 'min-content';
@@ -121,19 +117,12 @@ async function loadUnits(showAll = true) {
 
       unitsSelect.disabled = false;
     } else {
-      // Show only summary, hide buttons
       unitButtonsContainer.style.display = 'none';
 
-      // Default selected unit: 1 Unit or first in list
       const oneUnitData = allUnitsCache.find(u => u.display_unit === '1 Unit') || allUnitsCache[0];
-      if (oneUnitData) {
-        selectedUnit = oneUnitData.display_unit;
-      } else {
-        selectedUnit = null;
-      }
+      selectedUnit = oneUnitData ? oneUnitData.display_unit : null;
 
       unitsSelect.disabled = false;
-
       unitsSelect.innerHTML = '';
       if (selectedUnit) {
         const option = document.createElement('option');
@@ -144,6 +133,7 @@ async function loadUnits(showAll = true) {
     }
 
     updateUnitSummaryText();
+
   } catch (error) {
     console.error('Error loading units:', error);
     unitButtonsContainer.textContent = 'Error loading units';
@@ -189,7 +179,6 @@ function selectUnit(unitName) {
   if (selectedUnit === unitName) return;
   selectedUnit = unitName;
 
-  // Hide buttons container after selection
   unitButtonsContainer.style.display = 'none';
 
   unitsSelect.innerHTML = '';
@@ -203,7 +192,6 @@ function selectUnit(unitName) {
   updateUnitSummaryText();
 }
 
-// Update the summary text with dynamic explanatory text
 function updateUnitSummaryText() {
   let dynamicExplanation = '';
   if (explanatoryTextContainer) {
@@ -216,19 +204,16 @@ function updateUnitSummaryText() {
   }
 }
 
-// Show unit section (summary + buttons hidden initially)
 function showUnitSection() {
   unitSummaryContainer.style.display = 'flex';
   unitButtonsContainer.style.display = 'none';
 }
 
-// Hide entire unit section
 function hideUnitSection() {
   unitSummaryContainer.style.display = 'none';
   unitButtonsContainer.style.display = 'none';
 }
 
-// When Update button clicked, show all unit buttons to select from
 updateUnitBtn.addEventListener('click', () => {
   unitButtonsContainer.style.display = 'grid';
   unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -237,15 +222,13 @@ updateUnitBtn.addEventListener('click', () => {
   unitButtonsContainer.style.marginTop = '8px';
   unitButtonsContainer.style.alignItems = 'start';
 
-  unitButtonsContainer.innerHTML = ''; // clear current buttons
+  unitButtonsContainer.innerHTML = '';
   allUnitsCache.forEach(unit => {
     const btn = createUnitButton(unit.display_unit);
     unitButtonsContainer.appendChild(btn);
   });
 });
 
-// Initial load with summary only (no buttons shown)
 loadUnits(false);
 
-// Export the toggle functions for your external use
 export { loadUnits, showUnitSection, hideUnitSection };
