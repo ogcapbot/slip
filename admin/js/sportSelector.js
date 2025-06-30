@@ -57,7 +57,7 @@ export async function loadSports() {
     const sportsSet = new Set();
 
     snapshot.forEach(doc => {
-      const sport = doc.data().leagueGroup;
+      const sport = doc.data().leagueGroup; //legueeGroup is what Odds Api calls sports
       if (sport) sportsSet.add(sport);
     });
 
