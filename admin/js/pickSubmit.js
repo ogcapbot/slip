@@ -1,7 +1,7 @@
+// admin/js/pickSubmit.js
 import { db } from '../firebaseInit.js';
 import { collection, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { getNotesData, reset as resetNotes } from '/admin/js/notesSection.js';
-import { getSelectedPhrase } from '/admin/js/phraseSelector.js';
+import { getNotesData, reset as resetNotes, checkEnableSubmit } from '/admin/js/notesSection.js';
 
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
@@ -17,7 +17,6 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
 
-// Create or get container for action buttons
 let actionButtonsContainer = document.getElementById('actionButtonsContainer');
 if (!actionButtonsContainer) {
   actionButtonsContainer = document.createElement('div');
@@ -25,7 +24,6 @@ if (!actionButtonsContainer) {
   pickForm.appendChild(actionButtonsContainer);
 }
 
-// Create or get Start Over button
 let startOverBtn = document.getElementById('startOverBtn');
 if (!startOverBtn) {
   startOverBtn = document.createElement('button');
@@ -35,13 +33,11 @@ if (!startOverBtn) {
   startOverBtn.className = 'pick-btn blue';
   actionButtonsContainer.appendChild(startOverBtn);
 } else {
-  // Make sure it's inside container
   if (startOverBtn.parentNode !== actionButtonsContainer) {
     actionButtonsContainer.appendChild(startOverBtn);
   }
 }
 
-// Append submit button to container and style it
 actionButtonsContainer.appendChild(submitBtn);
 submitBtn.classList.add('pick-btn', 'red');
 submitBtn.disabled = true;
@@ -56,7 +52,10 @@ function isFormValid() {
   const pickText = selectedPickButton ? selectedPickButton.textContent.trim() : '';
   const wagerNumValid = !numberInput.disabled && numberInput.value.trim() !== '' && !isNaN(Number(numberInput.value));
 
-  return sport && league && gameId && wagerTypeId && unit && pickText && (numberInput.disabled || wagerNumValid);
+  // Include phrase selector check
+  const phraseSelected = window.phraseSelector?.isPhraseSelected() || false;
+
+  return sport && league && gameId && wagerTypeId && unit && pickText && (numberInput.disabled || wagerNumValid) && phraseSelected;
 }
 
 function updateSubmitButtonState() {
@@ -83,7 +82,6 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Proper Start Over button handler
 startOverBtn.addEventListener('click', () => {
   pickError.textContent = '';
   pickSuccess.textContent = '';
@@ -114,9 +112,8 @@ startOverBtn.addEventListener('click', () => {
     resetNotes();
   }
 
-  // Reset phraseSelector section (if you implement a reset there)
-  if (typeof window.resetPhraseSelector === 'function') {
-    window.resetPhraseSelector();
+  if (window.phraseSelector && typeof window.phraseSelector.reset === 'function') {
+    window.phraseSelector.reset();
   }
 
   sportSelect.disabled = false;
@@ -124,7 +121,6 @@ startOverBtn.addEventListener('click', () => {
   updateSubmitButtonState();
 });
 
-// Initial submit button update
 updateSubmitButtonState();
 
 pickForm.addEventListener('submit', async (e) => {
@@ -148,8 +144,9 @@ pickForm.addEventListener('submit', async (e) => {
 
   const notes = getNotesData() || '';
 
-  // Get selected hype phrase from phraseSelector
-  const selectedPhrase = getSelectedPhrase() || null;
+  // Phrase data from phrase selector
+  const selectedPhrase = window.phraseSelector?.getSelectedPhrase() || null;
+  const selectedPhraseType = window.phraseSelector?.getSelectedType() || null;
 
   if (!sport) return (pickError.textContent = 'Please select a sport.', updateSubmitButtonState());
   if (!league) return (pickError.textContent = 'Please select a league.', updateSubmitButtonState());
@@ -160,6 +157,7 @@ pickForm.addEventListener('submit', async (e) => {
     return (pickError.textContent = 'Please enter a valid number for the wager.', updateSubmitButtonState());
   }
   if (!unit) return (pickError.textContent = 'Please select a unit.', updateSubmitButtonState());
+  if (!selectedPhrase || !selectedPhraseType) return (pickError.textContent = 'Please select a hype phrase type and energy.', updateSubmitButtonState());
 
   try {
     const gameDocRef = doc(db, 'GameCache', gameId);
@@ -204,7 +202,9 @@ pickForm.addEventListener('submit', async (e) => {
       wagerNum,
       unit,
       notes,
-      selectedPhrase,  // <<< added phrase data here
+      phraseType: selectedPhraseType,
+      phraseEnergy: selectedPhrase.Energy,
+      phraseEnergyDescription: selectedPhrase.EnergyDescription || '',
       originalGameSnapshot: {
         HomeTeam: gameData.HomeTeam || null,
         AwayTeam: gameData.AwayTeam || null,
@@ -220,7 +220,6 @@ pickForm.addEventListener('submit', async (e) => {
     pickSuccess.textContent = 'Pick submitted successfully!';
     pickForm.reset();
 
-    // Reset UI to fresh start after submit
     startOverBtn.click();
 
   } catch (err) {
