@@ -13,6 +13,9 @@ if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
 
+// Hide number input container initially (so it doesn't show outside grid)
+numberInputContainer.style.display = 'none';
+
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
 if (!wagerButtonsContainer) {
   wagerButtonsContainer = document.createElement('div');
@@ -51,6 +54,7 @@ gameSelect.addEventListener('change', async () => {
 function clearWagerButtons() {
   selectedWagerId = null;
   wagerButtonsContainer.innerHTML = '';
+  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset to 3 col grid default
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
@@ -149,35 +153,33 @@ function selectWager(button, id, descTemplate) {
 
   wagerButtonsContainer.innerHTML = '';
 
-  // Container to hold selected wager, number input, and change button inline
-  const container = document.createElement('div');
-  container.style.display = 'grid';
-  container.style.gridTemplateColumns = '1fr auto 1fr';
-  container.style.gridGap = '6px';
-  container.style.marginTop = '8px';
-  container.style.alignItems = 'center';
+  // Set container to 3-column grid to place wager, input, change btn side-by-side
+  wagerButtonsContainer.style.display = 'grid';
+  wagerButtonsContainer.style.gridTemplateColumns = '1fr auto 1fr';
+  wagerButtonsContainer.style.gridAutoRows = 'min-content';
+  wagerButtonsContainer.style.gap = '4px 6px';
+  wagerButtonsContainer.style.marginTop = '8px';
+  wagerButtonsContainer.style.alignItems = 'center';
 
-  // Apply formatting to label to add <br>
+  // Format label with line breaks
   const formattedLabel = formatLabelWithLineBreaks(button.textContent);
 
-  // Selected wager button (with formatted label)
+  // Selected wager button
   const selectedBtn = createWagerButton(id, formattedLabel, descTemplate);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
   selectedBtn.style.gridColumn = '1 / 2';
-  // Use innerHTML to allow <br> line breaks in label
   selectedBtn.innerHTML = formattedLabel;
-  container.appendChild(selectedBtn);
+  wagerButtonsContainer.appendChild(selectedBtn);
 
-  // Number input container - show/hide based on [[NUM]]
+  // Number input
   if (descTemplate.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
     numberInputContainer.style.gridColumn = '2 / 3';
     numberInputContainer.style.margin = '0';
     numberInputContainer.style.width = '100%';
-    // Ensure input fits nicely
     numberInput.style.width = '100%';
-    container.appendChild(numberInputContainer);
+    wagerButtonsContainer.appendChild(numberInputContainer);
   } else {
     numberInputContainer.style.display = 'none';
   }
@@ -199,9 +201,7 @@ function selectWager(button, id, descTemplate) {
       resetWagerSelection();
     });
   }
-  container.appendChild(changeWagerBtn);
-
-  wagerButtonsContainer.appendChild(container);
+  wagerButtonsContainer.appendChild(changeWagerBtn);
 
   updateFinalPickDescription(descTemplate);
 
@@ -232,6 +232,7 @@ function resetWagerSelection() {
   wagerTypeSelect.dispatchEvent(new Event('change'));
 
   wagerButtonsContainer.innerHTML = '';
+  wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';  // reset grid cols
   numberInputContainer.style.display = 'none';
   finalPickDescription.textContent = '';
   numberInput.value = '';
