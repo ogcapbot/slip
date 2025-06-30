@@ -49,7 +49,8 @@ leagueSelect.addEventListener("change", async () => {
   gameButtonsContainer.textContent = "Loading games...";
 
   try {
-    const q = query(collection(db, "GameCache"), where("League", "==", selectedLeague));
+    // Updated to use sportName field for league filter
+    const q = query(collection(db, "GameCache"), where("sportName", "==", selectedLeague));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
@@ -67,10 +68,10 @@ leagueSelect.addEventListener("change", async () => {
       games.push({ id: doc.id, data });
     });
 
-    // Sort games by start time ascending
+    // Sort games by commenceTimeUTC ascending (string ISO date)
     games.sort((a, b) => {
-      const aTime = a.data.StartTimeUTC || 0;
-      const bTime = b.data.StartTimeUTC || 0;
+      const aTime = a.data.commenceTimeUTC ? new Date(a.data.commenceTimeUTC).getTime() : 0;
+      const bTime = b.data.commenceTimeUTC ? new Date(b.data.commenceTimeUTC).getTime() : 0;
       return aTime - bTime;
     });
 
@@ -105,10 +106,10 @@ function createGameButton(id, gameData) {
   btn.style.boxSizing = "border-box";
 
   // Display HomeTeam vs AwayTeam and start time formatted
-  const startTime = gameData.StartTimeUTC ? new Date(gameData.StartTimeUTC.seconds * 1000) : null;
+  const startTime = gameData.commenceTimeUTC ? new Date(gameData.commenceTimeUTC) : null;
   const timeString = startTime ? startTime.toLocaleString() : "Unknown time";
 
-  btn.textContent = `${gameData.HomeTeam || "Home"} vs ${gameData.AwayTeam || "Away"} — ${timeString}`;
+  btn.textContent = `${gameData.homeTeam || "Home"} vs ${gameData.awayTeam || "Away"} — ${timeString}`;
 
   btn.addEventListener("click", () => selectGame(btn, id));
 
@@ -127,10 +128,14 @@ function selectGame(button, gameId) {
   gameButtonsContainer.style.gridAutoRows = "min-content";
   gameButtonsContainer.style.marginTop = "8px";
 
+  // Extract Home and Away from button text for the selected button
+  const [home, rest] = button.textContent.split(" vs ");
+  const away = rest ? rest.split(" — ")[0] : "Away";
+
   const selectedBtn = createGameButton(gameId, {
-    HomeTeam: button.textContent.split(" vs ")[0],
-    AwayTeam: button.textContent.split(" vs ")[1].split(" — ")[0],
-    StartTimeUTC: null
+    homeTeam: home,
+    awayTeam: away,
+    commenceTimeUTC: null
   });
   selectedBtn.classList.remove("blue");
   selectedBtn.classList.add("green");
