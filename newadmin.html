@@ -27,46 +27,46 @@
     <!-- Login Section -->
     <section id="loginSection">
       <label for="AccessCode">Enter Access Code</label>
-      <input type="text" id="AccessCode" placeholder="Enter your access code" autocomplete="off" />
+      <input type="password" id="AccessCode" placeholder="Enter your access code" autocomplete="off" />
       <button id="loginBtn">Login</button>
       <p id="loginError" class="error"></p>
     </section>
 
     <!-- Pick Entry Form (hidden until login) -->
     <form id="pickForm" style="display:none;">
-      <label for="sportSelect">Choose Sport</label>
+      <label for="sportSelect" style="display:none;>Choose Sport</label>
       <select id="sportSelect" disabled>
         <option>Loading...</option>
       </select>
 
-      <label for="leagueSelect">Choose League</label>
+      <label for="leagueSelect" style="display:none;>Choose League</label>
       <select id="leagueSelect" disabled>
         <option>Select a sport first</option>
       </select>
 
-      <label for="gameSelect">Choose Game</label>
+      <label for="gameSelect" style="display:none;>Choose Game</label>
       <select id="gameSelect" disabled>
         <option>Select a league first</option>
       </select>
 
-      <label for="pickInput">Your Pick</label>
+      <label for="pickInput" style="display:none;>Your Pick</label>
       <div id="pickOptionsContainer" style="display:flex; gap:10px; margin-bottom:15px;"></div>
 
       <!-- Wager Type Dropdown -->
-      <label for="wagerTypeSelect">Choose Wager Type</label>
+      <label for="wagerTypeSelect" style="display:none;>Choose Wager Type</label>
       <select id="wagerTypeSelect" disabled>
         <option>Select a sport first</option>
       </select>
 
       <!-- Wager [[NUM]] Input -->
       <div id="numberInputContainer" style="display:none; margin-top:10px;">
-        <label for="numberInput">Enter Points</label>
+        <label for="numberInput" style="display:none;>Enter Points</label>
         <input type="number" id="numberInput" min="0" disabled/>
       </div>
 
-      <p id="finalPickDescription" style="font-weight:bold; margin-top:10px;"></p>
+      <!-- <p id="finalPickDescription" style="font-weight:bold; margin-top:10px;"></p> -->
 
-      <label for="unitsSelect">Choose Unit</label>
+      <label for="unitsSelect" style="display:none;>Choose Unit</label>
       <select id="unitsSelect" disabled>
         <option>Select a section first</option>
       </select>
