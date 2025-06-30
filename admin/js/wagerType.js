@@ -6,7 +6,7 @@ const wagerTypeSelect = document.getElementById('wagerTypeSelect');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const numberInput = document.getElementById('numberInput');
 const finalPickDescription = document.getElementById('finalPickDescription');
-const pickOptionsContainer = document.getElementById('pickOptionsContainer');
+const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // For team buttons
 const gameSelect = document.getElementById('gameSelect');
 
 if (wagerTypeSelect) {
@@ -31,27 +31,6 @@ if (!wagerButtonsContainer) {
 let selectedWagerId = null;
 let changeWagerBtn = null;
 
-function getLastWord(teamName) {
-  if (!teamName) return '';
-  const words = teamName.trim().split(' ');
-  return words[words.length - 1];
-}
-
-function clearWagerButtons() {
-  selectedWagerId = null;
-  wagerButtonsContainer.innerHTML = '';
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
-  numberInput.value = '';
-  if (changeWagerBtn) {
-    changeWagerBtn.remove();
-    changeWagerBtn = null;
-  }
-  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
-  wagerTypeSelect.disabled = true;
-  wagerTypeSelect.dispatchEvent(new Event('change'));
-}
-
 sportSelect.addEventListener('change', () => {
   clearWagerButtons();
   numberInputContainer.style.display = 'none';
@@ -69,6 +48,21 @@ gameSelect.addEventListener('change', async () => {
   await loadWagerTypes();
 });
 
+function clearWagerButtons() {
+  selectedWagerId = null;
+  wagerButtonsContainer.innerHTML = '';
+  numberInputContainer.style.display = 'none';
+  finalPickDescription.textContent = '';
+  numberInput.value = '';
+  if (changeWagerBtn) {
+    changeWagerBtn.remove();
+    changeWagerBtn = null;
+  }
+  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
+  wagerTypeSelect.disabled = true;
+  wagerTypeSelect.dispatchEvent(new Event('change'));
+}
+
 async function loadWagerTypes() {
   const selectedSport = sportSelect.value;
   clearWagerButtons();
@@ -78,7 +72,6 @@ async function loadWagerTypes() {
 
   try {
     const wagerTypesRef = collection(db, 'WagerTypes');
-
     const qAll = query(wagerTypesRef, where('active_status', '==', 'active'), where('Sport', '==', 'All'), orderBy('id'));
     const qSport = query(wagerTypesRef, where('active_status', '==', 'active'), where('Sport', '==', selectedSport), orderBy('id'));
 
@@ -109,6 +102,7 @@ async function loadWagerTypes() {
       const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
       wagerButtonsContainer.appendChild(btn);
     });
+
   } catch (error) {
     console.error('Error loading wager types:', error);
     wagerButtonsContainer.textContent = 'Error loading wager types';
@@ -236,6 +230,12 @@ numberInput.addEventListener('input', () => {
   }
   finalPickDescription.textContent = desc;
 });
+
+function getLastWord(teamName) {
+  if (!teamName) return '';
+  const words = teamName.trim().split(' ');
+  return words[words.length - 1];
+}
 
 function updateFinalPickDescription(descTemplate) {
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
