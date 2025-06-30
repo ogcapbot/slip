@@ -183,6 +183,7 @@ async function loadWagerTypes() {
     wagerTypes.forEach(wt => {
       const btn = createWagerButton(wt.id, wt.wager_label_template || 'Unknown', wt.pick_desc_template || '');
       wagerButtonsContainer.appendChild(btn);
+      console.log(`[loadWagerTypes] Appended wager button: ${wt.wager_label_template || 'Unknown'}`);
     });
 
   } catch (error) {
@@ -205,6 +206,7 @@ function formatLabelWithLineBreaks(label) {
 }
 
 function createWagerButton(id, label, descTemplate) {
+  console.log(`[createWagerButton] Creating button: ${label} (ID: ${id})`);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = label;
