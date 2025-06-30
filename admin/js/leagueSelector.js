@@ -63,7 +63,7 @@ sportSelect.addEventListener("change", async () => {
     const leaguesSet = new Set();
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data && data.League) {
+      if (data && data.sportName) { //this is whats odds api calls leagues
         leaguesSet.add(data.League);
       }
     });
