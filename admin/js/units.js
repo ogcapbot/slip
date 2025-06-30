@@ -26,18 +26,25 @@ if (!unitSummaryContainer) {
   unitSummaryContainer = document.createElement('div');
   unitSummaryContainer.id = 'unitSummaryContainer';
   unitSummaryContainer.style.marginTop = '10px';
-  unitSummaryContainer.style.display = 'flex';
-  unitSummaryContainer.style.justifyContent = 'space-between';
+
+  // Set container as grid with 3 equal columns and center aligned
+  unitSummaryContainer.style.display = 'grid';
+  unitSummaryContainer.style.gridTemplateColumns = '1fr 1fr 1fr';
   unitSummaryContainer.style.alignItems = 'center';
-  unitSummaryContainer.style.display = 'none'; // hidden initially
+  unitSummaryContainer.style.gap = '0 10px'; // horizontal gap between columns
 
   unitButtonsContainer.parentNode.insertBefore(unitSummaryContainer, unitButtonsContainer);
 }
 
 let unitSummaryText = document.createElement('div');
-unitSummaryText.style.fontWeight = 'bold';
-unitSummaryText.style.fontSize = '14px';
+// Style for left column text
+unitSummaryText.style.gridColumn = '1 / 2';
+unitSummaryText.style.fontWeight = '600';  // semi-bold
+unitSummaryText.style.fontSize = '16px';
 unitSummaryText.style.color = '#000';
+unitSummaryText.style.fontFamily = 'inherit';
+unitSummaryText.style.margin = '0';
+
 unitSummaryContainer.appendChild(unitSummaryText);
 
 let updateUnitBtn = document.createElement('button');
@@ -45,15 +52,28 @@ updateUnitBtn.type = 'button';
 updateUnitBtn.textContent = 'Update';
 updateUnitBtn.className = 'pick-btn blue';
 
-updateUnitBtn.style.minWidth = '78px'; // ~65% width of default 120px
-updateUnitBtn.style.width = 'auto';
-updateUnitBtn.style.padding = '2px 8px';
-updateUnitBtn.style.fontSize = '14px';
-updateUnitBtn.style.lineHeight = '18px';
-updateUnitBtn.style.boxSizing = 'border-box';
+// Style for right column button
+updateUnitBtn.style.gridColumn = '3 / 4';
+updateUnitBtn.style.minWidth = '100px';
+updateUnitBtn.style.height = '32px';
+updateUnitBtn.style.lineHeight = '32px';
+updateUnitBtn.style.fontSize = '16px';
+updateUnitBtn.style.fontFamily = 'inherit';
+updateUnitBtn.style.backgroundColor = '#3a82d6'; // adjust to your blue color
+updateUnitBtn.style.color = '#fff';
+updateUnitBtn.style.border = 'none';
+updateUnitBtn.style.borderRadius = '10px';
+updateUnitBtn.style.padding = '0 20px';
 updateUnitBtn.style.cursor = 'pointer';
+updateUnitBtn.style.boxShadow = '0 3px 6px rgba(0,0,0,0.1)';
+updateUnitBtn.style.whiteSpace = 'nowrap';
 
 unitSummaryContainer.appendChild(updateUnitBtn);
+
+// Insert an empty spacer div for middle column
+let spacer = document.createElement('div');
+spacer.style.gridColumn = '2 / 3';
+unitSummaryContainer.insertBefore(spacer, updateUnitBtn);
 
 let selectedUnit = null;
 let allUnitsCache = [];
@@ -203,7 +223,7 @@ function updateUnitSummaryText() {
 }
 
 function showUnitSection() {
-  unitSummaryContainer.style.display = 'flex';
+  unitSummaryContainer.style.display = 'grid';
   unitButtonsContainer.style.display = 'none';
 }
 
