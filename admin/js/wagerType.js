@@ -31,19 +31,20 @@ if (!requiredLabel) {
   numberInputContainer.appendChild(requiredLabel);
 }
 
-// Create container for the "Choose Wager Type" label and number input label, side by side, full width
-const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
-let labelsContainer = document.createElement('div');
-labelsContainer.style.display = 'flex';
-labelsContainer.style.alignItems = 'center';
-labelsContainer.style.justifyContent = 'space-between';  // Push labels to left and right
-labelsContainer.style.width = '100%';
-labelsContainer.style.marginBottom = '8px'; // Some space below labels container
+// Create container for the labels (choose wager and number input label)
+const wagerSectionContainer = document.createElement('div');
+wagerSectionContainer.style.display = 'flex';
+wagerSectionContainer.style.justifyContent = 'space-between';
+wagerSectionContainer.style.alignItems = 'center';
+wagerSectionContainer.style.marginBottom = '4px';
+wagerSectionContainer.style.width = '100%';
 
+// Grab the existing wager type label and move it inside wagerSectionContainer
+const wagerTypeLabel = document.querySelector('label[for="wagerTypeSelect"]');
 if (wagerTypeLabel && wagerTypeLabel.parentNode) {
-  wagerTypeLabel.parentNode.insertBefore(labelsContainer, wagerTypeLabel);
-  wagerTypeLabel.style.display = 'inline-block';  // Ensure inline for proper layout
-  labelsContainer.appendChild(wagerTypeLabel);
+  wagerTypeLabel.style.display = 'inline-block';
+  wagerTypeLabel.parentNode.insertBefore(wagerSectionContainer, wagerTypeLabel);
+  wagerSectionContainer.appendChild(wagerTypeLabel);
 }
 
 // Number input label (shown only when wager with [[NUM]] selected)
@@ -51,8 +52,12 @@ let numberInputTitle = document.createElement('label');
 numberInputTitle.textContent = 'Number Input:';
 numberInputTitle.style.fontWeight = 'bold';
 numberInputTitle.style.display = 'none'; // Hidden initially
-numberInputTitle.style.marginLeft = 'auto'; // Push to right side
-labelsContainer.appendChild(numberInputTitle);
+wagerSectionContainer.appendChild(numberInputTitle);
+
+// Place the number input container below the labels container (not inside wagerButtonsContainer)
+if (wagerTypeLabel && wagerTypeLabel.parentNode) {
+  wagerTypeLabel.parentNode.insertBefore(numberInputContainer, wagerSectionContainer.nextSibling);
+}
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
 if (!wagerButtonsContainer) {
@@ -69,16 +74,15 @@ if (!wagerButtonsContainer) {
   }
 }
 
-// Initially hide wager buttons container until a team is selected
-wagerButtonsContainer.style.display = 'none';
-
-// Style wager buttons container as a grid with 3 equal columns and gap, matching other sections
+// Style wager buttons container as grid with 3 equal columns
 wagerButtonsContainer.style.display = 'grid';
 wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-wagerButtonsContainer.style.gridAutoRows = 'min-content';
 wagerButtonsContainer.style.gap = '8px 12px';
-wagerButtonsContainer.style.marginTop = '0';
+wagerButtonsContainer.style.marginTop = '8px';
 wagerButtonsContainer.style.alignItems = 'start';
+
+// Initially hide wager buttons container until a team is selected
+wagerButtonsContainer.style.display = 'none';
 
 let selectedWagerId = null;
 let changeWagerBtn = null;
@@ -90,7 +94,6 @@ function toggleWagerSection() {
 
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
   console.log(`[toggleWagerSection] Wager buttons container display set to: ${wagerButtonsContainer.style.display}`);
-
   // No clearing here — just toggling visibility
 }
 
@@ -240,8 +243,6 @@ function selectWager(button, id, descTemplate) {
 
   wagerButtonsContainer.innerHTML = '';
 
-  // The wager buttons container will now show only the selected wager button, input (if needed), and change wager button
-
   wagerButtonsContainer.style.display = 'grid';
   wagerButtonsContainer.style.gridTemplateColumns = '1fr auto auto';
   wagerButtonsContainer.style.gridAutoRows = 'min-content';
@@ -260,22 +261,13 @@ function selectWager(button, id, descTemplate) {
 
   if (descTemplate.includes('[[NUM]]')) {
     numberInputContainer.style.display = 'block';
-    numberInputContainer.style.gridColumn = '2 / 3';
-    numberInputContainer.style.margin = '0';
-    numberInputContainer.style.width = '120px';
-    numberInput.style.width = '100%';
-
-    const btnHeight = selectedBtn.getBoundingClientRect().height;
-    numberInput.style.height = btnHeight + 'px';
-
-    wagerButtonsContainer.appendChild(numberInputContainer);
-
     requiredLabel.style.display = 'block';
     numberInputTitle.style.display = 'inline-block';
 
     numberInput.value = '0';
     numberInput.focus();
     numberInput.select();
+
   } else {
     numberInputContainer.style.display = 'none';
     requiredLabel.style.display = 'none';
