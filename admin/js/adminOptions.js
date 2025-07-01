@@ -1,20 +1,27 @@
-import { loadAdminStats } from './adminStats.js'; // import your stats function
+import { loadAdminStats } from './adminStats.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
+const pickForm = document.getElementById('pickForm');
 
-if (!adminSection || !adminButtonsContainer || !adminStatsContainer) {
+if (!adminSection || !adminButtonsContainer || !adminStatsContainer || !pickForm) {
   console.error('Containers not found! Check HTML IDs.');
 }
 
 export async function loadAdminOptions() {
+  // Show the admin section container on login
   adminSection.style.display = 'block';
+
   console.log('[loadAdminOptions] called');
 
+  // Clear buttons container
   adminButtonsContainer.innerHTML = '';
+
+  // Hide message container initially
   adminStatsContainer.style.display = 'none';
 
+  // Button definitions: text and message
   const buttons = [
     { text: 'Add New Pick', message: 'Coming Soon... Add New' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
@@ -24,56 +31,56 @@ export async function loadAdminOptions() {
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
-  const SUPERADMIN_CODE = 'super123';
+  const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
 
+  // Create buttons and add to container
   buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
       console.log(`[${text}] clicked`);
 
-      // Clear content immediately before doing anything
-      clearContent();
-
+      // For bottom 3 buttons, require access code
       if (index >= 3) {
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
-          await handleButtonAction(text, message);
+          // Show stats form for Stats button
+          if (text === 'Stats') {
+            adminStatsContainer.style.display = 'none';
+            pickForm.style.display = 'block';
+            await loadAdminStats();
+          } else {
+            pickForm.style.display = 'none';
+            adminStatsContainer.style.display = 'block';
+            showMessage(message);
+          }
         } else {
           showAccessDenied();
         }
       } else {
-        await handleButtonAction(text, message);
+        // Top 3 buttons behave normally
+        pickForm.style.display = 'none';
+        adminStatsContainer.style.display = 'block';
+        showMessage(message);
       }
     });
     adminButtonsContainer.appendChild(btn);
   });
 
-  // On initial load, clear and then load stats automatically
-  clearContent();
-  await handleButtonAction('Stats', 'Coming Soon... Stats');
-
-  function clearContent() {
-    adminStatsContainer.style.color = '#444';
-    adminStatsContainer.style.display = 'block';
-    adminStatsContainer.innerHTML = '';
-  }
+  // Show initial message (display the stats form on load)
+  pickForm.style.display = 'block';
+  adminStatsContainer.style.display = 'none';
+  await loadAdminStats();
 
   function showMessage(msg) {
-    adminStatsContainer.style.color = '#444';
+    adminStatsContainer.style.display = 'block';
+    adminStatsContainer.style.color = '#444'; // normal text color
     adminStatsContainer.innerHTML = `<p>${msg}</p>`;
   }
 
   function showAccessDenied() {
+    adminStatsContainer.style.display = 'block';
     adminStatsContainer.style.color = 'red';
     adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
-  }
-
-  async function handleButtonAction(text, message) {
-    if (text === 'Stats') {
-      await loadAdminStats();
-    } else {
-      showMessage(message);
-    }
   }
 }
 
@@ -82,12 +89,15 @@ function createButton(text) {
   btn.type = 'button';
   btn.textContent = text;
   btn.className = 'pick-btn blue';
+
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
   btn.style.marginBottom = '2px';
+
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
+
   return btn;
 }
