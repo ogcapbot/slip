@@ -1,17 +1,16 @@
+const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
 
-if (!adminButtonsContainer || !adminStatsContainer) {
+if (!adminSection || !adminButtonsContainer || !adminStatsContainer) {
   console.error('Containers not found! Check HTML IDs.');
 }
 
 export async function loadAdminOptions() {
-  console.log('[loadAdminOptions] called');
+  // Show the admin section container on login
+  adminSection.style.display = 'block';
 
-  if (!adminButtonsContainer || !adminStatsContainer) {
-    console.error('[loadAdminOptions] Containers missing, aborting');
-    return;
-  }
+  console.log('[loadAdminOptions] called');
 
   // Clear buttons container
   adminButtonsContainer.innerHTML = '';
