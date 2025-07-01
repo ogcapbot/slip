@@ -334,17 +334,16 @@ button:disabled {
   margin: 0; /* no margin, spacing handled by padding in container */
 }
 
-/* Admin message container */
+/* Admin message container WITHOUT box */
 .admin-message {
   min-height: 100px;
-  border: 1px solid #d1d9e6;
-  border-radius: 6px;
-  padding: 12px;
   font-weight: 700;
   font-size: 11px;
   color: #444;
   text-align: center;
-  background: #f9fbff;
   user-select: none;
   margin-top: 12px;
+  padding: 12px 0; /* vertical spacing, NO box or border */
+  background: transparent;
+  border: none;
 }
