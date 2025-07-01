@@ -1,6 +1,3 @@
-import { loadSports } from './sportSelector.js';
-import { loadAdminStats } from './adminStats.js';
-
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
@@ -20,11 +17,7 @@ export async function loadAdminOptions() {
   // Clear previous buttons
   adminButtonsContainer.innerHTML = '';
 
-  // Style containers: position relative for layering and z-index
-  pickForm.style.position = 'relative';
-  adminStatsContainer.style.position = 'relative';
-
-  // Start by hiding both content containers
+  // Hide both content containers initially
   pickForm.style.display = 'none';
   adminStatsContainer.style.display = 'none';
 
@@ -32,7 +25,7 @@ export async function loadAdminOptions() {
 
   // Create buttons
   const addNewPickBtn = createButton('Add New Pick');
-  const updateWinLossBtn = createButton('Update Win/Loss', true);
+  const updateWinLossBtn = createButton('Update Win/Loss');
   const statsBtn = createButton('Stats');
 
   // Style container as grid with gap
@@ -46,42 +39,35 @@ export async function loadAdminOptions() {
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Event: Add New Pick - show sports selector, hide stats
-  addNewPickBtn.addEventListener('click', async () => {
-    console.log('[Add New Pick] clicked');
-    // Show sports container
-    pickForm.style.display = 'block';
-    pickForm.style.zIndex = '10'; // bring on top
-    adminStatsContainer.style.display = 'none';
-    adminStatsContainer.style.zIndex = '0'; // send behind
-    // Load sports content
-    await loadSports();
-    console.log('[Add New Pick] loadSports completed');
-  });
+  // Shared container for showing messages
+  // We will use the adminStatsContainer for simplicity to show all messages
+  // and hide the pickForm always
 
-  // Event: Stats - show stats container, hide sports
-  statsBtn.addEventListener('click', async () => {
-    console.log('[Stats] clicked');
-    // Show stats container
+  function showMessage(message) {
     adminStatsContainer.style.display = 'block';
-    adminStatsContainer.style.zIndex = '10'; // bring on top
     pickForm.style.display = 'none';
-    pickForm.style.zIndex = '0'; // send behind
-    // Clear sports container if needed (optional)
-    pickForm.innerHTML = '';
-    // Load stats content
-    await loadAdminStats();
-    console.log('[Stats] loadAdminStats completed');
+    adminStatsContainer.innerHTML = `<p style="font-weight:bold; font-size:18px; text-align:center; padding: 20px;">${message}</p>`;
+  }
+
+  // Button handlers
+
+  addNewPickBtn.addEventListener('click', () => {
+    console.log('[Add New Pick] clicked');
+    showMessage('Coming Soon... Add New');
   });
 
-  // Initial load: show sports selector by default
-  pickForm.style.display = 'block';
-  pickForm.style.zIndex = '10';
-  adminStatsContainer.style.display = 'none';
-  adminStatsContainer.style.zIndex = '0';
+  updateWinLossBtn.addEventListener('click', () => {
+    console.log('[Update Win/Loss] clicked');
+    showMessage('Coming Soon... Win/Loss');
+  });
 
-  await loadSports();
-  console.log('[loadAdminOptions] initial loadSports completed');
+  statsBtn.addEventListener('click', () => {
+    console.log('[Stats] clicked');
+    showMessage('Coming Soon... Stats');
+  });
+
+  // Initial load: show Add New Pick message by default
+  showMessage('Coming Soon... Add New');
 }
 
 function createButton(text, disabled = false) {
