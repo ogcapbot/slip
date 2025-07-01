@@ -5,13 +5,13 @@ body {
   padding: 0;
   display: flex;
   justify-content: center;
-  font-size: 14px; /* Increased from 11px for better readability */
+  font-size: 11px; /* original font size preserved */
 }
 
 .container {
   width: 100%;
   max-width: 400px;
-  padding: 20px 10px; /* Added horizontal padding for mobile */
+  padding: 20px 10px; /* added horizontal padding for mobile */
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -21,12 +21,12 @@ input[type="text"],
 select,
 textarea {
   width: 100%;
-  max-width: 400px;
+  max-width: 100%; /* responsive max width */
   box-sizing: border-box;
   margin: 0 auto 12px;
   display: block;
-  padding: 12px 15px; /* Increased padding */
-  font-size: 16px; /* Increased font size */
+  padding: 8px 10px; /* original padding */
+  font-size: 11px; /* original font size */
   font-family: 'Oswald', sans-serif;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -34,21 +34,21 @@ textarea {
 
 button {
   width: 100%;
-  max-width: 400px;
+  max-width: 100%; /* responsive max width */
   box-sizing: border-box;
   margin: 0 auto 12px;
   display: block;
-  padding: 14px 20px; /* Increased padding */
-  font-size: 18px; /* Increased font size */
+  padding: 8px 12px; /* original padding */
+  font-size: 11px; /* original font size */
   background: linear-gradient(145deg, #2a9fd6, #1e81c3);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   transition: background 0.3s ease, box-shadow 0.3s ease;
   line-height: 1.3;
-  min-height: 48px; /* Increased height */
+  min-height: 44px;
   text-align: center;
 }
 
@@ -62,6 +62,8 @@ button:active {
   box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
+/* The rest of your original styles remain unchanged... */
+
 .hidden {
   display: none;
 }
@@ -73,7 +75,6 @@ button:active {
   font-family: 'Oswald', sans-serif;
 }
 
-/* Additional styles unchanged... */
 #loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #2a9fd6;
@@ -89,4 +90,208 @@ button:active {
   100% { transform: rotate(360deg); }
 }
 
-/* (Other existing styles remain unchanged) */
+#confirmOutput {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 10px;
+  resize: none;
+  overflow: hidden;
+  min-height: 650px;
+  height: auto;
+}
+
+#resetWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  height: 0;
+}
+
+#resetBtn {
+  position: absolute;
+  top: -35px;
+  right: 0;
+  font-size: 11px;
+  padding: 4px 12px;
+  background-color: #2a9fd6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  height: auto;
+  width: auto;
+  white-space: nowrap;
+  font-family: 'Oswald', sans-serif;
+}
+
+#copyBtn {
+  margin-bottom: 10px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+}
+
+#loginNotice {
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: gray;
+  font-size: 11px;
+  text-align: center;
+  font-family: 'Oswald', sans-serif;
+}
+
+#inputLabel {
+  color: #666;
+  font-size: 11px;
+  margin-bottom: 5px;
+  font-family: 'Oswald', sans-serif;
+}
+
+#gameSuggestion {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 15px;
+  background: #fff;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+}
+
+#gameSuggestion p {
+  margin: 6px 0;
+}
+
+#gameSuggestion strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+}
+
+#gameTable,
+#sportDropdown {
+  display: none;
+}
+
+#sports-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+#imageLoader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2a9fd6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+#imageLoaderText {
+  font-size: 11px;
+  font-weight: bold;
+  color: #2a9fd6;
+  animation: blink 1.5s infinite;
+  font-family: 'Oswald', sans-serif;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.hypeOutputBlock {
+  border: 1px solid #2a9fd6;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #eaf6ff;
+  user-select: none;
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+}
+.hypeOutputBlock:focus {
+  outline: 2px solid #2179a5;
+  outline-offset: 2px;
+}
+
+/* NEW styles for Post Title and Post Desc textboxes */
+.copyTextbox {
+  font-family: 'Oswald', sans-serif !important;
+  font-size: 11px !important;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  margin: 8px auto;
+  border-radius: 6px;
+  border: 1px solid #2a9fd6;
+  background-color: #f0f8ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  user-select: all;
+}
+
+.copyTextbox:focus {
+  outline: 2px solid #2179a5;
+  outline-offset: 2px;
+}
+
+/* Titles above textboxes */
+.copyTextboxLabel {
+  color: #666;
+  font-size: 11px;
+  margin: 12px 0 4px 0;
+  font-weight: 600;
+  font-family: 'Oswald', sans-serif;
+  user-select: none;
+}
+
+/* --- Added to keep #globalHeader h3 on one line --- */
+#globalHeader {
+  padding: 10px 5px;
+  text-align: center;
+  font-family: 'Oswald', sans-serif;
+}
+
+#globalHeader h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 1.2;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+#versionFooter {
+  max-width: 400px;           /* matches container width */
+  margin: 20px auto 0 auto;  /* centers footer horizontally with spacing */
+  color: gray;
+  font-size: 11px;
+  font-family: 'Oswald', sans-serif;
+  text-align: center;
+
+  /* Remove fixed positioning and other properties causing layout shift */
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  padding: 0;
+  background: transparent;
+  width: auto;
+  box-sizing: content-box;
+  z-index: auto;
+}
