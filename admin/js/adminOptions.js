@@ -11,6 +11,8 @@ export function loadAdminOptions() {
     return;
   }
 
+  pickForm.innerHTML = ''; // Clear any existing content before rendering admin options
+
   // Clear previous adminOptions container if exists
   if (adminOptionsContainer) {
     adminOptionsContainer.remove();
