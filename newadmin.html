@@ -31,7 +31,12 @@
     </section>
 
     <!-- Admin Buttons Container -->
-    <div id="adminButtonsContainer" style="margin-bottom: 12px;"></div>
+    <div id="adminSection" class="admin-container">
+    <h2 class="admin-title">Admin Tools</h2>
+    <div id="adminButtonsContainer" class="admin-buttons-grid"></div>
+    <div id="adminStatsContainer" class="admin-message"></div>
+    </div>
+
 
     <!-- Pick Entry Form (Sports Selector) -->
     <form id="pickForm" style="display:none;">
@@ -77,9 +82,6 @@
       <p id="pickError" class="error"></p>
       <p id="pickSuccess" class="success"></p>
     </form>
-
-    <!-- Admin Stats Container -->
-    <div id="adminStatsContainer" style="display:none;"></div>
 
     <!-- Global Footer -->
     <footer id="versionFooter" style="text-align:center; margin-top:30px; color:#666;">
