@@ -1,3 +1,5 @@
+import { loadAdminStats } from './adminStats.js'; // Import adminStats function
+
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
@@ -52,8 +54,11 @@ export async function loadAdminOptions() {
     adminButtonsContainer.appendChild(btn);
   });
 
-  // Show initial message
-  showMessage(buttons[0].message);
+  // Automatically load admin stats output on load
+  await loadAdminStats();
+
+  // Commented out to prevent overwriting stats output on load
+  // showMessage(buttons[0].message);
 
   function showMessage(msg) {
     adminStatsContainer.style.display = 'block';
