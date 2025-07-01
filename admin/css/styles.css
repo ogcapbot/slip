@@ -1,35 +1,42 @@
-body {
-  font-family: 'Oswald', sans-serif;
-  background: #f9f9f9;
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0 5px;
+  font-family: 'Oswald', sans-serif;
+  background: #f9f9f9;
   display: flex;
   justify-content: center;
+  align-items: flex-start; /* align content to top */
   font-size: 11px;
+  width: 100%;
+  overflow-x: hidden; /* prevent horizontal scroll */
+  box-sizing: border-box;
+}
+
+body > * {
   max-width: 400px;
   width: 100%;
-  position: relative;
+  box-sizing: border-box;
   transform-origin: top center;
   transition: transform 0.3s ease;
 }
 
+/* Responsive scaling on body’s immediate children */
 @media (max-width: 420px) {
-  body {
+  body > * {
     transform: scale(0.85);
-    width: 470px; /* 470 * 0.85 ≈ 400 */
+    width: 470px; /* inverse scaling for ~400px width visually */
   }
 }
 
 @media (max-width: 320px) {
-  body {
+  body > * {
     transform: scale(0.75);
-    width: 533px; /* 533 * 0.75 ≈ 400 */
+    width: 533px;
   }
 }
 
 .container {
-  width: 100%;
-  max-width: 390px;
   padding: 10px 5px;
   box-sizing: border-box;
 }
@@ -55,7 +62,7 @@ button {
   box-sizing: border-box;
   margin: 0 auto 8px;
   display: block;
-  padding: 5px 0; /* Updated: 3px added from previous 2px */
+  padding: 5px 0; /* 3px added vertical padding */
   font-size: 11px;
   background-color: #2a9fd6;
   color: white;
@@ -98,12 +105,8 @@ button:disabled {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 #confirmOutput {
@@ -213,13 +216,8 @@ button:disabled {
 }
 
 @keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 
 .hypeOutputBlock {
