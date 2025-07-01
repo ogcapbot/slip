@@ -2,15 +2,16 @@ body {
   font-family: 'Oswald', sans-serif;
   background: #f9f9f9;
   margin: 0;
-  padding: 0;
+  padding: 0 5px; /* Shrunk horizontal padding */
   display: flex;
   justify-content: center;
 }
 
 .container {
   width: 100%;
-  max-width: 400px;
-  padding: 20px;
+  max-width: 390px; /* Reduced 10px from 400 */
+  padding: 10px 5px; /* Shrunk padding to 5px sides */
+  box-sizing: border-box;
 }
 
 input[type="number"],
@@ -18,7 +19,7 @@ input[type="text"],
 select,
 textarea {
   width: 100%;
-  max-width: 400px;
+  max-width: 390px;
   box-sizing: border-box;
   margin: 0 auto 12px;
   display: block;
@@ -28,14 +29,13 @@ textarea {
   border: 1px solid #ccc;
 }
 
-/* UNIVERSAL BUTTON STYLE FOR ALL BUTTONS */
 button {
   width: 100%;
-  max-width: 400px;
+  max-width: 385px; /* 5px smaller than container max-width */
   box-sizing: border-box;
-  margin: 0 auto 12px;
+  margin: 0 auto 8px; /* Less bottom margin for tighter vertical spacing */
   display: block;
-  padding: 6px 0; /* smaller vertical padding */
+  padding: 2px 0; /* Added 2px vertical padding */
   font-size: 11px; /* smaller font size */
   background-color: #2a9fd6;
   color: white;
@@ -61,12 +61,226 @@ button:disabled {
   display: none;
 }
 
-/* Rest unchanged... */
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+}
 
+#loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2a9fd6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#confirmOutput {
+  white-space: pre-wrap;
+  font-family: monospace;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 10px;
+  resize: none;
+  overflow: hidden;
+  min-height: 650px;
+  height: auto;
+}
+
+#resetWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  margin: 0 auto;
+  height: 0;
+}
+
+#resetBtn {
+  position: absolute;
+  top: -35px;
+  right: 0;
+  font-size: 14px;
+  padding: 4px 12px;
+  background-color: #2a9fd6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  height: auto;
+  width: auto;
+  white-space: nowrap;
+}
+
+#copyBtn {
+  margin-bottom: 10px;
+}
+
+#loginNotice {
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: gray;
+  font-size: 10px;
+  text-align: center;
+}
+
+#inputLabel {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+#gameSuggestion {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 15px;
+  background: #fff;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 390px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+#gameSuggestion p {
+  margin: 6px 0;
+}
+
+#gameSuggestion strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+#gameTable,
+#sportDropdown {
+  display: none;
+}
+
+#sports-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+#imageLoader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #2a9fd6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+#imageLoaderText {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2a9fd6;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.hypeOutputBlock {
+  border: 1px solid #2a9fd6;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: #eaf6ff;
+  user-select: none;
+}
+.hypeOutputBlock:focus {
+  outline: 2px solid #2179a5;
+  outline-offset: 2px;
+}
+
+/* NEW styles for Post Title and Post Desc textboxes */
+.copyTextbox {
+  font-family: 'Oswald', sans-serif !important;
+  font-size: 11px !important;
+  width: 100%;
+  max-width: 390px;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  margin: 8px auto;
+  border-radius: 6px;
+  border: 1px solid #2a9fd6;
+  background-color: #f0f8ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  user-select: all;
+}
+
+.copyTextbox:focus {
+  outline: 2px solid #2179a5;
+  outline-offset: 2px;
+}
+
+/* Titles above textboxes */
+.copyTextboxLabel {
+  color: #666;
+  font-size: 14px;
+  margin: 12px 0 4px 0;
+  font-weight: 600;
+  font-family: 'Oswald', sans-serif;
+  user-select: none;
+}
+
+/* --- Added to keep #globalHeader h3 on one line --- */
+#globalHeader {
+  padding: 10px 5px;
+  text-align: center;
+}
+
+#globalHeader h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  line-height: 1.2;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+#versionFooter {
+  max-width: 390px;
+  margin: 20px auto 0 auto;
+  color: gray;
+  font-size: 10px;
+  font-family: 'Oswald', sans-serif;
+  text-align: center;
+
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  padding: 0;
+  background: transparent;
+  width: auto;
+  box-sizing: content-box;
+  z-index: auto;
+}
+
+/* Admin Section Styles */
 #adminSection {
   display: none;
   width: 100%;
-  max-width: 400px;
+  max-width: 390px;
   margin: 20px auto 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -74,8 +288,8 @@ button:disabled {
 .admin-buttons-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 4px; /* Reduced gap for tighter buttons */
+  margin-bottom: 15px;
 }
 
 .admin-message {
