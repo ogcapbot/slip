@@ -147,3 +147,16 @@ button:active {
   background: #f9fbff;
   user-select: none;
 }
+
+.pick-btn.blue {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+  font-size: 1rem !important;
+  line-height: 1.2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
