@@ -1,11 +1,3 @@
-can you help me fix a button that I have that isnt performing the way I expect it to?
-
-In the code below, you will see a button named add new. when clicked the program should act essentially as if I just newly logged in as a regular user which displays the sportsselector.js code/page.  Thats all I want the add new button to do.
-
-Here is the code I currently have.
-
-feel free to minimalize it or optimize it, I have tried so many things to get this button to work properly, that I have probably messed it up big time.
-
 import { loadSports } from './sportSelector.js';
 import { loadAdminStats } from './adminStats.js';
 
