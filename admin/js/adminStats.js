@@ -1,6 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadAdminOptions } from './adminOptions.js';
+import { softReset } from './auth.js';  // Import softReset from auth.js
 
 const pickForm = document.getElementById('pickForm');
 
@@ -66,8 +66,8 @@ export async function loadAdminStats() {
     backBtn.style.minWidth = '0';
     backBtn.style.boxSizing = 'border-box';
 
-    backBtn.addEventListener('click', () => {
-      loadAdminOptions();
+    backBtn.addEventListener('click', async () => {
+      await softReset();
     });
 
     pickForm.appendChild(backBtn);
