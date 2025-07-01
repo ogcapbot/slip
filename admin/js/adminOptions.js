@@ -1,4 +1,5 @@
 import { loadSports } from './sportSelector.js';
+import { loadAdminStats } from './adminStats.js';
 
 const pickForm = document.getElementById('pickForm');
 
@@ -27,7 +28,7 @@ export function loadAdminOptions() {
   // Create buttons
   const addNewPickBtn = createButton('Add New Pick');
   const updateWinLossBtn = createButton('Update Win/Loss', true);
-  const statsBtn = createButton('Stats', true);
+  const statsBtn = createButton('Stats'); // enabled now
 
   // Add event listener for Add New Pick
   addNewPickBtn.addEventListener('click', async () => {
@@ -36,6 +37,15 @@ export function loadAdminOptions() {
 
     // Load sport selector screen
     await loadSports();
+  });
+
+  // Add event listener for Stats button
+  statsBtn.addEventListener('click', async () => {
+    // Hide all buttons
+    adminOptionsContainer.style.display = 'none';
+
+    // Load stats screen
+    await loadAdminStats();
   });
 
   // Append buttons in order
