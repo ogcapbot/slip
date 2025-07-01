@@ -14,10 +14,12 @@ if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
 
-numberInputContainer.style.display = 'none';
+if (numberInputContainer) {
+  numberInputContainer.style.display = 'none';
+}
 
-let requiredLabel = numberInputContainer.querySelector('.required-label');
-if (!requiredLabel) {
+let requiredLabel = numberInputContainer ? numberInputContainer.querySelector('.required-label') : null;
+if (!requiredLabel && numberInputContainer) {
   requiredLabel = document.createElement('div');
   requiredLabel.className = 'required-label';
   requiredLabel.textContent = '* Required';
@@ -55,15 +57,19 @@ numberInputTitle.style.fontWeight = 'bold';
 numberInputTitle.style.display = 'none';
 wagerSectionContainer.appendChild(numberInputTitle);
 
-numberInputContainer.style.margin = '0';
-numberInputContainer.style.width = '100%';
+if (numberInputContainer) {
+  numberInputContainer.style.margin = '0';
+  numberInputContainer.style.width = '100%';
+}
 
 if (wagerTypeSelect && wagerTypeSelect.parentNode) {
   wagerTypeSelect.parentNode.insertBefore(wagerSectionContainer, wagerTypeSelect);
   wagerTypeSelect.parentNode.insertBefore(numberInputContainer, wagerTypeSelect);
 } else {
   document.body.appendChild(wagerSectionContainer);
-  document.body.appendChild(numberInputContainer);
+  if (numberInputContainer) {
+    document.body.appendChild(numberInputContainer);
+  }
 }
 
 let wagerButtonsContainer = document.getElementById('wagerButtonsContainer');
@@ -92,69 +98,84 @@ let selectedWagerId = null;
 let changeWagerBtn = null;
 
 function toggleWagerSection() {
+  if (!wagerButtonsContainer || !pickOptionsContainer) return;
   const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
   const teamSelected = !!selectedTeamButton;
   wagerButtonsContainer.style.display = teamSelected ? 'grid' : 'none';
 }
 
-sportSelect.addEventListener('change', () => {
-  clearWagerButtons();
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
-  toggleWagerSection();
-});
-
-gameSelect.addEventListener('change', async () => {
-  if (!gameSelect.value) {
+if (sportSelect) {
+  sportSelect.addEventListener('change', () => {
     clearWagerButtons();
-    wagerButtonsContainer.textContent = 'Select a game first';
-    numberInputContainer.style.display = 'none';
-    finalPickDescription.textContent = '';
+    if (numberInputContainer) numberInputContainer.style.display = 'none';
+    if (finalPickDescription) finalPickDescription.textContent = '';
     toggleWagerSection();
-    return;
-  }
-  await loadWagerTypes();
-  toggleWagerSection();
-});
+  });
+}
 
-pickOptionsContainer.addEventListener('click', e => {
-  if (e.target.tagName === 'BUTTON') {
-    Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
-    e.target.classList.add('green');
+if (gameSelect) {
+  gameSelect.addEventListener('change', async () => {
+    if (!gameSelect.value) {
+      clearWagerButtons();
+      if (wagerButtonsContainer) wagerButtonsContainer.textContent = 'Select a game first';
+      if (numberInputContainer) numberInputContainer.style.display = 'none';
+      if (finalPickDescription) finalPickDescription.textContent = '';
+      toggleWagerSection();
+      return;
+    }
+    await loadWagerTypes();
     toggleWagerSection();
-  }
-});
+  });
+}
+
+if (pickOptionsContainer) {
+  pickOptionsContainer.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON') {
+      Array.from(pickOptionsContainer.querySelectorAll('button')).forEach(btn => btn.classList.remove('green'));
+      e.target.classList.add('green');
+      toggleWagerSection();
+    }
+  });
+}
 
 function clearWagerButtons() {
   selectedWagerId = null;
+  if (!wagerButtonsContainer) return;
+
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   wagerButtonsContainer.style.marginTop = '8px';
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
-  numberInput.value = '';
-  requiredLabel.style.display = 'none';
-  numberInputTitle.style.display = 'none';
+
+  if (numberInputContainer) numberInputContainer.style.display = 'none';
+  if (finalPickDescription) finalPickDescription.textContent = '';
+
+  if (numberInput) numberInput.value = '';
+  if (requiredLabel) requiredLabel.style.display = 'none';
+  if (numberInputTitle) numberInputTitle.style.display = 'none';
+
   if (changeWagerBtn) {
     changeWagerBtn.remove();
     changeWagerBtn = null;
   }
-  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
-  wagerTypeSelect.disabled = true;
-  wagerTypeSelect.dispatchEvent(new Event('change'));
+  if (wagerTypeSelect) {
+    wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
+    wagerTypeSelect.disabled = true;
+    wagerTypeSelect.dispatchEvent(new Event('change'));
+  }
 }
 
 async function loadWagerTypes() {
-  const selectedSport = sportSelect.value;
+  if (!wagerButtonsContainer) return;
+  const selectedSport = sportSelect ? sportSelect.value : '';
 
-  const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
+  const selectedTeamButton = pickOptionsContainer ? pickOptionsContainer.querySelector('button.green') : null;
   if (!selectedTeamButton) {
     clearWagerButtons();
   }
 
   wagerButtonsContainer.textContent = 'Loading wager types...';
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
+  if (numberInputContainer) numberInputContainer.style.display = 'none';
+  if (finalPickDescription) finalPickDescription.textContent = '';
 
   try {
     const wagerTypesRef = collection(db, 'WagerTypes');
@@ -227,6 +248,8 @@ function selectWager(button, id, descTemplate) {
 
   selectedWagerId = id;
 
+  if (!wagerButtonsContainer) return;
+
   wagerButtonsContainer.innerHTML = '';
 
   wagerButtonsContainer.style.display = 'grid';
@@ -246,28 +269,29 @@ function selectWager(button, id, descTemplate) {
   wagerButtonsContainer.appendChild(selectedBtn);
 
   if (descTemplate.includes('[[NUM]]')) {
-    numberInputContainer.style.display = 'block';
-    numberInputContainer.style.gridColumn = '2 / 3';
-    numberInputContainer.style.maxWidth = '150px';
-    requiredLabel.style.display = 'block';
-    requiredLabel.style.marginTop = '4px';
-    numberInputTitle.style.display = 'inline-block';
+    if (numberInputContainer) numberInputContainer.style.display = 'block';
+    if (numberInputContainer) numberInputContainer.style.gridColumn = '2 / 3';
+    if (numberInputContainer) numberInputContainer.style.maxWidth = '150px';
+    if (requiredLabel) requiredLabel.style.display = 'block';
+    if (requiredLabel) requiredLabel.style.marginTop = '4px';
+    if (numberInputTitle) numberInputTitle.style.display = 'inline-block';
 
-    numberInput.value = '0';
+    if (numberInput) numberInput.value = '0';
 
     const btnHeight = selectedBtn.getBoundingClientRect().height;
-    numberInput.style.height = btnHeight + 'px';
-    numberInput.style.marginLeft = '6px';
-    numberInput.style.marginRight = '6px';
+    if (numberInput) {
+      numberInput.style.height = btnHeight + 'px';
+      numberInput.style.marginLeft = '6px';
+      numberInput.style.marginRight = '6px';
+      numberInput.focus();
+      numberInput.select();
+    }
 
-    numberInput.focus();
-    numberInput.select();
-
-    wagerButtonsContainer.appendChild(numberInputContainer);
+    if (wagerButtonsContainer && numberInputContainer) wagerButtonsContainer.appendChild(numberInputContainer);
   } else {
-    numberInputContainer.style.display = 'none';
-    requiredLabel.style.display = 'none';
-    numberInputTitle.style.display = 'none';
+    if (numberInputContainer) numberInputContainer.style.display = 'none';
+    if (requiredLabel) requiredLabel.style.display = 'none';
+    if (numberInputTitle) numberInputTitle.style.display = 'none';
   }
 
   if (!changeWagerBtn) {
@@ -286,22 +310,24 @@ function selectWager(button, id, descTemplate) {
       resetWagerSelection();
     });
   }
-  wagerButtonsContainer.appendChild(changeWagerBtn);
+  if (wagerButtonsContainer) wagerButtonsContainer.appendChild(changeWagerBtn);
 
   updateFinalPickDescription(descTemplate);
 
-  numberInput.disabled = !descTemplate.includes('[[NUM]]');
-  if (!descTemplate.includes('[[NUM]]')) {
+  if (numberInput) numberInput.disabled = !descTemplate.includes('[[NUM]]');
+  if (!descTemplate.includes('[[NUM]]') && numberInput) {
     numberInput.value = '';
   }
 
-  wagerTypeSelect.innerHTML = '';
-  const option = document.createElement('option');
-  option.value = id;
-  option.selected = true;
-  wagerTypeSelect.appendChild(option);
-  wagerTypeSelect.disabled = true;
-  wagerTypeSelect.dispatchEvent(new Event('change'));
+  if (wagerTypeSelect) {
+    wagerTypeSelect.innerHTML = '';
+    const option = document.createElement('option');
+    option.value = id;
+    option.selected = true;
+    wagerTypeSelect.appendChild(option);
+    wagerTypeSelect.disabled = true;
+    wagerTypeSelect.dispatchEvent(new Event('change'));
+  }
 
   // Sync explanatory text with units line:
   updateUnitSummaryText();
@@ -318,42 +344,51 @@ function resetWagerSelection() {
     changeWagerBtn = null;
   }
 
-  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
-  wagerTypeSelect.disabled = true;
-  wagerTypeSelect.dispatchEvent(new Event('change'));
+  if (wagerTypeSelect) {
+    wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
+    wagerTypeSelect.disabled = true;
+    wagerTypeSelect.dispatchEvent(new Event('change'));
+  }
+
+  if (!wagerButtonsContainer) return;
 
   wagerButtonsContainer.innerHTML = '';
   wagerButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   wagerButtonsContainer.style.marginTop = '8px';
-  numberInputContainer.style.display = 'none';
-  finalPickDescription.textContent = '';
-  numberInput.value = '';
-  requiredLabel.style.display = 'none';
-  numberInputTitle.style.display = 'none';
+
+  if (numberInputContainer) numberInputContainer.style.display = 'none';
+  if (finalPickDescription) finalPickDescription.textContent = '';
+  if (numberInput) numberInput.value = '';
+  if (requiredLabel) requiredLabel.style.display = 'none';
+  if (numberInputTitle) numberInputTitle.style.display = 'none';
 }
 
-numberInput.addEventListener('input', () => {
-  if (!selectedWagerId) return;
-  const selectedBtn = wagerButtonsContainer.querySelector('button.green');
-  if (!selectedBtn) return;
-  const descTemplate = selectedBtn.dataset.descTemplate || '';
-  const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
-  const selectedTeam = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
+if (numberInput) {
+  numberInput.addEventListener('input', () => {
+    if (!selectedWagerId) return;
+    if (!wagerButtonsContainer) return;
 
-  let desc = descTemplate;
-  if (desc.includes('[[TEAM]]')) {
-    const teamName = getLastWord(selectedTeam);
-    desc = desc.replace(/\[\[TEAM\]\]/g, teamName);
-  }
-  if (desc.includes('[[NUM]]')) {
-    const num = numberInput.value || '___';
-    desc = desc.replace(/\[\[NUM\]\]/g, num);
-  }
-  finalPickDescription.textContent = desc;
+    const selectedBtn = wagerButtonsContainer.querySelector('button.green');
+    if (!selectedBtn) return;
+    const descTemplate = selectedBtn.dataset.descTemplate || '';
+    const selectedTeamButton = pickOptionsContainer ? pickOptionsContainer.querySelector('button.green') : null;
+    const selectedTeam = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
 
-  // Sync explanatory text with units line on number input change
-  updateUnitSummaryText();
-});
+    let desc = descTemplate;
+    if (desc.includes('[[TEAM]]')) {
+      const teamName = getLastWord(selectedTeam);
+      desc = desc.replace(/\[\[TEAM\]\]/g, teamName);
+    }
+    if (desc.includes('[[NUM]]')) {
+      const num = numberInput.value || '___';
+      desc = desc.replace(/\[\[NUM\]\]/g, num);
+    }
+    if (finalPickDescription) finalPickDescription.textContent = desc;
+
+    // Sync explanatory text with units line on number input change
+    updateUnitSummaryText();
+  });
+}
 
 function getLastWord(teamName) {
   if (!teamName) return '';
@@ -362,7 +397,7 @@ function getLastWord(teamName) {
 }
 
 function updateFinalPickDescription(descTemplate) {
-  const selectedTeamButton = pickOptionsContainer.querySelector('button.green');
+  const selectedTeamButton = pickOptionsContainer ? pickOptionsContainer.querySelector('button.green') : null;
   const selectedTeam = selectedTeamButton ? selectedTeamButton.textContent.trim() : '';
 
   let desc = descTemplate;
@@ -373,7 +408,7 @@ function updateFinalPickDescription(descTemplate) {
   if (desc.includes('[[NUM]]')) {
     desc = desc.replace(/\[\[NUM\]\]/g, '___');
   }
-  finalPickDescription.textContent = desc;
+  if (finalPickDescription) finalPickDescription.textContent = desc;
 
   // Sync explanatory text with units line
   updateUnitSummaryText();
