@@ -5,62 +5,72 @@ const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
 
-if (!adminButtonsContainer) console.error('[adminOptions] adminButtonsContainer NOT FOUND!');
-if (!pickForm) console.error('[adminOptions] pickForm NOT FOUND!');
-if (!adminStatsContainer) console.error('[adminOptions] adminStatsContainer NOT FOUND!');
+if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
+  console.error('Containers not found! Check HTML IDs.');
+}
 
 /**
- * Load the admin screen with three buttons (Add New Pick, Update Win/Loss, Stats),
- * and show/hide the sports selector and stats containers properly.
+ * Load the admin screen with three buttons:
+ * - Add New Pick (loads sports selector)
+ * - Update Win/Loss (disabled)
+ * - Stats (loads stats)
+ * Shows the relevant section below the buttons depending on button clicks.
  */
 export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
   if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
-    console.error('[loadAdminOptions] One or more required containers are missing.');
+    console.error('[loadAdminOptions] Containers missing, aborting');
     return;
   }
 
   // Clear previous buttons
   adminButtonsContainer.innerHTML = '';
-  // Hide containers initially
+  // Hide both content containers initially
   pickForm.style.display = 'none';
   adminStatsContainer.style.display = 'none';
 
-  // Create buttons
   console.log('[loadAdminOptions] Creating buttons');
 
+  // Create buttons
   const addNewPickBtn = createButton('Add New Pick');
   const updateWinLossBtn = createButton('Update Win/Loss', true);
   const statsBtn = createButton('Stats');
 
-  // Add event listeners
-  addNewPickBtn.addEventListener('click', async () => {
-    console.log('[Add New Pick] clicked');
-    adminStatsContainer.style.display = 'none';
-    pickForm.style.display = 'block';
-    await loadSports();
-    console.log('[Add New Pick] loadSports completed');
-  });
+  // Style container as grid with gap
+  adminButtonsContainer.style.display = 'grid';
+  adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  adminButtonsContainer.style.gap = '6px';
+  adminButtonsContainer.style.marginBottom = '12px';
 
-  updateWinLossBtn.addEventListener('click', () => {
-    console.log('[Update Win/Loss] clicked - disabled');
-  });
-
-  statsBtn.addEventListener('click', async () => {
-    console.log('[Stats] clicked');
-    pickForm.style.display = 'none';
-    adminStatsContainer.style.display = 'block';
-    await loadAdminStats();
-    console.log('[Stats] loadAdminStats completed');
-  });
-
-  // Append buttons to container
+  // Append buttons
   adminButtonsContainer.appendChild(addNewPickBtn);
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Initial state: show pickForm and load sports
+  // Add event listeners wired correctly!
+
+  addNewPickBtn.addEventListener('click', async () => {
+    console.log('[Add New Pick] clicked');
+    // Show sports selector form, hide stats
+    pickForm.style.display = 'block';
+    adminStatsContainer.style.display = 'none';
+    // Load sports selector content
+    await loadSports();
+    console.log('[Add New Pick] loadSports completed');
+  });
+
+  statsBtn.addEventListener('click', async () => {
+    console.log('[Stats] clicked');
+    // Show stats container, hide sports selector form
+    adminStatsContainer.style.display = 'block';
+    pickForm.style.display = 'none';
+    // Load admin stats content
+    await loadAdminStats();
+    console.log('[Stats] loadAdminStats completed');
+  });
+
+  // Initial state: show sports selector form and load sports
   pickForm.style.display = 'block';
   adminStatsContainer.style.display = 'none';
 
@@ -69,13 +79,14 @@ export async function loadAdminOptions() {
 }
 
 /**
- * Utility function to create a styled button.
- * @param {string} text Button label
- * @param {boolean} disabled Whether button is disabled
+ * Creates a styled button element
+ * @param {string} text - Button label
+ * @param {boolean} disabled - Disabled state (default false)
  * @returns {HTMLButtonElement}
  */
 function createButton(text, disabled = false) {
   console.log(`[createButton] Creating button "${text}" (disabled: ${disabled})`);
+
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
