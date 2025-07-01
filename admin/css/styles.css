@@ -62,7 +62,7 @@ button {
   box-sizing: border-box;
   margin: 0 auto 8px;
   display: block;
-  padding: 5px 0; /* 3px added vertical padding */
+  padding: 5px 0; /* vertical padding */
   font-size: 11px;
   background-color: #2a9fd6;
   color: white;
@@ -72,6 +72,10 @@ button {
   box-shadow: 0 3px 6px rgba(42, 159, 214, 0.4);
   transition: background-color 0.3s ease;
   line-height: 1.2;
+  min-height: 44px; /* ensure tall enough */
+  white-space: nowrap;       /* prevent wrapping */
+  overflow: hidden;          /* hide overflow */
+  text-overflow: ellipsis;   /* show ... for overflow */
 }
 
 button:hover:not(:disabled) {
