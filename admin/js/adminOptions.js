@@ -1,4 +1,4 @@
-import { loadAdminStats } from './adminStats.js'; // Import your stats module
+import { loadAdminStats } from './adminStats.js'; // import your stats function
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -30,6 +30,10 @@ export async function loadAdminOptions() {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
       console.log(`[${text}] clicked`);
+
+      // Clear content immediately before doing anything
+      clearContent();
+
       if (index >= 3) {
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
@@ -44,26 +48,27 @@ export async function loadAdminOptions() {
     adminButtonsContainer.appendChild(btn);
   });
 
-  // Load stats automatically on load
+  // On initial load, clear and then load stats automatically
+  clearContent();
   await handleButtonAction('Stats', 'Coming Soon... Stats');
 
-  function showMessage(msg) {
+  function clearContent() {
+    adminStatsContainer.style.color = '#444';
     adminStatsContainer.style.display = 'block';
+    adminStatsContainer.innerHTML = '';
+  }
+
+  function showMessage(msg) {
     adminStatsContainer.style.color = '#444';
     adminStatsContainer.innerHTML = `<p>${msg}</p>`;
   }
 
   function showAccessDenied() {
-    adminStatsContainer.style.display = 'block';
     adminStatsContainer.style.color = 'red';
     adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
   }
 
   async function handleButtonAction(text, message) {
-    // Clear container before loading content
-    adminStatsContainer.innerHTML = '';
-    adminStatsContainer.style.display = 'block';
-
     if (text === 'Stats') {
       await loadAdminStats();
     } else {
