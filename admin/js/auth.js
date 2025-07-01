@@ -9,18 +9,27 @@ const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
 const sportSelect = document.getElementById('sportSelect');
 
+if (accessCodeInput && loginBtn) {
+  accessCodeInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      loginBtn.click();
+    }
+  });
+}
+
 loginBtn.addEventListener('click', async () => {
   if (!accessCodeInput) {
     console.error('Access code input element not found!');
-    loginError.textContent = 'Internal error: access code input missing.';
+    if (loginError) loginError.textContent = 'Internal error: access code input missing.';
     return;
   }
 
   const accessCode = accessCodeInput.value?.trim();
-  loginError.textContent = '';
+  if (loginError) loginError.textContent = '';
 
   if (!accessCode) {
-    loginError.textContent = 'Access code is required.';
+    if (loginError) loginError.textContent = 'Access code is required.';
     return;
   }
 
@@ -30,20 +39,21 @@ loginBtn.addEventListener('click', async () => {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      loginError.textContent = 'Invalid access code.';
+      if (loginError) loginError.textContent = 'Invalid access code.';
       return;
     }
 
     // Successful login
-    loginSection.style.display = 'none';
-    pickForm.style.display = 'block';
+    if (loginSection) loginSection.style.display = 'none';
+    if (pickForm) pickForm.style.display = 'block';
 
     // Enable sport select and load sports
-    sportSelect.disabled = false;
-    await loadSports();
-
+    if (sportSelect) {
+      sportSelect.disabled = false;
+      await loadSports();
+    }
   } catch (error) {
-    loginError.textContent = 'Login failed. Please try again.';
+    if (loginError) loginError.textContent = 'Login failed. Please try again.';
     console.error('Login error:', error);
   }
 });
