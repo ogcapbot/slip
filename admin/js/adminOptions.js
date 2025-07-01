@@ -28,12 +28,26 @@ export async function loadAdminOptions() {
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
+  const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
+
   // Create buttons and add to container
-  buttons.forEach(({ text, message }) => {
+  buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
     btn.addEventListener('click', () => {
       console.log(`[${text}] clicked`);
-      showMessage(message);
+      
+      // For bottom 3 buttons, require access code
+      if (index >= 3) { 
+        const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
+        if (enteredCode === SUPERADMIN_CODE) {
+          showMessage(message);
+        } else {
+          showAccessDenied();
+        }
+      } else {
+        // Top 3 buttons behave normally
+        showMessage(message);
+      }
     });
     adminButtonsContainer.appendChild(btn);
   });
@@ -43,7 +57,14 @@ export async function loadAdminOptions() {
 
   function showMessage(msg) {
     adminStatsContainer.style.display = 'block';
+    adminStatsContainer.style.color = '#444'; // normal text color
     adminStatsContainer.innerHTML = `<p>${msg}</p>`;
+  }
+  
+  function showAccessDenied() {
+    adminStatsContainer.style.display = 'block';
+    adminStatsContainer.style.color = 'red';
+    adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
   }
 }
 
