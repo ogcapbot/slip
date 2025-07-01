@@ -43,24 +43,25 @@ export function loadAdminOptions() {
 
   // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    // Hide admin options container (no clearing pickForm)
-    if (adminOptionsContainer) {
-      adminOptionsContainer.style.display = 'none';
-    }
+    // Clear entire pickForm content to remove admin options UI
+    pickForm.innerHTML = '';
+
+    // Clear reference to adminOptionsContainer
+    adminOptionsContainer = null;
 
     // Show pickForm container
-    if (pickForm) {
-      pickForm.style.display = 'block';
-    }
+    pickForm.style.display = 'block';
 
-    // Call loadSports just like user login flow
+    // Call loadSports just like regular user login flow
     await loadSports();
   });
 
   // Stats button click handler
   statsBtn.addEventListener('click', async () => {
     // Hide admin options container while showing stats
-    adminOptionsContainer.style.display = 'none';
+    if (adminOptionsContainer) {
+      adminOptionsContainer.style.display = 'none';
+    }
 
     // Load stats screen
     await loadAdminStats();
