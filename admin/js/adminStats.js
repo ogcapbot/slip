@@ -1,5 +1,5 @@
 import { db } from '../firebaseInit.js';
-import { collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadAdminOptions } from './adminOptions.js';
 
 const pickForm = document.getElementById('pickForm');
