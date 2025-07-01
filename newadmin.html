@@ -26,19 +26,15 @@
 
     <!-- Login Section -->
     <section id="loginSection" style="text-align: center;">
-     <!-- <label for="AccessCode">Enter Access Code</label> -->
-      <br><input style="text-align:center;" inputmode="numeric" type="password" id="AccessCode" autofocus="autofocus" required="required" placeholder="Enter Access Code" autocomplete="off" />
-      <br><br><button id="loginBtn" max-width: 150px;>Login</button>
+      <br><input style="text-align:center;" inputmode="numeric" type="password" id="AccessCode" autofocus required placeholder="Enter Access Code" autocomplete="off" />
+      <br><br><button id="loginBtn" max-width="150px;">Login</button>
       <p id="loginError" class="error"></p>
     </section>
 
     <!-- Admin Buttons Container -->
     <div id="adminButtonsContainer" style="margin-bottom: 12px;"></div>
 
-    <!-- Admin Content Container (for stats, other admin views) -->
-    <div id="adminContentContainer"></div>
-
-    <!-- Pick Entry Form (unchanged, still used for sports selector) -->
+    <!-- Pick Entry Form (Sports Selector) -->
     <form id="pickForm" style="display:none;">
       <label for="sportSelect" style="display:none;"></label>
       <select id="sportSelect" disabled>
@@ -70,14 +66,11 @@
         <input type="number" id="numberInput" min="0" disabled/>
       </div>
 
-      <!-- <p id="finalPickDescription" style="font-weight:bold; margin-top:10px;"></p> -->
-
       <label for="unitsSelect" style="display:none;"></label>
       <select id="unitsSelect" disabled>
         <option>Select a section first</option>
       </select>
 
-      <!-- Action Buttons Container -->
       <div id="actionButtonsContainer" style="margin-top: 20px;">
         <button id="startOverBtn" type="button" class="pick-btn blue" style="display:none;">Start Over</button>
         <div></div> <!-- Empty middle column -->
@@ -88,13 +81,15 @@
       <p id="pickSuccess" class="success"></p>
     </form>
 
+    <!-- Admin Stats Container -->
+    <div id="adminStatsContainer" style="display:none;"></div>
+
     <!-- Global Footer -->
     <footer id="versionFooter" style="text-align:center; margin-top:30px; color:#666;">
       Version 7.25
     </footer>
-    <!-- End Global Footer -->
 
-  </div> <!-- End container -->
+  </div>
 
   <!-- Firebase Initialization and JS modules -->
   <script type="module" src="admin/firebaseInit.js"></script>
