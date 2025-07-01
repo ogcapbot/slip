@@ -1,4 +1,4 @@
-import { loadAdminStats } from './adminStats.js'; // Import the stats module
+import { loadAdminStats } from './adminStats.js'; // Import your stats module
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -9,18 +9,12 @@ if (!adminSection || !adminButtonsContainer || !adminStatsContainer) {
 }
 
 export async function loadAdminOptions() {
-  // Show the admin section container on login
   adminSection.style.display = 'block';
-
   console.log('[loadAdminOptions] called');
 
-  // Clear buttons container
   adminButtonsContainer.innerHTML = '';
-
-  // Hide message container initially
   adminStatsContainer.style.display = 'none';
 
-  // Button definitions: text and message
   const buttons = [
     { text: 'Add New Pick', message: 'Coming Soon... Add New' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
@@ -30,34 +24,32 @@ export async function loadAdminOptions() {
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
-  const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
+  const SUPERADMIN_CODE = 'super123';
 
-  // Create buttons and add to container
   buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
       console.log(`[${text}] clicked`);
-
       if (index >= 3) {
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
-          await showContentForButton(text, message);
+          await handleButtonAction(text, message);
         } else {
           showAccessDenied();
         }
       } else {
-        await showContentForButton(text, message);
+        await handleButtonAction(text, message);
       }
     });
     adminButtonsContainer.appendChild(btn);
   });
 
-  // Load stats automatically on admin screen load
-  await loadAdminStats();
+  // Load stats automatically on load
+  await handleButtonAction('Stats', 'Coming Soon... Stats');
 
   function showMessage(msg) {
     adminStatsContainer.style.display = 'block';
-    adminStatsContainer.style.color = '#444'; // normal text color
+    adminStatsContainer.style.color = '#444';
     adminStatsContainer.innerHTML = `<p>${msg}</p>`;
   }
 
@@ -67,15 +59,14 @@ export async function loadAdminOptions() {
     adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
   }
 
-  async function showContentForButton(text, message) {
-    // Clear the main content area
+  async function handleButtonAction(text, message) {
+    // Clear container before loading content
     adminStatsContainer.innerHTML = '';
+    adminStatsContainer.style.display = 'block';
 
     if (text === 'Stats') {
-      // Load and display stats content
       await loadAdminStats();
     } else {
-      // Show message for other buttons
       showMessage(message);
     }
   }
@@ -86,15 +77,12 @@ function createButton(text) {
   btn.type = 'button';
   btn.textContent = text;
   btn.className = 'pick-btn blue';
-
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
   btn.style.marginBottom = '2px';
-
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
-
   return btn;
 }
