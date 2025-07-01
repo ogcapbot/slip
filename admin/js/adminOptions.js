@@ -8,13 +8,17 @@ let addNewPickBtn;
 let updateWinLossBtn;
 let statsBtn;
 
+/**
+ * Load the admin screen with three buttons (Add New Pick, Update Win/Loss, Stats)
+ * and show the sports selector or stats below depending on selection.
+ */
 export async function loadAdminOptions() {
   if (!adminButtonsContainer || !adminContentContainer) {
-    console.error('Containers not found!');
+    console.error('[loadAdminOptions] Containers not found!');
     return;
   }
 
-  // Clear buttons and content containers
+  // Clear previous UI
   adminButtonsContainer.innerHTML = '';
   adminContentContainer.innerHTML = '';
 
@@ -23,41 +27,43 @@ export async function loadAdminOptions() {
   updateWinLossBtn = createButton('Update Win/Loss', true);
   statsBtn = createButton('Stats');
 
-  // Style buttons container
+  // Style buttons container as grid with 3 equal columns
   adminButtonsContainer.style.display = 'grid';
   adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   adminButtonsContainer.style.gap = '6px';
   adminButtonsContainer.style.marginBottom = '12px';
 
-  // Append buttons
+  // Append buttons to container
   adminButtonsContainer.appendChild(addNewPickBtn);
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Helper to clear content and load selected view
-  async function showContent(loaderFunc) {
-    adminContentContainer.innerHTML = '';
-    await loaderFunc();
-  }
-
+  // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    console.log('Add New Pick clicked');
-    await showContent(loadSports);
+    console.log('[Add New Pick] clicked');
+    adminContentContainer.innerHTML = '';
+    adminContentContainer.style.display = 'block';
+    await loadSports();
   });
 
+  // Stats button click handler
   statsBtn.addEventListener('click', async () => {
-    console.log('Stats clicked');
-    await showContent(loadAdminStats);
+    console.log('[Stats] clicked');
+    adminContentContainer.innerHTML = '';
+    adminContentContainer.style.display = 'block';
+    await loadAdminStats();
   });
 
-  // Update Win/Loss button disabled, no handler needed
-
-  // Optionally show the sports selector by default or keep empty
-  await showContent(loadSports);
+  // Show admin content container and load sports selector by default
+  adminContentContainer.style.display = 'block';
+  await loadSports();
 }
 
 /**
- * Utility to create styled button
+ * Utility function to create styled buttons
+ * @param {string} text Button label
+ * @param {boolean} disabled Whether button is disabled
+ * @returns {HTMLButtonElement}
  */
 function createButton(text, disabled = false) {
   const btn = document.createElement('button');
