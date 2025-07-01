@@ -19,7 +19,12 @@ export async function loadAdminOptions() {
 
   // Clear previous buttons
   adminButtonsContainer.innerHTML = '';
-  // Hide both content containers initially
+
+  // Style containers: position relative for layering and z-index
+  pickForm.style.position = 'relative';
+  adminStatsContainer.style.position = 'relative';
+
+  // Start by hiding both content containers
   pickForm.style.display = 'none';
   adminStatsContainer.style.display = 'none';
 
@@ -41,29 +46,39 @@ export async function loadAdminOptions() {
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // *** Correct Event Bindings ***
-
-  // When Add New Pick is clicked, show the sports selector and load sports
+  // Event: Add New Pick - show sports selector, hide stats
   addNewPickBtn.addEventListener('click', async () => {
     console.log('[Add New Pick] clicked');
+    // Show sports container
     pickForm.style.display = 'block';
+    pickForm.style.zIndex = '10'; // bring on top
     adminStatsContainer.style.display = 'none';
+    adminStatsContainer.style.zIndex = '0'; // send behind
+    // Load sports content
     await loadSports();
     console.log('[Add New Pick] loadSports completed');
   });
 
-  // When Stats is clicked, show the admin stats container and load stats
+  // Event: Stats - show stats container, hide sports
   statsBtn.addEventListener('click', async () => {
     console.log('[Stats] clicked');
+    // Show stats container
     adminStatsContainer.style.display = 'block';
+    adminStatsContainer.style.zIndex = '10'; // bring on top
     pickForm.style.display = 'none';
+    pickForm.style.zIndex = '0'; // send behind
+    // Clear sports container if needed (optional)
+    pickForm.innerHTML = '';
+    // Load stats content
     await loadAdminStats();
     console.log('[Stats] loadAdminStats completed');
   });
 
   // Initial load: show sports selector by default
   pickForm.style.display = 'block';
+  pickForm.style.zIndex = '10';
   adminStatsContainer.style.display = 'none';
+  adminStatsContainer.style.zIndex = '0';
 
   await loadSports();
   console.log('[loadAdminOptions] initial loadSports completed');
