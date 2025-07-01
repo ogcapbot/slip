@@ -1,9 +1,11 @@
 import { loadSports } from './sportSelector.js';
 import { loadAdminStats } from './adminStats.js';
 
+const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 
-let adminButtonsContainer;
+let updateWinLossBtn;
+let statsBtn;
 
 /**
  * Load the admin screen with two buttons (Update Win/Loss disabled and Stats),
@@ -12,37 +14,20 @@ let adminButtonsContainer;
 export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
-  if (!pickForm) {
-    console.error('[loadAdminOptions] ERROR: pickForm element not found!');
+  if (!adminButtonsContainer || !pickForm) {
+    console.error('[loadAdminOptions] ERROR: Containers not found');
     return;
   }
 
-  console.log('[loadAdminOptions] Clearing pickForm content');
-  pickForm.innerHTML = '';
-
-  if (adminButtonsContainer) {
-    console.log('[loadAdminOptions] Removing previous adminButtonsContainer');
-    adminButtonsContainer.remove();
-    adminButtonsContainer = null;
-  }
-
-  console.log('[loadAdminOptions] Creating adminButtonsContainer div');
-  adminButtonsContainer = document.createElement('div');
-  adminButtonsContainer.id = 'adminButtonsContainer';
-
-  console.log('[loadAdminOptions] Styling adminButtonsContainer');
-  adminButtonsContainer.style.display = 'grid';
-  adminButtonsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
-  adminButtonsContainer.style.gap = '6px';
-  adminButtonsContainer.style.marginBottom = '12px';
+  // Clear the admin buttons container but do NOT clear pickForm (sports selector)
+  adminButtonsContainer.innerHTML = '';
 
   console.log('[loadAdminOptions] Creating Update Win/Loss button (disabled)');
-  const updateWinLossBtn = createButton('Update Win/Loss', true);
+  updateWinLossBtn = createButton('Update Win/Loss', true);
 
   console.log('[loadAdminOptions] Creating Stats button');
-  const statsBtn = createButton('Stats');
+  statsBtn = createButton('Stats');
 
-  console.log('[loadAdminOptions] Adding click event listener to Stats button');
   statsBtn.addEventListener('click', async () => {
     console.log('[Stats Button] Clicked - hiding admin buttons');
     adminButtonsContainer.style.display = 'none';
@@ -51,17 +36,19 @@ export async function loadAdminOptions() {
     await loadAdminStats();
 
     console.log('[Stats Button] Admin stats screen loaded');
-    // If you want to restore buttons and form after stats, add logic here
+    // Add logic here to restore buttons or UI if needed
   });
 
   console.log('[loadAdminOptions] Appending buttons to adminButtonsContainer');
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  console.log('[loadAdminOptions] Appending adminButtonsContainer to pickForm');
-  pickForm.appendChild(adminButtonsContainer);
+  console.log('[loadAdminOptions] Showing adminButtonsContainer and pickForm');
+  adminButtonsContainer.style.display = 'grid';
+  adminButtonsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
+  adminButtonsContainer.style.gap = '6px';
+  adminButtonsContainer.style.marginBottom = '12px';
 
-  console.log('[loadAdminOptions] Showing pickForm container');
   pickForm.style.display = 'block';
 
   console.log('[loadAdminOptions] Calling loadSports to render sports selector');
@@ -71,7 +58,7 @@ export async function loadAdminOptions() {
 }
 
 /**
- * Utility to create styled button
+ * Utility function to create styled button
  * @param {string} text Button label
  * @param {boolean} disabled Whether button is disabled
  * @returns {HTMLButtonElement}
