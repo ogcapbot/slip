@@ -35,8 +35,8 @@ button {
   box-sizing: border-box;
   margin: 0 auto 12px;
   display: block;
-  padding: 12px;
-  font-size: 16px;
+  padding: 6px 0; /* smaller vertical padding */
+  font-size: 11px; /* smaller font size */
   background-color: #2a9fd6;
   color: white;
   border: none;
@@ -61,7 +61,7 @@ button:disabled {
   display: none;
 }
 
-/* ...rest of your CSS unchanged... */
+/* Rest unchanged... */
 
 #adminSection {
   display: none;
