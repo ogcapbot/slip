@@ -272,7 +272,7 @@ function resetGameSelection() {
     changeGameBtn = null;
   }
 
-  gameSelect.innerHTML = '<option value="" disabled selected>Select a game</option>';
+ // gameSelect.innerHTML = '<option value="" disabled selected>Select a game</option>';
   gameSelect.disabled = true;
   gameSelect.dispatchEvent(new Event("change"));
 
