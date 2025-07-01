@@ -1,7 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadAdminOptions } from './adminOptions.js';
-import { loadSports } from './sportSelector.js';
+import { loginUser } from './adminOptions.js';
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('AccessCode');
@@ -20,7 +19,7 @@ if (accessCodeInput && loginBtn) {
   });
 }
 
-// New reusable post-login UI function
+// New reusable post-login UI function uses loginUser()
 export async function showPostLoginScreen(userData) {
   if (!userData) {
     console.error('No user data provided for post-login screen');
@@ -30,12 +29,14 @@ export async function showPostLoginScreen(userData) {
   if (loginSection) loginSection.style.display = 'none';
   if (pickForm) pickForm.style.display = 'block';
 
-  // Check user access level and load corresponding screen
+  // Extract access level from user data
   const accessField = (userData.Access || '').toLowerCase();
+
+  // Use loginUser to load UI based on access
   if (accessField.includes('user')) {
-    await loadSports();
+    await loginUser('User');
   } else {
-    await loadAdminOptions();
+    await loginUser(userData.Access);
   }
 }
 
@@ -76,7 +77,7 @@ loginBtn.addEventListener('click', async () => {
     // Store logged-in user data for later resets
     currentUserData = querySnapshot.docs[0].data();
 
-    // Show appropriate post-login UI
+    // Show appropriate post-login UI using loginUser()
     await showPostLoginScreen(currentUserData);
 
   } catch (error) {
