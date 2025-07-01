@@ -30,7 +30,7 @@ export async function loadAdminOptions() {
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Initially show sports selector and hide stats
+  // Start with showing sports selector
   pickForm.style.display = 'block';
   adminStatsContainer.style.display = 'none';
   await loadSports();
