@@ -345,7 +345,7 @@ function resetWagerSelection() {
   }
 
   if (wagerTypeSelect) {
-    wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
+   // wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
     wagerTypeSelect.disabled = true;
     wagerTypeSelect.dispatchEvent(new Event('change'));
   }
