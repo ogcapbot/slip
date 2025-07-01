@@ -1,4 +1,3 @@
-
 import { loadSports } from './sportSelector.js';
 
 const pickForm = document.getElementById('pickForm');
