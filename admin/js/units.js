@@ -27,21 +27,21 @@ if (!unitSummaryContainer) {
   unitSummaryContainer.id = 'unitSummaryContainer';
   unitSummaryContainer.style.marginTop = '10px';
 
-  // Change from flex to grid for 3 columns
+  // Use CSS Grid with 3 columns for layout
   unitSummaryContainer.style.display = 'grid';
-  unitSummaryContainer.style.gridTemplateColumns = '1fr 1fr 1fr'; // 3 equal columns
+  unitSummaryContainer.style.gridTemplateColumns = '1fr 1fr 1fr';
   unitSummaryContainer.style.alignItems = 'center';
-  unitSummaryContainer.style.gap = '0 10px'; // horizontal gap
+  unitSummaryContainer.style.gap = '0 10px';
   unitSummaryContainer.style.display = 'none'; // hidden initially
 
   unitButtonsContainer.parentNode.insertBefore(unitSummaryContainer, unitButtonsContainer);
 }
 
 let unitSummaryText = document.createElement('div');
-// Place in leftmost column, style consistent with other sections
+// Left column styling to match other sections
 unitSummaryText.style.gridColumn = '1 / 2';
-unitSummaryText.style.fontWeight = '600'; // semi-bold
-unitSummaryText.style.fontSize = '16px';  // smaller but readable
+unitSummaryText.style.fontWeight = '600';
+unitSummaryText.style.fontSize = '16px';
 unitSummaryText.style.color = '#000';
 unitSummaryText.style.fontFamily = 'inherit';
 unitSummaryText.style.margin = '0';
@@ -53,14 +53,14 @@ updateUnitBtn.type = 'button';
 updateUnitBtn.textContent = 'Update';
 updateUnitBtn.className = 'pick-btn blue';
 
-// Style the update button to match other buttons but with one line height
-updateUnitBtn.style.gridColumn = '3 / 4'; // rightmost column
+// Right column placement with matching style and single line height
+updateUnitBtn.style.gridColumn = '3 / 4';
 updateUnitBtn.style.minWidth = '100px';
-updateUnitBtn.style.height = '32px';      // compact height for single line text
-updateUnitBtn.style.lineHeight = '32px';  // vertically center text
+updateUnitBtn.style.height = '32px';
+updateUnitBtn.style.lineHeight = '32px';
 updateUnitBtn.style.fontSize = '16px';
 updateUnitBtn.style.fontFamily = 'inherit';
-updateUnitBtn.style.backgroundColor = '#3a82d6'; // example blue, adjust if needed
+updateUnitBtn.style.backgroundColor = '#3a82d6'; // adjust if needed
 updateUnitBtn.style.color = '#fff';
 updateUnitBtn.style.border = 'none';
 updateUnitBtn.style.borderRadius = '10px';
@@ -71,7 +71,7 @@ updateUnitBtn.style.whiteSpace = 'nowrap';
 
 unitSummaryContainer.appendChild(updateUnitBtn);
 
-// Insert an empty spacer in the middle column to keep spacing consistent
+// Spacer in the middle column to balance the layout
 let spacer = document.createElement('div');
 spacer.style.gridColumn = '2 / 3';
 unitSummaryContainer.insertBefore(spacer, updateUnitBtn);
@@ -248,7 +248,7 @@ updateUnitBtn.addEventListener('click', () => {
   });
 });
 
-// Set default selected unit immediately on load
+// Set default selected unit to "1 Unit" on load and update display
 selectedUnit = '1 Unit';
 updateUnitSummaryText();
 
