@@ -1,7 +1,8 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadAdminOptions } from './adminOptions.js';  // NEW import
-import { loadSports } from './sportSelector.js';       // NEW import for direct sportSelector load
+import { loadAdminOptions } from './adminOptions.js';
+import { loadSports } from './sportSelector.js';
+import { loadAdminStats } from './adminStats.js';  // NEW import
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('AccessCode');
