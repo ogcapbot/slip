@@ -1,6 +1,7 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadAdminOptions } from './adminOptions.js';  // NEW import
+import { loadSports } from './sportSelector.js';       // NEW import for direct sportSelector load
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('AccessCode');
@@ -46,8 +47,19 @@ loginBtn.addEventListener('click', async () => {
     if (loginSection) loginSection.style.display = 'none';
     if (pickForm) pickForm.style.display = 'block';
 
-    // Show admin options screen instead of sport selector directly
-    await loadAdminOptions();
+    // Get user document data - assume only one match
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+
+    // Check if Access field contains 'User' (case-insensitive)
+    const accessField = (userData.Access || '').toLowerCase();
+    if (accessField.includes('user')) {
+      // Load sport selector directly for 'User' access
+      await loadSports();
+    } else {
+      // Otherwise load admin options screen
+      await loadAdminOptions();
+    }
 
   } catch (error) {
     if (loginError) loginError.textContent = 'Login failed. Please try again.';
