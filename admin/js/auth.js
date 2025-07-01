@@ -2,13 +2,14 @@ import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadAdminOptions } from './adminOptions.js';
 import { loadSports } from './sportSelector.js';
-import { loadAdminStats } from './adminStats.js';  // NEW import
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('AccessCode');
 const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
+
+let currentUserData = null; // store logged-in user data
 
 if (accessCodeInput && loginBtn) {
   accessCodeInput.addEventListener('keydown', (event) => {
@@ -17,6 +18,34 @@ if (accessCodeInput && loginBtn) {
       loginBtn.click();
     }
   });
+}
+
+// New reusable post-login UI function
+export async function showPostLoginScreen(userData) {
+  if (!userData) {
+    console.error('No user data provided for post-login screen');
+    return;
+  }
+
+  if (loginSection) loginSection.style.display = 'none';
+  if (pickForm) pickForm.style.display = 'block';
+
+  // Check user access level and load corresponding screen
+  const accessField = (userData.Access || '').toLowerCase();
+  if (accessField.includes('user')) {
+    await loadSports();
+  } else {
+    await loadAdminOptions();
+  }
+}
+
+// New function for soft reset
+export async function softReset() {
+  if (!currentUserData) {
+    console.error('No logged-in user data for soft reset');
+    return;
+  }
+  await showPostLoginScreen(currentUserData);
 }
 
 loginBtn.addEventListener('click', async () => {
@@ -44,23 +73,11 @@ loginBtn.addEventListener('click', async () => {
       return;
     }
 
-    // Successful login
-    if (loginSection) loginSection.style.display = 'none';
-    if (pickForm) pickForm.style.display = 'block';
+    // Store logged-in user data for later resets
+    currentUserData = querySnapshot.docs[0].data();
 
-    // Get user document data - assume only one match
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-
-    // Check if Access field contains 'User' (case-insensitive)
-    const accessField = (userData.Access || '').toLowerCase();
-    if (accessField.includes('user')) {
-      // Load sport selector directly for 'User' access
-      await loadSports();
-    } else {
-      // Otherwise load admin options screen
-      await loadAdminOptions();
-    }
+    // Show appropriate post-login UI
+    await showPostLoginScreen(currentUserData);
 
   } catch (error) {
     if (loginError) loginError.textContent = 'Login failed. Please try again.';
