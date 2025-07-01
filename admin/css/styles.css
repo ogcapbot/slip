@@ -312,7 +312,7 @@ button:disabled {
   display: none;
   width: 100%;
   max-width: 390px;
-  margin: 20px auto 4px auto; /* tightened bottom margin */
+  margin: 20px auto 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -348,13 +348,10 @@ button:disabled {
   border: none;
 }
 
-/* Tighten margin/padding between admin section and form */
-#pickForm {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-.admin-container {
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
+/* Override to reduce vertical spacing for #adminStatsContainer */
+#adminStatsContainer.admin-message {
+  margin-top: 4px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  min-height: auto !important;
 }
