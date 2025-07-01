@@ -34,8 +34,13 @@ export function loadAdminOptions() {
 
   // Add event listener for Add New Pick
   addNewPickBtn.addEventListener('click', async () => {
-    // Hide all buttons
-    adminOptionsContainer.style.display = 'none';
+    // Remove admin options container completely
+    if (adminOptionsContainer) {
+      adminOptionsContainer.remove();
+      adminOptionsContainer = null;
+    }
+
+    if (pickForm) pickForm.style.display = 'block';  // Ensure pickForm is visible
 
     // Load sport selector screen
     await loadSports();
