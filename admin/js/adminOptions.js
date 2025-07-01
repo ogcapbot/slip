@@ -5,23 +5,53 @@ const pickForm = document.getElementById('pickForm');
 
 let adminOptionsContainer;
 
+/**
+ * Ensure the hidden select and sport buttons container
+ * exist inside pickForm for sportSelector.js to work properly.
+ */
+function ensureSportSelectorContainers() {
+  let hiddenSelect = document.getElementById('sportSelect');
+  if (!hiddenSelect) {
+    hiddenSelect = document.createElement('select');
+    hiddenSelect.id = 'sportSelect';
+    hiddenSelect.style.display = 'none';
+    pickForm.appendChild(hiddenSelect);
+  }
+
+  let sportButtonsContainer = document.getElementById('sportButtonsContainer');
+  if (!sportButtonsContainer) {
+    sportButtonsContainer = document.createElement('div');
+    sportButtonsContainer.id = 'sportButtonsContainer';
+    pickForm.appendChild(sportButtonsContainer);
+  }
+}
+
+/**
+ * Load the admin options screen with three buttons:
+ * - Add New Pick
+ * - Update Win/Loss (disabled)
+ * - Stats
+ */
 export function loadAdminOptions() {
   if (!pickForm) {
     console.error('pickForm element not found!');
     return;
   }
 
-  pickForm.innerHTML = ''; // Clear any existing content before rendering admin options
+  // Clear all existing content in pickForm before rendering admin options
+  pickForm.innerHTML = '';
 
-  // Clear previous adminOptions container if exists
+  // Remove previous adminOptionsContainer if any
   if (adminOptionsContainer) {
     adminOptionsContainer.remove();
+    adminOptionsContainer = null;
   }
 
+  // Create container for admin option buttons
   adminOptionsContainer = document.createElement('div');
   adminOptionsContainer.id = 'adminOptionsContainer';
 
-  // Style container to match sportButtonsContainer grid style
+  // Style container as 3 equal columns grid
   adminOptionsContainer.style.display = 'grid';
   adminOptionsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   adminOptionsContainer.style.gap = '6px';
@@ -30,45 +60,58 @@ export function loadAdminOptions() {
   // Create buttons
   const addNewPickBtn = createButton('Add New Pick');
   const updateWinLossBtn = createButton('Update Win/Loss', true);
-  const statsBtn = createButton('Stats'); // enabled now
+  const statsBtn = createButton('Stats');
 
-  // Add event listener for Add New Pick
+  // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    // Remove admin options container completely
+    // Clear pickForm to wipe admin options and any old UI
+    pickForm.innerHTML = '';
+
+    // Ensure sport selector containers exist for loadSports to work
+    ensureSportSelectorContainers();
+
+    // Make sure pickForm is visible
+    pickForm.style.display = 'block';
+
+    // Remove admin options container reference
     if (adminOptionsContainer) {
       adminOptionsContainer.remove();
       adminOptionsContainer = null;
     }
 
-    if (pickForm) pickForm.style.display = 'block';  // Ensure pickForm is visible
-
-    // Load sport selector screen
+    // Load sport selector screen fresh
     await loadSports();
   });
 
-  // Add event listener for Stats button
+  // Stats button click handler
   statsBtn.addEventListener('click', async () => {
-    // Hide all buttons
+    // Hide admin options container while showing stats
     adminOptionsContainer.style.display = 'none';
 
     // Load stats screen
     await loadAdminStats();
   });
 
-  // Append buttons in order
+  // Append buttons to the container
   adminOptionsContainer.appendChild(addNewPickBtn);
   adminOptionsContainer.appendChild(updateWinLossBtn);
   adminOptionsContainer.appendChild(statsBtn);
 
-  // Append container to pickForm (or suitable container)
+  // Append container to pickForm
   pickForm.appendChild(adminOptionsContainer);
 }
 
+/**
+ * Utility function to create a styled button.
+ * @param {string} text Button label
+ * @param {boolean} disabled Whether button is disabled
+ * @returns {HTMLButtonElement}
+ */
 function createButton(text, disabled = false) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
-  btn.className = 'pick-btn blue'; // matching sportSelector button styles
+  btn.className = 'pick-btn blue'; // styling consistent with sport selector buttons
 
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
