@@ -2,15 +2,35 @@ body {
   font-family: 'Oswald', sans-serif;
   background: #f9f9f9;
   margin: 0;
-  padding: 0 5px; /* Shrunk horizontal padding */
+  padding: 0 5px;
   display: flex;
   justify-content: center;
+  font-size: 11px;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  transform-origin: top center;
+  transition: transform 0.3s ease;
+}
+
+@media (max-width: 420px) {
+  body {
+    transform: scale(0.85);
+    width: 470px; /* 470 * 0.85 ≈ 400 */
+  }
+}
+
+@media (max-width: 320px) {
+  body {
+    transform: scale(0.75);
+    width: 533px; /* 533 * 0.75 ≈ 400 */
+  }
 }
 
 .container {
   width: 100%;
-  max-width: 390px; /* Reduced 10px from 400 */
-  padding: 10px 5px; /* Shrunk padding to 5px sides */
+  max-width: 390px;
+  padding: 10px 5px;
   box-sizing: border-box;
 }
 
@@ -31,12 +51,12 @@ textarea {
 
 button {
   width: 100%;
-  max-width: 385px; /* 5px smaller than container max-width */
+  max-width: 385px;
   box-sizing: border-box;
-  margin: 0 auto 8px; /* Less bottom margin for tighter vertical spacing */
+  margin: 0 auto 8px;
   display: block;
-  padding: 2px 0; /* Added 2px vertical padding */
-  font-size: 11px; /* smaller font size */
+  padding: 5px 0; /* Updated: 3px added from previous 2px */
+  font-size: 11px;
   background-color: #2a9fd6;
   color: white;
   border: none;
@@ -78,8 +98,12 @@ button:disabled {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 #confirmOutput {
@@ -189,8 +213,13 @@ button:disabled {
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 
 .hypeOutputBlock {
@@ -202,6 +231,7 @@ button:disabled {
   background-color: #eaf6ff;
   user-select: none;
 }
+
 .hypeOutputBlock:focus {
   outline: 2px solid #2179a5;
   outline-offset: 2px;
@@ -264,7 +294,6 @@ button:disabled {
   font-size: 10px;
   font-family: 'Oswald', sans-serif;
   text-align: center;
-
   position: static;
   bottom: auto;
   left: auto;
