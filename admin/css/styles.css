@@ -312,7 +312,7 @@ button:disabled {
   display: none;
   width: 100%;
   max-width: 390px;
-  margin: 20px auto 0 auto;
+  margin: 20px auto 4px auto; /* tightened bottom margin */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
