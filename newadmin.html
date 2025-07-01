@@ -26,17 +26,17 @@
     <!-- Login Section -->
     <section id="loginSection" style="text-align: center;">
       <br><input style="text-align:center;" inputmode="numeric" type="password" id="AccessCode" autofocus required placeholder="Enter Access Code" autocomplete="off" />
-      <br><br><button id="loginBtn" class="pick-btn.blue" max-width="100px;" >Login</button>
+      <br><br><button id="loginBtn" class="pick-btn blue" max-width="100px;" >Login</button>
       <p id="loginError" class="error"></p>
     </section>
 
-    <!-- Admin Buttons Container -->
-    <div id="adminSection" class="admin-container">
-    <h2 class="admin-title">Admin Tools</h2>
-    <div id="adminButtonsContainer" class="admin-buttons-grid"></div>
-    <div id="adminStatsContainer" class="admin-message"></div>
+    <!-- Admin Section -->
+    <div id="adminSection">
+      <div class="admin-container">
+        <div id="adminButtonsContainer" class="admin-buttons-grid"></div>
+      </div>
+      <div id="adminStatsContainer" class="admin-message"></div>
     </div>
-
 
     <!-- Pick Entry Form (Sports Selector) -->
     <form id="pickForm" style="display:none;">
@@ -74,9 +74,9 @@
       </select>
 
       <div id="actionButtonsContainer" style="margin-top: 20px;">
-        <button id="startOverBtn" type="button" class="pick-btn.blue" style="display:none;">Start Over</button>
+        <button id="startOverBtn" type="button" class="pick-btn blue" style="display:none;">Start Over</button>
         <div></div>
-        <button id="submitBtn" type="submit" class="pick-btn.red" style="display:none;">Submit Pick</button>
+        <button id="submitBtn" type="submit" class="pick-btn red" style="display:none;">Submit Pick</button>
       </div>
 
       <p id="pickError" class="error"></p>
