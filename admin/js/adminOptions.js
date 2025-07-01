@@ -5,15 +5,11 @@ const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
 
-let addNewPickBtn;
-let updateWinLossBtn;
-let statsBtn;
-
 export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
   if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
-    console.error('[loadAdminOptions] ERROR: One or more containers NOT found!');
+    console.error('[loadAdminOptions] ERROR: Containers missing');
     return;
   }
 
@@ -22,9 +18,9 @@ export async function loadAdminOptions() {
     pickForm.style.display = 'none';
     adminStatsContainer.style.display = 'none';
 
-    addNewPickBtn = createButton('Add New Pick');
-    updateWinLossBtn = createButton('Update Win/Loss', true);
-    statsBtn = createButton('Stats');
+    const addNewPickBtn = createButton('Add New Pick');
+    const updateWinLossBtn = createButton('Update Win/Loss', true);
+    const statsBtn = createButton('Stats');
 
     adminButtonsContainer.style.display = 'grid';
     adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -35,56 +31,44 @@ export async function loadAdminOptions() {
     adminButtonsContainer.appendChild(updateWinLossBtn);
     adminButtonsContainer.appendChild(statsBtn);
 
-    // Remove any existing listeners to avoid duplicates
-    removeAllEventListeners(addNewPickBtn);
-    removeAllEventListeners(statsBtn);
-
-    // Add New Pick click
     addNewPickBtn.addEventListener('click', async () => {
-      console.log('[Add New Pick] Clicked');
+      console.log('[Add New Pick] clicked');
+      addNewPickBtn.disabled = true;
+      statsBtn.disabled = false;
+      pickForm.style.display = 'block';
+      adminStatsContainer.style.display = 'none';
       try {
-        addNewPickBtn.disabled = true;
-        statsBtn.disabled = false;
-
-        pickForm.style.display = 'block';
-        adminStatsContainer.style.display = 'none';
-
         await loadSports();
-        console.log('[Add New Pick] loadSports() completed');
+        console.log('[Add New Pick] loadSports completed');
       } catch (e) {
-        console.error('[Add New Pick] loadSports() error:', e);
+        console.error('[Add New Pick] loadSports error', e);
       } finally {
         addNewPickBtn.disabled = false;
       }
     });
 
-    // Stats click
     statsBtn.addEventListener('click', async () => {
-      console.log('[Stats] Clicked');
+      console.log('[Stats] clicked');
+      statsBtn.disabled = true;
+      addNewPickBtn.disabled = false;
+      pickForm.style.display = 'none';
+      adminStatsContainer.style.display = 'block';
       try {
-        statsBtn.disabled = true;
-        addNewPickBtn.disabled = false;
-
-        pickForm.style.display = 'none';
-        adminStatsContainer.style.display = 'block';
-
         await loadAdminStats();
-        console.log('[Stats] loadAdminStats() completed');
+        console.log('[Stats] loadAdminStats completed');
       } catch (e) {
-        console.error('[Stats] loadAdminStats() error:', e);
+        console.error('[Stats] loadAdminStats error', e);
       } finally {
         statsBtn.disabled = false;
       }
     });
 
-    // Initial load
     pickForm.style.display = 'block';
     adminStatsContainer.style.display = 'none';
     await loadSports();
-    console.log('[loadAdminOptions] Initial loadSports() completed');
-
+    console.log('[loadAdminOptions] initial loadSports completed');
   } catch (error) {
-    console.error('[loadAdminOptions] Unexpected error:', error);
+    console.error('[loadAdminOptions] error:', error);
   }
 }
 
@@ -93,22 +77,16 @@ function createButton(text, disabled = false) {
   btn.type = 'button';
   btn.textContent = text;
   btn.className = 'pick-btn blue';
+
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
   btn.style.marginBottom = '2px';
+
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
 
   if (disabled) btn.disabled = true;
   return btn;
-}
-
-// Utility to remove all event listeners to avoid duplicates
-function removeAllEventListeners(element) {
-  const oldElement = element;
-  const newElement = oldElement.cloneNode(true);
-  oldElement.parentNode.replaceChild(newElement, oldElement);
-  return newElement;
 }
