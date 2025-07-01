@@ -2,27 +2,16 @@ import { loadAdminStats } from './adminStats.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
-const adminStatsContainer = document.getElementById('adminStatsContainer');
+const pickForm = document.getElementById('pickForm');
 
-if (!adminSection || !adminButtonsContainer || !adminStatsContainer) {
-  console.error('Containers not found! Check HTML IDs.');
-}
-
-const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
+const SUPERADMIN_CODE = 'super123';
 
 export async function loadAdminOptions() {
-  // Show the admin section container on login
   adminSection.style.display = 'block';
-
-  console.log('[loadAdminOptions] called');
-
-  // Clear buttons container
   adminButtonsContainer.innerHTML = '';
+  pickForm.style.display = 'block';
+  pickForm.innerHTML = '';
 
-  // Hide message container initially
-  adminStatsContainer.style.display = 'none';
-
-  // Button definitions: text and message
   const buttons = [
     { text: 'Add New Pick', message: 'Coming Soon... Add New' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
@@ -32,45 +21,29 @@ export async function loadAdminOptions() {
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
-  // Create buttons and add to container
   buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
-      console.log(`[${text}] clicked`);
-
       if (index === 2) {
-        // Stats button clicked
-        await loadAdminStats();
+        await loadAdminStats(pickForm);
       } else if (index >= 3) {
-        // Bottom 3 buttons require password
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
-          showMessage(message);
+          pickForm.style.color = '#444';
+          pickForm.innerHTML = `<p>${message}</p>`;
         } else {
-          showAccessDenied();
+          pickForm.style.color = 'red';
+          pickForm.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
         }
       } else {
-        // Top 2 buttons show placeholder message
-        showMessage(message);
+        pickForm.style.color = '#444';
+        pickForm.innerHTML = `<p>${message}</p>`;
       }
     });
     adminButtonsContainer.appendChild(btn);
   });
 
-  // On initial load, show Stats output automatically
-  await loadAdminStats();
-
-  function showMessage(msg) {
-    adminStatsContainer.style.display = 'block';
-    adminStatsContainer.style.color = '#444'; // normal text color
-    adminStatsContainer.innerHTML = `<p>${msg}</p>`;
-  }
-
-  function showAccessDenied() {
-    adminStatsContainer.style.display = 'block';
-    adminStatsContainer.style.color = 'red';
-    adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
-  }
+  await loadAdminStats(pickForm);
 }
 
 function createButton(text) {
@@ -83,7 +56,6 @@ function createButton(text) {
   btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
   btn.style.marginBottom = '2px';
-
   btn.style.width = '100%';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
