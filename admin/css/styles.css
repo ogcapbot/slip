@@ -11,7 +11,7 @@ body {
 .container {
   width: 100%;
   max-width: 400px;
-  padding: 20px 10px; /* added horizontal padding for mobile */
+  padding: 10px 10px; /* added horizontal padding for mobile */
   margin: 0 auto;
   box-sizing: border-box;
 }
