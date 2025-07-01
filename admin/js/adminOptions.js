@@ -9,7 +9,7 @@ export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
   if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
-    console.error('[loadAdminOptions] ERROR: Missing one or more containers!');
+    console.error('[loadAdminOptions] ERROR: Missing container(s)!');
     return;
   }
 
@@ -24,7 +24,7 @@ export async function loadAdminOptions() {
     const updateWinLossBtn = createButton('Update Win/Loss', true);
     const statsBtn = createButton('Stats');
 
-    // Style admin buttons container
+    // Style container
     adminButtonsContainer.style.display = 'grid';
     adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     adminButtonsContainer.style.gap = '6px';
@@ -35,7 +35,7 @@ export async function loadAdminOptions() {
     adminButtonsContainer.appendChild(updateWinLossBtn);
     adminButtonsContainer.appendChild(statsBtn);
 
-    // Add event listeners
+    // Setup event listeners
 
     addNewPickBtn.addEventListener('click', async () => {
       console.log('[Add New Pick] clicked');
