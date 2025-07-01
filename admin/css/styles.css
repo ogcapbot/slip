@@ -280,7 +280,7 @@ button:active {
   max-width: 400px;           /* matches container width */
   margin: 20px auto 0 auto;  /* centers footer horizontally with spacing */
   color: gray;
-  font-size: 10px;
+  font-size: 8px;
   font-family: 'Oswald', sans-serif;
   text-align: center;
 
