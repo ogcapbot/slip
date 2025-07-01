@@ -1,4 +1,4 @@
-import { loadAdminStats } from './adminStats.js'; // Import adminStats function
+import { loadAdminStats } from './adminStats.js'; // Import the stats module
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -35,41 +35,49 @@ export async function loadAdminOptions() {
   // Create buttons and add to container
   buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       console.log(`[${text}] clicked`);
-      
-      // For bottom 3 buttons, require access code
-      if (index >= 3) { 
+
+      if (index >= 3) {
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
-          showMessage(message);
+          await showContentForButton(text, message);
         } else {
           showAccessDenied();
         }
       } else {
-        // Top 3 buttons behave normally
-        showMessage(message);
+        await showContentForButton(text, message);
       }
     });
     adminButtonsContainer.appendChild(btn);
   });
 
-  // Automatically load admin stats output on load
+  // Load stats automatically on admin screen load
   await loadAdminStats();
-
-  // Commented out to prevent overwriting stats output on load
-  // showMessage(buttons[0].message);
 
   function showMessage(msg) {
     adminStatsContainer.style.display = 'block';
     adminStatsContainer.style.color = '#444'; // normal text color
     adminStatsContainer.innerHTML = `<p>${msg}</p>`;
   }
-  
+
   function showAccessDenied() {
     adminStatsContainer.style.display = 'block';
     adminStatsContainer.style.color = 'red';
     adminStatsContainer.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
+  }
+
+  async function showContentForButton(text, message) {
+    // Clear the main content area
+    adminStatsContainer.innerHTML = '';
+
+    if (text === 'Stats') {
+      // Load and display stats content
+      await loadAdminStats();
+    } else {
+      // Show message for other buttons
+      showMessage(message);
+    }
   }
 }
 
