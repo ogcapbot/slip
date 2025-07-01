@@ -53,8 +53,8 @@ function createButton(text) {
   btn.textContent = text;
   btn.className = 'pick-btn blue';
 
-  btn.style.paddingTop = '10px';
-  btn.style.paddingBottom = '10px';
+  btn.style.paddingTop = '6px';
+  btn.style.paddingBottom = '6px';
   btn.style.marginTop = '2px';
   btn.style.marginBottom = '2px';
 
