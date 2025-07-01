@@ -7,7 +7,7 @@ let adminOptionsContainer = null;
 let currentUserAccess = null;
 
 /**
- * Call this function on user login to load the correct UI based on access level.
+ * Call this on login to load correct UI based on access level
  * @param {string} accessLevel - 'User' or admin roles like 'SuperAdmin'
  */
 export function loginUser(accessLevel) {
@@ -18,21 +18,24 @@ export function loginUser(accessLevel) {
     return;
   }
 
-  // Clear existing content on login
+  // Clear any existing content
   pickForm.innerHTML = '';
   adminOptionsContainer = null;
 
+  // Make sure pickForm is visible
+  pickForm.style.display = 'block';
+
   if (accessLevel === 'User') {
-    // Regular user: load sports selector page directly
+    // Regular user: show sports selector UI immediately
     loadSports();
   } else {
-    // Admin user: load admin options screen
+    // Admin user: show admin options UI
     loadAdminOptions();
   }
 }
 
 /**
- * Load the admin options screen with three buttons:
+ * Load the admin options screen with buttons:
  * - Add New Pick
  * - Update Win/Loss (disabled)
  * - Stats
@@ -46,17 +49,20 @@ export function loadAdminOptions() {
   // Clear pickForm before rendering admin options
   pickForm.innerHTML = '';
 
-  // Remove any existing adminOptionsContainer from DOM
+  // Remove existing container if any
   if (adminOptionsContainer) {
     adminOptionsContainer.remove();
     adminOptionsContainer = null;
   }
 
-  // Create container for admin option buttons
+  // Show pickForm container
+  pickForm.style.display = 'block';
+
+  // Create container div for admin buttons
   adminOptionsContainer = document.createElement('div');
   adminOptionsContainer.id = 'adminOptionsContainer';
 
-  // Style container as 3 equal columns grid
+  // Style as grid with 3 equal columns
   adminOptionsContainer.style.display = 'grid';
   adminOptionsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
   adminOptionsContainer.style.gap = '6px';
@@ -67,46 +73,49 @@ export function loadAdminOptions() {
   const updateWinLossBtn = createButton('Update Win/Loss', true);
   const statsBtn = createButton('Stats');
 
-  // Add New Pick button click handler: switch to user mode UI
+  // Add New Pick button click: switch UI to sports selector (user mode)
   addNewPickBtn.addEventListener('click', async () => {
-    // Clear UI container and reset adminOptionsContainer reference
     pickForm.innerHTML = '';
     adminOptionsContainer = null;
 
-    // Set UI mode to 'User' without logging out
-    currentUserAccess = 'User';
+    pickForm.style.display = 'block';
 
-    // Load sports selector UI (like regular user)
+    // Optionally update UI mode state:
+    // currentUserAccess = 'User';
+
     await loadSports();
   });
 
-  // Stats button click handler: load admin stats screen
+  // Stats button click: load admin stats UI
   statsBtn.addEventListener('click', async () => {
     pickForm.innerHTML = '';
     adminOptionsContainer = null;
+
+    pickForm.style.display = 'block';
+
     await loadAdminStats();
   });
 
-  // Append buttons to the container
+  // Append buttons to container
   adminOptionsContainer.appendChild(addNewPickBtn);
   adminOptionsContainer.appendChild(updateWinLossBtn);
   adminOptionsContainer.appendChild(statsBtn);
 
-  // Append admin options container to pickForm
+  // Append container to pickForm
   pickForm.appendChild(adminOptionsContainer);
 }
 
 /**
- * Utility function to create a styled button.
+ * Utility to create styled button
  * @param {string} text Button label
- * @param {boolean} disabled Whether button is disabled
+ * @param {boolean} disabled Whether to disable button
  * @returns {HTMLButtonElement}
  */
 function createButton(text, disabled = false) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
-  btn.className = 'pick-btn blue'; // styling consistent with sport selector buttons
+  btn.className = 'pick-btn blue';
 
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
