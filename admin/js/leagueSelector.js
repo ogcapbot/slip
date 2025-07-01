@@ -186,7 +186,7 @@ function resetLeagueSelection() {
     changeLeagueBtn = null;
   }
 
-  leagueSelect.innerHTML = '<option value="" disabled selected>Choose League</option>';
+  //leagueSelect.innerHTML = '<option value="" disabled selected>Choose League</option>';
   leagueSelect.disabled = true;
   leagueSelect.dispatchEvent(new Event("change"));
 
