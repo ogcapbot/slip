@@ -10,6 +10,8 @@ let adminOptionsContainer;
  * - Add New Pick
  * - Update Win/Loss (disabled)
  * - Stats
+ *
+ * This implementation toggles visibility instead of removing elements.
  */
 export function loadAdminOptions() {
   if (!pickForm) {
@@ -17,13 +19,13 @@ export function loadAdminOptions() {
     return;
   }
 
-  // Clear all existing content in pickForm before rendering admin options
-  pickForm.innerHTML = '';
+  // Hide the sports selector UI (all existing content in pickForm assumed to be sports selector)
+  pickForm.style.display = 'none';
 
-  // Remove previous adminOptionsContainer if any
+  // If admin options container exists, just show it and return
   if (adminOptionsContainer) {
-    adminOptionsContainer.remove();
-    adminOptionsContainer = null;
+    adminOptionsContainer.style.display = 'grid';
+    return;
   }
 
   // Create container for admin option buttons
@@ -43,30 +45,22 @@ export function loadAdminOptions() {
 
   // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    // Fully clear pickForm content
-    pickForm.innerHTML = '';
+    // Hide admin options container
+    adminOptionsContainer.style.display = 'none';
 
-    // Remove adminOptionsContainer from DOM and reset reference
-    if (adminOptionsContainer) {
-      adminOptionsContainer.remove();
-      adminOptionsContainer = null;
-    }
-
-    // Make sure pickForm is visible
+    // Show the sports selector UI container
     pickForm.style.display = 'block';
 
-    // Load sports selector UI fresh, just like user login
+    // Load sports selector UI (should update content if needed)
     await loadSports();
   });
 
   // Stats button click handler
   statsBtn.addEventListener('click', async () => {
     // Hide admin options container while showing stats
-    if (adminOptionsContainer) {
-      adminOptionsContainer.style.display = 'none';
-    }
+    adminOptionsContainer.style.display = 'none';
 
-    // Load stats screen
+    // Load stats screen (assumed to manage its own UI)
     await loadAdminStats();
   });
 
@@ -75,8 +69,9 @@ export function loadAdminOptions() {
   adminOptionsContainer.appendChild(updateWinLossBtn);
   adminOptionsContainer.appendChild(statsBtn);
 
-  // Append container to pickForm
-  pickForm.appendChild(adminOptionsContainer);
+  // Append container to the body or main container (not inside pickForm)
+  // So admin options and pickForm are siblings and can be toggled independently
+  document.body.appendChild(adminOptionsContainer);
 }
 
 /**
@@ -89,7 +84,7 @@ function createButton(text, disabled = false) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
-  btn.className = 'pick-btn blue'; // styling consistent with sport selector buttons
+  btn.className = 'pick-btn blue';
 
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
