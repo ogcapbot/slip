@@ -3,11 +3,12 @@ import { loadAdminStats } from './adminStats.js';
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
-const pickForm = document.getElementById('pickForm');
 
-if (!adminSection || !adminButtonsContainer || !adminStatsContainer || !pickForm) {
+if (!adminSection || !adminButtonsContainer || !adminStatsContainer) {
   console.error('Containers not found! Check HTML IDs.');
 }
+
+const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
 
 export async function loadAdminOptions() {
   // Show the admin section container on login
@@ -25,13 +26,11 @@ export async function loadAdminOptions() {
   const buttons = [
     { text: 'Add New Pick', message: 'Coming Soon... Add New' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
-    { text: 'Stats', message: 'Coming Soon... Stats' },
+    { text: 'Stats', message: 'Stats' },
     { text: 'Admin 1', message: 'Coming Soon... Admin 1' },
     { text: 'Admin 2', message: 'Coming Soon... Admin 2' },
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
-
-  const SUPERADMIN_CODE = 'super123'; // Your simple hardcoded code
 
   // Create buttons and add to container
   buttons.forEach(({ text, message }, index) => {
@@ -39,36 +38,26 @@ export async function loadAdminOptions() {
     btn.addEventListener('click', async () => {
       console.log(`[${text}] clicked`);
 
-      // For bottom 3 buttons, require access code
-      if (index >= 3) {
+      if (index === 2) {
+        // Stats button clicked
+        await loadAdminStats();
+      } else if (index >= 3) {
+        // Bottom 3 buttons require password
         const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
-          // Show stats form for Stats button
-          if (text === 'Stats') {
-            adminStatsContainer.style.display = 'none';
-            pickForm.style.display = 'block';
-            await loadAdminStats();
-          } else {
-            pickForm.style.display = 'none';
-            adminStatsContainer.style.display = 'block';
-            showMessage(message);
-          }
+          showMessage(message);
         } else {
           showAccessDenied();
         }
       } else {
-        // Top 3 buttons behave normally
-        pickForm.style.display = 'none';
-        adminStatsContainer.style.display = 'block';
+        // Top 2 buttons show placeholder message
         showMessage(message);
       }
     });
     adminButtonsContainer.appendChild(btn);
   });
 
-  // Show initial message (display the stats form on load)
-  pickForm.style.display = 'block';
-  adminStatsContainer.style.display = 'none';
+  // On initial load, show Stats output automatically
   await loadAdminStats();
 
   function showMessage(msg) {
