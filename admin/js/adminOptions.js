@@ -9,13 +9,6 @@ if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
   console.error('Containers not found! Check HTML IDs.');
 }
 
-/**
- * Load the admin screen with three buttons:
- * - Add New Pick (loads sports selector)
- * - Update Win/Loss (disabled)
- * - Stats (loads stats)
- * Shows the relevant section below the buttons depending on button clicks.
- */
 export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
@@ -48,29 +41,27 @@ export async function loadAdminOptions() {
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Add event listeners wired correctly!
+  // *** Correct Event Bindings ***
 
+  // When Add New Pick is clicked, show the sports selector and load sports
   addNewPickBtn.addEventListener('click', async () => {
     console.log('[Add New Pick] clicked');
-    // Show sports selector form, hide stats
     pickForm.style.display = 'block';
     adminStatsContainer.style.display = 'none';
-    // Load sports selector content
     await loadSports();
     console.log('[Add New Pick] loadSports completed');
   });
 
+  // When Stats is clicked, show the admin stats container and load stats
   statsBtn.addEventListener('click', async () => {
     console.log('[Stats] clicked');
-    // Show stats container, hide sports selector form
     adminStatsContainer.style.display = 'block';
     pickForm.style.display = 'none';
-    // Load admin stats content
     await loadAdminStats();
     console.log('[Stats] loadAdminStats completed');
   });
 
-  // Initial state: show sports selector form and load sports
+  // Initial load: show sports selector by default
   pickForm.style.display = 'block';
   adminStatsContainer.style.display = 'none';
 
@@ -78,12 +69,6 @@ export async function loadAdminOptions() {
   console.log('[loadAdminOptions] initial loadSports completed');
 }
 
-/**
- * Creates a styled button element
- * @param {string} text - Button label
- * @param {boolean} disabled - Disabled state (default false)
- * @returns {HTMLButtonElement}
- */
 function createButton(text, disabled = false) {
   console.log(`[createButton] Creating button "${text}" (disabled: ${disabled})`);
 
