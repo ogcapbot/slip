@@ -105,5 +105,25 @@
   <script type="module" src="admin/js/notesSection.js"></script>
   <script type="module" src="admin/js/pickSubmit.js"></script>
 
+  <script>
+    function scalePageToFit() {
+      const designWidth = 400;
+      const screenWidth = window.innerWidth;
+
+      if (screenWidth < designWidth) {
+        const scale = screenWidth / designWidth;
+        document.body.style.transformOrigin = "top left";
+        document.body.style.transform = `scale(${scale})`;
+        document.body.style.width = `${designWidth}px`;
+      } else {
+        document.body.style.transform = "";
+        document.body.style.width = "100%";
+      }
+    }
+
+    window.addEventListener('load', scalePageToFit);
+    window.addEventListener('resize', scalePageToFit);
+  </script>
+
 </body>
 </html>
