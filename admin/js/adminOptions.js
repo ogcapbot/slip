@@ -43,16 +43,19 @@ export function loadAdminOptions() {
 
   // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    // Clear entire pickForm content to remove admin options UI
+    // Fully clear pickForm content
     pickForm.innerHTML = '';
 
-    // Clear reference to adminOptionsContainer
-    adminOptionsContainer = null;
+    // Remove adminOptionsContainer from DOM and reset reference
+    if (adminOptionsContainer) {
+      adminOptionsContainer.remove();
+      adminOptionsContainer = null;
+    }
 
-    // Show pickForm container
+    // Make sure pickForm is visible
     pickForm.style.display = 'block';
 
-    // Call loadSports just like regular user login flow
+    // Load sports selector UI fresh, just like user login
     await loadSports();
   });
 
