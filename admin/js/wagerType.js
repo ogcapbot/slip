@@ -45,7 +45,7 @@ wagerSectionContainer.style.width = '100%';
 wagerSectionContainer.style.maxWidth = '600px';
 
 const wagerTypeLabelNew = document.createElement('label');
-wagerTypeLabelNew.textContent = 'Choose Wager Type';
+//wagerTypeLabelNew.textContent = 'Choose Wager Type';
 wagerTypeLabelNew.style.fontWeight = 'bold';
 wagerTypeLabelNew.style.display = 'inline-block';
 
