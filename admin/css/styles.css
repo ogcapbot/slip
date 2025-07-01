@@ -366,3 +366,8 @@ button:active {
   user-select: none;
 }
 
+#adminSection {
+  display: none;
+}
+
+
