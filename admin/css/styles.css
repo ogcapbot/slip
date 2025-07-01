@@ -24,8 +24,8 @@ body > * {
 /* Responsive scaling on body’s immediate children */
 @media (max-width: 420px) {
   body > * {
-    transform: scale(0.85);
-    width: 470px; /* inverse scaling for ~400px width visually */
+    transform: scale(0.82); /* slightly smaller scale */
+    width: 488px; /* adjust width accordingly */
   }
 }
 
@@ -62,7 +62,7 @@ button {
   box-sizing: border-box;
   margin: 0 auto 8px;
   display: block;
-  padding: 5px 0; /* vertical padding */
+  padding: 4px 0; /* reduce vertical padding */
   font-size: 11px;
   background-color: #2a9fd6;
   color: white;
@@ -314,22 +314,16 @@ button:disabled {
   max-width: 390px;
   margin: 20px auto 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.admin-container {
-  padding: 24px;
-  border-radius: 12px;
-  border: 2px solid #2a9df4; /* bright blue accent */
-  box-shadow: 0 6px 16px rgba(42, 157, 244, 0.2);
-  background: #fff;
-  margin-bottom: 20px;
+  border: 2px solid #2a9fd6; /* added border */
+  border-radius: 12px;        /* rounded corners */
+  padding: 10px 8px;          /* reduced padding for tighter layout */
 }
 
 .admin-buttons-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 4px; /* Reduced gap for tighter buttons */
-  margin-bottom: 0; /* removed extra margin because admin-container has padding */
+  margin-bottom: 10px; /* less space below */
 }
 
 .admin-message {
