@@ -347,3 +347,14 @@ button:disabled {
   background: transparent;
   border: none;
 }
+
+/* Tighten margin/padding between admin section and form */
+#pickForm {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.admin-container {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
