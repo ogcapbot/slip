@@ -295,3 +295,74 @@ button:active {
   box-sizing: content-box;
   z-index: auto;
 }
+
+/* Container style */
+.admin-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid #2a9df4; /* bright blue accent */
+  box-shadow: 0 6px 16px rgba(42, 157, 244, 0.2);
+  background: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title */
+.admin-title {
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2a9df4;
+  border-bottom: 3px solid #2a9df4;
+  padding-bottom: 6px;
+  user-select: none;
+  text-align: center;
+}
+
+/* Buttons grid */
+.admin-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* Button style */
+.pick-btn.blue {
+  background-color: #2a9df4;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 3px 6px rgba(42, 157, 244, 0.4);
+}
+
+.pick-btn.blue:hover:not(:disabled) {
+  background-color: #2377cc;
+}
+
+.pick-btn.blue:disabled {
+  background-color: #a1c6ff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Message container */
+.admin-message {
+  min-height: 100px;
+  border: 1px solid #d1d9e6;
+  border-radius: 10px;
+  padding: 20px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #444;
+  text-align: center;
+  background: #f9fbff;
+  user-select: none;
+}
+
