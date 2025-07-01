@@ -5,10 +5,6 @@ const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 const adminStatsContainer = document.getElementById('adminStatsContainer');
 
-let addNewPickBtn;
-let updateWinLossBtn;
-let statsBtn;
-
 export async function loadAdminOptions() {
   if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
     console.error('Required containers not found!');
@@ -17,9 +13,9 @@ export async function loadAdminOptions() {
 
   adminButtonsContainer.innerHTML = '';
 
-  addNewPickBtn = createButton('Add New Pick');
-  updateWinLossBtn = createButton('Update Win/Loss', true);
-  statsBtn = createButton('Stats');
+  const addNewPickBtn = createButton('Add New Pick');
+  const updateWinLossBtn = createButton('Update Win/Loss', true);
+  const statsBtn = createButton('Stats');
 
   adminButtonsContainer.style.display = 'grid';
   adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -30,7 +26,6 @@ export async function loadAdminOptions() {
   adminButtonsContainer.appendChild(updateWinLossBtn);
   adminButtonsContainer.appendChild(statsBtn);
 
-  // Start with showing sports selector
   pickForm.style.display = 'block';
   adminStatsContainer.style.display = 'none';
   await loadSports();
@@ -61,8 +56,7 @@ function createButton(text, disabled = false) {
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
 
-  if (disabled) {
-    btn.disabled = true;
-  }
+  if (disabled) btn.disabled = true;
+
   return btn;
 }
