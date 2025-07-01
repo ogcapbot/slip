@@ -41,6 +41,7 @@ export async function loadAdminStats() {
     statsDiv.style.fontFamily = 'Oswald, sans-serif';
     statsDiv.style.whiteSpace = 'pre-line';
     statsDiv.style.marginBottom = '12px';
+    statsDiv.style.fontSize = '12px';  // Increased font size here
 
     statsDiv.textContent =
       `Total Official Picks: ${total}\n` +
@@ -66,6 +67,7 @@ export async function loadAdminStats() {
     backBtn.style.boxSizing = 'border-box';
 
     backBtn.addEventListener('click', () => {
+      pickForm.innerHTML = '';   // Clear stats display on back
       loadAdminOptions();
     });
 
