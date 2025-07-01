@@ -9,39 +9,47 @@ export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
   if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
-    console.error('[loadAdminOptions] ERROR: Containers missing');
+    console.error('[loadAdminOptions] ERROR: Missing one or more containers!');
     return;
   }
 
   try {
+    // Clear previous buttons & hide containers
     adminButtonsContainer.innerHTML = '';
     pickForm.style.display = 'none';
     adminStatsContainer.style.display = 'none';
 
+    // Create buttons
     const addNewPickBtn = createButton('Add New Pick');
     const updateWinLossBtn = createButton('Update Win/Loss', true);
     const statsBtn = createButton('Stats');
 
+    // Style admin buttons container
     adminButtonsContainer.style.display = 'grid';
     adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     adminButtonsContainer.style.gap = '6px';
     adminButtonsContainer.style.marginBottom = '12px';
 
+    // Append buttons
     adminButtonsContainer.appendChild(addNewPickBtn);
     adminButtonsContainer.appendChild(updateWinLossBtn);
     adminButtonsContainer.appendChild(statsBtn);
+
+    // Add event listeners
 
     addNewPickBtn.addEventListener('click', async () => {
       console.log('[Add New Pick] clicked');
       addNewPickBtn.disabled = true;
       statsBtn.disabled = false;
+
       pickForm.style.display = 'block';
       adminStatsContainer.style.display = 'none';
+
       try {
         await loadSports();
         console.log('[Add New Pick] loadSports completed');
       } catch (e) {
-        console.error('[Add New Pick] loadSports error', e);
+        console.error('[Add New Pick] loadSports error:', e);
       } finally {
         addNewPickBtn.disabled = false;
       }
@@ -51,24 +59,28 @@ export async function loadAdminOptions() {
       console.log('[Stats] clicked');
       statsBtn.disabled = true;
       addNewPickBtn.disabled = false;
+
       pickForm.style.display = 'none';
       adminStatsContainer.style.display = 'block';
+
       try {
         await loadAdminStats();
         console.log('[Stats] loadAdminStats completed');
       } catch (e) {
-        console.error('[Stats] loadAdminStats error', e);
+        console.error('[Stats] loadAdminStats error:', e);
       } finally {
         statsBtn.disabled = false;
       }
     });
 
+    // Show sports selector by default on load
     pickForm.style.display = 'block';
     adminStatsContainer.style.display = 'none';
     await loadSports();
     console.log('[loadAdminOptions] initial loadSports completed');
+
   } catch (error) {
-    console.error('[loadAdminOptions] error:', error);
+    console.error('[loadAdminOptions] Unexpected error:', error);
   }
 }
 
