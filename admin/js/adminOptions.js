@@ -8,79 +8,86 @@ const adminStatsContainer = document.getElementById('adminStatsContainer');
 export async function loadAdminOptions() {
   console.log('[loadAdminOptions] called');
 
-  if (!adminButtonsContainer || !pickForm || !adminStatsContainer) {
-    console.error('[loadAdminOptions] ERROR: Missing container(s)!');
+  if (!adminButtonsContainer) {
+    console.error('[loadAdminOptions] ERROR: adminButtonsContainer not found!');
+    return;
+  }
+  if (!pickForm) {
+    console.error('[loadAdminOptions] ERROR: pickForm not found!');
+    return;
+  }
+  if (!adminStatsContainer) {
+    console.error('[loadAdminOptions] ERROR: adminStatsContainer not found!');
     return;
   }
 
-  try {
-    // Clear previous buttons & hide containers
-    adminButtonsContainer.innerHTML = '';
-    pickForm.style.display = 'none';
-    adminStatsContainer.style.display = 'none';
+  // Clear buttons and hide content containers
+  adminButtonsContainer.innerHTML = '';
+  pickForm.style.display = 'none';
+  adminStatsContainer.style.display = 'none';
 
-    // Create buttons
-    const addNewPickBtn = createButton('Add New Pick');
-    const updateWinLossBtn = createButton('Update Win/Loss', true);
-    const statsBtn = createButton('Stats');
+  // Create buttons
+  const addNewPickBtn = createButton('Add New Pick');
+  const updateWinLossBtn = createButton('Update Win/Loss', true);
+  const statsBtn = createButton('Stats');
 
-    // Style container
-    adminButtonsContainer.style.display = 'grid';
-    adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    adminButtonsContainer.style.gap = '6px';
-    adminButtonsContainer.style.marginBottom = '12px';
+  // Style container
+  adminButtonsContainer.style.display = 'grid';
+  adminButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  adminButtonsContainer.style.gap = '6px';
+  adminButtonsContainer.style.marginBottom = '12px';
 
-    // Append buttons
-    adminButtonsContainer.appendChild(addNewPickBtn);
-    adminButtonsContainer.appendChild(updateWinLossBtn);
-    adminButtonsContainer.appendChild(statsBtn);
+  // Append buttons to container
+  adminButtonsContainer.appendChild(addNewPickBtn);
+  adminButtonsContainer.appendChild(updateWinLossBtn);
+  adminButtonsContainer.appendChild(statsBtn);
 
-    // Setup event listeners
+  // Setup event listeners
+  addNewPickBtn.addEventListener('click', async () => {
+    console.log('[Add New Pick] clicked');
+    addNewPickBtn.disabled = true;
+    statsBtn.disabled = false;
 
-    addNewPickBtn.addEventListener('click', async () => {
-      console.log('[Add New Pick] clicked');
-      addNewPickBtn.disabled = true;
-      statsBtn.disabled = false;
-
-      pickForm.style.display = 'block';
-      adminStatsContainer.style.display = 'none';
-
-      try {
-        await loadSports();
-        console.log('[Add New Pick] loadSports completed');
-      } catch (e) {
-        console.error('[Add New Pick] loadSports error:', e);
-      } finally {
-        addNewPickBtn.disabled = false;
-      }
-    });
-
-    statsBtn.addEventListener('click', async () => {
-      console.log('[Stats] clicked');
-      statsBtn.disabled = true;
-      addNewPickBtn.disabled = false;
-
-      pickForm.style.display = 'none';
-      adminStatsContainer.style.display = 'block';
-
-      try {
-        await loadAdminStats();
-        console.log('[Stats] loadAdminStats completed');
-      } catch (e) {
-        console.error('[Stats] loadAdminStats error:', e);
-      } finally {
-        statsBtn.disabled = false;
-      }
-    });
-
-    // Show sports selector by default on load
     pickForm.style.display = 'block';
     adminStatsContainer.style.display = 'none';
+
+    try {
+      await loadSports();
+      console.log('[Add New Pick] loadSports completed');
+    } catch (e) {
+      console.error('[Add New Pick] loadSports error:', e);
+    } finally {
+      addNewPickBtn.disabled = false;
+    }
+  });
+
+  statsBtn.addEventListener('click', async () => {
+    console.log('[Stats] clicked');
+    statsBtn.disabled = true;
+    addNewPickBtn.disabled = false;
+
+    pickForm.style.display = 'none';
+    adminStatsContainer.style.display = 'block';
+
+    try {
+      await loadAdminStats();
+      console.log('[Stats] loadAdminStats completed');
+    } catch (e) {
+      console.error('[Stats] loadAdminStats error:', e);
+    } finally {
+      statsBtn.disabled = false;
+    }
+  });
+
+  // Show sports selector by default on load
+  pickForm.style.display = 'block';
+  adminStatsContainer.style.display = 'none';
+
+  try {
     await loadSports();
     console.log('[loadAdminOptions] initial loadSports completed');
-
-  } catch (error) {
-    console.error('[loadAdminOptions] Unexpected error:', error);
+  } catch (e) {
+    console.error('[loadAdminOptions] initial loadSports error:', e);
   }
 }
 
