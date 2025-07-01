@@ -1,13 +1,12 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadSports } from '/admin/js/sportSelector.js';
+import { loadAdminOptions } from './adminOptions.js';  // NEW import
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('AccessCode');
 const loginError = document.getElementById('loginError');
 const loginSection = document.getElementById('loginSection');
 const pickForm = document.getElementById('pickForm');
-const sportSelect = document.getElementById('sportSelect');
 
 if (accessCodeInput && loginBtn) {
   accessCodeInput.addEventListener('keydown', (event) => {
@@ -47,11 +46,9 @@ loginBtn.addEventListener('click', async () => {
     if (loginSection) loginSection.style.display = 'none';
     if (pickForm) pickForm.style.display = 'block';
 
-    // Enable sport select and load sports
-    if (sportSelect) {
-      sportSelect.disabled = false;
-      await loadSports();
-    }
+    // Show admin options screen instead of sport selector directly
+    await loadAdminOptions();
+
   } catch (error) {
     if (loginError) loginError.textContent = 'Login failed. Please try again.';
     console.error('Login error:', error);
