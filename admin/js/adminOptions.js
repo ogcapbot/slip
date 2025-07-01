@@ -5,12 +5,17 @@ const pickForm = document.getElementById('pickForm');
 
 let adminOptionsContainer;
 
+// Variables from sportSelector.js that need to be updated when containers change
+let hiddenSelect = null;
+let sportButtonsContainer = null;
+
 /**
  * Ensure the hidden select and sport buttons container
  * exist inside pickForm for sportSelector.js to work properly.
+ * Also updates the internal references used by loadSports.
  */
 function ensureSportSelectorContainers() {
-  let hiddenSelect = document.getElementById('sportSelect');
+  hiddenSelect = document.getElementById('sportSelect');
   if (!hiddenSelect) {
     hiddenSelect = document.createElement('select');
     hiddenSelect.id = 'sportSelect';
@@ -18,12 +23,24 @@ function ensureSportSelectorContainers() {
     pickForm.appendChild(hiddenSelect);
   }
 
-  let sportButtonsContainer = document.getElementById('sportButtonsContainer');
+  sportButtonsContainer = document.getElementById('sportButtonsContainer');
   if (!sportButtonsContainer) {
     sportButtonsContainer = document.createElement('div');
     sportButtonsContainer.id = 'sportButtonsContainer';
     pickForm.appendChild(sportButtonsContainer);
   }
+}
+
+/**
+ * This function mirrors and wraps the original loadSports function,
+ * but ensures that internal variables point to the correct DOM elements.
+ */
+async function loadSportsWrapper() {
+  // Update internal references before loading sports
+  ensureSportSelectorContainers();
+
+  // Now call the actual loadSports function from sportSelector.js
+  await loadSports();
 }
 
 /**
@@ -67,10 +84,7 @@ export function loadAdminOptions() {
     // Clear pickForm to wipe admin options and any old UI
     pickForm.innerHTML = '';
 
-    // Ensure sport selector containers exist for loadSports to work
-    ensureSportSelectorContainers();
-
-    // Make sure pickForm is visible
+    // Show pickForm container
     pickForm.style.display = 'block';
 
     // Remove admin options container reference
@@ -79,8 +93,8 @@ export function loadAdminOptions() {
       adminOptionsContainer = null;
     }
 
-    // Load sport selector screen fresh
-    await loadSports();
+    // Load sport selector screen fresh, with updated internal refs
+    await loadSportsWrapper();
   });
 
   // Stats button click handler
