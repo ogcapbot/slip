@@ -5,44 +5,6 @@ const pickForm = document.getElementById('pickForm');
 
 let adminOptionsContainer;
 
-// Variables from sportSelector.js that need to be updated when containers change
-let hiddenSelect = null;
-let sportButtonsContainer = null;
-
-/**
- * Ensure the hidden select and sport buttons container
- * exist inside pickForm for sportSelector.js to work properly.
- * Also updates the internal references used by loadSports.
- */
-function ensureSportSelectorContainers() {
-  hiddenSelect = document.getElementById('sportSelect');
-  if (!hiddenSelect) {
-    hiddenSelect = document.createElement('select');
-    hiddenSelect.id = 'sportSelect';
-    hiddenSelect.style.display = 'none';
-    pickForm.appendChild(hiddenSelect);
-  }
-
-  sportButtonsContainer = document.getElementById('sportButtonsContainer');
-  if (!sportButtonsContainer) {
-    sportButtonsContainer = document.createElement('div');
-    sportButtonsContainer.id = 'sportButtonsContainer';
-    pickForm.appendChild(sportButtonsContainer);
-  }
-}
-
-/**
- * This function mirrors and wraps the original loadSports function,
- * but ensures that internal variables point to the correct DOM elements.
- */
-async function loadSportsWrapper() {
-  // Update internal references before loading sports
-  ensureSportSelectorContainers();
-
-  // Now call the actual loadSports function from sportSelector.js
-  await loadSports();
-}
-
 /**
  * Load the admin options screen with three buttons:
  * - Add New Pick
@@ -81,20 +43,18 @@ export function loadAdminOptions() {
 
   // Add New Pick button click handler
   addNewPickBtn.addEventListener('click', async () => {
-    // Clear pickForm to wipe admin options and any old UI
-    pickForm.innerHTML = '';
-
-    // Show pickForm container
-    pickForm.style.display = 'block';
-
-    // Remove admin options container reference
+    // Hide admin options container (no clearing pickForm)
     if (adminOptionsContainer) {
-      adminOptionsContainer.remove();
-      adminOptionsContainer = null;
+      adminOptionsContainer.style.display = 'none';
     }
 
-    // Load sport selector screen fresh, with updated internal refs
-    await loadSportsWrapper();
+    // Show pickForm container
+    if (pickForm) {
+      pickForm.style.display = 'block';
+    }
+
+    // Call loadSports just like user login flow
+    await loadSports();
   });
 
   // Stats button click handler
