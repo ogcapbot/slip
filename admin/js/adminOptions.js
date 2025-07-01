@@ -3,7 +3,33 @@ import { loadAdminStats } from './adminStats.js';
 
 const pickForm = document.getElementById('pickForm');
 
-let adminOptionsContainer;
+let adminOptionsContainer = null;
+let currentUserAccess = null;
+
+/**
+ * Call this function on user login to load the correct UI based on access level.
+ * @param {string} accessLevel - 'User' or admin roles like 'SuperAdmin'
+ */
+export function loginUser(accessLevel) {
+  currentUserAccess = accessLevel;
+
+  if (!pickForm) {
+    console.error('pickForm element not found!');
+    return;
+  }
+
+  // Clear existing content on login
+  pickForm.innerHTML = '';
+  adminOptionsContainer = null;
+
+  if (accessLevel === 'User') {
+    // Regular user: load sports selector page directly
+    loadSports();
+  } else {
+    // Admin user: load admin options screen
+    loadAdminOptions();
+  }
+}
 
 /**
  * Load the admin options screen with three buttons:
@@ -17,10 +43,10 @@ export function loadAdminOptions() {
     return;
   }
 
-  // Clear all existing content in pickForm before rendering admin options
+  // Clear pickForm before rendering admin options
   pickForm.innerHTML = '';
 
-  // Remove previous adminOptionsContainer if any
+  // Remove any existing adminOptionsContainer from DOM
   if (adminOptionsContainer) {
     adminOptionsContainer.remove();
     adminOptionsContainer = null;
@@ -41,28 +67,23 @@ export function loadAdminOptions() {
   const updateWinLossBtn = createButton('Update Win/Loss', true);
   const statsBtn = createButton('Stats');
 
-  // Add New Pick button click handler
+  // Add New Pick button click handler: switch to user mode UI
   addNewPickBtn.addEventListener('click', async () => {
-    // Hide admin options container (no clearing pickForm)
-    if (adminOptionsContainer) {
-      adminOptionsContainer.style.display = 'none';
-    }
+    // Clear UI container and reset adminOptionsContainer reference
+    pickForm.innerHTML = '';
+    adminOptionsContainer = null;
 
-    // Show pickForm container
-    if (pickForm) {
-      pickForm.style.display = 'block';
-    }
+    // Set UI mode to 'User' without logging out
+    currentUserAccess = 'User';
 
-    // Call loadSports just like user login flow
+    // Load sports selector UI (like regular user)
     await loadSports();
   });
 
-  // Stats button click handler
+  // Stats button click handler: load admin stats screen
   statsBtn.addEventListener('click', async () => {
-    // Hide admin options container while showing stats
-    adminOptionsContainer.style.display = 'none';
-
-    // Load stats screen
+    pickForm.innerHTML = '';
+    adminOptionsContainer = null;
     await loadAdminStats();
   });
 
@@ -71,7 +92,7 @@ export function loadAdminOptions() {
   adminOptionsContainer.appendChild(updateWinLossBtn);
   adminOptionsContainer.appendChild(statsBtn);
 
-  // Append container to pickForm
+  // Append admin options container to pickForm
   pickForm.appendChild(adminOptionsContainer);
 }
 
