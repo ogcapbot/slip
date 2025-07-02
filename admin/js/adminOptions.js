@@ -21,8 +21,8 @@ export async function loadAdminOptions() {
     { text: 'Add New Pick', message: '' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
     { text: 'Stats', message: 'Stats' },
-    { text: 'Admin 1', message: 'Coming Soon... Admin 1' },
-    { text: 'Admin 2', message: 'Coming Soon... Admin 2' },
+    { text: 'Refresh All', message: 'Refreshing all data...' },      // Updated Admin 1
+    { text: 'Code {}', message: 'Coming Soon... Code {}' },          // Updated Admin 2
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
@@ -38,7 +38,6 @@ export async function loadAdminOptions() {
       if (index === 0) {
         // Add New Pick button
         if (activeAdminBtn !== btn) {
-          // Reset add-new state only if switching from another button
           resetSportSelectorState();
         }
         try {
@@ -57,8 +56,17 @@ export async function loadAdminOptions() {
         } catch (error) {
           console.error('Error in loadAdminStats():', error);
         }
-      } else if (index >= 3) {
-        // Bottom 3 admin buttons with password prompt
+      } else if (index === 3) {
+        // Refresh All button — clears and reloads stats dynamically
+        try {
+          await loadAdminStats(pickForm);
+          setActiveAdminButton(btn);
+          console.log('Admin UI refreshed: stats loaded');
+        } catch (error) {
+          console.error('Error refreshing admin UI:', error);
+        }
+      } else if (index === 4) {
+        // Code {} button with password prompt
         const enteredCode = prompt('Enter Code to Continue:');
         console.log(`Code entered: ${enteredCode}`);
         if (enteredCode === SUPERADMIN_CODE) {
@@ -73,7 +81,7 @@ export async function loadAdminOptions() {
           // Do NOT change active button on failed access
         }
       } else {
-        // Other buttons (e.g. Update Win/Loss)
+        // Other buttons (e.g., Update Win/Loss)
         pickForm.style.color = '#444';
         pickForm.innerHTML = `<p>${message}</p>`;
         setActiveAdminButton(btn);
