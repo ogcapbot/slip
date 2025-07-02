@@ -88,6 +88,7 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
+  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -122,14 +123,14 @@ function selectSport(button, sport) {
 
   const container = button.parentNode;
 
-  // Clear container and set flex layout for horizontal alignment
+  // Clear container and reset layout to flex row for horizontal alignment
   container.innerHTML = '';
   container.style.display = 'flex';
+  container.style.flexDirection = 'row';
   container.style.justifyContent = 'space-between';
   container.style.alignItems = 'center';
   container.style.marginTop = '8px';
   container.style.width = '100%';
-  container.style.flexWrap = 'nowrap';
 
   // Create and add the selected sport text aligned left
   const selectedText = document.createElement('span');
@@ -138,9 +139,8 @@ function selectSport(button, sport) {
   selectedText.style.fontWeight = '700';
   selectedText.style.fontSize = '11px';
   selectedText.style.userSelect = 'none';
-  selectedText.style.flexGrow = '1';
   selectedText.style.whiteSpace = 'nowrap';
-  selectedText.style.writingMode = 'horizontal-tb';
+  selectedText.style.flexGrow = '1';
   selectedText.style.textAlign = 'left';
   container.appendChild(selectedText);
 
