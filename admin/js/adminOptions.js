@@ -1,6 +1,6 @@
+import { loadAdminStats } from './adminStats.js';
 import { loadSports, resetSportSelectorState } from './sportSelector.js';
 import { loadUpdateWinLoss } from './updateWinloss.js';
-import { loadAdminStats } from './adminStats.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -75,6 +75,7 @@ export async function loadAdminOptions() {
           resetSportSelectorState();
         }
 
+        // Set the pickForm innerHTML including summary and containers for selectors
         pickForm.innerHTML = `
           <h3>Official Pick Summary</h3>
           <p id="summarySport">Sport: Not Selected</p>
@@ -89,10 +90,12 @@ export async function loadAdminOptions() {
           <hr>
           <div id="sportSelectorContainer"></div>
           <div id="leagueSelectorContainer" style="display:none;"></div>
-          <!-- Additional containers for Game, Team, etc can be added here -->
         `;
 
-        await loadSports(document.getElementById('sportSelectorContainer'));
+        // Now that sportSelectorContainer is in DOM, get reference and load sports into it
+        const sportSelectorContainer = document.getElementById('sportSelectorContainer');
+        await loadSports(sportSelectorContainer);
+
         setActiveAdminButton(btn);
         console.log('Initialized Add New Pick with dynamic summary and loaded sports');
         return;
