@@ -24,7 +24,6 @@ function createStyledButton(text, colorClass = 'blue') {
   return btn;
 }
 
-// Helper: format Firestore timestamp to readable string
 function formatTimestamp(ts) {
   if (!ts) return 'N/A';
   if (ts.seconds) {
@@ -91,28 +90,47 @@ export async function loadUpdateWinLoss(container) {
       const btnPush = createStyledButton('Push');
       const btnLost = createStyledButton('Lost');
 
-      // Set initial color based on existing value
       const currentStatus = data.gameWinLossDraw;
-      if (currentStatus === 'Won') {
-        btnWin.classList.replace('blue', 'green');
-      } else if (currentStatus === 'Push') {
-        // Keep blue but no pressed class needed
-      } else if (currentStatus === 'Lost') {
-        btnLost.classList.replace('blue', 'red');
+
+      // Function to hide/show buttons based on selection
+      function showOnlyButton(selectedBtn, status) {
+        [btnWin, btnPush, btnLost].forEach(btn => {
+          if (btn === selectedBtn) {
+            btn.style.display = 'block';
+            btn.classList.remove('blue', 'green', 'red');
+            if (status === 'Won') btn.classList.add('green');
+            else if (status === 'Push') btn.classList.add('blue');
+            else if (status === 'Lost') btn.classList.add('red');
+          } else {
+            btn.style.display = 'none';
+          }
+        });
       }
 
-      // Handler for button click
+      // Initially show only the button corresponding to existing status, else show all
+      if (currentStatus === 'Won') {
+        showOnlyButton(btnWin, 'Won');
+      } else if (currentStatus === 'Push') {
+        showOnlyButton(btnPush, 'Push');
+      } else if (currentStatus === 'Lost') {
+        showOnlyButton(btnLost, 'Lost');
+      } else {
+        // Show all buttons
+        [btnWin, btnPush, btnLost].forEach(btn => {
+          btn.style.display = 'block';
+          btn.classList.remove('green', 'red');
+          btn.classList.add('blue');
+        });
+      }
+
+      // Event handler for all buttons: prompt for password then update
       const onButtonClick = async (status, btnClicked) => {
-        // If clicked the button that matches current status, require password
-        if (currentStatus === status) {
-          const password = prompt('Enter password to change this status:');
-          if (password !== 'super123') {
-            alert('Incorrect password. Status not changed.');
-            return;
-          }
+        const password = prompt('Enter password to update status:');
+        if (password !== 'super123') {
+          alert('Incorrect password. Status not changed.');
+          return;
         }
 
-        // Update DB
         try {
           const docRef = doc(db, 'OfficialPicks', docSnap.id);
           await updateDoc(docRef, { gameWinLossDraw: status });
@@ -122,20 +140,8 @@ export async function loadUpdateWinLoss(container) {
           return;
         }
 
-        // Update button UI:
-        // Show only clicked button, hide others
-        [btnWin, btnPush, btnLost].forEach(btn => {
-          if (btn === btnClicked) {
-            // Set color
-            btn.style.display = 'block';
-            btn.classList.remove('blue', 'green', 'red');
-            if (status === 'Won') btn.classList.add('green');
-            else if (status === 'Push') btn.classList.add('blue'); // push is blue
-            else if (status === 'Lost') btn.classList.add('red');
-          } else {
-            btn.style.display = 'none';
-          }
-        });
+        // Update UI after successful update
+        showOnlyButton(btnClicked, status);
       };
 
       btnWin.addEventListener('click', () => onButtonClick('Won', btnWin));
