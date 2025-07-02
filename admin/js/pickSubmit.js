@@ -16,7 +16,12 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const numberInputContainer = document.getElementById('numberInputContainer');
 const submitBtn = pickForm.querySelector('button[type="submit"]');
 
-// Create or get container for action buttons
+// Hide submit button by default
+submitBtn.style.display = 'none';
+submitBtn.classList.remove('red', 'enabled');
+submitBtn.disabled = true;
+
+// Create or get container for action buttons (if needed for positioning)
 let actionButtonsContainer = document.getElementById('actionButtonsContainer');
 if (!actionButtonsContainer) {
   actionButtonsContainer = document.createElement('div');
@@ -24,28 +29,55 @@ if (!actionButtonsContainer) {
   pickForm.appendChild(actionButtonsContainer);
 }
 
-// Create or get Start Over button
-let startOverBtn = document.getElementById('startOverBtn');
-if (!startOverBtn) {
-  startOverBtn = document.createElement('button');
-  startOverBtn.id = 'startOverBtn';
-  startOverBtn.type = 'button';
-  startOverBtn.textContent = 'Start Over';
-  startOverBtn.className = 'pick-btn blue';
-  actionButtonsContainer.appendChild(startOverBtn);
-} else {
-  // Make sure it's inside container
-  if (startOverBtn.parentNode !== actionButtonsContainer) {
-    actionButtonsContainer.appendChild(startOverBtn);
-  }
+// Move submit button inside container for consistent layout
+if (submitBtn.parentNode !== actionButtonsContainer) {
+  actionButtonsContainer.appendChild(submitBtn);
 }
 
-// Append submit button to container and style it
-actionButtonsContainer.appendChild(submitBtn);
-submitBtn.classList.add('pick-btn', 'red');
-submitBtn.disabled = true;
+// Create a review prompt message element (hidden initially)
+let reviewPrompt = document.getElementById('reviewPrompt');
+if (!reviewPrompt) {
+  reviewPrompt = document.createElement('div');
+  reviewPrompt.id = 'reviewPrompt';
+  reviewPrompt.style.color = '#444';
+  reviewPrompt.style.fontWeight = '600';
+  reviewPrompt.style.marginBottom = '12px';
+  reviewPrompt.style.fontFamily = 'Oswald, sans-serif';
+  reviewPrompt.style.display = 'none';
+  actionButtonsContainer.insertBefore(reviewPrompt, submitBtn);
+}
 
+// Flag to track if phrase has been selected & added to running list
+let phraseSelectedAndAdded = false;
+
+// Function to call when phrase is selected and added to running list
+export function enableSubmitAfterPhrase() {
+  phraseSelectedAndAdded = true;
+  reviewPrompt.textContent = 'Please double-check the data above for accuracy before submitting.';
+  reviewPrompt.style.display = 'block';
+
+  submitBtn.style.display = 'inline-block';
+  submitBtn.classList.remove('red');
+  submitBtn.classList.add('green', 'enabled');
+  submitBtn.disabled = false;
+}
+
+// Function to reset submit button and review prompt (call on form reset)
+function resetSubmitUI() {
+  phraseSelectedAndAdded = false;
+  reviewPrompt.style.display = 'none';
+  reviewPrompt.textContent = '';
+
+  submitBtn.style.display = 'none';
+  submitBtn.disabled = true;
+  submitBtn.classList.remove('green', 'enabled');
+  submitBtn.classList.add('red');
+}
+
+// Form validation (allow submit only if phrase selected and valid form)
 function isFormValid() {
+  if (!phraseSelectedAndAdded) return false;
+
   const sport = sportSelect.value;
   const league = leagueSelect.value;
   const gameId = gameSelect.value;
@@ -68,6 +100,7 @@ function updateSubmitButtonState() {
   }
 }
 
+// Listen to relevant elements to keep submit button state updated
 const watchedElements = [sportSelect, leagueSelect, gameSelect, wagerTypeSelect, unitsSelect, numberInput];
 watchedElements.forEach(el => {
   if (!el) return;
@@ -82,43 +115,9 @@ pickOptionsContainer.addEventListener('click', e => {
   }
 });
 
-// Proper Start Over button handler
-startOverBtn.addEventListener('click', () => {
-  pickError.textContent = '';
-  pickSuccess.textContent = '';
+// No start over button or handler here (removed as requested)
 
-  sportSelect.value = '';
-  leagueSelect.innerHTML = '<option value="">Select a sport first</option>';
-  leagueSelect.disabled = true;
-
-  gameSelect.innerHTML = '<option value="">Select a league first</option>';
-  gameSelect.disabled = true;
-
-  wagerTypeSelect.innerHTML = '<option value="">Select a game first</option>';
-  wagerTypeSelect.disabled = true;
-
-  unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
-  unitsSelect.disabled = true;
-
-  pickOptionsContainer.innerHTML = '';
-  finalPickDescription.textContent = '';
-
-  numberInput.value = '';
-  numberInput.disabled = true;
-  numberInputContainer.style.display = 'none';
-
-  pickOptionsContainer.querySelectorAll('button.green').forEach(btn => btn.classList.remove('green'));
-
-  if (typeof resetNotes === 'function') {
-    resetNotes();
-  }
-
-  sportSelect.disabled = false;
-
-  updateSubmitButtonState();
-});
-
-// Initial submit button update
+// Initialize submit button state on load
 updateSubmitButtonState();
 
 pickForm.addEventListener('submit', async (e) => {
@@ -142,6 +141,7 @@ pickForm.addEventListener('submit', async (e) => {
 
   const notes = getNotesData() || '';
 
+  // Validate again before submit
   if (!sport) return (pickError.textContent = 'Please select a sport.', updateSubmitButtonState());
   if (!league) return (pickError.textContent = 'Please select a league.', updateSubmitButtonState());
   if (!gameId) return (pickError.textContent = 'Please select a game.', updateSubmitButtonState());
@@ -207,11 +207,21 @@ pickForm.addEventListener('submit', async (e) => {
 
     await addDoc(collection(db, 'OfficialPicks'), submissionDoc);
 
-    pickSuccess.textContent = 'Pick submitted successfully!';
+    // After successful submit, clear everything & show success message
+    pickSuccess.textContent = 'Your Official Pick has been successfully entered into the database.';
     pickForm.reset();
 
-    // Reset UI to fresh start after submit
-    startOverBtn.click();
+    // Hide submit button and prompt
+    resetSubmitUI();
+
+    // Clear running selections list (you may have a function for this; 
+    // otherwise, clear pickOptionsContainer here)
+    pickOptionsContainer.innerHTML = '';
+    finalPickDescription.textContent = '';
+
+    if (typeof resetNotes === 'function') {
+      resetNotes();
+    }
 
   } catch (err) {
     console.error('Error submitting pick:', err);
