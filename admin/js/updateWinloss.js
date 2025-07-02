@@ -50,7 +50,22 @@ export async function loadUpdateWinLoss(container) {
       return;
     }
 
-    snapshot.docs.forEach((docSnap, i) => {
+    const docs = snapshot.docs.slice(); // clone array
+
+    docs.sort((a, b) => {
+      const statusA = a.data().gameWinLossDraw;
+      const statusB = b.data().gameWinLossDraw;
+
+      const emptyA = !statusA || statusA === '';
+      const emptyB = !statusB || statusB === '';
+
+      if (emptyA && !emptyB) return -1;
+      if (!emptyA && emptyB) return 1;
+
+      return 0;
+    });
+
+    docs.forEach((docSnap, i) => {
       const data = docSnap.data();
 
       const docRow = document.createElement('div');
@@ -95,7 +110,7 @@ export async function loadUpdateWinLoss(container) {
             btn.classList.remove('blue', 'green', 'red');
             if (status === 'Won') btn.classList.add('green');
             else if (status === 'Push') btn.classList.add('blue');
-            else if (status === 'Lost') btn.classList.add('red'); // Fix applied here
+            else if (status === 'Lost') btn.classList.add('red');
           } else {
             btn.style.display = 'none';
           }
@@ -147,7 +162,7 @@ export async function loadUpdateWinLoss(container) {
 
       container.appendChild(docRow);
 
-      if (i < snapshot.docs.length - 1) {
+      if (i < docs.length - 1) {
         const hr = document.createElement('hr');
         container.appendChild(hr);
       }
