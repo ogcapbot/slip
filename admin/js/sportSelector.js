@@ -88,7 +88,6 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
-  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -129,7 +128,8 @@ function selectSport(button, sport) {
   container.style.justifyContent = 'space-between';
   container.style.alignItems = 'center';
   container.style.marginTop = '8px';
-  container.style.width = '100%'; // Ensure container uses full width
+  container.style.width = '100%';
+  container.style.flexWrap = 'nowrap';
 
   // Create and add the selected sport text aligned left
   const selectedText = document.createElement('span');
@@ -138,7 +138,10 @@ function selectSport(button, sport) {
   selectedText.style.fontWeight = '700';
   selectedText.style.fontSize = '11px';
   selectedText.style.userSelect = 'none';
-  selectedText.style.flexGrow = '1'; // Take all remaining space on left
+  selectedText.style.flexGrow = '1';
+  selectedText.style.whiteSpace = 'nowrap';
+  selectedText.style.writingMode = 'horizontal-tb';
+  selectedText.style.textAlign = 'left';
   container.appendChild(selectedText);
 
   // Create the smaller change button aligned right
@@ -146,13 +149,13 @@ function selectSport(button, sport) {
   changeSportBtn.type = 'button';
   changeSportBtn.textContent = 'Change';
   changeSportBtn.className = 'pick-btn change-btn';
-  changeSportBtn.style.minWidth = '60px';   // smaller width
-  changeSportBtn.style.height = '22px';     // shorter height
-  changeSportBtn.style.fontSize = '11px';   // smaller font
+  changeSportBtn.style.minWidth = '60px';
+  changeSportBtn.style.height = '22px';
+  changeSportBtn.style.fontSize = '11px';
   changeSportBtn.style.padding = '0 8px';
   changeSportBtn.style.cursor = 'pointer';
-  changeSportBtn.style.flexShrink = '0';    // Prevent shrinking
-  changeSportBtn.style.marginLeft = '10px'; // Add some space from text
+  changeSportBtn.style.flexShrink = '0';
+  changeSportBtn.style.marginLeft = '10px';
 
   changeSportBtn.addEventListener('click', () => {
     resetSportSelection();
