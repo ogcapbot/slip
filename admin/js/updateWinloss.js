@@ -1,5 +1,5 @@
 import { db } from '../firebaseInit.js';
-import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const requiredFields = [
   'sport',
@@ -44,18 +44,14 @@ export async function loadUpdateWinLoss(container) {
 
   try {
     const officialPicksRef = collection(db, 'OfficialPicks');
-    const qNull = query(officialPicksRef, where('gameWinLossDraw', '==', null));
-    const snapshotNull = await getDocs(qNull);
-    const qEmpty = query(officialPicksRef, where('gameWinLossDraw', '==', ''));
-    const snapshotEmpty = await getDocs(qEmpty);
-    const combinedDocs = [...snapshotNull.docs, ...snapshotEmpty.docs];
+    const snapshot = await getDocs(officialPicksRef);
 
-    if (combinedDocs.length === 0) {
-      container.textContent = 'No picks pending Win/Loss update.';
+    if (snapshot.empty) {
+      container.textContent = 'No picks found.';
       return;
     }
 
-    combinedDocs.forEach((docSnap, i) => {
+    snapshot.docs.forEach((docSnap, i) => {
       const data = docSnap.data();
 
       // Container for the whole doc row (2 columns)
@@ -90,66 +86,61 @@ export async function loadUpdateWinLoss(container) {
       buttonsCol.style.width = '110px'; // fixed width for buttons
       buttonsCol.style.flexShrink = '0';
 
-      // Track pressed button for this doc
-      let pressedBtn = null;
-
       // Create buttons
       const btnWin = createStyledButton('Win');
       const btnPush = createStyledButton('Push');
       const btnLost = createStyledButton('Lost');
 
-      // Set initial pressed button based on existing value
+      // Set initial color based on existing value
       const currentStatus = data.gameWinLossDraw;
       if (currentStatus === 'Won') {
         btnWin.classList.replace('blue', 'green');
-        pressedBtn = btnWin;
       } else if (currentStatus === 'Push') {
-        // Keep blue but pressed style
-        btnPush.classList.add('pressed'); // We'll define this class in CSS below
-        pressedBtn = btnPush;
+        // Keep blue but no pressed class needed
       } else if (currentStatus === 'Lost') {
         btnLost.classList.replace('blue', 'red');
-        pressedBtn = btnLost;
       }
 
-      // Button click handler to update status and UI
-      const updateStatus = async (status, btn) => {
-        if (pressedBtn === btn) return; // no change
+      // Handler for button click
+      const onButtonClick = async (status, btnClicked) => {
+        // If clicked the button that matches current status, require password
+        if (currentStatus === status) {
+          const password = prompt('Enter password to change this status:');
+          if (password !== 'super123') {
+            alert('Incorrect password. Status not changed.');
+            return;
+          }
+        }
 
+        // Update DB
         try {
           const docRef = doc(db, 'OfficialPicks', docSnap.id);
           await updateDoc(docRef, { gameWinLossDraw: status });
-
-          // Reset previously pressed button styles
-          if (pressedBtn) {
-            pressedBtn.classList.remove('green', 'red', 'pressed');
-            pressedBtn.classList.add('blue');
-          }
-
-          // Set new pressed button style
-          if (status === 'Won') {
-            btn.classList.replace('blue', 'green');
-            btn.classList.remove('pressed');
-          } else if (status === 'Push') {
-            btn.classList.add('pressed');
-            btn.classList.remove('green', 'red');
-            btn.classList.remove('blue'); // remove blue for pressed style
-          } else if (status === 'Lost') {
-            btn.classList.replace('blue', 'red');
-            btn.classList.remove('pressed');
-          }
-
-          pressedBtn = btn;
-
         } catch (error) {
-          alert('Failed to update status. Check console for details.');
+          alert('Failed to update status. See console for details.');
           console.error('Error updating status:', error);
+          return;
         }
+
+        // Update button UI:
+        // Show only clicked button, hide others
+        [btnWin, btnPush, btnLost].forEach(btn => {
+          if (btn === btnClicked) {
+            // Set color
+            btn.style.display = 'block';
+            btn.classList.remove('blue', 'green', 'red');
+            if (status === 'Won') btn.classList.add('green');
+            else if (status === 'Push') btn.classList.add('blue'); // push is blue
+            else if (status === 'Lost') btn.classList.add('red');
+          } else {
+            btn.style.display = 'none';
+          }
+        });
       };
 
-      btnWin.addEventListener('click', () => updateStatus('Won', btnWin));
-      btnPush.addEventListener('click', () => updateStatus('Push', btnPush));
-      btnLost.addEventListener('click', () => updateStatus('Lost', btnLost));
+      btnWin.addEventListener('click', () => onButtonClick('Won', btnWin));
+      btnPush.addEventListener('click', () => onButtonClick('Push', btnPush));
+      btnLost.addEventListener('click', () => onButtonClick('Lost', btnLost));
 
       buttonsCol.appendChild(btnWin);
       buttonsCol.appendChild(btnPush);
@@ -160,7 +151,7 @@ export async function loadUpdateWinLoss(container) {
       container.appendChild(docRow);
 
       // Horizontal separator except after last
-      if (i < combinedDocs.length - 1) {
+      if (i < snapshot.docs.length - 1) {
         const hr = document.createElement('hr');
         container.appendChild(hr);
       }
