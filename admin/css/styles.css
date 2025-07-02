@@ -380,4 +380,32 @@ button:disabled {
   color: white;
 }
 
+.selected-sport-container {
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 6px 12px;
+  max-width: 400px; /* optional */
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+  color: #333;
+}
+
+.selected-sport-text {
+  flex-grow: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-sport-change-btn {
+  height: 22px;
+  font-size: 11px;
+  min-width: 60px;
+  padding: 0 10px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+
 
