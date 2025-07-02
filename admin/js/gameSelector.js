@@ -1,5 +1,6 @@
 import { db } from "../firebaseInit.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { loadTeams } from './teamSelector.js';  // Next step selector
 
 const gameSelect = document.getElementById("gameSelect");
 let gameButtonsContainer = document.getElementById("gameButtonsContainer");
@@ -18,7 +19,6 @@ if (!gameButtonsContainer) {
   }
 }
 
-// Hide the original gameSelect dropdown but keep for compatibility
 if (gameSelect) {
   gameSelect.style.display = "none";
 }
@@ -99,12 +99,12 @@ function createGameButton(id, gameData) {
 
   btn.textContent = `${gameData.homeTeam || "Home"} vs ${gameData.awayTeam || "Away"} — ${timeString}`;
 
-  btn.addEventListener("click", () => selectGame(id, btn.textContent));
+  btn.addEventListener("click", () => selectGame(id, btn.textContent, gameData));
 
   return btn;
 }
 
-function selectGame(gameId, gameDescription) {
+function selectGame(gameId, gameDescription, gameData) {
   if (selectedGameId === gameId) return;
 
   selectedGameId = gameId;
@@ -131,6 +131,6 @@ function selectGame(gameId, gameDescription) {
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
 
-  // TODO: Call next selector here, e.g.
-  // loadWagerType(null, gameId);
+  // Call next selector: loadTeams for this game
+  loadTeams(null, gameData);
 }
