@@ -15,35 +15,42 @@ if (!leagueButtonsContainer) {
     console.log("[LeagueSelector] Inserting leagueButtonsContainer after label.");
     leagueLabel.parentNode.insertBefore(leagueButtonsContainer, leagueLabel.nextSibling);
   } else if (leagueSelect && leagueSelect.parentNode) {
-    console.log("[LeagueSelector] Appending leagueButtonsContainer to leagueSelect parent.");
+    console.log("[LeagueSelector] Appending leagueButtonsContainer to leagueSelect's parent.");
     leagueSelect.parentNode.appendChild(leagueButtonsContainer);
   } else {
-    console.log("[LeagueSelector] Appending leagueButtonsContainer to document.body.");
+    console.log("[LeagueSelector] Appending leagueButtonsContainer to body.");
     document.body.appendChild(leagueButtonsContainer);
   }
 } else {
   console.log("[LeagueSelector] leagueButtonsContainer found.");
 }
 
+// Hide the original leagueSelect dropdown but keep for compatibility
 if (leagueSelect) {
   leagueSelect.style.display = "none";
   console.log("[LeagueSelector] leagueSelect dropdown hidden.");
+} else {
+  console.warn("[LeagueSelector] leagueSelect element not found!");
 }
 
 let selectedLeague = null;
 
 export async function loadLeagues(container = null, selectedSport = null) {
+  console.log("[LeagueSelector] loadLeagues called with selectedSport:", selectedSport);
   const targetContainer = container || leagueButtonsContainer;
 
-  console.log("[LeagueSelector] loadLeagues called with selectedSport:", selectedSport);
   targetContainer.innerHTML = "";
   selectedLeague = null;
 
-  leagueSelect.innerHTML = '<option>Select a sport first</option>';
-  leagueSelect.disabled = true;
+  if (leagueSelect) {
+    leagueSelect.innerHTML = '<option>Select a sport first</option>';
+    leagueSelect.disabled = true;
+  } else {
+    console.warn("[LeagueSelector] leagueSelect element not found on loadLeagues start.");
+  }
 
   if (!selectedSport) {
-    console.log("[LeagueSelector] No sport selected, exiting loadLeagues.");
+    console.log("[LeagueSelector] No sport selected, returning early.");
     return; // No sport selected yet, nothing to do
   }
 
@@ -53,23 +60,24 @@ export async function loadLeagues(container = null, selectedSport = null) {
     const q = query(collection(db, "GameCache"), where("leagueGroup", "==", selectedSport));
     console.log("[LeagueSelector] Querying GameCache for leagueGroup == ", selectedSport);
     const querySnapshot = await getDocs(q);
-
     console.log("[LeagueSelector] Retrieved league documents count:", querySnapshot.size);
 
     const leaguesSet = new Set();
     querySnapshot.forEach(doc => {
       const data = doc.data();
       if (data && data.sportName) {
-        leaguesSet.add(data.sportName);
         console.log("[LeagueSelector] Found league:", data.sportName);
+        leaguesSet.add(data.sportName);
       }
     });
 
     if (leaguesSet.size === 0) {
-      console.log("[LeagueSelector] No leagues found for sport:", selectedSport);
       targetContainer.textContent = "No leagues found";
-      leagueSelect.innerHTML = '<option>No leagues found</option>';
-      leagueSelect.disabled = true;
+      if (leagueSelect) {
+        leagueSelect.innerHTML = '<option>No leagues found</option>';
+        leagueSelect.disabled = true;
+      }
+      console.log("[LeagueSelector] No leagues found for selected sport.");
       return;
     }
 
@@ -101,12 +109,13 @@ export async function loadLeagues(container = null, selectedSport = null) {
       btn.style.minWidth = "0";
       btn.style.boxSizing = "border-box";
 
-      btn.addEventListener("click", () => selectLeague(league));
+      btn.addEventListener("click", () => {
+        console.log(`[LeagueSelector] Button clicked for league: ${league}`);
+        selectLeague(league);
+      });
       targetContainer.appendChild(btn);
     });
-
     console.log("[LeagueSelector] All league buttons created and appended.");
-
   } catch (error) {
     targetContainer.textContent = "Error loading leagues";
     console.error("[LeagueSelector] Error loading leagues:", error);
@@ -114,9 +123,9 @@ export async function loadLeagues(container = null, selectedSport = null) {
 }
 
 function selectLeague(league) {
-  console.log("[LeagueSelector] selectLeague called with:", league);
+  console.log("[LeagueSelector] selectLeague fired for:", league);
   if (selectedLeague === league) {
-    console.log("[LeagueSelector] League already selected, ignoring:", league);
+    console.log("[LeagueSelector] League already selected, ignoring.");
     return;
   }
 
@@ -134,29 +143,20 @@ function selectLeague(league) {
 
   leagueButtonsContainer.appendChild(summaryLine);
 
-  leagueSelect.innerHTML = "";
-  const option = document.createElement("option");
-  option.value = league;
-  option.selected = true;
-  leagueSelect.appendChild(option);
-  leagueSelect.disabled = false;
-  leagueSelect.dispatchEvent(new Event("change"));
-
-  console.log("[LeagueSelector] Hidden select updated and change event dispatched.");
+  // Update hidden select for compatibility
+  if (leagueSelect) {
+    leagueSelect.innerHTML = "";
+    const option = document.createElement("option");
+    option.value = league;
+    option.selected = true;
+    leagueSelect.appendChild(option);
+    leagueSelect.disabled = false;
+    leagueSelect.dispatchEvent(new Event("change"));
+  } else {
+    console.warn("[LeagueSelector] leagueSelect element not found in selectLeague.");
+  }
 
   // Call next selector with the selected league
   console.log("[LeagueSelector] Calling loadGames with league:", league);
   loadGames(null, league);
-}
-
-export function resetLeagueSelectorState() {
-  console.log("[LeagueSelector] resetLeagueSelectorState called.");
-  selectedLeague = null;
-  if (leagueButtonsContainer) {
-    leagueButtonsContainer.innerHTML = "";
-  }
-  if (leagueSelect) {
-    leagueSelect.innerHTML = "";
-    leagueSelect.dispatchEvent(new Event("change"));
-  }
 }
