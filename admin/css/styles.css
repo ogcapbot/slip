@@ -375,3 +375,9 @@ button:disabled {
   transform: translateY(2px);
 }
 
+.red {
+  background-color: #d9534f;
+  color: white;
+}
+
+
