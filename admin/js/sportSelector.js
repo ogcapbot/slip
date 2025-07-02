@@ -88,6 +88,7 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
+  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -122,48 +123,47 @@ function selectSport(button, sport) {
 
   const container = button.parentNode;
 
-  // Clear container for new layout
+  // Clear container content
   container.innerHTML = '';
 
-  // Create container for selected sport and change button
-  const selectedContainer = document.createElement('div');
-  selectedContainer.style.display = 'flex';
-  selectedContainer.style.alignItems = 'center';
-  selectedContainer.style.justifyContent = 'space-between';
-  selectedContainer.style.marginTop = '8px';
-  selectedContainer.style.marginBottom = '8px';
-  selectedContainer.style.padding = '4px 8px';
-  selectedContainer.style.borderRadius = '6px';
-  selectedContainer.style.backgroundColor = '#f0f0f0';
+  // Change layout to flex for selected sport + change button
+  container.style.display = 'flex';
+  container.style.flexDirection = 'row';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'flex-start';
+  container.style.gap = '12px';  // spacing between text and button
+  container.style.marginTop = '8px';
+  container.style.padding = '8px';
+  container.style.backgroundColor = '#f9f9f9';  // subtle background
+  container.style.borderRadius = '6px';
+  container.style.maxWidth = '400px';  // optional max width
 
-  // Selected sport text
+  // Create selected sport text
   const selectedText = document.createElement('span');
   selectedText.textContent = `Selected Sport: ${sport}`;
   selectedText.style.fontWeight = '600';
-  selectedText.style.fontFamily = 'Oswald, sans-serif';
-  selectedText.style.fontSize = '14px';
-  selectedText.style.color = '#333';
+  selectedText.style.fontSize = '16px';
+  container.appendChild(selectedText);
 
-  // Change button
-  const changeBtn = document.createElement('button');
-  changeBtn.type = 'button';
-  changeBtn.textContent = 'Change';
-  changeBtn.className = 'pick-btn blue';
-  changeBtn.style.fontSize = '12px';
-  changeBtn.style.padding = '4px 10px';
-  changeBtn.style.marginLeft = '12px';
-  changeBtn.style.minWidth = '70px';
-  changeBtn.style.height = '32px';
-  changeBtn.style.boxSizing = 'border-box';
+  // Create Change button if not already created
+  if (!changeSportBtn) {
+    changeSportBtn = document.createElement('button');
+    changeSportBtn.type = 'button';
+    changeSportBtn.textContent = 'Change';
+    changeSportBtn.className = 'pick-btn blue';
+    changeSportBtn.style.minWidth = '80px';
+    changeSportBtn.style.width = 'auto';
+    changeSportBtn.style.boxSizing = 'border-box';
+    changeSportBtn.style.margin = '0';
+    changeSportBtn.style.padding = '6px 12px';
+    changeSportBtn.style.fontSize = '14px';
+    changeSportBtn.style.cursor = 'pointer';
 
-  changeBtn.addEventListener('click', () => {
-    resetSportSelection();
-  });
-
-  selectedContainer.appendChild(selectedText);
-  selectedContainer.appendChild(changeBtn);
-
-  container.appendChild(selectedContainer);
+    changeSportBtn.addEventListener('click', () => {
+      resetSportSelection();
+    });
+  }
+  container.appendChild(changeSportBtn);
 
   updateHiddenSelect(sport);
 }
