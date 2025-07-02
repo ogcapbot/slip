@@ -7,8 +7,8 @@ const pickForm = document.getElementById('pickForm');
 
 const SUPERADMIN_CODE = 'super123';
 
-let activeAdminBtn = null; // Track active admin button
-let statsBtn = null;       // Reference to Stats button for default active state
+let activeAdminBtn = null;
+let statsBtn = null;
 
 export async function loadAdminOptions() {
   console.log('loadAdminOptions called');
@@ -22,8 +22,8 @@ export async function loadAdminOptions() {
     { text: 'Add New Pick', message: '' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
     { text: 'Stats', message: 'Stats' },
-    { text: 'Refresh All', message: 'Refreshing all data...' },      // Updated Admin 1
-    { text: 'Code {}', message: 'Coming Soon... Code {}' },          // Updated Admin 2
+    { text: 'Refresh All', message: 'Refreshing all data...' },
+    { text: 'Code {}', message: 'Coming Soon... Code {}' },
     { text: 'Settings', message: 'Coming Soon... Settings' },
   ];
 
@@ -32,19 +32,17 @@ export async function loadAdminOptions() {
     const btn = createButton(text);
 
     if (index === 2) {
-      statsBtn = btn; // Save reference to Stats button
+      statsBtn = btn;
     }
 
     btn.addEventListener('click', async () => {
       console.log(`Button clicked: ${text} at index ${index}`);
 
-      // Reset color to default every time except when showing password fail message below
+      // Reset color on every button click except password fail case
       pickForm.style.color = '#444';
+      pickForm.innerHTML = '';
 
-      pickForm.innerHTML = ''; // Clear UI on every button press
-
-      if (index === 4) {
-        // Password prompt block, override color if fail below
+      if (index === 4 || index === 5) {  // Code {} and Settings require password
         const enteredCode = prompt('Enter Code to Continue:');
         console.log(`Code entered: ${enteredCode}`);
         if (enteredCode === SUPERADMIN_CODE) {
@@ -52,16 +50,26 @@ export async function loadAdminOptions() {
           setActiveAdminButton(btn);
           console.log('Access granted, message displayed');
         } else {
-          pickForm.style.color = 'red'; // override color only here on failure
+          pickForm.style.color = 'red';
           pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
           console.warn('Access denied due to incorrect code');
-          // Do NOT change active button on failed access
+          return;  // Do NOT change active button on fail
         }
-        return; // Return here to prevent further execution
+        return;
       }
 
-      if (index === 0) {
-        // Add New Pick button
+      if (index === 3) {  // Refresh All no password, reload stats & set Stats active
+        try {
+          await loadAdminStats(pickForm);
+          setActiveAdminButton(statsBtn);
+          console.log('Admin UI refreshed: stats loaded, Stats button set active');
+        } catch (error) {
+          console.error('Error refreshing admin UI:', error);
+        }
+        return;
+      }
+
+      if (index === 0) {  // Add New Pick - reset sport selector state before loading sports
         if (activeAdminBtn !== btn) {
           resetSportSelectorState();
         }
@@ -72,8 +80,10 @@ export async function loadAdminOptions() {
         } catch (error) {
           console.error('Error in loadSports():', error);
         }
-      } else if (index === 2) {
-        // Stats button
+        return;
+      }
+
+      if (index === 2) {  // Stats button
         try {
           await loadAdminStats(pickForm);
           setActiveAdminButton(btn);
@@ -81,22 +91,13 @@ export async function loadAdminOptions() {
         } catch (error) {
           console.error('Error in loadAdminStats():', error);
         }
-      } else if (index === 3) {
-        // Refresh All button — clears and reloads stats dynamically
-        try {
-          await loadAdminStats(pickForm);
-          setActiveAdminButton(statsBtn); // Set Stats button active after refresh
-          console.log('Admin UI refreshed: stats loaded, Stats button set active');
-        } catch (error) {
-          console.error('Error refreshing admin UI:', error);
-        }
-      } else {
-        // Other buttons (e.g., Update Win/Loss, Settings)
-        pickForm.style.color = '#444';
-        pickForm.innerHTML = `<p>${message}</p>`;
-        setActiveAdminButton(btn);
-        console.log('Placeholder message displayed');
+        return;
       }
+
+      // All other buttons
+      pickForm.innerHTML = `<p>${message}</p>`;
+      setActiveAdminButton(btn);
+      console.log('Placeholder message displayed');
     });
 
     adminButtonsContainer.appendChild(btn);
@@ -106,17 +107,13 @@ export async function loadAdminOptions() {
 
   try {
     await loadAdminStats(pickForm);
-    setActiveAdminButton(statsBtn); // Stats button active by default after login
+    setActiveAdminButton(statsBtn);
     console.log('Initial loadAdminStats() call completed, Stats button set active');
   } catch (error) {
     console.error('Error during initial loadAdminStats() call:', error);
   }
 }
 
-/**
- * Set the given button as active, and remove active styles from previous button
- * @param {HTMLElement|null} btn 
- */
 function setActiveAdminButton(btn) {
   if (activeAdminBtn) {
     activeAdminBtn.classList.remove('green', 'pressed');
