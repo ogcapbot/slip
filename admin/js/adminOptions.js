@@ -1,6 +1,5 @@
 import { loadAdminStats } from './adminStats.js';
 import { loadSports } from './sportSelector.js';
-import { softReset } from './auth.js'; // Assuming softReset is needed for UI reset
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -27,7 +26,6 @@ export async function loadAdminOptions() {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
       if (index === 0) {
-        pickForm.innerHTML = ''; // Clear existing content before loading sports
         await loadSports();
       } else if (index === 2) {
         await loadAdminStats(pickForm);
