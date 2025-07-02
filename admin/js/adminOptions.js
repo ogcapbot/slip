@@ -27,13 +27,13 @@ export async function loadAdminOptions() {
       if (index === 2) {
         await loadAdminStats(pickForm);
       } else if (index >= 3) {
-        const enteredCode = prompt('Enter SuperAdmin Code to Continue:');
+        const enteredCode = prompt('Enter Code to Continue:');
         if (enteredCode === SUPERADMIN_CODE) {
           pickForm.style.color = '#444';
           pickForm.innerHTML = `<p>${message}</p>`;
         } else {
           pickForm.style.color = 'red';
-          pickForm.innerHTML = `<p>Access Denied - The SuperAdmin Code entered is incorrect</p>`;
+          pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
         }
       } else {
         pickForm.style.color = '#444';
