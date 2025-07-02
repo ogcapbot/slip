@@ -223,7 +223,6 @@ function updateUnitSummaryText() {
   }
 }
 
-// Expose for "Update" button click to allow re-selecting unit
 updateUnitBtn.addEventListener('click', () => {
   unitButtonsContainer.style.display = 'grid';
   unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -241,12 +240,10 @@ updateUnitBtn.addEventListener('click', () => {
   unitSummaryContainer.style.display = 'none';
 });
 
-// Update the running summary container (assumed to be with id "pickSummaryContainer")
 function updatePickSummary() {
   const pickSummaryContainer = document.getElementById('pickSummaryContainer');
   if (!pickSummaryContainer) return;
 
-  // Remove any existing "Unit Selected" line so we can replace it
   let existing = Array.from(pickSummaryContainer.querySelectorAll('p')).find(p => p.dataset.label === 'Unit Selected');
   if (existing) {
     pickSummaryContainer.removeChild(existing);
@@ -261,6 +258,11 @@ function updatePickSummary() {
 }
 
 export { loadUnits, updateUnitSummaryText, showUnitSection };
+
+function showUnitSection() {
+  unitSummaryContainer.style.display = 'grid';
+  unitButtonsContainer.style.display = 'none';
+}
 
 // Initial load of all units buttons
 loadUnits();
