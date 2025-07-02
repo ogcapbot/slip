@@ -1,7 +1,5 @@
 import { db } from "../firebaseInit.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-// Import next step selector here, e.g. loadWagerType from wagerType.js when ready
-// import { loadWagerType } from './wagerType.js';
 
 const gameSelect = document.getElementById("gameSelect");
 let gameButtonsContainer = document.getElementById("gameButtonsContainer");
