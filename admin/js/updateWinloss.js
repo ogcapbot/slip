@@ -1,4 +1,3 @@
-
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -21,12 +20,11 @@ export async function loadUpdateWinLoss(container) {
 
   try {
     const officialPicksRef = collection(db, 'OfficialPicks');
-    // Query where gameWinLossDraw is null or empty string
-    const q = query(officialPicksRef, where('gameWinLossDraw', '==', null));
-    const snapshotNull = await getDocs(q);
+    // Query where gameWinLossDraw is null
+    const qNull = query(officialPicksRef, where('gameWinLossDraw', '==', null));
+    const snapshotNull = await getDocs(qNull);
 
-    // Also query for empty string if needed (Firestore does not support "or" in older versions)
-    // So do a separate query for '' if you expect that case:
+    // Query where gameWinLossDraw is empty string
     const qEmpty = query(officialPicksRef, where('gameWinLossDraw', '==', ''));
     const snapshotEmpty = await getDocs(qEmpty);
 
