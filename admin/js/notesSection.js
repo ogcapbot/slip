@@ -49,6 +49,7 @@ notesTextarea.maxLength = 100;
 notesTextarea.style.width = '100%';
 notesTextarea.style.resize = 'none';
 notesTextarea.style.display = 'none'; // hidden initially
+notesTextarea.style.fontFamily = 'Oswald, sans-serif';  // Font updated here
 notesTextarea.placeholder = 'Enter your notes/comments here (max 100 chars)';
 
 // Append buttons to buttonsDiv
@@ -146,6 +147,8 @@ notesTextarea.addEventListener('input', () => {
 function getNotesData() {
   if (notesSelected === 'yes') {
     return notesTextarea.value.trim();
+  } else if (notesSelected === 'no') {
+    return 'N/A';
   }
   return null;
 }
