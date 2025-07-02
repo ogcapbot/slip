@@ -10,7 +10,6 @@ const requiredFields = [
   'timestampSubmitted'
 ];
 
-// Helper: Create styled button matching your design
 function createStyledButton(text) {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -18,15 +17,20 @@ function createStyledButton(text) {
   btn.className = 'pick-btn blue';
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
-  btn.style.marginTop = '2px';
-  btn.style.marginBottom = '2px';
-  btn.style.width = 'auto';
+  btn.style.margin = '0';
   btn.style.minWidth = '0';
   btn.style.boxSizing = 'border-box';
-  btn.style.alignSelf = 'flex-start';
-  btn.style.float = 'right';  // Place on right side
-  btn.style.marginLeft = '10px';
   return btn;
+}
+
+// Helper: format Firestore timestamp to readable string
+function formatTimestamp(ts) {
+  if (!ts) return 'N/A';
+  if (ts.seconds) {
+    const date = new Date(ts.seconds * 1000);
+    return date.toLocaleString();
+  }
+  return ts.toString();
 }
 
 export async function loadUpdateWinLoss(container) {
@@ -53,25 +57,37 @@ export async function loadUpdateWinLoss(container) {
     combinedDocs.forEach((docSnap, i) => {
       const data = docSnap.data();
 
-      // Container for this pick's info and button
+      // Flex container for info + button side by side
       const docDiv = document.createElement('div');
+      docDiv.style.display = 'flex';
+      docDiv.style.justifyContent = 'space-between';
+      docDiv.style.alignItems = 'center';
       docDiv.style.marginBottom = '15px';
-      docDiv.style.position = 'relative'; // To contain floated button
 
-      // Add fields text
+      // Info container (left side)
+      const infoDiv = document.createElement('div');
+      infoDiv.style.flex = '1';
+
       requiredFields.forEach(field => {
         const p = document.createElement('p');
-        p.style.margin = '2px 0'; // tighter vertical spacing
-        p.textContent = `${field}: ${data[field] !== undefined ? data[field] : 'N/A'}`;
-        docDiv.appendChild(p);
+        p.style.margin = '2px 0';
+        let value = data[field] !== undefined ? data[field] : 'N/A';
+        if (field === 'timestampSubmitted') {
+          value = formatTimestamp(value);
+        }
+        p.textContent = `${field}: ${value}`;
+        infoDiv.appendChild(p);
       });
 
-      // Create the Update Status button
-      const updateBtn = createStyledButton('Update Status');
+      docDiv.appendChild(infoDiv);
 
-      // Button click opens popup dialog
+      // Update Status button (right side)
+      const updateBtn = createStyledButton('Update Status');
+      updateBtn.style.marginLeft = '15px';
+      updateBtn.style.flexShrink = '0'; // don't shrink the button
+
       updateBtn.addEventListener('click', () => {
-        showUpdateStatusPopup(docSnap.id, docDiv);
+        showUpdateStatusPopup(docSnap.id, docDiv.parentNode, docDiv);
       });
 
       docDiv.appendChild(updateBtn);
@@ -91,7 +107,7 @@ export async function loadUpdateWinLoss(container) {
 }
 
 // Popup dialog to choose status and confirm update
-function showUpdateStatusPopup(docId, docDiv) {
+function showUpdateStatusPopup(docId, container, docDiv) {
   // Create overlay
   const overlay = document.createElement('div');
   overlay.style.position = 'fixed';
@@ -165,10 +181,16 @@ function showUpdateStatusPopup(docId, docDiv) {
       await updateDoc(docRef, { gameWinLossDraw: selectedValue });
       alert(`Status updated to "${selectedValue}" successfully.`);
 
-      // Remove popup and also remove this docDiv from container to reflect update
+      // Remove popup and also remove this docDiv + separator (hr) from container to reflect update
       document.body.removeChild(overlay);
-      if (docDiv.parentNode) {
-        docDiv.parentNode.removeChild(docDiv);
+      if (container && docDiv) {
+        container.removeChild(docDiv);
+
+        // Also remove the hr that immediately follows docDiv if exists
+        const nextSibling = container.firstChild;
+        if (nextSibling && nextSibling.tagName === 'HR') {
+          container.removeChild(nextSibling);
+        }
       }
     } catch (error) {
       alert('Failed to update status. See console for details.');
