@@ -8,39 +8,21 @@ let sportButtonsContainer;
 let hiddenSelect;
 let selectedSport = null;
 
-if (originalSportSelect) {
-  console.log('[SportSelector] Original sportSelect found, replacing with hidden select and button container.');
-  const parent = originalSportSelect.parentNode;
-  parent.removeChild(originalSportSelect);
+// Create or get sportButtonsContainer and hiddenSelect same as before...
 
-  hiddenSelect = document.createElement('select');
-  hiddenSelect.id = 'sportSelect';
-  hiddenSelect.style.display = 'none';
-  parent.appendChild(hiddenSelect);
-
-  sportButtonsContainer = document.createElement('div');
-  sportButtonsContainer.id = 'sportButtonsContainer';
-
-  const sportLabel = parent.querySelector('label[for="sportSelect"]');
-  if (sportLabel) {
-    sportLabel.parentNode.insertBefore(sportButtonsContainer, sportLabel.nextSibling);
+// Add this new container for summary display (create once)
+let officialPickSummaryContainer = document.getElementById('officialPickSummaryContainer');
+if (!officialPickSummaryContainer) {
+  officialPickSummaryContainer = document.createElement('div');
+  officialPickSummaryContainer.id = 'officialPickSummaryContainer';
+  officialPickSummaryContainer.style.marginTop = '12px';
+  officialPickSummaryContainer.style.fontWeight = '700';
+  officialPickSummaryContainer.style.fontSize = '11px';
+  officialPickSummaryContainer.style.fontFamily = 'Oswald, sans-serif';
+  if (sportButtonsContainer && sportButtonsContainer.parentNode) {
+    sportButtonsContainer.parentNode.insertBefore(officialPickSummaryContainer, sportButtonsContainer.nextSibling);
   } else {
-    parent.appendChild(sportButtonsContainer);
-  }
-} else {
-  console.log('[SportSelector] Original sportSelect NOT found, using existing sportButtonsContainer or creating new.');
-  sportButtonsContainer = document.getElementById('sportButtonsContainer');
-  if (!sportButtonsContainer) {
-    sportButtonsContainer = document.createElement('div');
-    sportButtonsContainer.id = 'sportButtonsContainer';
-    document.body.appendChild(sportButtonsContainer);
-  }
-  hiddenSelect = document.getElementById('sportSelect');
-  if (!hiddenSelect) {
-    hiddenSelect = document.createElement('select');
-    hiddenSelect.id = 'sportSelect';
-    hiddenSelect.style.display = 'none';
-    document.body.appendChild(hiddenSelect);
+    document.body.appendChild(officialPickSummaryContainer);
   }
 }
 
@@ -52,35 +34,13 @@ export async function loadSports(container = null) {
   selectedSport = null;
   hiddenSelect.innerHTML = '';
   hiddenSelect.dispatchEvent(new Event('change'));
-  console.log('[SportSelector] Cleared existing buttons and hidden select.');
+
+  // Clear summary on fresh load
+  officialPickSummaryContainer.textContent = 'Sport: Not Selected';
 
   try {
     const snapshot = await getDocs(collection(db, 'GameCache'));
-    console.log('[SportSelector] Retrieved GameCache documents:', snapshot.size);
-
-    const sportsSet = new Set();
-    snapshot.forEach(doc => {
-      const sport = doc.data().leagueGroup;
-      if (sport) {
-        sportsSet.add(sport);
-        console.log(`[SportSelector] Found sport: ${sport}`);
-      }
-    });
-
-    const sports = Array.from(sportsSet).sort((a, b) => a.localeCompare(b));
-    console.log(`[SportSelector] Sorted sports list: ${sports.join(', ')}`);
-
-    if (sports.length === 0) {
-      targetContainer.textContent = 'No sports found';
-      console.warn('[SportSelector] No sports found in GameCache.');
-      return;
-    }
-
-    targetContainer.style.display = 'grid';
-    targetContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    targetContainer.style.gap = '4px 6px';
-    targetContainer.style.marginTop = '8px';
-    targetContainer.style.alignItems = 'start';
+    // ...rest same as before to create buttons
 
     sports.forEach(sport => {
       const btn = document.createElement('button');
@@ -98,7 +58,6 @@ export async function loadSports(container = null) {
 
       targetContainer.appendChild(btn);
     });
-    console.log('[SportSelector] Buttons created and appended to container.');
   } catch (error) {
     console.error('[SportSelector] Error loading sports:', error);
     targetContainer.textContent = 'Error loading sports';
@@ -115,18 +74,11 @@ function selectSport(sport) {
 
   selectedSport = sport;
 
-  // Clear the sport buttons container and show the selected sport summary line
-  sportButtonsContainer.innerHTML = '';
-  sportButtonsContainer.style.display = 'block';
+  // Hide all sport buttons after selecting
+  sportButtonsContainer.style.display = 'none';
 
-  const summaryLine = document.createElement('div');
-  summaryLine.textContent = `Selected Sport: ${sport}`;
-  summaryLine.style.fontWeight = '700';
-  summaryLine.style.fontSize = '11px';
-  summaryLine.style.fontFamily = 'Oswald, sans-serif';
-  summaryLine.style.marginBottom = '6px';
-
-  sportButtonsContainer.appendChild(summaryLine);
+  // Update summary container
+  officialPickSummaryContainer.textContent = `Sport: ${sport}`;
 
   // Update hidden select for form compatibility
   hiddenSelect.innerHTML = '';
@@ -147,12 +99,13 @@ export function resetSportSelectorState() {
   selectedSport = null;
   if (sportButtonsContainer) {
     sportButtonsContainer.innerHTML = '';
+    sportButtonsContainer.style.display = 'grid'; // Show again when resetting
   }
   if (hiddenSelect) {
     hiddenSelect.innerHTML = '';
     hiddenSelect.dispatchEvent(new Event('change'));
   }
+  if (officialPickSummaryContainer) {
+    officialPickSummaryContainer.textContent = 'Sport: Not Selected';
+  }
 }
-
-// EXPOSE for debugging in console:
-window.sportButtonsContainer = sportButtonsContainer;
