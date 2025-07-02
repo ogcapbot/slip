@@ -88,7 +88,6 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
-  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -123,40 +122,26 @@ function selectSport(button, sport) {
 
   const container = button.parentNode;
 
-  // Clear container content
   container.innerHTML = '';
 
-  // Change layout to flex for selected sport + change button
   container.style.display = 'flex';
   container.style.flexDirection = 'row';
   container.style.alignItems = 'center';
-  container.style.justifyContent = 'flex-start';
-  container.style.gap = '12px';  // spacing between text and button
+  container.style.justifyContent = 'space-between';
   container.style.marginTop = '8px';
-  container.style.padding = '8px';
-  container.style.backgroundColor = '#f9f9f9';  // subtle background
-  container.style.borderRadius = '6px';
-  container.style.maxWidth = '400px';  // optional max width
+  container.classList.add('selected-sport-container');
 
-  // Create selected sport text
   const selectedText = document.createElement('span');
   selectedText.textContent = `Selected Sport: ${sport}`;
   selectedText.style.fontWeight = '600';
-  selectedText.style.fontSize = '16px';
+  selectedText.classList.add('selected-sport-text');
   container.appendChild(selectedText);
 
-  // Create Change button if not already created
   if (!changeSportBtn) {
     changeSportBtn = document.createElement('button');
     changeSportBtn.type = 'button';
     changeSportBtn.textContent = 'Change';
-    changeSportBtn.className = 'pick-btn blue';
-    changeSportBtn.style.minWidth = '80px';
-    changeSportBtn.style.width = 'auto';
-    changeSportBtn.style.boxSizing = 'border-box';
-    changeSportBtn.style.margin = '0';
-    changeSportBtn.style.padding = '6px 12px';
-    changeSportBtn.style.fontSize = '14px';
+    changeSportBtn.className = 'pick-btn blue selected-sport-change-btn';
     changeSportBtn.style.cursor = 'pointer';
 
     changeSportBtn.addEventListener('click', () => {
