@@ -42,8 +42,14 @@ if (originalSportSelect) {
   }
 }
 
-export async function loadSports() {
-  sportButtonsContainer.innerHTML = '';
+/**
+ * Load sports and render buttons inside provided container, or default container if none given
+ * @param {HTMLElement} container Optional container element to render sports UI inside.
+ */
+export async function loadSports(container = null) {
+  const targetContainer = container || sportButtonsContainer;
+
+  targetContainer.innerHTML = '';
   selectedSport = null;
   if (changeSportBtn) {
     changeSportBtn.remove();
@@ -57,32 +63,32 @@ export async function loadSports() {
     const sportsSet = new Set();
 
     snapshot.forEach(doc => {
-      const sport = doc.data().leagueGroup; //legueeGroup is what Odds Api calls sports
+      const sport = doc.data().leagueGroup; // leagueGroup is what Odds Api calls sports
       if (sport) sportsSet.add(sport);
     });
 
     const sports = Array.from(sportsSet).sort((a, b) => a.localeCompare(b));
 
     if (sports.length === 0) {
-      sportButtonsContainer.textContent = 'No sports found';
+      targetContainer.textContent = 'No sports found';
       return;
     }
 
     // Style as grid for 3 columns with tight gaps and top alignment
-    sportButtonsContainer.style.display = 'grid';
-    sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    sportButtonsContainer.style.gridAutoRows = 'min-content';
-    sportButtonsContainer.style.gap = '4px 6px'; // 4px vertical, 6px horizontal gap
-    sportButtonsContainer.style.marginTop = '8px';
-    sportButtonsContainer.style.alignItems = 'start';
+    targetContainer.style.display = 'grid';
+    targetContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    targetContainer.style.gridAutoRows = 'min-content';
+    targetContainer.style.gap = '4px 6px'; // 4px vertical, 6px horizontal gap
+    targetContainer.style.marginTop = '8px';
+    targetContainer.style.alignItems = 'start';
 
     // Add buttons in order for natural row-wise grid flow
     sports.forEach(sport => {
-      sportButtonsContainer.appendChild(createSportButton(sport));
+      targetContainer.appendChild(createSportButton(sport));
     });
   } catch (error) {
     console.error('Error loading sports:', error);
-    sportButtonsContainer.textContent = 'Error loading sports';
+    targetContainer.textContent = 'Error loading sports';
   }
 }
 
@@ -105,20 +111,22 @@ function selectSport(button, sport) {
 
   selectedSport = sport;
 
-  sportButtonsContainer.innerHTML = '';
+  const container = button.parentNode; // button container is the current container
 
-  sportButtonsContainer.style.display = 'grid';
-  sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  sportButtonsContainer.style.gridAutoRows = 'min-content';
-  sportButtonsContainer.style.gap = '4px 6px';
-  sportButtonsContainer.style.marginTop = '8px';
-  sportButtonsContainer.style.alignItems = 'start';
+  container.innerHTML = '';
+
+  container.style.display = 'grid';
+  container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  container.style.gridAutoRows = 'min-content';
+  container.style.gap = '4px 6px';
+  container.style.marginTop = '8px';
+  container.style.alignItems = 'start';
 
   // Selected sport button green, top-left grid cell
   const selectedBtn = createSportButton(sport);
   selectedBtn.classList.remove('blue');
   selectedBtn.classList.add('green');
-  sportButtonsContainer.appendChild(selectedBtn);
+  container.appendChild(selectedBtn);
 
   // Invisible placeholder button for middle cell
   const placeholderBtn = createSportButton('');
@@ -127,7 +135,7 @@ function selectSport(button, sport) {
   placeholderBtn.style.margin = '0';
   placeholderBtn.style.padding = '0';
   placeholderBtn.style.height = selectedBtn.offsetHeight ? selectedBtn.offsetHeight + 'px' : '36px'; // slightly smaller fallback
-  sportButtonsContainer.appendChild(placeholderBtn);
+  container.appendChild(placeholderBtn);
 
   // Change Sport button in third cell
   if (!changeSportBtn) {
@@ -145,7 +153,7 @@ function selectSport(button, sport) {
       resetSportSelection();
     });
   }
-  sportButtonsContainer.appendChild(changeSportBtn);
+  container.appendChild(changeSportBtn);
 
   updateHiddenSelect(sport);
 }
