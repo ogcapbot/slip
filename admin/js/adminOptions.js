@@ -7,6 +7,8 @@ const pickForm = document.getElementById('pickForm');
 
 const SUPERADMIN_CODE = 'super123';
 
+let activeAdminBtn = null; // Track which admin button is currently active
+
 export async function loadAdminOptions() {
   console.log('loadAdminOptions called');
 
@@ -27,43 +29,54 @@ export async function loadAdminOptions() {
   buttons.forEach(({ text, message }, index) => {
     console.log(`Creating button: ${text} at index ${index}`);
     const btn = createButton(text);
+
     btn.addEventListener('click', async () => {
       console.log(`Button clicked: ${text} at index ${index}`);
 
-      if (index === 0) {
-        console.log('Calling loadSports() for Add New Pick with pickForm container');
-        try {
-          await loadSports(pickForm);
-          console.log('loadSports() completed successfully');
-        } catch (error) {
-          console.error('Error in loadSports():', error);
-        }
-      } else if (index === 2) {
-        console.log('Calling loadAdminStats() for Stats');
-        try {
-          await loadAdminStats(pickForm);
-          console.log('loadAdminStats() completed successfully');
-        } catch (error) {
-          console.error('Error in loadAdminStats():', error);
-        }
-      } else if (index >= 3) {
+      if (index >= 3) {
+        // Admin buttons with password check
         const enteredCode = prompt('Enter Code to Continue:');
         console.log(`Code entered: ${enteredCode}`);
         if (enteredCode === SUPERADMIN_CODE) {
           pickForm.style.color = '#444';
           pickForm.innerHTML = `<p>${message}</p>`;
           console.log('Access granted, message displayed');
+          setActiveAdminButton(btn);
         } else {
           pickForm.style.color = 'red';
           pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
           console.warn('Access denied due to incorrect code');
+          // Do NOT set active button on failed access
+        }
+      } else if (index === 0) {
+        // Add New Pick
+        console.log('Calling loadSports() for Add New Pick with pickForm container');
+        try {
+          await loadSports(pickForm);
+          console.log('loadSports() completed successfully');
+          setActiveAdminButton(btn);
+        } catch (error) {
+          console.error('Error in loadSports():', error);
+        }
+      } else if (index === 2) {
+        // Stats
+        console.log('Calling loadAdminStats() for Stats');
+        try {
+          await loadAdminStats(pickForm);
+          console.log('loadAdminStats() completed successfully');
+          setActiveAdminButton(btn);
+        } catch (error) {
+          console.error('Error in loadAdminStats():', error);
         }
       } else {
+        // Other buttons without password
         pickForm.style.color = '#444';
         pickForm.innerHTML = `<p>${message}</p>`;
         console.log('Placeholder message displayed');
+        setActiveAdminButton(btn);
       }
     });
+
     adminButtonsContainer.appendChild(btn);
   });
 
@@ -74,6 +87,20 @@ export async function loadAdminOptions() {
     console.log('Initial loadAdminStats() call completed');
   } catch (error) {
     console.error('Error during initial loadAdminStats() call:', error);
+  }
+}
+
+/**
+ * Set the given button as active, and remove active from previous one
+ * @param {HTMLElement} btn 
+ */
+function setActiveAdminButton(btn) {
+  if (activeAdminBtn) {
+    activeAdminBtn.classList.remove('green', 'pressed');
+  }
+  activeAdminBtn = btn;
+  if (activeAdminBtn) {
+    activeAdminBtn.classList.add('green', 'pressed');
   }
 }
 
