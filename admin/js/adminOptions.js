@@ -1,5 +1,5 @@
 import { loadAdminStats } from './adminStats.js';
-import { loadSports } from './sportCollector.js';
+import { loadSports } from './sportSelector.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
