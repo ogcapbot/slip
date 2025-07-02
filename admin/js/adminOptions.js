@@ -74,8 +74,35 @@ export async function loadAdminOptions() {
         if (activeAdminBtn !== btn) {
           resetSportSelectorState();
         }
+        // Show official pick summary section and then load sports into separate container
+        const summaryHtml = `
+          <h3>Official Pick Summary</h3>
+          <div>Sport: Not Selected</div>
+          <div>League: Not Selected</div>
+          <div>Game: Not Selected</div>
+          <div>Team: Not Selected</div>
+          <div>Wager: Not Selected</div>
+          <div>Unit: Not Selected</div>
+          <div>Pick Desc: N/A</div>
+          <div>Notes: Not Entered</div>
+          <div>Phrase: Not Selected</div>
+          <hr />
+        `;
+        pickForm.innerHTML = summaryHtml;
+
+        // Create separate container for sport buttons below summary
+        let sportContainer = document.getElementById('sportButtonsWrapper');
+        if (!sportContainer) {
+          sportContainer = document.createElement('div');
+          sportContainer.id = 'sportButtonsWrapper';
+          sportContainer.style.marginTop = '12px';
+          pickForm.appendChild(sportContainer);
+        } else {
+          sportContainer.innerHTML = '';
+        }
+
         try {
-          await loadSports(pickForm);
+          await loadSports(sportContainer);
           setActiveAdminButton(btn);
           console.log('loadSports() completed successfully');
         } catch (error) {
@@ -87,8 +114,28 @@ export async function loadAdminOptions() {
       if (index === 1) {  // Update Win/Loss button
         try {
           await loadUpdateWinLoss(pickForm);
+
+          // Fix Win/Loss buttons style
+          const winLossButtons = pickForm.querySelectorAll('button');
+          winLossButtons.forEach(btn => {
+            btn.style.display = 'inline-block';
+            btn.style.margin = '4px 6px';
+            btn.style.width = 'auto';
+          });
+
+          // Wrap Win/Loss output text in a container with line breaks and spacing
+          const outputText = pickForm.querySelector('.winloss-output-text'); // Assuming output text has this class, adjust as needed
+          if (outputText) {
+            const wrapper = document.createElement('div');
+            wrapper.style.whiteSpace = 'normal';
+            wrapper.style.lineHeight = '1.4';
+            wrapper.style.marginTop = '8px';
+            wrapper.textContent = outputText.textContent;
+            outputText.parentNode.replaceChild(wrapper, outputText);
+          }
+
           setActiveAdminButton(btn);
-          console.log('loadUpdateWinLoss() completed successfully');
+          console.log('loadUpdateWinLoss() completed successfully with style fixes');
         } catch (error) {
           console.error('Error in loadUpdateWinLoss():', error);
         }
