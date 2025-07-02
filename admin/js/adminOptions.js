@@ -1,4 +1,5 @@
 import { loadAdminStats } from './adminStats.js';
+import { loadSports } from './sportCollector.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -13,7 +14,7 @@ export async function loadAdminOptions() {
   pickForm.innerHTML = '';
 
   const buttons = [
-    { text: 'Add New Pick', message: 'Coming Soon... Add New' },
+    { text: 'Add New Pick', message: '' },
     { text: 'Update Win/Loss', message: 'Coming Soon... Win/Loss' },
     { text: 'Stats', message: 'Stats' },
     { text: 'Admin 1', message: 'Coming Soon... Admin 1' },
@@ -24,7 +25,10 @@ export async function loadAdminOptions() {
   buttons.forEach(({ text, message }, index) => {
     const btn = createButton(text);
     btn.addEventListener('click', async () => {
-      if (index === 2) {
+      if (index === 0) {
+        // Load sports instead of placeholder for "Add New Pick"
+        await loadSports();
+      } else if (index === 2) {
         await loadAdminStats(pickForm);
       } else if (index >= 3) {
         const enteredCode = prompt('Enter Code to Continue:');
