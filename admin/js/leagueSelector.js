@@ -30,16 +30,19 @@ export async function loadLeagues(container = null, selectedSport = null) {
   }
 
   try {
+    // Filter by sport (leagueGroup) but retrieve leagues from sportName
     const q = query(collection(db, 'GameCache'), where('leagueGroup', '==', selectedSport));
     const snapshot = await getDocs(q);
     console.log(`[LeagueSelector] Retrieved league documents count: ${snapshot.size}`);
 
     const leaguesSet = new Set();
     snapshot.forEach(doc => {
-      const league = doc.data().league;
+      const league = doc.data().sportName; // Corrected: leagues are in sportName field
       if (league) {
         leaguesSet.add(league);
         console.log(`[LeagueSelector] Found league: ${league}`);
+      } else {
+        console.warn('[LeagueSelector] No sportName field (league) in document:', doc.id);
       }
     });
 
