@@ -1,49 +1,162 @@
 // admin/js/phraseSelector.js
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 const phraseSection = document.createElement('div');
 phraseSection.id = 'phraseSelectorSection';
-phraseSection.style.display = 'none';
 phraseSection.style.marginTop = '20px';
 
-// Titles
-const sportTitle = document.createElement('h4');
-const nonSportTitle = document.createElement('h4');
-nonSportTitle.style.marginTop = '20px';
+// Container for phrase buttons
+const phraseButtonsContainer = document.createElement('div');
+phraseButtonsContainer.style.display = 'grid';
+phraseButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+phraseButtonsContainer.style.gap = '6px 8px';
+phraseButtonsContainer.style.marginBottom = '12px';
 
-// Containers for buttons
-const typeButtonsContainer = document.createElement('div');
-const energyButtonsContainer = document.createElement('div');
-energyButtonsContainer.style.marginTop = '10px';
+phraseSection.appendChild(phraseButtonsContainer);
 
-// Load More button
-const loadMoreBtn = document.createElement('button');
-loadMoreBtn.type = 'button';
-loadMoreBtn.textContent = 'Load More Phrases';
-loadMoreBtn.className = 'pick-btn blue';
-loadMoreBtn.style.marginTop = '12px';
+// Show More button container (middle column)
+const showMoreBtn = document.createElement('button');
+showMoreBtn.type = 'button';
+showMoreBtn.textContent = 'Show More';
+showMoreBtn.className = 'pick-btn blue';
+showMoreBtn.style.gridColumn = '2 / 3';
+showMoreBtn.style.justifySelf = 'center';
+showMoreBtn.style.width = '120px';
+showMoreBtn.style.marginBottom = '12px';
 
-phraseSection.appendChild(sportTitle);
-phraseSection.appendChild(typeButtonsContainer);
-phraseSection.appendChild(loadMoreBtn);
-phraseSection.appendChild(nonSportTitle);
-phraseSection.appendChild(energyButtonsContainer);
+phraseSection.appendChild(showMoreBtn);
 
-// Append phraseSection after notesContainer
 const notesContainer = document.getElementById('notesContainer');
 notesContainer.parentNode.insertBefore(phraseSection, notesContainer.nextSibling);
 
-// State
-let allPhrases = [];
-let sportPhrases = [];
-let nonSportPhrases = [];
-let filteredTypes = [];
-let selectedType = null;
-let selectedEnergy = null;
-let currentSport = null;
-let showingNonSport = false;
+phraseSection.style.display = 'none'; // hidden initially
 
-// Helper: shuffle array
+// State variables
+let allActivePhrases = [];
+let filteredSportPhrases = [];
+let currentSport = null;
+let phraseIndex = 0;
+const BATCH_SIZE = 15;
+
+// Public: call this to load phrases for a given sport
+export async function loadPhrasesForSport(sport) {
+  currentSport = sport || null;
+  phraseSection.style.display = 'none';
+  phraseButtonsContainer.innerHTML = '';
+  showMoreBtn.style.display = 'none';
+  phraseIndex = 0;
+  allActivePhrases = [];
+  filteredSportPhrases = [];
+
+  try {
+    const hypeRef = collection(window.db, 'HypePhrases');
+    const qActive = query(hypeRef, where('active_status', '==', 'active'));
+    const snapshot = await getDocs(qActive);
+
+    allActivePhrases = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      allActivePhrases.push({ id: doc.id, ...data });
+    });
+
+    if (currentSport) {
+      filteredSportPhrases = allActivePhrases.filter(p => p.Sport === currentSport);
+    }
+
+    // If no filtered sport phrases, pick 15 random from allActivePhrases
+    if (!filteredSportPhrases.length) {
+      filteredSportPhrases = shuffleArray(allActivePhrases).slice(0, BATCH_SIZE);
+      phraseIndex = filteredSportPhrases.length;
+    } else {
+      // Sort sport phrases alphabetically by Phrase field
+      filteredSportPhrases.sort((a, b) => a.Phrase.localeCompare(b.Phrase));
+    }
+
+    phraseSection.style.display = 'block';
+    renderPhraseButtons(filteredSportPhrases.slice(0, phraseIndex || BATCH_SIZE));
+
+    if (filteredSportPhrases.length > (phraseIndex || BATCH_SIZE)) {
+      showMoreBtn.style.display = 'inline-block';
+    } else {
+      showMoreBtn.style.display = 'none';
+    }
+  } catch (error) {
+    phraseSection.textContent = 'Error loading phrases.';
+    console.error('PhraseSelector load error:', error);
+  }
+}
+
+function renderPhraseButtons(phrasesToShow) {
+  phraseButtonsContainer.innerHTML = '';
+
+  phrasesToShow.forEach(phrase => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = phrase.Phrase;
+    btn.className = 'pick-btn blue';
+    btn.style.paddingTop = '6px';
+    btn.style.paddingBottom = '6px';
+    btn.style.marginTop = '2px';
+    btn.style.marginBottom = '2px';
+    btn.style.width = '100%';
+    btn.style.minWidth = '0';
+    btn.style.boxSizing = 'border-box';
+
+    btn.addEventListener('click', () => selectPhrase(phrase));
+    phraseButtonsContainer.appendChild(btn);
+  });
+}
+
+// Show More button click handler
+showMoreBtn.addEventListener('click', () => {
+  // Remove Show More button while loading next batch
+  showMoreBtn.style.display = 'none';
+
+  // Load next batch of 15 random phrases from allActivePhrases not already shown
+  const remaining = allActivePhrases.filter(p => !filteredSportPhrases.includes(p));
+  const nextBatch = shuffleArray(remaining).slice(0, BATCH_SIZE);
+
+  filteredSportPhrases = filteredSportPhrases.concat(nextBatch);
+  phraseIndex = filteredSportPhrases.length;
+
+  renderPhraseButtons(filteredSportPhrases);
+
+  if (filteredSportPhrases.length < allActivePhrases.length) {
+    showMoreBtn.style.display = 'inline-block';
+  } else {
+    showMoreBtn.style.display = 'none';
+  }
+});
+
+// When user selects a phrase
+function selectPhrase(phrase) {
+  // Clear all buttons and Show More
+  phraseButtonsContainer.innerHTML = '';
+  showMoreBtn.style.display = 'none';
+
+  // Prepare display title and description
+  // Placeholder [[Units]] and [[GameTime]] must be replaced by your app logic when rendering the summary
+  const displayTitle = `[[Units]] - ${phrase.Phrase} - ${phrase.Sport || 'N/A'} - [[GameTime]]`;
+  const displayDesc = `${phrase.Phrase} - ${phrase.Promo || ''}`;
+
+  // Call your app's function to add this to the running summary
+  // For example:
+  if (window.addToSelectionSummary) {
+    window.addToSelectionSummary({
+      Phrase: phrase.Phrase,
+      Promo: phrase.Promo,
+      Type: phrase.Type,
+      Energy: phrase.Energy,
+      DisplayTitle: displayTitle,
+      DisplayDesc: displayDesc
+    });
+  }
+
+  // Optionally hide the phraseSection to tidy UI or keep it visible if needed
+  phraseSection.style.display = 'none';
+}
+
+// Utility shuffle function
 function shuffleArray(array) {
   const arr = array.slice();
   for (let i = arr.length -1; i > 0; i--) {
@@ -53,161 +166,6 @@ function shuffleArray(array) {
   return arr;
 }
 
-async function loadPhrases(sport) {
-  currentSport = sport || null;
-  phraseSection.style.display = 'none';
-  typeButtonsContainer.innerHTML = '';
-  energyButtonsContainer.innerHTML = '';
-  sportTitle.textContent = '';
-  nonSportTitle.textContent = '';
-  loadMoreBtn.style.display = 'none';
-  selectedType = null;
-  selectedEnergy = null;
-  showingNonSport = false;
-
-  try {
-    const snapshot = await getDocs(collection(window.db, 'HypePhrases'));
-    allPhrases = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      allPhrases.push({ id: doc.id, ...data });
-    });
-
-    // Filter sport phrases and non sport phrases
-    sportPhrases = allPhrases.filter(p => p.Sport === currentSport);
-    nonSportPhrases = allPhrases.filter(p => !p.Sport);
-
-    // Shuffle sport phrases
-    sportPhrases = shuffleArray(sportPhrases);
-    nonSportPhrases = shuffleArray(nonSportPhrases);
-
-    // Determine distinct types (union of all phrases)
-    const typesSet = new Set(allPhrases.map(p => p.Type));
-    filteredTypes = Array.from(typesSet).sort();
-
-    renderTypeButtons();
-  } catch (error) {
-    phraseSection.textContent = 'Error loading phrases.';
-    console.error('PhraseSelector load error:', error);
-  }
-}
-
-function renderTypeButtons() {
-  typeButtonsContainer.innerHTML = '';
-  if (currentSport && sportPhrases.length > 0) {
-    sportTitle.textContent = `Choose ${currentSport} Specific Hype Phrase Below`;
-  } else {
-    sportTitle.textContent = '';
-  }
-  nonSportTitle.textContent = '';
-
-  filteredTypes.forEach(type => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = type;
-    btn.className = 'pick-btn blue';
-    btn.style.padding = '10px';
-    btn.style.marginBottom = '6px';
-    btn.style.width = '100%';
-    btn.addEventListener('click', () => selectType(type));
-    typeButtonsContainer.appendChild(btn);
-  });
-
-  loadMoreBtn.style.display = 'inline-block';
-  loadMoreBtn.disabled = false;
-  loadMoreBtn.onclick = () => showNonSportSection();
-}
-
-function selectType(type) {
-  selectedType = type;
-  selectedEnergy = null;
-  energyButtonsContainer.innerHTML = '';
-
-  // Show energies matching selectedType and sport (if any)
-  const matchingSportEnergies = sportPhrases.filter(p => p.Type === type);
-  const matchingNonSportEnergies = nonSportPhrases.filter(p => p.Type === type);
-
-  let energiesToShow = [];
-
-  if (!showingNonSport && currentSport && matchingSportEnergies.length > 0) {
-    energiesToShow = shuffleArray(matchingSportEnergies);
-    sportTitle.textContent = `Choose ${currentSport} Specific Hype Phrase Below`;
-    nonSportTitle.textContent = '';
-  } else {
-    energiesToShow = shuffleArray(matchingNonSportEnergies);
-    sportTitle.textContent = '';
-    nonSportTitle.textContent = 'Non Sport Specific Hype Phrase';
-  }
-
-  energiesToShow.forEach(phrase => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'pick-btn blue';
-    btn.style.width = '100%';
-    btn.style.marginBottom = '6px';
-    btn.textContent = phrase.Energy;
-    btn.title = phrase.EnergyDescription || '';
-    btn.addEventListener('click', () => selectEnergy(phrase));
-    energyButtonsContainer.appendChild(btn);
-  });
-
-  checkEnableSubmit();
-}
-
-function showNonSportSection() {
-  showingNonSport = true;
-  sportTitle.textContent = '';
-  nonSportTitle.textContent = 'Non Sport Specific Hype Phrase';
-  loadMoreBtn.style.display = 'none';
-  renderTypeButtons();
-  // Automatically select first type if possible to refresh energies list for non-sport
-  if (filteredTypes.length > 0) {
-    selectType(filteredTypes[0]);
-  }
-}
-
-// Select Energy (the actual phrase choice)
-function selectEnergy(phrase) {
-  selectedEnergy = phrase;
-
-  // Highlight selected energy button
-  [...energyButtonsContainer.children].forEach(btn => {
-    btn.classList.remove('green');
-    btn.classList.add('blue');
-  });
-
-  const clickedBtn = [...energyButtonsContainer.children].find(btn => btn.textContent === phrase.Energy);
-  if (clickedBtn) {
-    clickedBtn.classList.remove('blue');
-    clickedBtn.classList.add('green');
-  }
-
-  checkEnableSubmit();
-}
-
-function isPhraseSelected() {
-  return selectedType !== null && selectedEnergy !== null;
-}
-
-function reset() {
-  phraseSection.style.display = 'none';
-  typeButtonsContainer.innerHTML = '';
-  energyButtonsContainer.innerHTML = '';
-  sportTitle.textContent = '';
-  nonSportTitle.textContent = '';
-  loadMoreBtn.style.display = 'none';
-  selectedType = null;
-  selectedEnergy = null;
-  showingNonSport = false;
-}
-
-// Attach to window for global access (used in notesSection)
-window.phraseSelector = {
-  loadPhrases,
-  isPhraseSelected,
-  reset,
-  getSelectedPhrase: () => selectedEnergy,
-  getSelectedType: () => selectedType
+export default {
+  loadPhrasesForSport
 };
-
-export { loadPhrases, reset, isPhraseSelected };
