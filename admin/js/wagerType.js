@@ -10,6 +10,9 @@ const finalPickDescription = document.getElementById('finalPickDescription');
 const pickOptionsContainer = document.getElementById('pickOptionsContainer'); // For team buttons
 const gameSelect = document.getElementById('gameSelect');
 
+// New: summary container for the running selections display
+const pickSummaryContainer = document.getElementById('pickSummaryContainer');
+
 if (wagerTypeSelect) {
   wagerTypeSelect.style.display = 'none';
 }
@@ -45,7 +48,6 @@ wagerSectionContainer.style.width = '100%';
 wagerSectionContainer.style.maxWidth = '600px';
 
 const wagerTypeLabelNew = document.createElement('label');
-//wagerTypeLabelNew.textContent = 'Choose Wager Type';
 wagerTypeLabelNew.style.fontWeight = 'bold';
 wagerTypeLabelNew.style.display = 'inline-block';
 
@@ -158,7 +160,6 @@ function clearWagerButtons() {
     changeWagerBtn = null;
   }
   if (wagerTypeSelect) {
-  //  wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
     wagerTypeSelect.disabled = true;
     wagerTypeSelect.dispatchEvent(new Event('change'));
   }
@@ -334,6 +335,9 @@ function selectWager(button, id, descTemplate) {
 
   // Show unit selection area after wager chosen
   showUnitSection();
+
+  // NEW: update the running summary with wager selection and description
+  updatePickSummary();
 }
 
 function resetWagerSelection() {
@@ -345,7 +349,6 @@ function resetWagerSelection() {
   }
 
   if (wagerTypeSelect) {
-   // wagerTypeSelect.innerHTML = '<option value="" disabled selected>Choose wager type</option>';
     wagerTypeSelect.disabled = true;
     wagerTypeSelect.dispatchEvent(new Event('change'));
   }
@@ -361,6 +364,10 @@ function resetWagerSelection() {
   if (numberInput) numberInput.value = '';
   if (requiredLabel) requiredLabel.style.display = 'none';
   if (numberInputTitle) numberInputTitle.style.display = 'none';
+
+  // Also clear wager from summary when resetting
+  clearPickSummarySection('Wager Selected');
+  clearPickSummarySection('Desc');
 }
 
 if (numberInput) {
@@ -387,6 +394,9 @@ if (numberInput) {
 
     // Sync explanatory text with units line on number input change
     updateUnitSummaryText();
+
+    // Also update summary description dynamically
+    updatePickSummary();
   });
 }
 
@@ -412,6 +422,47 @@ function updateFinalPickDescription(descTemplate) {
 
   // Sync explanatory text with units line
   updateUnitSummaryText();
+}
+
+// Helper to update the running pick summary with wager info
+function updatePickSummary() {
+  if (!pickSummaryContainer) return;
+
+  // Clear existing wager-related lines first
+  clearPickSummarySection('Wager Selected');
+  clearPickSummarySection('Desc');
+
+  const selectedWagerButton = wagerButtonsContainer.querySelector('button.green');
+  if (!selectedWagerButton) return;
+
+  const wagerText = selectedWagerButton.textContent.trim();
+  const descText = finalPickDescription ? finalPickDescription.textContent.trim() : '';
+
+  addOrUpdatePickSummaryLine('Wager Selected', wagerText);
+  if (descText) addOrUpdatePickSummaryLine('Desc', descText);
+}
+
+function addOrUpdatePickSummaryLine(label, text) {
+  if (!pickSummaryContainer) return;
+  // Try to find existing line by label
+  let line = Array.from(pickSummaryContainer.querySelectorAll('p')).find(p => p.dataset.label === label);
+  if (!line) {
+    line = document.createElement('p');
+    line.dataset.label = label;
+    pickSummaryContainer.appendChild(line);
+  }
+  line.textContent = `${label}: ${text}`;
+}
+
+// Helper to clear a specific line in the summary by label
+function clearPickSummarySection(label) {
+  if (!pickSummaryContainer) return;
+  const lines = Array.from(pickSummaryContainer.querySelectorAll('p'));
+  lines.forEach(line => {
+    if (line.dataset.label === label) {
+      pickSummaryContainer.removeChild(line);
+    }
+  });
 }
 
 export default {};
