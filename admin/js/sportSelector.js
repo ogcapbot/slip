@@ -118,3 +118,14 @@ function selectSport(sport) {
   // Call next selector passing default params
   loadLeagues(null);
 }
+
+export function resetSportSelectorState() {
+  selectedSport = null;
+  if (sportButtonsContainer) {
+    sportButtonsContainer.innerHTML = '';
+  }
+  if (hiddenSelect) {
+    hiddenSelect.innerHTML = '';
+    hiddenSelect.dispatchEvent(new Event('change'));
+  }
+}
