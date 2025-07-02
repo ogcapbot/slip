@@ -53,14 +53,12 @@ export async function loadUpdateWinLoss(container) {
     snapshot.docs.forEach((docSnap, i) => {
       const data = docSnap.data();
 
-      // Container for the whole doc row (2 columns)
       const docRow = document.createElement('div');
       docRow.style.display = 'flex';
       docRow.style.justifyContent = 'space-between';
       docRow.style.alignItems = 'flex-start';
       docRow.style.marginBottom = '15px';
 
-      // Left column: doc info
       const infoCol = document.createElement('div');
       infoCol.style.flex = '1';
       infoCol.style.paddingRight = '15px';
@@ -78,21 +76,18 @@ export async function loadUpdateWinLoss(container) {
 
       docRow.appendChild(infoCol);
 
-      // Right column: buttons stacked vertically
       const buttonsCol = document.createElement('div');
       buttonsCol.style.display = 'flex';
       buttonsCol.style.flexDirection = 'column';
-      buttonsCol.style.width = '110px'; // fixed width for buttons
+      buttonsCol.style.width = '110px';
       buttonsCol.style.flexShrink = '0';
 
-      // Create buttons
       const btnWin = createStyledButton('Win');
       const btnPush = createStyledButton('Push');
       const btnLost = createStyledButton('Lost');
 
       const currentStatus = data.gameWinLossDraw;
 
-      // Function to hide/show buttons based on selection
       function showOnlyButton(selectedBtn, status) {
         [btnWin, btnPush, btnLost].forEach(btn => {
           if (btn === selectedBtn) {
@@ -100,14 +95,13 @@ export async function loadUpdateWinLoss(container) {
             btn.classList.remove('blue', 'green', 'red');
             if (status === 'Won') btn.classList.add('green');
             else if (status === 'Push') btn.classList.add('blue');
-            else if (status === 'Lost') btn.classList.add('red');
+            else if (status === 'Lost') btn.classList.add('red'); // Fix applied here
           } else {
             btn.style.display = 'none';
           }
         });
       }
 
-      // Initially show only the button corresponding to existing status, else show all
       if (currentStatus === 'Won') {
         showOnlyButton(btnWin, 'Won');
       } else if (currentStatus === 'Push') {
@@ -115,7 +109,6 @@ export async function loadUpdateWinLoss(container) {
       } else if (currentStatus === 'Lost') {
         showOnlyButton(btnLost, 'Lost');
       } else {
-        // Show all buttons
         [btnWin, btnPush, btnLost].forEach(btn => {
           btn.style.display = 'block';
           btn.classList.remove('green', 'red');
@@ -123,7 +116,6 @@ export async function loadUpdateWinLoss(container) {
         });
       }
 
-      // Event handler for all buttons: prompt for password then update
       const onButtonClick = async (status, btnClicked) => {
         const password = prompt('Enter password to update status:');
         if (password !== 'super123') {
@@ -140,7 +132,6 @@ export async function loadUpdateWinLoss(container) {
           return;
         }
 
-        // Update UI after successful update
         showOnlyButton(btnClicked, status);
       };
 
@@ -156,7 +147,6 @@ export async function loadUpdateWinLoss(container) {
 
       container.appendChild(docRow);
 
-      // Horizontal separator except after last
       if (i < snapshot.docs.length - 1) {
         const hr = document.createElement('hr');
         container.appendChild(hr);
