@@ -38,7 +38,27 @@ export async function loadAdminOptions() {
     btn.addEventListener('click', async () => {
       console.log(`Button clicked: ${text} at index ${index}`);
 
+      // Reset color to default every time except when showing password fail message below
+      pickForm.style.color = '#444';
+
       pickForm.innerHTML = ''; // Clear UI on every button press
+
+      if (index === 4) {
+        // Password prompt block, override color if fail below
+        const enteredCode = prompt('Enter Code to Continue:');
+        console.log(`Code entered: ${enteredCode}`);
+        if (enteredCode === SUPERADMIN_CODE) {
+          pickForm.innerHTML = `<p>${message}</p>`;
+          setActiveAdminButton(btn);
+          console.log('Access granted, message displayed');
+        } else {
+          pickForm.style.color = 'red'; // override color only here on failure
+          pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
+          console.warn('Access denied due to incorrect code');
+          // Do NOT change active button on failed access
+        }
+        return; // Return here to prevent further execution
+      }
 
       if (index === 0) {
         // Add New Pick button
@@ -70,23 +90,8 @@ export async function loadAdminOptions() {
         } catch (error) {
           console.error('Error refreshing admin UI:', error);
         }
-      } else if (index === 4) {
-        // Code {} button with password prompt
-        const enteredCode = prompt('Enter Code to Continue:');
-        console.log(`Code entered: ${enteredCode}`);
-        if (enteredCode === SUPERADMIN_CODE) {
-          pickForm.style.color = '#444';
-          pickForm.innerHTML = `<p>${message}</p>`;
-          setActiveAdminButton(btn);
-          console.log('Access granted, message displayed');
-        } else {
-          pickForm.style.color = 'red';
-          pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
-          console.warn('Access denied due to incorrect code');
-          // Do NOT change active button on failed access
-        }
       } else {
-        // Other buttons (e.g., Update Win/Loss)
+        // Other buttons (e.g., Update Win/Loss, Settings)
         pickForm.style.color = '#444';
         pickForm.innerHTML = `<p>${message}</p>`;
         setActiveAdminButton(btn);
