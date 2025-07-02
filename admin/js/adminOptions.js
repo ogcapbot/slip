@@ -1,6 +1,6 @@
-import { loadAdminStats } from './adminStats.js';
 import { loadSports, resetSportSelectorState } from './sportSelector.js';
 import { loadUpdateWinLoss } from './updateWinloss.js';
+import { loadAdminStats } from './adminStats.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -70,72 +70,39 @@ export async function loadAdminOptions() {
         return;
       }
 
-      if (index === 0) {  // Add New Pick - reset sport selector state before loading sports
+      if (index === 0) {  // Add New Pick - reset sport selector state before loading sports and show summary
         if (activeAdminBtn !== btn) {
           resetSportSelectorState();
         }
-        // Show official pick summary section and then load sports into separate container
-        const summaryHtml = `
+
+        pickForm.innerHTML = `
           <h3>Official Pick Summary</h3>
-          <div>Sport: Not Selected</div>
-          <div>League: Not Selected</div>
-          <div>Game: Not Selected</div>
-          <div>Team: Not Selected</div>
-          <div>Wager: Not Selected</div>
-          <div>Unit: Not Selected</div>
-          <div>Pick Desc: N/A</div>
-          <div>Notes: Not Entered</div>
-          <div>Phrase: Not Selected</div>
-          <hr />
+          <p id="summarySport">Sport: Not Selected</p>
+          <p id="summaryLeague">League: Not Selected</p>
+          <p id="summaryGame">Game: Not Selected</p>
+          <p id="summaryTeam">Team: Not Selected</p>
+          <p id="summaryWager">Wager: Not Selected</p>
+          <p id="summaryUnit">Unit: Not Selected</p>
+          <p id="summaryPickDesc">Pick Desc: N/A</p>
+          <p id="summaryNotes">Notes: Not Entered</p>
+          <p id="summaryPhrase">Phrase: Not Selected</p>
+          <hr>
+          <div id="sportSelectorContainer"></div>
+          <div id="leagueSelectorContainer" style="display:none;"></div>
+          <!-- Additional containers for Game, Team, etc can be added here -->
         `;
-        pickForm.innerHTML = summaryHtml;
 
-        // Create separate container for sport buttons below summary
-        let sportContainer = document.getElementById('sportButtonsWrapper');
-        if (!sportContainer) {
-          sportContainer = document.createElement('div');
-          sportContainer.id = 'sportButtonsWrapper';
-          sportContainer.style.marginTop = '12px';
-          pickForm.appendChild(sportContainer);
-        } else {
-          sportContainer.innerHTML = '';
-        }
-
-        try {
-          await loadSports(sportContainer);
-          setActiveAdminButton(btn);
-          console.log('loadSports() completed successfully');
-        } catch (error) {
-          console.error('Error in loadSports():', error);
-        }
+        await loadSports(document.getElementById('sportSelectorContainer'));
+        setActiveAdminButton(btn);
+        console.log('Initialized Add New Pick with dynamic summary and loaded sports');
         return;
       }
 
       if (index === 1) {  // Update Win/Loss button
         try {
           await loadUpdateWinLoss(pickForm);
-
-          // Fix Win/Loss buttons style
-          const winLossButtons = pickForm.querySelectorAll('button');
-          winLossButtons.forEach(btn => {
-            btn.style.display = 'inline-block';
-            btn.style.margin = '4px 6px';
-            btn.style.width = 'auto';
-          });
-
-          // Wrap Win/Loss output text in a container with line breaks and spacing
-          const outputText = pickForm.querySelector('.winloss-output-text'); // Assuming output text has this class, adjust as needed
-          if (outputText) {
-            const wrapper = document.createElement('div');
-            wrapper.style.whiteSpace = 'normal';
-            wrapper.style.lineHeight = '1.4';
-            wrapper.style.marginTop = '8px';
-            wrapper.textContent = outputText.textContent;
-            outputText.parentNode.replaceChild(wrapper, outputText);
-          }
-
           setActiveAdminButton(btn);
-          console.log('loadUpdateWinLoss() completed successfully with style fixes');
+          console.log('loadUpdateWinLoss() completed successfully');
         } catch (error) {
           console.error('Error in loadUpdateWinLoss():', error);
         }
