@@ -1,6 +1,6 @@
 import { loadAdminStats } from './adminStats.js';
 import { loadSports, resetSportSelectorState } from './sportSelector.js';
-import { loadUpdateWinLoss } from './updateWinloss.js'; // new import
+import { loadUpdateWinLoss } from './updateWinloss.js';
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
