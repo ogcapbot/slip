@@ -106,25 +106,28 @@
   <script type="module" src="admin/js/pickSubmit.js"></script>
 
   <script>
-    function scalePageToFit() {
+    function scaleContainerToFit() {
       const designWidth = 400;
       const screenWidth = window.innerWidth;
+      const container = document.querySelector('.container');
+
+      if (!container) return;
 
       if (screenWidth < designWidth) {
         const scale = screenWidth / designWidth;
-        document.body.style.transformOrigin = "top left";
-        document.body.style.transform = `scale(${scale})`;
-        document.body.style.width = `${designWidth}px`;
-        document.body.style.overflowX = 'hidden';
+        container.style.transformOrigin = "top left";
+        container.style.transform = `scale(${scale})`;
+        container.style.width = `${designWidth}px`;
+        container.style.overflowX = 'hidden';
       } else {
-        document.body.style.transform = "";
-        document.body.style.width = "100%";
-        document.body.style.overflowX = '';
+        container.style.transform = "";
+        container.style.width = "100%";
+        container.style.overflowX = '';
       }
     }
 
-    window.addEventListener('load', scalePageToFit);
-    window.addEventListener('resize', scalePageToFit);
+    window.addEventListener('load', scaleContainerToFit);
+    window.addEventListener('resize', scaleContainerToFit);
   </script>
 
 </body>
