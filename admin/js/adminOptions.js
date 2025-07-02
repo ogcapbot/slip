@@ -31,9 +31,9 @@ export async function loadAdminOptions() {
       console.log(`Button clicked: ${text} at index ${index}`);
 
       if (index === 0) {
-        console.log('Calling loadSports() for Add New Pick');
+        console.log('Calling loadSports() for Add New Pick with pickForm container');
         try {
-          await loadSports();
+          await loadSports(pickForm);
           console.log('loadSports() completed successfully');
         } catch (error) {
           console.error('Error in loadSports():', error);
