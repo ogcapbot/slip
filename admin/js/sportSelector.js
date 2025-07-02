@@ -70,6 +70,7 @@ export async function loadSports(container = null) {
       return;
     }
 
+    // Show full sport buttons grid (3 columns)
     targetContainer.style.display = 'grid';
     targetContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     targetContainer.style.gridAutoRows = 'min-content';
@@ -122,56 +123,53 @@ function selectSport(button, sport) {
 
   const container = button.parentNode;
 
+  // Clear container and remove 3 column layout for selected sport display
   container.innerHTML = '';
-
-  // New flex row layout with proper alignment and spacing
   container.style.display = 'flex';
-  container.style.flexDirection = 'row';
-  container.style.alignItems = 'center';
   container.style.justifyContent = 'space-between';
+  container.style.alignItems = 'center';
   container.style.marginTop = '8px';
 
-  // Selected sport text
+  // Create and add the selected sport text aligned left
   const selectedText = document.createElement('span');
   selectedText.textContent = `Selected Sport: ${sport}`;
-  selectedText.style.fontWeight = '600';
-  selectedText.style.fontSize = '11px';
   selectedText.style.fontFamily = 'Oswald, sans-serif';
-  selectedText.style.flexGrow = '1';
-  selectedText.style.textAlign = 'left';
-  selectedText.style.whiteSpace = 'nowrap';
+  selectedText.style.fontWeight = '700';
+  selectedText.style.fontSize = '11px';
+  selectedText.style.userSelect = 'none';
   container.appendChild(selectedText);
 
-  // Change button creation if not existing
-  if (!changeSportBtn) {
-    changeSportBtn = document.createElement('button');
-    changeSportBtn.type = 'button';
-    changeSportBtn.textContent = 'Change';
-    changeSportBtn.className = 'pick-btn blue';
-    changeSportBtn.style.fontSize = '11px';
-    changeSportBtn.style.fontFamily = 'Oswald, sans-serif';
-    changeSportBtn.style.height = '22px';
-    changeSportBtn.style.padding = '0 12px';
-    changeSportBtn.style.minWidth = '75px';
-    changeSportBtn.style.cursor = 'pointer';
+  // Create the smaller change button aligned right
+  changeSportBtn = document.createElement('button');
+  changeSportBtn.type = 'button';
+  changeSportBtn.textContent = 'Change';
+  changeSportBtn.className = 'pick-btn change-btn';
+  changeSportBtn.style.minWidth = '60px';   // smaller width
+  changeSportBtn.style.height = '22px';     // shorter height
+  changeSportBtn.style.fontSize = '11px';   // smaller font
+  changeSportBtn.style.padding = '0 8px';
+  changeSportBtn.style.cursor = 'pointer';
 
-    changeSportBtn.addEventListener('click', () => {
-      container.innerHTML = '';
-      container.style.display = 'grid';
-      container.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      container.style.gridAutoRows = 'min-content';
-      container.style.gap = '4px 6px';
-      container.style.marginTop = '8px';
-      container.style.alignItems = 'start';
-      loadSports(container);
-      selectedSport = null;
-      changeSportBtn = null;
-      clearHiddenSelect();
-    });
-  }
+  changeSportBtn.addEventListener('click', () => {
+    resetSportSelection();
+  });
+
   container.appendChild(changeSportBtn);
 
   updateHiddenSelect(sport);
+}
+
+function resetSportSelection() {
+  selectedSport = null;
+
+  if (changeSportBtn) {
+    changeSportBtn.remove();
+    changeSportBtn = null;
+  }
+
+  loadSports();
+
+  clearHiddenSelect();
 }
 
 function createSportButton(sport) {
