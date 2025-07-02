@@ -52,26 +52,6 @@ export async function loadAdminStats() {
 
     pickForm.appendChild(statsDiv);
 
-    // Create Back button
-    const backBtn = document.createElement('button');
-    backBtn.type = 'button';
-    backBtn.textContent = 'Back';
-    backBtn.className = 'pick-btn blue';
-
-    backBtn.style.paddingTop = '6px';
-    backBtn.style.paddingBottom = '6px';
-    backBtn.style.marginTop = '2px';
-    backBtn.style.marginBottom = '2px';
-    backBtn.style.width = '100%';
-    backBtn.style.minWidth = '0';
-    backBtn.style.boxSizing = 'border-box';
-
-    backBtn.addEventListener('click', async () => {
-      await softReset();
-    });
-
-    pickForm.appendChild(backBtn);
-
   } catch (error) {
     console.error('Error loading official picks stats:', error);
     pickForm.textContent = 'Failed to load stats.';
