@@ -25,9 +25,10 @@ export async function loadAdminStats() {
     snapshot.forEach(doc => {
       total++;
       const result = doc.data().gameWinLossDraw;
-      if (result === null || result === undefined) {
+
+      if (result === null || result === undefined || result === '') {
         pending++;
-      } else if (result === 'Won') {
+      } else if (result === 'Win') {
         won++;
       } else if (result === 'Lost') {
         lost++;
@@ -35,6 +36,11 @@ export async function loadAdminStats() {
         push++;
       }
     });
+
+    const completed = won + lost + push;
+    const winPercent = completed ? ((won / completed) * 100).toFixed(1) : '0.0';
+    const lossPercent = completed ? ((lost / completed) * 100).toFixed(1) : '0.0';
+    const pushPercent = completed ? ((push / completed) * 100).toFixed(1) : '0.0';
 
     // Create stats display elements
     const statsDiv = document.createElement('div');
@@ -44,11 +50,12 @@ export async function loadAdminStats() {
     statsDiv.style.fontSize = '12px';
 
     statsDiv.innerHTML = 
-  `Total Official Picks: ${total}-1<br>` +
-  `Official Picks Pending Win/Loss: ${pending}<br>` +
-  `Official Picks Won: ${won}<br>` +
-  `Official Picks Lost: ${lost}<br>` +
-  `Official Picks Push: ${push}`;
+      `Total Official Picks: ${total}<br>` +
+      `Official Picks Pending Win/Loss: ${pending}<br>` +
+      `Official Picks Completed: ${completed}<br><br>` +
+      `Official Picks Won: ${won} (${winPercent}%)<br>` +
+      `Official Picks Lost: ${lost} (${lossPercent}%)<br>` +
+      `Official Picks Push: ${push} (${pushPercent}%)`;
 
     pickForm.appendChild(statsDiv);
 
