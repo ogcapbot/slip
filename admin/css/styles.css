@@ -10,6 +10,7 @@ html, body {
   font-size: 11px;
   width: 100%;
   overflow-x: hidden; /* prevent horizontal scroll */
+  max-width: 100vw;
   box-sizing: border-box;
 }
 
@@ -346,12 +347,4 @@ button:disabled {
   padding: 12px 0; /* vertical spacing, NO box or border */
   background: transparent;
   border: none;
-}
-
-/* Override to reduce vertical spacing for #adminStatsContainer */
-#adminStatsContainer.admin-message {
-  margin-top: 4px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  min-height: auto !important;
 }
