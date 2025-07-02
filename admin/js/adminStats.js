@@ -44,7 +44,7 @@ export async function loadAdminStats() {
     statsDiv.style.fontSize = '12px';
 
     statsDiv.innerHTML = 
-  `Total Official Picks: ${total}<br>` +
+  `Total Official Picks: ${total}-1<br>` +
   `Official Picks Pending Win/Loss: ${pending}<br>` +
   `Official Picks Won: ${won}<br>` +
   `Official Picks Lost: ${lost}<br>` +
