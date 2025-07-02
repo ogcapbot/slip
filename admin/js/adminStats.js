@@ -43,12 +43,12 @@ export async function loadAdminStats() {
     statsDiv.style.marginBottom = '12px';
     statsDiv.style.fontSize = '12px';
 
-    statsDiv.textContent =
-      `Total Official Picks: ${total}\n` +
-      `Official Picks Pending Win/Loss: ${pending}\n` +
-      `Official Picks Won: ${won}\n` +
-      `Official Picks Lost: ${lost}\n` +
-      `Official Picks Push: ${push}`;
+    statsDiv.innerHTML = 
+  `Total Official Picks: ${total}<br>` +
+  `Official Picks Pending Win/Loss: ${pending}<br>` +
+  `Official Picks Won: ${won}<br>` +
+  `Official Picks Lost: ${lost}<br>` +
+  `Official Picks Push: ${push}`;
 
     pickForm.appendChild(statsDiv);
 
