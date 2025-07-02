@@ -8,6 +8,7 @@ const pickForm = document.getElementById('pickForm');
 const SUPERADMIN_CODE = 'super123';
 
 let activeAdminBtn = null; // Track active admin button
+let statsBtn = null;       // Reference to Stats button for default active state
 
 export async function loadAdminOptions() {
   console.log('loadAdminOptions called');
@@ -29,6 +30,10 @@ export async function loadAdminOptions() {
   buttons.forEach(({ text, message }, index) => {
     console.log(`Creating button: ${text} at index ${index}`);
     const btn = createButton(text);
+
+    if (index === 2) {
+      statsBtn = btn; // Save reference to Stats button
+    }
 
     btn.addEventListener('click', async () => {
       console.log(`Button clicked: ${text} at index ${index}`);
@@ -60,8 +65,8 @@ export async function loadAdminOptions() {
         // Refresh All button — clears and reloads stats dynamically
         try {
           await loadAdminStats(pickForm);
-          setActiveAdminButton(btn);
-          console.log('Admin UI refreshed: stats loaded');
+          setActiveAdminButton(statsBtn); // Set Stats button active after refresh
+          console.log('Admin UI refreshed: stats loaded, Stats button set active');
         } catch (error) {
           console.error('Error refreshing admin UI:', error);
         }
@@ -96,8 +101,8 @@ export async function loadAdminOptions() {
 
   try {
     await loadAdminStats(pickForm);
-    setActiveAdminButton(null); // No active button on initial load
-    console.log('Initial loadAdminStats() call completed');
+    setActiveAdminButton(statsBtn); // Stats button active by default after login
+    console.log('Initial loadAdminStats() call completed, Stats button set active');
   } catch (error) {
     console.error('Error during initial loadAdminStats() call:', error);
   }
