@@ -364,3 +364,14 @@ button:disabled {
   overflow-wrap: break-word;
   word-break: break-word;
 }
+
+.green {
+  background-color: #4CAF50 !important; /* green background */
+  color: white !important;
+}
+
+.pressed {
+  box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+  transform: translateY(2px);
+}
+
