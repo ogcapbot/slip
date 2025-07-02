@@ -10,15 +10,16 @@ const requiredFields = [
   'timestampSubmitted'
 ];
 
-function createStyledButton(text) {
+function createStyledButton(text, colorClass = 'blue') {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
-  btn.className = 'pick-btn blue';
+  btn.className = `pick-btn ${colorClass}`;
   btn.style.paddingTop = '6px';
   btn.style.paddingBottom = '6px';
-  btn.style.margin = '0';
+  btn.style.margin = '4px 0';
   btn.style.minWidth = '0';
+  btn.style.width = '100%';
   btn.style.boxSizing = 'border-box';
   return btn;
 }
@@ -57,16 +58,17 @@ export async function loadUpdateWinLoss(container) {
     combinedDocs.forEach((docSnap, i) => {
       const data = docSnap.data();
 
-      // Flex container for info + button side by side
-      const docDiv = document.createElement('div');
-      docDiv.style.display = 'flex';
-      docDiv.style.justifyContent = 'space-between';
-      docDiv.style.alignItems = 'center';
-      docDiv.style.marginBottom = '15px';
+      // Container for the whole doc row (2 columns)
+      const docRow = document.createElement('div');
+      docRow.style.display = 'flex';
+      docRow.style.justifyContent = 'space-between';
+      docRow.style.alignItems = 'flex-start';
+      docRow.style.marginBottom = '15px';
 
-      // Info container (left side)
-      const infoDiv = document.createElement('div');
-      infoDiv.style.flex = '1';
+      // Left column: doc info
+      const infoCol = document.createElement('div');
+      infoCol.style.flex = '1';
+      infoCol.style.paddingRight = '15px';
 
       requiredFields.forEach(field => {
         const p = document.createElement('p');
@@ -76,24 +78,88 @@ export async function loadUpdateWinLoss(container) {
           value = formatTimestamp(value);
         }
         p.textContent = `${field}: ${value}`;
-        infoDiv.appendChild(p);
+        infoCol.appendChild(p);
       });
 
-      docDiv.appendChild(infoDiv);
+      docRow.appendChild(infoCol);
 
-      // Update Status button (right side)
-      const updateBtn = createStyledButton('Update Status');
-      updateBtn.style.marginLeft = '15px';
-      updateBtn.style.flexShrink = '0'; // don't shrink the button
+      // Right column: buttons stacked vertically
+      const buttonsCol = document.createElement('div');
+      buttonsCol.style.display = 'flex';
+      buttonsCol.style.flexDirection = 'column';
+      buttonsCol.style.width = '110px'; // fixed width for buttons
+      buttonsCol.style.flexShrink = '0';
 
-      updateBtn.addEventListener('click', () => {
-        showUpdateStatusPopup(docSnap.id, docDiv.parentNode, docDiv);
-      });
+      // Track pressed button for this doc
+      let pressedBtn = null;
 
-      docDiv.appendChild(updateBtn);
+      // Create buttons
+      const btnWin = createStyledButton('Win');
+      const btnPush = createStyledButton('Push');
+      const btnLost = createStyledButton('Lost');
 
-      container.appendChild(docDiv);
+      // Set initial pressed button based on existing value
+      const currentStatus = data.gameWinLossDraw;
+      if (currentStatus === 'Won') {
+        btnWin.classList.replace('blue', 'green');
+        pressedBtn = btnWin;
+      } else if (currentStatus === 'Push') {
+        // Keep blue but pressed style
+        btnPush.classList.add('pressed'); // We'll define this class in CSS below
+        pressedBtn = btnPush;
+      } else if (currentStatus === 'Lost') {
+        btnLost.classList.replace('blue', 'red');
+        pressedBtn = btnLost;
+      }
 
+      // Button click handler to update status and UI
+      const updateStatus = async (status, btn) => {
+        if (pressedBtn === btn) return; // no change
+
+        try {
+          const docRef = doc(db, 'OfficialPicks', docSnap.id);
+          await updateDoc(docRef, { gameWinLossDraw: status });
+
+          // Reset previously pressed button styles
+          if (pressedBtn) {
+            pressedBtn.classList.remove('green', 'red', 'pressed');
+            pressedBtn.classList.add('blue');
+          }
+
+          // Set new pressed button style
+          if (status === 'Won') {
+            btn.classList.replace('blue', 'green');
+            btn.classList.remove('pressed');
+          } else if (status === 'Push') {
+            btn.classList.add('pressed');
+            btn.classList.remove('green', 'red');
+            btn.classList.remove('blue'); // remove blue for pressed style
+          } else if (status === 'Lost') {
+            btn.classList.replace('blue', 'red');
+            btn.classList.remove('pressed');
+          }
+
+          pressedBtn = btn;
+
+        } catch (error) {
+          alert('Failed to update status. Check console for details.');
+          console.error('Error updating status:', error);
+        }
+      };
+
+      btnWin.addEventListener('click', () => updateStatus('Won', btnWin));
+      btnPush.addEventListener('click', () => updateStatus('Push', btnPush));
+      btnLost.addEventListener('click', () => updateStatus('Lost', btnLost));
+
+      buttonsCol.appendChild(btnWin);
+      buttonsCol.appendChild(btnPush);
+      buttonsCol.appendChild(btnLost);
+
+      docRow.appendChild(buttonsCol);
+
+      container.appendChild(docRow);
+
+      // Horizontal separator except after last
       if (i < combinedDocs.length - 1) {
         const hr = document.createElement('hr');
         container.appendChild(hr);
@@ -104,105 +170,4 @@ export async function loadUpdateWinLoss(container) {
     console.error('Error loading updateWinLoss picks:', error);
     container.textContent = 'Failed to load picks.';
   }
-}
-
-// Popup dialog to choose status and confirm update
-function showUpdateStatusPopup(docId, container, docDiv) {
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100vw';
-  overlay.style.height = '100vh';
-  overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-  overlay.style.display = 'flex';
-  overlay.style.justifyContent = 'center';
-  overlay.style.alignItems = 'center';
-  overlay.style.zIndex = '9999';
-
-  // Popup container
-  const popup = document.createElement('div');
-  popup.style.background = '#fff';
-  popup.style.padding = '20px';
-  popup.style.borderRadius = '8px';
-  popup.style.minWidth = '280px';
-  popup.style.boxSizing = 'border-box';
-  popup.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-  popup.style.fontFamily = "'Oswald', sans-serif";
-  popup.style.fontSize = '14px';
-  popup.style.color = '#444';
-
-  // Title
-  const title = document.createElement('h3');
-  title.textContent = 'Update Pick Status';
-  title.style.marginTop = '0';
-  title.style.marginBottom = '12px';
-  popup.appendChild(title);
-
-  // Dropdown select
-  const select = document.createElement('select');
-  ['Won', 'Lost', 'Push'].forEach(optionText => {
-    const option = document.createElement('option');
-    option.value = optionText;
-    option.textContent = optionText;
-    select.appendChild(option);
-  });
-  select.style.width = '100%';
-  select.style.padding = '8px';
-  select.style.fontSize = '14px';
-  select.style.marginBottom = '16px';
-  select.style.borderRadius = '6px';
-  select.style.border = '1px solid #ccc';
-  popup.appendChild(select);
-
-  // Buttons container
-  const btnContainer = document.createElement('div');
-  btnContainer.style.textAlign = 'right';
-
-  // Cancel button
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.className = 'pick-btn blue';
-  cancelBtn.style.marginRight = '10px';
-  cancelBtn.addEventListener('click', () => {
-    document.body.removeChild(overlay);
-  });
-
-  // Confirm button
-  const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = 'Update Status';
-  confirmBtn.className = 'pick-btn red';
-
-  confirmBtn.addEventListener('click', async () => {
-    const selectedValue = select.value;
-    try {
-      const docRef = doc(db, 'OfficialPicks', docId);
-      await updateDoc(docRef, { gameWinLossDraw: selectedValue });
-      alert(`Status updated to "${selectedValue}" successfully.`);
-
-      // Remove popup and also remove this docDiv + separator (hr) from container to reflect update
-      document.body.removeChild(overlay);
-      if (container && docDiv) {
-        container.removeChild(docDiv);
-
-        // Also remove the hr that immediately follows docDiv if exists
-        const nextSibling = container.firstChild;
-        if (nextSibling && nextSibling.tagName === 'HR') {
-          container.removeChild(nextSibling);
-        }
-      }
-    } catch (error) {
-      alert('Failed to update status. See console for details.');
-      console.error('Error updating status:', error);
-    }
-  });
-
-  btnContainer.appendChild(cancelBtn);
-  btnContainer.appendChild(confirmBtn);
-
-  popup.appendChild(btnContainer);
-
-  overlay.appendChild(popup);
-  document.body.appendChild(overlay);
 }
