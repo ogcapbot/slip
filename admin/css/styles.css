@@ -437,10 +437,18 @@ button:disabled {
 }
 
 .pick-btn.change-btn {
-  min-width: 60px;
-  height: 22px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
   font-size: 11px;
-  padding: 0 8px;
+  border-radius: 5px;
+  background-color: #4285F4;
+  color: white;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.pick-btn.change-btn:hover {
+  background-color: #357ae8;
   cursor: pointer;
 }
 
