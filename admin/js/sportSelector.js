@@ -88,6 +88,7 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
+  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -134,6 +135,8 @@ function selectSport(button, sport) {
   const selectedText = document.createElement('span');
   selectedText.textContent = `Selected Sport: ${sport}`;
   selectedText.style.fontWeight = '600';
+  selectedText.style.flexGrow = '1';
+  selectedText.style.textAlign = 'left';
   selectedText.classList.add('selected-sport-text');
   container.appendChild(selectedText);
 
@@ -145,25 +148,24 @@ function selectSport(button, sport) {
     changeSportBtn.style.cursor = 'pointer';
 
     changeSportBtn.addEventListener('click', () => {
-      resetSportSelection();
+      // Reset container and reload all sports buttons
+      container.innerHTML = '';
+      container.style.display = 'grid';
+      container.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      container.style.gridAutoRows = 'min-content';
+      container.style.gap = '4px 6px';
+      container.style.marginTop = '8px';
+      container.style.alignItems = 'start';
+      container.classList.remove('selected-sport-container');
+      loadSports(container);
+      selectedSport = null;
+      changeSportBtn = null;
+      clearHiddenSelect();
     });
   }
   container.appendChild(changeSportBtn);
 
   updateHiddenSelect(sport);
-}
-
-function resetSportSelection() {
-  selectedSport = null;
-
-  if (changeSportBtn) {
-    changeSportBtn.remove();
-    changeSportBtn = null;
-  }
-
-  loadSports();
-
-  clearHiddenSelect();
 }
 
 function createSportButton(sport) {
