@@ -153,3 +153,6 @@ export function resetSportSelectorState() {
     hiddenSelect.dispatchEvent(new Event('change'));
   }
 }
+
+// EXPOSE for debugging in console:
+window.sportButtonsContainer = sportButtonsContainer;
