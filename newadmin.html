@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>OG Capper Bets - Official Pick Admin</title>
   
   <!-- Google Fonts Oswald -->
@@ -106,28 +106,29 @@
   <script type="module" src="admin/js/pickSubmit.js"></script>
 
   <script>
-    function scaleContainerToFit() {
-      const designWidth = 400;
-      const screenWidth = window.innerWidth;
-      const container = document.querySelector('.container');
+   function scaleContainerToFit() {
+  const designWidth = 400;
+  const screenWidth = window.innerWidth;
+  const container = document.querySelector('.container');
 
-      if (!container) return;
+  if (!container) return;
 
-      if (screenWidth < designWidth) {
-        const scale = screenWidth / designWidth;
-        container.style.transformOrigin = "top left";
-        container.style.transform = `scale(${scale})`;
-        container.style.width = `${designWidth}px`;
-        container.style.overflowX = 'hidden';
-      } else {
-        container.style.transform = "";
-        container.style.width = "100%";
-        container.style.overflowX = '';
-      }
-    }
+  if (screenWidth < designWidth) {
+    const scale = screenWidth / designWidth;
+    container.style.transformOrigin = "top left";
+    container.style.transform = `scale(${scale})`;
+    container.style.width = `${designWidth}px`;
+    container.style.overflowX = 'hidden';
+  } else {
+    container.style.transform = "";
+    container.style.width = "100%";
+    container.style.overflowX = '';
+  }
+}
 
-    window.addEventListener('load', scaleContainerToFit);
-    window.addEventListener('resize', scaleContainerToFit);
+window.addEventListener('load', scaleContainerToFit);
+window.addEventListener('resize', scaleContainerToFit);
+
   </script>
 
 </body>
