@@ -27,18 +27,16 @@ if (!unitSummaryContainer) {
   unitSummaryContainer.id = 'unitSummaryContainer';
   unitSummaryContainer.style.marginTop = '10px';
 
-  // Use CSS Grid with 3 columns for layout
   unitSummaryContainer.style.display = 'grid';
   unitSummaryContainer.style.gridTemplateColumns = '1fr 1fr 1fr';
   unitSummaryContainer.style.alignItems = 'center';
   unitSummaryContainer.style.gap = '0 10px';
-  unitSummaryContainer.style.display = 'none'; // hidden initially
+  unitSummaryContainer.style.display = 'none'; // initially hidden
 
   unitButtonsContainer.parentNode.insertBefore(unitSummaryContainer, unitButtonsContainer);
 }
 
 let unitSummaryText = document.createElement('div');
-// Left column styling to match other sections
 unitSummaryText.style.gridColumn = '1 / 2';
 unitSummaryText.style.fontWeight = '600';
 unitSummaryText.style.fontSize = '16px';
@@ -53,14 +51,13 @@ updateUnitBtn.type = 'button';
 updateUnitBtn.textContent = 'Update';
 updateUnitBtn.className = 'pick-btn blue';
 
-// Right column placement with matching style and single line height
 updateUnitBtn.style.gridColumn = '3 / 4';
 updateUnitBtn.style.minWidth = '100px';
 updateUnitBtn.style.height = '32px';
 updateUnitBtn.style.lineHeight = '32px';
 updateUnitBtn.style.fontSize = '16px';
 updateUnitBtn.style.fontFamily = 'inherit';
-updateUnitBtn.style.backgroundColor = '#3a82d6'; // adjust if needed
+updateUnitBtn.style.backgroundColor = '#3a82d6';
 updateUnitBtn.style.color = '#fff';
 updateUnitBtn.style.border = 'none';
 updateUnitBtn.style.borderRadius = '10px';
@@ -71,19 +68,24 @@ updateUnitBtn.style.whiteSpace = 'nowrap';
 
 unitSummaryContainer.appendChild(updateUnitBtn);
 
-// Spacer in the middle column to balance the layout
 let spacer = document.createElement('div');
 spacer.style.gridColumn = '2 / 3';
 unitSummaryContainer.insertBefore(spacer, updateUnitBtn);
 
-let selectedUnit = null;
+let selectedUnit = null;          // The display_unit string selected by user
+let selectedUnitValue = null;     // The associated Units value from DB (hidden for submission)
 let allUnitsCache = [];
 
 const explanatoryTextContainer = document.getElementById('explanatoryTextContainer');
 
-unitButtonsContainer.style.display = 'none';
+unitButtonsContainer.style.display = 'grid';
+unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+unitButtonsContainer.style.gridAutoRows = 'min-content';
+unitButtonsContainer.style.gap = '4px 6px';
+unitButtonsContainer.style.marginTop = '8px';
+unitButtonsContainer.style.alignItems = 'start';
 
-async function loadUnits(showAll = true) {
+async function loadUnits() {
   if (!unitButtonsContainer || !unitsSelect) {
     console.error('Required elements missing.');
     return;
@@ -91,8 +93,9 @@ async function loadUnits(showAll = true) {
 
   unitButtonsContainer.innerHTML = '';
   selectedUnit = null;
+  selectedUnitValue = null;
 
-  unitsSelect.innerHTML = '<option value="" disabled selected>Select a unit</option>';
+  unitsSelect.innerHTML = '';
   unitsSelect.disabled = true;
 
   unitButtonsContainer.textContent = 'Loading units...';
@@ -104,7 +107,7 @@ async function loadUnits(showAll = true) {
 
       unitsSnapshot.forEach(doc => {
         const data = doc.data();
-        if (data && data.display_unit !== undefined && data.Rank !== undefined) {
+        if (data && data.display_unit !== undefined && data.Units !== undefined && data.Rank !== undefined) {
           allUnitsCache.push(data);
         }
       });
@@ -121,37 +124,19 @@ async function loadUnits(showAll = true) {
 
     unitButtonsContainer.textContent = '';
 
-    if (showAll) {
-      unitButtonsContainer.style.display = 'grid';
-      unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-      unitButtonsContainer.style.gridAutoRows = 'min-content';
-      unitButtonsContainer.style.gap = '4px 6px';
-      unitButtonsContainer.style.marginTop = '8px';
-      unitButtonsContainer.style.alignItems = 'start';
+    unitButtonsContainer.style.display = 'grid';
+    unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    unitButtonsContainer.style.gridAutoRows = 'min-content';
+    unitButtonsContainer.style.gap = '4px 6px';
+    unitButtonsContainer.style.marginTop = '8px';
+    unitButtonsContainer.style.alignItems = 'start';
 
-      allUnitsCache.forEach(unit => {
-        const btn = createUnitButton(unit.display_unit);
-        unitButtonsContainer.appendChild(btn);
-      });
+    allUnitsCache.forEach(unit => {
+      const btn = createUnitButton(unit.display_unit);
+      unitButtonsContainer.appendChild(btn);
+    });
 
-      unitsSelect.disabled = false;
-    } else {
-      unitButtonsContainer.style.display = 'none';
-
-      const oneUnitData = allUnitsCache.find(u => u.display_unit === '1 Unit') || allUnitsCache[0];
-      selectedUnit = oneUnitData ? oneUnitData.display_unit : null;
-
-      unitsSelect.disabled = false;
-      unitsSelect.innerHTML = '';
-      if (selectedUnit) {
-        const option = document.createElement('option');
-        option.value = selectedUnit;
-        option.selected = true;
-        unitsSelect.appendChild(option);
-      }
-    }
-
-    updateUnitSummaryText();
+    unitsSelect.disabled = false;
 
   } catch (error) {
     console.error('Error loading units:', error);
@@ -196,8 +181,14 @@ function createUnitButton(unitName) {
 
 function selectUnit(unitName) {
   if (selectedUnit === unitName) return;
+
   selectedUnit = unitName;
 
+  // Find Units value from cache
+  const selectedUnitObj = allUnitsCache.find(u => u.display_unit === unitName);
+  selectedUnitValue = selectedUnitObj ? selectedUnitObj.Units : null;
+
+  // Hide buttons after selection
   unitButtonsContainer.style.display = 'none';
 
   unitsSelect.innerHTML = '';
@@ -208,7 +199,16 @@ function selectUnit(unitName) {
   unitsSelect.disabled = false;
   unitsSelect.dispatchEvent(new Event('change'));
 
+  // Show summary container
+  unitSummaryContainer.style.display = 'grid';
+
   updateUnitSummaryText();
+
+  // Update the global running summary list (append line "Unit Selected: [unitName]")
+  updatePickSummary();
+
+  // Here you can store selectedUnit and selectedUnitValue globally or send upwards for DB submit
+  // For example, window.selectedUnitData = { name: selectedUnit, value: selectedUnitValue };
 }
 
 function updateUnitSummaryText() {
@@ -217,22 +217,13 @@ function updateUnitSummaryText() {
     dynamicExplanation = explanatoryTextContainer.textContent.trim();
   }
   if (selectedUnit) {
-    unitSummaryText.textContent = `Unit Selected: ${selectedUnit} - ${dynamicExplanation}`;
+    unitSummaryText.textContent = `Unit Selected: ${selectedUnit} ${dynamicExplanation}`;
   } else {
     unitSummaryText.textContent = '';
   }
 }
 
-function showUnitSection() {
-  unitSummaryContainer.style.display = 'grid';
-  unitButtonsContainer.style.display = 'none';
-}
-
-function hideUnitSection() {
-  unitSummaryContainer.style.display = 'none';
-  unitButtonsContainer.style.display = 'none';
-}
-
+// Expose for "Update" button click to allow re-selecting unit
 updateUnitBtn.addEventListener('click', () => {
   unitButtonsContainer.style.display = 'grid';
   unitButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -246,12 +237,30 @@ updateUnitBtn.addEventListener('click', () => {
     const btn = createUnitButton(unit.display_unit);
     unitButtonsContainer.appendChild(btn);
   });
+
+  unitSummaryContainer.style.display = 'none';
 });
 
-// Set default selected unit to "1 Unit" on load and update display
-selectedUnit = '1 Unit';
-updateUnitSummaryText();
+// Update the running summary container (assumed to be with id "pickSummaryContainer")
+function updatePickSummary() {
+  const pickSummaryContainer = document.getElementById('pickSummaryContainer');
+  if (!pickSummaryContainer) return;
 
-loadUnits(false);
+  // Remove any existing "Unit Selected" line so we can replace it
+  let existing = Array.from(pickSummaryContainer.querySelectorAll('p')).find(p => p.dataset.label === 'Unit Selected');
+  if (existing) {
+    pickSummaryContainer.removeChild(existing);
+  }
 
-export { loadUnits, showUnitSection, hideUnitSection, updateUnitSummaryText };
+  if (selectedUnit) {
+    const p = document.createElement('p');
+    p.dataset.label = 'Unit Selected';
+    p.textContent = `Unit Selected: ${selectedUnit}`;
+    pickSummaryContainer.appendChild(p);
+  }
+}
+
+export { loadUnits, updateUnitSummaryText, showUnitSection };
+
+// Initial load of all units buttons
+loadUnits();
