@@ -142,7 +142,7 @@ function selectSport(button, sport) {
   // Create the smaller change button aligned right
   changeSportBtn = document.createElement('button');
   changeSportBtn.type = 'button';
-  changeSportBtn.textContent = 'Change';
+  changeSportBtn.textContent = 'Change It';
   changeSportBtn.className = 'pick-btn change-btn';
   changeSportBtn.style.minWidth = '60px';   // smaller width
   changeSportBtn.style.height = '22px';     // shorter height
