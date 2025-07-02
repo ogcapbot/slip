@@ -1,162 +1,106 @@
-import { db } from "../firebaseInit.js";
+import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadGames } from './gameSelector.js';  // Next step selector
 
-const leagueSelect = document.getElementById("leagueSelect");
-let leagueButtonsContainer = document.getElementById("leagueButtonsContainer");
-
-if (!leagueButtonsContainer) {
-  console.log("[LeagueSelector] leagueButtonsContainer not found, creating new container.");
-  leagueButtonsContainer = document.createElement("div");
-  leagueButtonsContainer.id = "leagueButtonsContainer";
-
-  const leagueLabel = document.querySelector('label[for="leagueSelect"]');
-  if (leagueLabel) {
-    console.log("[LeagueSelector] Inserting leagueButtonsContainer after label.");
-    leagueLabel.parentNode.insertBefore(leagueButtonsContainer, leagueLabel.nextSibling);
-  } else if (leagueSelect && leagueSelect.parentNode) {
-    console.log("[LeagueSelector] Appending leagueButtonsContainer to leagueSelect's parent.");
-    leagueSelect.parentNode.appendChild(leagueButtonsContainer);
-  } else {
-    console.log("[LeagueSelector] Appending leagueButtonsContainer to body.");
-    document.body.appendChild(leagueButtonsContainer);
-  }
-} else {
-  console.log("[LeagueSelector] leagueButtonsContainer found.");
-}
-
-// Hide the original leagueSelect dropdown but keep for compatibility
-if (leagueSelect) {
-  leagueSelect.style.display = "none";
-  console.log("[LeagueSelector] leagueSelect dropdown hidden.");
-} else {
-  console.warn("[LeagueSelector] leagueSelect element not found!");
-}
-
+let leagueButtonsContainer;
+let leagueSelect;
 let selectedLeague = null;
 
 export async function loadLeagues(container = null, selectedSport = null) {
-  console.log("[LeagueSelector] loadLeagues called with selectedSport:", selectedSport);
-  const targetContainer = container || leagueButtonsContainer;
+  if (!container) {
+    leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
+    if (!leagueButtonsContainer) {
+      leagueButtonsContainer = document.createElement('div');
+      leagueButtonsContainer.id = 'leagueButtonsContainer';
+      document.body.appendChild(leagueButtonsContainer);
+      console.log('[LeagueSelector] leagueButtonsContainer not found, creating new container.');
+    }
+  } else {
+    leagueButtonsContainer = container;
+  }
 
-  targetContainer.innerHTML = "";
+  console.log('[LeagueSelector] loadLeagues called with selectedSport:', selectedSport);
+
+  leagueButtonsContainer.innerHTML = '';
   selectedLeague = null;
 
-  if (leagueSelect) {
-    leagueSelect.innerHTML = '<option>Select a sport first</option>';
-    leagueSelect.disabled = true;
-  } else {
-    console.warn("[LeagueSelector] leagueSelect element not found on loadLeagues start.");
-  }
-
   if (!selectedSport) {
-    console.log("[LeagueSelector] No sport selected, returning early.");
-    return; // No sport selected yet, nothing to do
+    leagueButtonsContainer.textContent = 'No sport selected.';
+    console.warn('[LeagueSelector] No sport selected to load leagues.');
+    return;
   }
-
-  targetContainer.textContent = "Loading leagues...";
 
   try {
-    const q = query(collection(db, "GameCache"), where("leagueGroup", "==", selectedSport));
-    console.log("[LeagueSelector] Querying GameCache for leagueGroup == ", selectedSport);
-    const querySnapshot = await getDocs(q);
-    console.log("[LeagueSelector] Retrieved league documents count:", querySnapshot.size);
+    const q = query(collection(db, 'GameCache'), where('leagueGroup', '==', selectedSport));
+    const snapshot = await getDocs(q);
+    console.log(`[LeagueSelector] Retrieved league documents count: ${snapshot.size}`);
 
     const leaguesSet = new Set();
-    querySnapshot.forEach(doc => {
-      const data = doc.data();
-      if (data && data.sportName) {
-        console.log("[LeagueSelector] Found league:", data.sportName);
-        leaguesSet.add(data.sportName);
+    snapshot.forEach(doc => {
+      const league = doc.data().league;
+      if (league) {
+        leaguesSet.add(league);
+        console.log(`[LeagueSelector] Found league: ${league}`);
       }
     });
 
-    if (leaguesSet.size === 0) {
-      targetContainer.textContent = "No leagues found";
-      if (leagueSelect) {
-        leagueSelect.innerHTML = '<option>No leagues found</option>';
-        leagueSelect.disabled = true;
-      }
-      console.log("[LeagueSelector] No leagues found for selected sport.");
+    const leagues = Array.from(leaguesSet).sort((a, b) => a.localeCompare(b));
+    console.log(`[LeagueSelector] Sorted leagues: ${leagues}`);
+
+    if (leagues.length === 0) {
+      leagueButtonsContainer.textContent = 'No leagues found';
+      console.warn('[LeagueSelector] No leagues found for selected sport.');
       return;
     }
 
-    targetContainer.textContent = "";
-
-    const leagues = Array.from(leaguesSet).sort((a, b) => a.localeCompare(b));
-    console.log("[LeagueSelector] Sorted leagues:", leagues);
-
-    targetContainer.style.display = "grid";
-    targetContainer.style.gridTemplateColumns = "repeat(3, 1fr)";
-    targetContainer.style.gridAutoRows = "min-content";
-    targetContainer.style.gap = "4px 6px";
-    targetContainer.style.marginTop = "8px";
-    targetContainer.style.alignItems = "start";
+    leagueButtonsContainer.style.display = 'grid';
+    leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    leagueButtonsContainer.style.gap = '4px 6px';
+    leagueButtonsContainer.style.marginTop = '8px';
+    leagueButtonsContainer.style.alignItems = 'start';
 
     leagues.forEach(league => {
-      console.log("[LeagueSelector] Creating button for league:", league);
-      const btn = document.createElement("button");
-      btn.type = "button";
+      const btn = document.createElement('button');
+      btn.type = 'button';
       btn.textContent = league;
-      btn.className = "pick-btn blue";
+      btn.className = 'pick-btn blue';
+      btn.style.width = '100%';
+      btn.style.minWidth = '0';
+      btn.style.boxSizing = 'border-box';
 
-      btn.style.paddingTop = "6px";
-      btn.style.paddingBottom = "6px";
-      btn.style.marginTop = "2px";
-      btn.style.marginBottom = "2px";
-
-      btn.style.width = "100%";
-      btn.style.minWidth = "0";
-      btn.style.boxSizing = "border-box";
-
-      btn.addEventListener("click", () => {
-        console.log(`[LeagueSelector] Button clicked for league: ${league}`);
+      btn.addEventListener('click', () => {
         selectLeague(league);
       });
-      targetContainer.appendChild(btn);
+
+      leagueButtonsContainer.appendChild(btn);
+      console.log(`[LeagueSelector] Creating button for league: ${league}`);
     });
-    console.log("[LeagueSelector] All league buttons created and appended.");
+
+    console.log('[LeagueSelector] All league buttons created and appended.');
   } catch (error) {
-    targetContainer.textContent = "Error loading leagues";
-    console.error("[LeagueSelector] Error loading leagues:", error);
+    console.error('[LeagueSelector] Error loading leagues:', error);
+    leagueButtonsContainer.textContent = 'Error loading leagues';
   }
 }
 
 function selectLeague(league) {
-  console.log("[LeagueSelector] selectLeague fired for:", league);
   if (selectedLeague === league) {
-    console.log("[LeagueSelector] League already selected, ignoring.");
+    console.log('[LeagueSelector] Selected league is the same as current; ignoring.');
     return;
   }
 
   selectedLeague = league;
 
-  leagueButtonsContainer.innerHTML = "";
-  leagueButtonsContainer.style.display = "block";
-
-  const summaryLine = document.createElement("div");
-  summaryLine.textContent = `Selected League: ${league}`;
-  summaryLine.style.fontWeight = "700";
-  summaryLine.style.fontSize = "11px";
-  summaryLine.style.fontFamily = "Oswald, sans-serif";
-  summaryLine.style.marginBottom = "6px";
-
-  leagueButtonsContainer.appendChild(summaryLine);
-
-  // Update hidden select for compatibility
-  if (leagueSelect) {
-    leagueSelect.innerHTML = "";
-    const option = document.createElement("option");
-    option.value = league;
-    option.selected = true;
-    leagueSelect.appendChild(option);
-    leagueSelect.disabled = false;
-    leagueSelect.dispatchEvent(new Event("change"));
-  } else {
-    console.warn("[LeagueSelector] leagueSelect element not found in selectLeague.");
+  // Update summary text dynamically
+  const summaryLeague = document.getElementById('summaryLeague');
+  if (summaryLeague) {
+    summaryLeague.textContent = `League: ${league}`;
   }
 
-  // Call next selector with the selected league
-  console.log("[LeagueSelector] Calling loadGames with league:", league);
-  loadGames(null, league);
+  // Hide league selector container and show next step container here (not implemented yet)
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (leagueContainer) leagueContainer.style.display = 'none';
+
+  // TODO: Show next container (e.g. gameSelectorContainer) here
+
+  console.log('[LeagueSelector] League selected:', league);
 }
