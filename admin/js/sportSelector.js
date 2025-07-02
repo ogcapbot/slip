@@ -88,7 +88,6 @@ export async function loadSports(container = null) {
 
 export function resetSportSelectorState() {
   selectedSport = null;
-  // Add other state resets here if needed
   if (changeSportBtn) {
     changeSportBtn.remove();
     changeSportBtn = null;
@@ -125,30 +124,38 @@ function selectSport(button, sport) {
 
   container.innerHTML = '';
 
+  // New flex row layout with proper alignment and spacing
   container.style.display = 'flex';
   container.style.flexDirection = 'row';
   container.style.alignItems = 'center';
   container.style.justifyContent = 'space-between';
   container.style.marginTop = '8px';
-  container.classList.add('selected-sport-container');
 
+  // Selected sport text
   const selectedText = document.createElement('span');
   selectedText.textContent = `Selected Sport: ${sport}`;
   selectedText.style.fontWeight = '600';
+  selectedText.style.fontSize = '11px';
+  selectedText.style.fontFamily = 'Oswald, sans-serif';
   selectedText.style.flexGrow = '1';
   selectedText.style.textAlign = 'left';
-  selectedText.classList.add('selected-sport-text');
+  selectedText.style.whiteSpace = 'nowrap';
   container.appendChild(selectedText);
 
+  // Change button creation if not existing
   if (!changeSportBtn) {
     changeSportBtn = document.createElement('button');
     changeSportBtn.type = 'button';
     changeSportBtn.textContent = 'Change';
-    changeSportBtn.className = 'pick-btn blue selected-sport-change-btn';
+    changeSportBtn.className = 'pick-btn blue';
+    changeSportBtn.style.fontSize = '11px';
+    changeSportBtn.style.fontFamily = 'Oswald, sans-serif';
+    changeSportBtn.style.height = '22px';
+    changeSportBtn.style.padding = '0 12px';
+    changeSportBtn.style.minWidth = '75px';
     changeSportBtn.style.cursor = 'pointer';
 
     changeSportBtn.addEventListener('click', () => {
-      // Reset container and reload all sports buttons
       container.innerHTML = '';
       container.style.display = 'grid';
       container.style.gridTemplateColumns = 'repeat(3, 1fr)';
@@ -156,7 +163,6 @@ function selectSport(button, sport) {
       container.style.gap = '4px 6px';
       container.style.marginTop = '8px';
       container.style.alignItems = 'start';
-      container.classList.remove('selected-sport-container');
       loadSports(container);
       selectedSport = null;
       changeSportBtn = null;
