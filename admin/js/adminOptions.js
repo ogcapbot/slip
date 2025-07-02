@@ -1,5 +1,6 @@
 import { loadAdminStats } from './adminStats.js';
 import { loadSports, resetSportSelectorState } from './sportSelector.js';
+import { loadUpdateWinLoss } from './updateWinloss.js'; // new import
 
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
@@ -79,6 +80,17 @@ export async function loadAdminOptions() {
           console.log('loadSports() completed successfully');
         } catch (error) {
           console.error('Error in loadSports():', error);
+        }
+        return;
+      }
+
+      if (index === 1) {  // Update Win/Loss button
+        try {
+          await loadUpdateWinLoss(pickForm);
+          setActiveAdminButton(btn);
+          console.log('loadUpdateWinLoss() completed successfully');
+        } catch (error) {
+          console.error('Error in loadUpdateWinLoss():', error);
         }
         return;
       }
