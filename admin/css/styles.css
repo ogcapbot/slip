@@ -11,38 +11,30 @@ html, body {
   width: 100%;
   overflow-x: hidden; /* prevent horizontal scroll */
   box-sizing: border-box;
-}
 
-/* REMOVED this conflicting scaling block:
-
-body > * {
-  max-width: 400px;
-  width: 100%;
-  box-sizing: border-box;
-  transform-origin: top center;
-  transition: transform 0.3s ease;
+  -webkit-text-size-adjust: 100%;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
 }
-
-@media (max-width: 420px) {
-  body > * {
-    transform: scale(0.85);
-    width: 470px;
-  }
-}
-
-@media (max-width: 320px) {
-  body > * {
-    transform: scale(0.75);
-    width: 533px;
-  }
-}
-*/
 
 .container {
   padding: 10px 5px;
   box-sizing: border-box;
   max-width: 400px;
   width: 100%;
+  overflow-x: hidden;
+}
+
+/* Force all inner elements inside .container to stay within width and break words */
+.container * {
+  max-width: 100% !important;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+.admin-buttons-box, .admin-buttons-grid {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 input[type="number"],
