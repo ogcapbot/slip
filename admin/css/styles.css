@@ -22,19 +22,27 @@ html, body {
   box-sizing: border-box;
   max-width: 400px;
   width: 100%;
-  overflow-x: hidden;
-}
-
-/* Force all inner elements inside .container to stay within width and break words */
-.container * {
-  max-width: 100% !important;
-  box-sizing: border-box;
+  overflow-x: hidden; /* prevent overflow */
+  word-wrap: break-word;
   word-break: break-word;
 }
 
+/* Crucial: force all elements inside container to never overflow horizontally */
+.container * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  white-space: normal !important; /* prevent nowrap forcing overflow */
+}
+
+/* Admin button container fix */
 .admin-buttons-box, .admin-buttons-grid {
   max-width: 100%;
   box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 input[type="number"],
@@ -50,6 +58,8 @@ textarea {
   font-size: 16px;
   border-radius: 6px;
   border: 1px solid #ccc;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 button {
@@ -176,10 +186,14 @@ button:disabled {
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 #gameSuggestion p {
   margin: 6px 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 #gameSuggestion strong {
@@ -329,6 +343,10 @@ button:disabled {
   grid-template-columns: repeat(3, 1fr);
   gap: 4px; /* Reduced gap for tighter buttons */
   margin: 0; /* no margin, spacing handled by padding in container */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Admin message container WITHOUT box */
@@ -343,4 +361,6 @@ button:disabled {
   padding: 0 !important;       /* Remove padding */
   background: transparent;
   border: none;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
