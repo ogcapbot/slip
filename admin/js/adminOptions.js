@@ -1,28 +1,18 @@
-// adminOptions.js
-// Responsible for rendering the admin panel buttons and managing their interactions.
-// Controls loading of different admin functions: Add New Pick, Update Win/Loss, Stats, etc.
-
-// Imports relevant modules for loading different parts of the admin UI
 import { loadAdminStats } from './adminStats.js';
 import { loadSports, resetSportSelectorState } from './sportSelector.js';
 import { loadUpdateWinLoss } from './updateWinloss.js';
 
-// Cache key DOM elements for reuse
 const adminSection = document.getElementById('adminSection');
 const adminButtonsContainer = document.getElementById('adminButtonsContainer');
 const pickForm = document.getElementById('pickForm');
 
-const SUPERADMIN_CODE = 'super123';  // Password for admin restricted sections
+const SUPERADMIN_CODE = 'super123';
 
 let activeAdminBtn = null;
 let statsBtn = null;
 
-/**
- * Initializes and loads all admin option buttons.
- * Adds event listeners for each button to handle clicks and load relevant content.
- */
 export async function loadAdminOptions() {
-  console.log('[adminOptions.js:27] loadAdminOptions called');
+  console.log('loadAdminOptions called');
 
   adminSection.style.display = 'block';
   adminButtonsContainer.innerHTML = '';
@@ -39,7 +29,7 @@ export async function loadAdminOptions() {
   ];
 
   buttons.forEach(({ text, message }, index) => {
-    console.log(`[adminOptions.js:41] Creating button: ${text} at index ${index}`);
+    console.log(`Creating button: ${text} at index ${index}`);
     const btn = createButton(text);
 
     if (index === 2) {
@@ -47,107 +37,142 @@ export async function loadAdminOptions() {
     }
 
     btn.addEventListener('click', async () => {
-      console.log(`[adminOptions.js:48] Button clicked: ${text} at index ${index}`);
+      console.log(`Button clicked: ${text} at index ${index}`);
 
-      // Reset pickForm style and clear content on every button click
+      // Reset color on every button click except password fail case
       pickForm.style.color = '#444';
       pickForm.innerHTML = '';
 
-      // Password protected buttons (Code {} and Settings)
-      if (index === 4 || index === 5) {
+      if (index === 4 || index === 5) {  // Code {} and Settings require password
         const enteredCode = prompt('Enter Code to Continue:');
-        console.log(`[adminOptions.js:57] Code entered: ${enteredCode}`);
+        console.log(`Code entered: ${enteredCode}`);
         if (enteredCode === SUPERADMIN_CODE) {
           pickForm.innerHTML = `<p>${message}</p>`;
           setActiveAdminButton(btn);
-          console.log('[adminOptions.js:61] Access granted, message displayed');
+          console.log('Access granted, message displayed');
         } else {
           pickForm.style.color = 'red';
           pickForm.innerHTML = `<p>Access Denied - The Code entered is incorrect.</p>`;
-          console.warn('[adminOptions.js:66] Access denied due to incorrect code');
-          return;  // Do NOT change active button on failure
+          console.warn('Access denied due to incorrect code');
+          return;  // Do NOT change active button on fail
         }
         return;
       }
 
-      // Refresh All: reload stats, no password required
-      if (index === 3) {
+      if (index === 3) {  // Refresh All no password, reload stats & set Stats active
         try {
           await loadAdminStats(pickForm);
           setActiveAdminButton(statsBtn);
-          console.log('[adminOptions.js:77] Admin UI refreshed: stats loaded, Stats button set active');
+          console.log('Admin UI refreshed: stats loaded, Stats button set active');
         } catch (error) {
-          console.error('[adminOptions.js:80] Error refreshing admin UI:', error);
+          console.error('Error refreshing admin UI:', error);
         }
         return;
       }
 
-      // Add New Pick: reset sport selector state and load sports buttons
-      if (index === 0) {
+      if (index === 0) {  // Add New Pick - reset sport selector state before loading sports
         if (activeAdminBtn !== btn) {
           resetSportSelectorState();
         }
+        // Show official pick summary section and then load sports into separate container
+        const summaryHtml = `
+          <h3>Official Pick Summary</h3>
+          <div>Sport: Not Selected</div>
+          <div>League: Not Selected</div>
+          <div>Game: Not Selected</div>
+          <div>Team: Not Selected</div>
+          <div>Wager: Not Selected</div>
+          <div>Unit: Not Selected</div>
+          <div>Pick Desc: N/A</div>
+          <div>Notes: Not Entered</div>
+          <div>Phrase: Not Selected</div>
+          <hr />
+        `;
+        pickForm.innerHTML = summaryHtml;
+
+        // Create separate container for sport buttons below summary
+        let sportContainer = document.getElementById('sportButtonsWrapper');
+        if (!sportContainer) {
+          sportContainer = document.createElement('div');
+          sportContainer.id = 'sportButtonsWrapper';
+          sportContainer.style.marginTop = '12px';
+          pickForm.appendChild(sportContainer);
+        } else {
+          sportContainer.innerHTML = '';
+        }
+
         try {
-          await loadSports(pickForm);
+          await loadSports(sportContainer);
           setActiveAdminButton(btn);
-          console.log('[adminOptions.js:93] loadSports() completed successfully');
+          console.log('loadSports() completed successfully');
         } catch (error) {
-          console.error('[adminOptions.js:96] Error in loadSports():', error);
+          console.error('Error in loadSports():', error);
         }
         return;
       }
 
-      // Update Win/Loss: load update interface
-      if (index === 1) {
+      if (index === 1) {  // Update Win/Loss button
         try {
           await loadUpdateWinLoss(pickForm);
+
+          // Fix Win/Loss buttons style
+          const winLossButtons = pickForm.querySelectorAll('button');
+          winLossButtons.forEach(btn => {
+            btn.style.display = 'inline-block';
+            btn.style.margin = '4px 6px';
+            btn.style.width = 'auto';
+          });
+
+          // Wrap Win/Loss output text in a container with line breaks and spacing
+          const outputText = pickForm.querySelector('.winloss-output-text'); // Assuming output text has this class, adjust as needed
+          if (outputText) {
+            const wrapper = document.createElement('div');
+            wrapper.style.whiteSpace = 'normal';
+            wrapper.style.lineHeight = '1.4';
+            wrapper.style.marginTop = '8px';
+            wrapper.textContent = outputText.textContent;
+            outputText.parentNode.replaceChild(wrapper, outputText);
+          }
+
           setActiveAdminButton(btn);
-          console.log('[adminOptions.js:106] loadUpdateWinLoss() completed successfully');
+          console.log('loadUpdateWinLoss() completed successfully with style fixes');
         } catch (error) {
-          console.error('[adminOptions.js:109] Error in loadUpdateWinLoss():', error);
+          console.error('Error in loadUpdateWinLoss():', error);
         }
         return;
       }
 
-      // Stats button: load stats interface
-      if (index === 2) {
+      if (index === 2) {  // Stats button
         try {
           await loadAdminStats(pickForm);
           setActiveAdminButton(btn);
-          console.log('[adminOptions.js:118] loadAdminStats() completed successfully');
+          console.log('loadAdminStats() completed successfully');
         } catch (error) {
-          console.error('[adminOptions.js:121] Error in loadAdminStats():', error);
+          console.error('Error in loadAdminStats():', error);
         }
         return;
       }
 
-      // Default placeholder for any other buttons
+      // All other buttons
       pickForm.innerHTML = `<p>${message}</p>`;
       setActiveAdminButton(btn);
-      console.log('[adminOptions.js:128] Placeholder message displayed');
+      console.log('Placeholder message displayed');
     });
 
     adminButtonsContainer.appendChild(btn);
   });
 
-  console.log('[adminOptions.js:134] All buttons created and appended');
+  console.log('All buttons created and appended');
 
-  // Load initial stats display and set stats button as active
   try {
     await loadAdminStats(pickForm);
     setActiveAdminButton(statsBtn);
-    console.log('[adminOptions.js:140] Initial loadAdminStats() call completed, Stats button set active');
+    console.log('Initial loadAdminStats() call completed, Stats button set active');
   } catch (error) {
-    console.error('[adminOptions.js:143] Error during initial loadAdminStats() call:', error);
+    console.error('Error during initial loadAdminStats() call:', error);
   }
 }
 
-/**
- * Sets the currently active admin button's visual state.
- * Removes 'green' and 'pressed' classes from previously active button.
- * Adds these classes to the newly active button.
- * @param {HTMLElement} btn - The button to activate.
- */
 function setActiveAdminButton(btn) {
   if (activeAdminBtn) {
     activeAdminBtn.classList.remove('green', 'pressed');
@@ -158,13 +183,8 @@ function setActiveAdminButton(btn) {
   }
 }
 
-/**
- * Creates a styled button element with consistent UI styles.
- * @param {string} text - The text content of the button.
- * @returns {HTMLButtonElement} The created button element.
- */
 function createButton(text) {
-  console.log(`[adminOptions.js:164] createButton called with text: ${text}`);
+  console.log(`createButton called with text: ${text}`);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.textContent = text;
