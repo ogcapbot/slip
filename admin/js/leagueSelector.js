@@ -83,4 +83,4 @@ function updateSummary(field, value) {
   summaryElement.appendChild(line);
 }
 
-export { selectedLeague };
+export { loadLeagues, selectedLeague };
