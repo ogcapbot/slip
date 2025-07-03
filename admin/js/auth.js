@@ -1,5 +1,5 @@
 // admin/js/auth.js
-import { db } from '../firebaseInit.js';
+import { db } from '/admin/firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const loginBtn = document.getElementById('loginBtn');
