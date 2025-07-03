@@ -1,6 +1,7 @@
+// sportSelector.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadLeagues } from './leagueSelector.js'; // next selector module
+import { loadLeagues } from './leagueSelector.js';
 
 const originalSportSelect = document.getElementById('sportSelect');
 
@@ -115,21 +116,17 @@ function selectSport(sport) {
 
   selectedSport = sport;
 
-  // Update summary text dynamically
   const summarySport = document.getElementById('summarySport');
   if (summarySport) {
     summarySport.textContent = `Sport: ${sport}`;
   }
 
-  // Hide the sport buttons container
-  const sportContainer = document.getElementById('sportSelectorContainer');
-  if (sportContainer) sportContainer.style.display = 'none';
+  // Fix here: Hide sportButtonsContainer, NOT sportSelectorContainer
+  if (sportButtonsContainer) sportButtonsContainer.style.display = 'none';
 
-  // Show the league selector container
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (leagueContainer) leagueContainer.style.display = 'block';
 
-  // Update hidden select for form compatibility
   hiddenSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = sport;
@@ -138,7 +135,6 @@ function selectSport(sport) {
   hiddenSelect.dispatchEvent(new Event('change'));
   console.log('[SportSelector] Hidden select updated and change event dispatched.');
 
-  // Call next selector passing league container and sport
   console.log('[SportSelector] Calling loadLeagues with sport:', sport);
   loadLeagues(leagueContainer, sport);
 }
