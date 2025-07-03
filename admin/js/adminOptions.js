@@ -7,7 +7,7 @@ const mainContent = document.getElementById('mainContent');
 export function initAdminOptions() {
   console.log("[adminOptions] Starting to render admin options UI...");
 
-  // Clear mainContent first (optional)
+  // Clear main content
   mainContent.innerHTML = '';
 
   // Create admin buttons container
@@ -18,7 +18,7 @@ export function initAdminOptions() {
   adminBtnContainer.style.maxWidth = '400px';
   adminBtnContainer.style.margin = '0 auto 20px auto';
 
-  // List of buttons
+  // Define buttons
   const buttons = [
     { id: 'btnAddNew', label: 'Add New' },
     { id: 'btnWinLoss', label: 'Win/Loss' },
@@ -50,26 +50,23 @@ export function initAdminOptions() {
   welcomeMessage.textContent = 'Welcome to the Admin Panel!';
   mainContent.appendChild(welcomeMessage);
 
-  // Button event handlers
+  // Event handlers
   document.getElementById('btnAddNew').addEventListener('click', async () => {
     console.log('[adminOptions] "Add New" button clicked.');
     try {
-      console.log('[adminOptions] Loading sportSelector module...');
       await renderSportSelector();
-      console.log('[adminOptions] Sport selector displayed successfully.');
       welcomeMessage.textContent = '';
     } catch (error) {
-      console.error('[adminOptions] Error loading sportSelector module:', error);
+      console.error('[adminOptions] Error loading sportSelector:', error);
       mainContent.textContent = "Failed to load sport selector.";
     }
     setActiveButton('btnAddNew');
   });
 
-  // Placeholder handlers for other buttons with access control for demo:
-  const restrictedButtons = ['btnWinLoss', 'btnStats', 'btnCode', 'btnSettings'];
-  const userAccessType = window.currentUserAccessType || 'User'; // or get from your auth state
+  // Dummy accessType for demo
+  const userAccessType = window.currentUserAccessType || 'User';
 
-  restrictedButtons.forEach(buttonId => {
+  ['btnWinLoss', 'btnStats', 'btnCode', 'btnSettings'].forEach(buttonId => {
     document.getElementById(buttonId).addEventListener('click', () => {
       console.log(`[adminOptions] "${buttonId.replace('btn','')}" button clicked.`);
       if (userAccessType !== 'SuperAdmin') {
@@ -83,16 +80,16 @@ export function initAdminOptions() {
 
   document.getElementById('btnStartOver').addEventListener('click', () => {
     console.log('[adminOptions] "Start Over" button clicked.');
-    window.location.reload();  // reset everything without logout
+    window.location.reload();
   });
 
-  // Initialize first button active state as none
+  // Active button management
   let activeButtonId = null;
   function setActiveButton(buttonId) {
     if (activeButtonId) {
       document.getElementById(activeButtonId).style.backgroundColor = '#007bff';
     }
-    document.getElementById(buttonId).style.backgroundColor = '#28a745'; // nice green
+    document.getElementById(buttonId).style.backgroundColor = '#28a745'; // green
     activeButtonId = buttonId;
   }
 
