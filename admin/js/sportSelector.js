@@ -115,18 +115,19 @@ function selectSport(sport) {
 
   selectedSport = sport;
 
-  // Clear the sport buttons container and show the selected sport summary line
-  sportButtonsContainer.innerHTML = '';
-  sportButtonsContainer.style.display = 'block';
+  // Update summary text dynamically
+  const summarySport = document.getElementById('summarySport');
+  if (summarySport) {
+    summarySport.textContent = `Sport: ${sport}`;
+  }
 
-  const summaryLine = document.createElement('div');
-  summaryLine.textContent = `Selected Sport: ${sport}`;
-  summaryLine.style.fontWeight = '700';
-  summaryLine.style.fontSize = '11px';
-  summaryLine.style.fontFamily = 'Oswald, sans-serif';
-  summaryLine.style.marginBottom = '6px';
+  // Hide the sport buttons container
+  const sportContainer = document.getElementById('sportSelectorContainer');
+  if (sportContainer) sportContainer.style.display = 'none';
 
-  sportButtonsContainer.appendChild(summaryLine);
+  // Show the league selector container
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (leagueContainer) leagueContainer.style.display = 'block';
 
   // Update hidden select for form compatibility
   hiddenSelect.innerHTML = '';
@@ -137,9 +138,9 @@ function selectSport(sport) {
   hiddenSelect.dispatchEvent(new Event('change'));
   console.log('[SportSelector] Hidden select updated and change event dispatched.');
 
-  // Call next selector passing default params
+  // Call next selector passing league container and sport
   console.log('[SportSelector] Calling loadLeagues with sport:', sport);
-  loadLeagues(null, sport);
+  loadLeagues(leagueContainer, sport);
 }
 
 export function resetSportSelectorState() {
@@ -147,12 +148,10 @@ export function resetSportSelectorState() {
   selectedSport = null;
   if (sportButtonsContainer) {
     sportButtonsContainer.innerHTML = '';
+    sportButtonsContainer.style.display = 'block';
   }
   if (hiddenSelect) {
     hiddenSelect.innerHTML = '';
     hiddenSelect.dispatchEvent(new Event('change'));
   }
 }
-
-// EXPOSE for debugging in console:
-window.sportButtonsContainer = sportButtonsContainer;
