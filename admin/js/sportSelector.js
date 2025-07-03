@@ -2,49 +2,63 @@ import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadLeagues } from './leagueSelector.js';
 
-let sportButtonsContainer = document.getElementById('sportButtonsContainer');
-let leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
-let hiddenSelect = document.getElementById('sportSelect');
+const originalSportSelect = document.getElementById('sportSelect');
+
+let sportButtonsContainer;
+let hiddenSelect;
 let selectedSport = null;
 
-if (!sportButtonsContainer) {
-  sportButtonsContainer = document.createElement('div');
-  sportButtonsContainer.id = 'sportButtonsContainer';
-  sportButtonsContainer.style.display = 'grid';
-  sportButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  sportButtonsContainer.style.gap = '4px 6px';
-  sportButtonsContainer.style.marginTop = '8px';
-  sportButtonsContainer.style.alignItems = 'start';
-  document.body.appendChild(sportButtonsContainer);
-}
+if (originalSportSelect) {
+  const parent = originalSportSelect.parentNode;
+  parent.removeChild(originalSportSelect);
 
-if (!leagueButtonsContainer) {
-  leagueButtonsContainer = document.createElement('div');
-  leagueButtonsContainer.id = 'leagueButtonsContainer';
-  leagueButtonsContainer.style.display = 'none';
-  leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  leagueButtonsContainer.style.gap = '4px 6px';
-  leagueButtonsContainer.style.marginTop = '8px';
-  leagueButtonsContainer.style.alignItems = 'start';
-  document.body.appendChild(leagueButtonsContainer);
-}
-
-if (!hiddenSelect) {
   hiddenSelect = document.createElement('select');
   hiddenSelect.id = 'sportSelect';
   hiddenSelect.style.display = 'none';
-  document.body.appendChild(hiddenSelect);
+  parent.appendChild(hiddenSelect);
+
+  sportButtonsContainer = document.createElement('div');
+  sportButtonsContainer.id = 'sportButtonsContainer';
+
+  const sportLabel = parent.querySelector('label[for="sportSelect"]');
+  if (sportLabel) {
+    sportLabel.parentNode.insertBefore(sportButtonsContainer, sportLabel.nextSibling);
+  } else {
+    parent.appendChild(sportButtonsContainer);
+  }
+} else {
+  sportButtonsContainer = document.getElementById('sportButtonsContainer');
+  if (!sportButtonsContainer) {
+    sportButtonsContainer = document.createElement('div');
+    sportButtonsContainer.id = 'sportButtonsContainer';
+    document.body.appendChild(sportButtonsContainer);
+  }
+  hiddenSelect = document.getElementById('sportSelect');
+  if (!hiddenSelect) {
+    hiddenSelect = document.createElement('select');
+    hiddenSelect.id = 'sportSelect';
+    hiddenSelect.style.display = 'none';
+    document.body.appendChild(hiddenSelect);
+  }
 }
 
-export async function loadSports() {
-  sportButtonsContainer.innerHTML = '';
-  leagueButtonsContainer.style.display = 'none';
-  sportButtonsContainer.style.display = 'grid';
+export async function loadSports(container = null) {
+  const targetContainer = container || sportButtonsContainer;
+
+  targetContainer.innerHTML = '';
   selectedSport = null;
   hiddenSelect.innerHTML = '';
+  hiddenSelect.dispatchEvent(new Event('change'));
+
+  // Show sport buttons container and hide league container
+  const sportContainer = document.getElementById('sportSelectorContainer');
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (sportContainer) sportContainer.style.display = 'block';
+  if (leagueContainer) leagueContainer.style.display = 'none';
 
   try {
     const snapshot = await getDocs(collection(db, 'GameCache'));
+
     const sportsSet = new Set();
     snapshot.forEach(doc => {
       const sport = doc.data().leagueGroup;
@@ -52,10 +66,17 @@ export async function loadSports() {
     });
 
     const sports = Array.from(sportsSet).sort((a, b) => a.localeCompare(b));
+
     if (sports.length === 0) {
-      sportButtonsContainer.textContent = 'No sports found';
+      targetContainer.textContent = 'No sports found';
       return;
     }
+
+    targetContainer.style.display = 'grid';
+    targetContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    targetContainer.style.gap = '4px 6px';
+    targetContainer.style.marginTop = '8px';
+    targetContainer.style.alignItems = 'start';
 
     sports.forEach(sport => {
       const btn = document.createElement('button');
@@ -70,10 +91,10 @@ export async function loadSports() {
         selectSport(sport);
       });
 
-      sportButtonsContainer.appendChild(btn);
+      targetContainer.appendChild(btn);
     });
   } catch (error) {
-    sportButtonsContainer.textContent = 'Error loading sports';
+    targetContainer.textContent = 'Error loading sports';
     console.error(error);
   }
 }
@@ -82,11 +103,15 @@ function selectSport(sport) {
   if (selectedSport === sport) return;
   selectedSport = sport;
 
-  // Update summary text
   const summarySport = document.getElementById('summarySport');
   if (summarySport) summarySport.textContent = `Sport: ${sport}`;
 
-  // Update hidden select
+  // Hide sport container, show league container
+  const sportContainer = document.getElementById('sportSelectorContainer');
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (sportContainer) sportContainer.style.display = 'none';
+  if (leagueContainer) leagueContainer.style.display = 'block';
+
   hiddenSelect.innerHTML = '';
   const option = document.createElement('option');
   option.value = sport;
@@ -94,26 +119,23 @@ function selectSport(sport) {
   hiddenSelect.appendChild(option);
   hiddenSelect.dispatchEvent(new Event('change'));
 
-  // Hide sport buttons, show league buttons container
-  sportButtonsContainer.style.display = 'none';
-  leagueButtonsContainer.style.display = 'grid';
-
-  // Load leagues for selected sport inside leagueButtonsContainer
-  loadLeagues(leagueButtonsContainer, sport);
+  loadLeagues(leagueContainer, sport);
 }
 
 export function resetSportSelectorState() {
   selectedSport = null;
   if (sportButtonsContainer) {
     sportButtonsContainer.innerHTML = '';
-    sportButtonsContainer.style.display = 'grid';
-  }
-  if (leagueButtonsContainer) {
-    leagueButtonsContainer.innerHTML = '';
-    leagueButtonsContainer.style.display = 'none';
+    sportButtonsContainer.style.display = 'block';
   }
   if (hiddenSelect) {
     hiddenSelect.innerHTML = '';
     hiddenSelect.dispatchEvent(new Event('change'));
   }
+
+  // Also show sport container, hide league container on reset
+  const sportContainer = document.getElementById('sportSelectorContainer');
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (sportContainer) sportContainer.style.display = 'block';
+  if (leagueContainer) leagueContainer.style.display = 'none';
 }
