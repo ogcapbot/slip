@@ -42,7 +42,7 @@ export async function renderSportSelector() {
 
       btn.addEventListener('click', () => {
         console.log(`[sportSelector] Button clicked: ${sportName}`);
-        // Further logic on sport button click can be added here
+        // Here you can dispatch event or handle sport selection
       });
 
       container.appendChild(btn);
