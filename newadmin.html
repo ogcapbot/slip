@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  
   <title>OG Capper Bets - Official Pick Admin</title>
   
   <!-- Google Fonts Oswald -->
@@ -14,7 +15,7 @@
 </head>
 <body>
 
-  <div class="container">
+ 
 
     <!-- Global Header -->
     <header id="globalHeader" style="text-align: center; padding: 15px 0 6px;">
@@ -35,57 +36,10 @@
       <div class="admin-container admin-buttons-box">
         <div id="adminButtonsContainer" class="admin-buttons-grid"></div>
       </div>
-      <div id="adminStatsContainer" class="admin-message">
-        <!-- "Coming Soon... Add New" text will appear here with no box container -->
-      </div>
     </div>
 
-    <!-- Pick Entry Form (Sports Selector) -->
-    <form id="pickForm" style="display:none;">
-      <label for="sportSelect" style="display:none;"></label>
-      <select id="sportSelect" disabled>
-        <option>Loading...</option>
-      </select>
-
-      <label for="leagueSelect" style="display:none;"></label>
-      <select id="leagueSelect" disabled>
-        <option>Select a sport first</option>
-      </select>
-
-      <label for="gameSelect" style="display:none;"></label>
-      <select id="gameSelect" disabled>
-        <option>Select a league first</option>
-      </select>
-
-      <label for="pickInput" style="display:none;"></label>
-      <div id="pickOptionsContainer" style="display:flex; gap:10px; margin-bottom:15px;"></div>
-
-      <label for="wagerTypeSelect" style="display:none;"></label>
-      <select id="wagerTypeSelect" disabled>
-        <option>Select a sport first</option>
-      </select>
-
-      <div id="numberInputContainer" style="display:none; margin-top:10px;">
-        <label for="numberInput" style="display:none;"></label>
-        <input type="number" id="numberInput" min="0" disabled/>
-      </div>
-
-      <label for="unitsSelect" style="display:none;"></label>
-      <select id="unitsSelect" disabled>
-        <option>Select a section first</option>
-      </select>
-
-      <label for="updateWinloss" style="display:none;"></label>      
-      
-      <div id="actionButtonsContainer" style="margin-top: 20px;">
-        <button id="startOverBtn" type="button" class="pick-btn blue" style="display:none;">Start Over</button>
-        <div></div>
-        <button id="submitBtn" type="submit" class="pick-btn red" style="display:none;">Submit Pick</button>
-      </div>
-
-      <p id="pickError" class="error"></p>
-      <p id="pickSuccess" class="success"></p>
-    </form>
+    <div id="adminStatsContainer" class="admin-message">
+    <div id="updateWinloss" class="admin-message">
 
     <!-- Global Footer -->
     <footer id="versionFooter" style="text-align:center; margin-top:30px; color:#666;">
@@ -99,38 +53,31 @@
   <script type="module" src="admin/js/auth.js"></script>
   <script type="module" src="admin/js/adminOptions.js"></script>
   <script type="module" src="admin/js/adminStats.js"></script>
-  <script type="module" src="admin/js/sportSelector.js"></script> 
-  <script type="module" src="admin/js/leagueSelector.js"></script>
-  <script type="module" src="admin/js/gameSelector.js"></script>
-  <script type="module" src="admin/js/wagerType.js"></script>
-  <script type="module" src="admin/js/units.js"></script>
-  <script type="module" src="admin/js/notesSection.js"></script>
-  <script type="module" src="admin/js/pickSubmit.js"></script>
   <script type="module" src="admin/js/updateWinloss.js"></script>
 
   <script>
    function scaleContainerToFit() {
-  const designWidth = 400;
-  const screenWidth = window.innerWidth;
-  const container = document.querySelector('.container');
+    const designWidth = 400;
+    const screenWidth = window.innerWidth;
+    const container = document.querySelector('.container');
 
-  if (!container) return;
+    if (!container) return;
 
-  if (screenWidth < designWidth) {
-    const scale = screenWidth / designWidth;
-    container.style.transformOrigin = "top left";
-    container.style.transform = `scale(${scale})`;
-    container.style.width = `${designWidth}px`;
-    container.style.overflowX = 'hidden';
-  } else {
-    container.style.transform = "";
-    container.style.width = "100%";
-    container.style.overflowX = '';
+    if (screenWidth < designWidth) {
+      const scale = screenWidth / designWidth;
+      container.style.transformOrigin = "top left";
+      container.style.transform = `scale(${scale})`;
+      container.style.width = `${designWidth}px`;
+      container.style.overflowX = 'hidden';
+    } else {
+      container.style.transform = "";
+      container.style.width = "100%";
+      container.style.overflowX = '';
+    }
   }
-}
 
-window.addEventListener('load', scaleContainerToFit);
-window.addEventListener('resize', scaleContainerToFit);
+  window.addEventListener('load', scaleContainerToFit);
+  window.addEventListener('resize', scaleContainerToFit);
 
   </script>
 
