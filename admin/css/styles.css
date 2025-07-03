@@ -61,6 +61,15 @@ button:hover {
   background-color: #0056b3;
 }
 
+button.login-button {
+  width: auto;          /* let width be natural */
+  max-width: 150px;     /* max width so it doesn't get huge */
+  margin: 0 auto;       /* center horizontally */
+  display: block;       /* block so margin:auto works */
+  padding: 10px 24px;   /* keep comfortable padding */
+}
+
+
 /* Active button green highlight for admin buttons */
 
 button.admin-button.active {
