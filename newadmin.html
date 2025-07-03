@@ -3,71 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  
   <title>OG Capper Bets - Official Pick Admin</title>
-  
-  <!-- Google Fonts Oswald -->
   <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
-
-  <!-- Your Styles -->
   <link rel="stylesheet" href="admin/css/styles.css" />
 </head>
 <body>
-
   <header>
     <h3>OG Capper Bets</h3>
     <h3>Official Pick Admin</h3>
-    <h6>Official Use Only</h6>
+    <h6 class="red-text">Official Use Only</h6>
   </header>
 
-  <main>
-    <!-- Login Section -->
-    <section id="loginSection">
-      <input id="accessCodeInput" type="password" inputmode="numeric" autofocus required placeholder="Enter Access Code" autocomplete="off" />
-      <button id="loginBtn">Login</button>
-      <p id="loginError"></p>
-    </section>
+  <section>
+    <input type="password" inputmode="numeric" autofocus required placeholder="Enter Access Code" autocomplete="off" />
+    <button>Login</button>
+    <p id="loginError" class="error-text"></p>
+  </section>
 
-    <!-- Admin Section (hidden initially) -->
-    <section id="adminSection" style="display:none;">
-      <div id="adminContent"></div>
-    </section>
-  </main>
+  <section id="adminSection" style="display:none;"></section>
 
-  <footer id="versionFooter">
-    Version 7.25
-  </footer>
+  <footer id="versionFooter">Version 7.25</footer>
 
-  <!-- Firebase Initialization and JS modules -->
   <script type="module" src="admin/firebaseInit.js"></script>
   <script type="module" src="admin/js/auth.js"></script>
   <script type="module" src="admin/js/adminOptions.js"></script>
-
-  <script>
-    // Optional: scale content on tiny screens below 400px width
-    function scaleContainerToFit() {
-      const designWidth = 400;
-      const screenWidth = window.innerWidth;
-      const container = document.querySelector('main');
-
-      if (!container) return;
-
-      if (screenWidth < designWidth) {
-        const scale = screenWidth / designWidth;
-        container.style.transformOrigin = "top left";
-        container.style.transform = `scale(${scale})`;
-        container.style.width = `${designWidth}px`;
-        container.style.overflowX = 'hidden';
-      } else {
-        container.style.transform = "";
-        container.style.width = "100%";
-        container.style.overflowX = '';
-      }
-    }
-
-    window.addEventListener('load', scaleContainerToFit);
-    window.addEventListener('resize', scaleContainerToFit);
-  </script>
-
 </body>
 </html>
