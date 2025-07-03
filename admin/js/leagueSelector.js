@@ -1,108 +1,86 @@
-// leagueSelector.js
+// admin/js/leagueSelector.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-let leagueButtonsContainer;
-let leagueSelect;
+let leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
+let leagueSelect = document.getElementById('leagueSelect');
 let selectedLeague = null;
+
+if (!leagueButtonsContainer) {
+  leagueButtonsContainer = document.createElement('div');
+  leagueButtonsContainer.id = 'leagueButtonsContainer';
+
+  const leagueLabel = document.querySelector('label[for="leagueSelect"]');
+  if (leagueLabel) {
+    leagueLabel.parentNode.insertBefore(leagueButtonsContainer, leagueLabel.nextSibling);
+  } else if (leagueSelect && leagueSelect.parentNode) {
+    leagueSelect.parentNode.insertBefore(leagueButtonsContainer, leagueSelect.nextSibling);
+  } else {
+    document.body.appendChild(leagueButtonsContainer);
+  }
+}
+
+if (leagueSelect) {
+  leagueSelect.style.display = 'none';
+}
 
 export async function loadLeagues(container = null, selectedSport = null) {
   if (!container) {
-    leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
-    if (!leagueButtonsContainer) {
-      leagueButtonsContainer = document.createElement('div');
-      leagueButtonsContainer.id = 'leagueButtonsContainer';
-      document.body.appendChild(leagueButtonsContainer);
-      console.log('[LeagueSelector] leagueButtonsContainer not found, creating new container.');
-    }
-  } else {
-    leagueButtonsContainer = container;
+    container = leagueButtonsContainer;
   }
 
-  console.log('[LeagueSelector] loadLeagues called with selectedSport:', selectedSport);
-
-  leagueButtonsContainer.innerHTML = '';
+  container.innerHTML = '';
   selectedLeague = null;
 
   if (!selectedSport) {
-    leagueButtonsContainer.textContent = 'No sport selected.';
-    console.warn('[LeagueSelector] No sport selected to load leagues.');
+    console.warn('[LeagueSelector] No sport selected, cannot load leagues.');
     return;
   }
 
-  try {
-    const q = query(collection(db, 'GameCache'), where('leagueGroup', '==', selectedSport));
-    const snapshot = await getDocs(q);
-    console.log(`[LeagueSelector] Retrieved league documents count: ${snapshot.size}`);
+  const leaguesRef = collection(db, 'leagues');
+  const q = query(leaguesRef, where('sport', '==', selectedSport));
+  const querySnapshot = await getDocs(q);
 
-    const leaguesSet = new Set();
-    snapshot.forEach(doc => {
-      const league = doc.data().sportName;
-      if (league) {
-        leaguesSet.add(league);
-        console.log(`[LeagueSelector] Found league: ${league}`);
-      } else {
-        console.warn('[LeagueSelector] No sportName field (league) in document:', doc.id);
-      }
-    });
+  if (querySnapshot.empty) {
+    container.innerHTML = '<p>No leagues available for selected sport.</p>';
+    return;
+  }
 
-    const leagues = Array.from(leaguesSet).sort((a, b) => a.localeCompare(b));
-    console.log(`[LeagueSelector] Sorted leagues: ${leagues}`);
+  querySnapshot.forEach(doc => {
+    const league = doc.data();
+    const button = document.createElement('button');
+    button.textContent = league.name || doc.id;
+    button.classList.add('btn', 'btn-primary', 'm-1');
+    button.dataset.leagueId = doc.id;
 
-    if (leagues.length === 0) {
-      leagueButtonsContainer.textContent = 'No leagues found';
-      console.warn('[LeagueSelector] No leagues found for selected sport.');
-      return;
-    }
+    button.addEventListener('click', () => {
+      selectedLeague = doc.id;
 
-    // Show the league buttons container (fix)
-    leagueButtonsContainer.style.display = 'grid';
-    leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-    leagueButtonsContainer.style.gap = '4px 6px';
-    leagueButtonsContainer.style.marginTop = '8px';
-    leagueButtonsContainer.style.alignItems = 'start';
+      // Hide league buttons on selection
+      container.style.display = 'none';
 
-    leagues.forEach(league => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = league;
-      btn.className = 'pick-btn blue';
-      btn.style.width = '100%';
-      btn.style.minWidth = '0';
-      btn.style.boxSizing = 'border-box';
+      // Update summary
+      updateSummary('League', league.name || doc.id);
 
-      btn.addEventListener('click', () => {
-        selectLeague(league);
+      // Load games (next step)
+      import('./gameSelector.js').then(module => {
+        module.loadGames(null, selectedLeague);
       });
-
-      leagueButtonsContainer.appendChild(btn);
-      console.log(`[LeagueSelector] Creating button for league: ${league}`);
     });
 
-    console.log('[LeagueSelector] All league buttons created and appended.');
-  } catch (error) {
-    console.error('[LeagueSelector] Error loading leagues:', error);
-    leagueButtonsContainer.textContent = 'Error loading leagues';
-  }
+    container.appendChild(button);
+  });
+
+  container.style.display = 'block';
 }
 
-function selectLeague(league) {
-  if (selectedLeague === league) {
-    console.log('[LeagueSelector] Selected league is the same as current; ignoring.');
-    return;
-  }
+function updateSummary(field, value) {
+  const summaryElement = document.getElementById('summary');
+  if (!summaryElement) return;
 
-  selectedLeague = league;
-
-  const summaryLeague = document.getElementById('summaryLeague');
-  if (summaryLeague) {
-    summaryLeague.textContent = `League: ${league}`;
-  }
-
-  const leagueContainer = document.getElementById('leagueSelectorContainer');
-  if (leagueContainer) leagueContainer.style.display = 'none';
-
-  // TODO: Show next container (e.g. gameSelectorContainer) here
-
-  console.log('[LeagueSelector] League selected:', league);
+  const line = document.createElement('div');
+  line.textContent = `${field}: ${value}`;
+  summaryElement.appendChild(line);
 }
+
+export { selectedLeague };
