@@ -10,7 +10,6 @@ let hiddenSelect;
 let selectedSport = null;
 
 if (originalSportSelect) {
-  console.log('[SportSelector] Original sportSelect found, replacing with hidden select and button container.');
   const parent = originalSportSelect.parentNode;
   parent.removeChild(originalSportSelect);
 
@@ -32,7 +31,7 @@ if (originalSportSelect) {
   loadSports();
 }
 
-async function loadSports() {
+export async function loadSports() {
   sportButtonsContainer.innerHTML = '';
   selectedSport = null;
 
@@ -49,17 +48,13 @@ async function loadSports() {
     button.addEventListener('click', () => {
       selectedSport = doc.id;
 
-      // Hide sport buttons on selection
-      sportButtonsContainer.style.display = 'none';
+      sportButtonsContainer.style.display = 'none';  // Hide sport buttons
 
-      // Update hidden select value
       hiddenSelect.value = selectedSport;
 
-      // Update summary
       updateSummary('Sport', sport.name || doc.id);
 
-      // Load leagues for selected sport
-      loadLeagues(null, selectedSport);
+      loadLeagues(null, selectedSport);  // Show leagues
     });
 
     sportButtonsContainer.appendChild(button);
