@@ -1,3 +1,4 @@
+/* Mobile-first base styles */
 body, html {
   margin: 0;
   padding: 0;
@@ -18,11 +19,17 @@ header, footer {
   flex-shrink: 0;
 }
 
+/* Tighter header spacing for mobile */
+header h3 {
+  margin: 2px 0; /* reduce vertical spacing */
+  font-weight: 700;
+}
+
 header h6 {
-  color: red;
-  margin: 0;
-  font-weight: normal;
-  font-size: 0.9em;
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-weight: 500;
+  font-size: 0.85em;
 }
 
 main {
@@ -37,7 +44,7 @@ main {
   box-sizing: border-box;
 }
 
-input[type="password"] {
+#loginSection input[type="password"] {
   text-align: center;
   font-size: 1.2em;
   padding: 10px;
@@ -46,10 +53,15 @@ input[type="password"] {
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
+  margin-bottom: 10px; /* space below input */
 }
 
-button {
-  margin-top: 15px;
+#loginSection button {
+  display: block;
+  margin: 15px auto 0 auto; /* center horizontally, top margin */
+  min-width: 120px;
+  max-width: 90%;
+  width: fit-content;
   padding: 12px 24px;
   font-size: 1.1em;
   cursor: pointer;
@@ -60,7 +72,8 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover, button:focus {
+#loginSection button:hover,
+#loginSection button:focus {
   background-color: #005a9e;
 }
 
@@ -77,6 +90,7 @@ button:hover, button:focus {
   font-size: 1.1em;
 }
 
+/* Scaling for very narrow viewports */
 @media (max-width: 320px) {
   body, html {
     font-size: 14px;
@@ -84,10 +98,10 @@ button:hover, button:focus {
   main {
     padding: 15px 5px;
   }
-  input[type="password"] {
+  #loginSection input[type="password"] {
     max-width: 280px;
   }
-  button {
+  #loginSection button {
     padding: 10px 20px;
   }
 }
