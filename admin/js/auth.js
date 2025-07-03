@@ -1,6 +1,6 @@
 // auth.js
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -14,7 +14,6 @@ import {
 
 import { showAdminOptions } from './adminOptions.js';
 
-// Your actual Firebase config (copied from your firebaseInit.js)
 const firebaseConfig = {
   apiKey: "AIzaSyD9Px_6V0Yl5Dz8HRiLuFNgC3RT6AL9P-o",
   authDomain: "ogcapperbets.firebaseapp.com",
@@ -24,7 +23,8 @@ const firebaseConfig = {
   appId: "1:70543247155:web:48f6a17d8d496792b5ec2b"
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase app only if not already initialized
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 const loginInput = document.querySelector('input[type="password"]');
