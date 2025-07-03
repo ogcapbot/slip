@@ -1,3 +1,4 @@
+// leagueSelector.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -30,14 +31,13 @@ export async function loadLeagues(container = null, selectedSport = null) {
   }
 
   try {
-    // Filter by sport (leagueGroup) but retrieve leagues from sportName
     const q = query(collection(db, 'GameCache'), where('leagueGroup', '==', selectedSport));
     const snapshot = await getDocs(q);
     console.log(`[LeagueSelector] Retrieved league documents count: ${snapshot.size}`);
 
     const leaguesSet = new Set();
     snapshot.forEach(doc => {
-      const league = doc.data().sportName; // Corrected: leagues are in sportName field
+      const league = doc.data().sportName;
       if (league) {
         leaguesSet.add(league);
         console.log(`[LeagueSelector] Found league: ${league}`);
@@ -55,6 +55,7 @@ export async function loadLeagues(container = null, selectedSport = null) {
       return;
     }
 
+    // Show the league buttons container (fix)
     leagueButtonsContainer.style.display = 'grid';
     leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
     leagueButtonsContainer.style.gap = '4px 6px';
@@ -93,13 +94,11 @@ function selectLeague(league) {
 
   selectedLeague = league;
 
-  // Update summary text dynamically
   const summaryLeague = document.getElementById('summaryLeague');
   if (summaryLeague) {
     summaryLeague.textContent = `League: ${league}`;
   }
 
-  // Hide league selector container and show next step container here (not implemented yet)
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (leagueContainer) leagueContainer.style.display = 'none';
 
