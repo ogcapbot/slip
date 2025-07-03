@@ -1,93 +1,113 @@
-// adminOptions.js
-
-const mainContent = document.getElementById('mainContent');
+// admin/js/adminOptions.js
 
 /**
- * Shows the admin options UI for the logged-in user.
- * @param {Object} user - User object containing user info (e.g. displayName, accessType)
+ * Displays the admin options UI below the user display name.
+ * Creates a 2-row x 3-column button grid with labeled buttons.
+ * Shows a welcome message in the main content area.
+ * Implements access control for some buttons.
+ * Highlights the active button with a calm green color.
+ * Resets UI on Start Over button click.
+ * 
+ * @param {Object} userData - The logged-in user's data, including accessType and userName.
  */
-export function showAdminOptions(user) {
-  console.log("[adminOptions] Showing admin options for user:", user);
+export function showAdminOptions(userData) {
+  console.log("[adminOptions] Starting to render admin options UI...");
 
-  mainContent.innerHTML = '';
+  // Select header to insert below user display name
+  const header = document.querySelector('header');
 
-  // Create admin buttons container
-  const adminBtnContainer = document.createElement('div');
-  adminBtnContainer.style.display = 'grid';
-  adminBtnContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  adminBtnContainer.style.gap = '10px';
-  adminBtnContainer.style.maxWidth = '400px';
-  adminBtnContainer.style.margin = '0 auto 20px auto';
-
-  // Buttons list
-  const buttons = [
-    { id: 'btnAddNew', label: 'Add New' },
-    { id: 'btnWinLoss', label: 'Win/Loss' },
-    { id: 'btnStats', label: 'Stats' },
-    { id: 'btnStartOver', label: 'Start Over' },
-    { id: 'btnCode', label: 'Code{}' },
-    { id: 'btnSettings', label: 'Settings' }
-  ];
-
-  buttons.forEach(({ id, label }) => {
-    const btn = document.createElement('button');
-    btn.id = id;
-    btn.textContent = label;
-    btn.className = 'admin-button';
-    btn.style.height = '45px';
-    btn.style.fontSize = '11px';
-    adminBtnContainer.appendChild(btn);
-  });
-
-  mainContent.appendChild(adminBtnContainer);
-
-  // Welcome message
-  const welcomeMessage = document.createElement('div');
-  welcomeMessage.id = 'welcomeMessage';
-  welcomeMessage.style.marginTop = '10px';
-  welcomeMessage.style.fontSize = '14px';
-  welcomeMessage.style.fontWeight = 'bold';
-  welcomeMessage.style.textAlign = 'center';
-  welcomeMessage.textContent = `Welcome, ${user.displayName || 'User'}!`;
-  mainContent.appendChild(welcomeMessage);
-
-  // Store accessType locally
-  const userAccessType = user.accessType || 'User';
-
-  // Button handlers
-  document.getElementById('btnAddNew').addEventListener('click', async () => {
-    console.log('[adminOptions] "Add New" clicked');
-    // Your logic here (e.g., call renderSportSelector)
-    welcomeMessage.textContent = '';
-    setActiveButton('btnAddNew');
-  });
-
-  ['btnWinLoss', 'btnStats', 'btnCode', 'btnSettings'].forEach(buttonId => {
-    document.getElementById(buttonId).addEventListener('click', () => {
-      console.log(`[adminOptions] "${buttonId}" clicked.`);
-      if (userAccessType !== 'SuperAdmin') {
-        alert("Access Denied");
-      } else {
-        welcomeMessage.textContent = `${buttonId.replace('btn', '')} Button Pressed`;
-      }
-      setActiveButton(buttonId);
-    });
-  });
-
-  document.getElementById('btnStartOver').addEventListener('click', () => {
-    console.log('[adminOptions] "Start Over" clicked');
-    window.location.reload();
-  });
-
-  // Active button tracking
-  let activeButtonId = null;
-  function setActiveButton(buttonId) {
-    if (activeButtonId) {
-      document.getElementById(activeButtonId).style.backgroundColor = '#007bff';
-    }
-    document.getElementById(buttonId).style.backgroundColor = '#28a745';
-    activeButtonId = buttonId;
+  // Remove existing admin options if present to avoid duplicates
+  const existingAdminOptions = document.getElementById('adminOptionsSection');
+  if (existingAdminOptions) {
+    console.log("[adminOptions] Existing adminOptionsSection found, removing it.");
+    existingAdminOptions.remove();
   }
 
-  console.log("[adminOptions] Admin options UI shown.");
+  // Create main container for admin options and apply ID for CSS targeting
+  const adminOptionsSection = document.createElement('section');
+  adminOptionsSection.id = 'adminOptionsSection';
+
+  // Create button grid container and assign CSS class
+  const buttonGrid = document.createElement('div');
+  buttonGrid.classList.add('button-grid');
+
+  // Define buttons with labels and access requirements
+  const buttons = [
+    { label: 'Add New', accessRequired: false },
+    { label: 'Win/Loss', accessRequired: true },
+    { label: 'Stats', accessRequired: true },
+    { label: 'Start Over', accessRequired: false },
+    { label: 'Code{}', accessRequired: true },
+    { label: 'Settings', accessRequired: true },
+  ];
+
+  // Create or select main content area below buttons
+  let mainContent = document.getElementById('adminMainContent');
+  if (!mainContent) {
+    mainContent = document.createElement('div');
+    mainContent.id = 'adminMainContent';
+  }
+  // Reset main content styles are in CSS, just clear content here
+  mainContent.innerHTML = '';
+  mainContent.textContent = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
+
+  // Track currently active button for toggling highlight
+  let activeButton = null;
+
+  // Create buttons with class and event listeners
+  buttons.forEach(btnConfig => {
+    const btn = document.createElement('button');
+    btn.textContent = btnConfig.label;
+    btn.classList.add('admin-button');
+
+    btn.addEventListener('click', () => {
+      console.log(`[adminOptions] "${btnConfig.label}" button clicked.`);
+
+      // Handle Start Over separately - resets main content and clears button highlight
+      if (btnConfig.label === 'Start Over') {
+        console.log("[adminOptions] Resetting UI on Start Over.");
+
+        mainContent.textContent = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
+
+        if (activeButton) {
+          activeButton.classList.remove('active');
+          activeButton = null;
+        }
+        return;
+      }
+
+      // Access control for restricted buttons
+      if (btnConfig.accessRequired && userData.accessType !== 'SuperAdmin') {
+        console.warn(`[adminOptions] Access denied for user with accessType: ${userData.accessType}`);
+        mainContent.textContent = 'Access Denied';
+        return;
+      }
+
+      // Highlight clicked button, remove highlight from previous
+      if (activeButton && activeButton !== btn) {
+        activeButton.classList.remove('active');
+      }
+      btn.classList.add('active');
+      activeButton = btn;
+
+      // Show which button was pressed
+      mainContent.textContent = `${btnConfig.label} Button Pressed`;
+    });
+
+    buttonGrid.appendChild(btn);
+  });
+
+  // Append button grid and main content to admin options container
+  adminOptionsSection.appendChild(buttonGrid);
+  adminOptionsSection.appendChild(mainContent);
+
+  // Insert adminOptionsSection just below user display name paragraph
+  const userDisplayEl = [...header.querySelectorAll('p')].find(p => p.textContent.startsWith('User:'));
+  if (userDisplayEl) {
+    userDisplayEl.insertAdjacentElement('afterend', adminOptionsSection);
+  } else {
+    header.appendChild(adminOptionsSection);
+  }
+
+  console.log("[adminOptions] Admin options UI rendered successfully.");
 }
