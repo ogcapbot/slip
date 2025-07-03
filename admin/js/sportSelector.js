@@ -1,4 +1,3 @@
-// sportSelector.js
 import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadLeagues } from './leagueSelector.js';
@@ -121,8 +120,13 @@ function selectSport(sport) {
     summarySport.textContent = `Sport: ${sport}`;
   }
 
-  // Fix here: Hide sportButtonsContainer, NOT sportSelectorContainer
-  if (sportButtonsContainer) sportButtonsContainer.style.display = 'none';
+  // Fix here: Hide sportButtonsContainer and all buttons inside it explicitly
+  if (sportButtonsContainer) {
+    sportButtonsContainer.style.display = 'none';
+    sportButtonsContainer.querySelectorAll('button').forEach(btn => {
+      btn.style.display = 'none';
+    });
+  }
 
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (leagueContainer) leagueContainer.style.display = 'block';
