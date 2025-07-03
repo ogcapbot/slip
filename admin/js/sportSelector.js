@@ -1,92 +1,79 @@
-// admin/js/sportSelector.js
+// sportSelector.js
+// Module to render sport selector buttons based on unique sport names from GameEventsData collection
 
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const db = getFirestore();
 
 /**
- * Initialize Firebase app and Firestore db instance
- * Use existing app if already initialized to prevent errors
+ * Renders sport selector buttons (max 15) in 3 columns inside #mainContent element
+ * Dispatches 'sportSelected' event with sportName detail on button click
  */
-const firebaseConfig = {
-  apiKey: "AIzaSyD9Px_6V0Yl5Dz8HRiLuFNgC3RT6AL9P-o",
-  authDomain: "ogcapperbets.firebaseapp.com",
-  projectId: "ogcapperbets",
-  storageBucket: "ogcapperbets.appspot.com",
-  messagingSenderId: "70543247155",
-  appId: "1:70543247155:web:48f6a17d8d496792b5ec2b"
-};
-
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-
-/**
- * Build sport selector buttons from GameEventsData collection.
- * Shows up to 15 unique sportName buttons sorted alphabetically.
- * Buttons arranged in 3 columns and up to 5 rows.
- * 
- * @param {HTMLElement} container - DOM element to append buttons container into
- */
-export async function showSportSelector(container) {
+export async function renderSportSelector() {
   console.log("[sportSelector] Starting to build sport selector buttons...");
 
-  if (!container) {
-    console.error("[sportSelector] No container element provided.");
-    return;
-  }
-
   try {
-    // Fetch all documents from GameEventsData
-    const gameEventsRef = collection(db, 'GameEventsData');
-    const querySnapshot = await getDocs(gameEventsRef);
+    // Fetch all docs from GameEventsData
+    const gameEventsRef = collection(db, "GameEventsData");
+    const snapshot = await getDocs(gameEventsRef);
 
-    // Extract unique sportNames
-    const sportNameSet = new Set();
-
-    querySnapshot.forEach(doc => {
+    // Collect unique sport names
+    const sportsSet = new Set();
+    snapshot.forEach(doc => {
       const data = doc.data();
-      if (data.sportName && typeof data.sportName === 'string') {
-        sportNameSet.add(data.sportName);
+      if (data.sportName) {
+        sportsSet.add(data.sportName);
       }
     });
 
-    // Convert to array and sort alphabetically
-    const sportNames = Array.from(sportNameSet).sort((a, b) => a.localeCompare(b));
+    const uniqueSports = Array.from(sportsSet).sort();
 
-    console.log(`[sportSelector] Found ${sportNames.length} unique sport names.`);
+    console.log(`[sportSelector] Found ${uniqueSports.length} unique sport names.`);
 
-    // Limit to max 15 sports
-    const limitedSports = sportNames.slice(0, 15);
+    // Get container to render buttons
+    const container = document.getElementById('mainContent');
+    if (!container) {
+      console.error("[sportSelector] No #mainContent element found.");
+      return;
+    }
 
-    // Clear previous content if any
-    container.innerHTML = '';
+    container.innerHTML = ""; // Clear existing content
 
-    // Create a div container for buttons with a CSS class for styling
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('sport-selector-grid');
+    // Create a grid container for buttons
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.style.display = 'grid';
+    buttonWrapper.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    buttonWrapper.style.gap = '10px';
+    buttonWrapper.style.maxWidth = '400px';
+    buttonWrapper.style.margin = '0 auto';
 
-    // Create buttons for each sport
-    limitedSports.forEach(sportName => {
+    // Limit buttons to 15
+    const buttonsToShow = uniqueSports.slice(0, 15);
+
+    buttonsToShow.forEach(sportName => {
       const btn = document.createElement('button');
       btn.textContent = sportName;
-      btn.classList.add('sport-selector-button');
-      // Optionally: add click handlers here to do something when clicked
+      btn.className = 'admin-button'; // Use your button styling class
+      btn.style.height = '45px';
+      btn.style.fontSize = '11px';
+
       btn.addEventListener('click', () => {
         console.log(`[sportSelector] Button clicked: ${sportName}`);
-        // TODO: handle sport selection action
+        // Dispatch event for adminOptions to handle
+        document.dispatchEvent(new CustomEvent('sportSelected', { detail: sportName }));
       });
-      buttonsContainer.appendChild(btn);
+
+      buttonWrapper.appendChild(btn);
     });
 
-    // Append buttons container to the provided container element
-    container.appendChild(buttonsContainer);
+    container.appendChild(buttonWrapper);
 
     console.log("[sportSelector] Sport selector buttons rendered successfully.");
-
   } catch (error) {
-    console.error("[sportSelector] Error fetching or rendering sports:", error);
+    console.error("[sportSelector] Error rendering sport selector:", error);
+    const container = document.getElementById('mainContent');
+    if (container) {
+      container.textContent = "Failed to load sports. Please try again.";
+    }
   }
 }
