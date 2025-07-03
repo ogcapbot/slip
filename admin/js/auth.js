@@ -1,5 +1,6 @@
 // admin/js/auth.js
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { db } from '../firebaseInit.js';  // Import the initialized Firestore instance
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const loginBtn = document.getElementById('loginBtn');
 const accessCodeInput = document.getElementById('accessCodeInput');
@@ -14,7 +15,6 @@ loginBtn.addEventListener('click', async () => {
   }
 
   try {
-    const db = getFirestore();
     const usersRef = collection(db, 'Users');
     const q = query(usersRef, where('accessCode', '==', accessCode));
     const querySnapshot = await getDocs(q);
