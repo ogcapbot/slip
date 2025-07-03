@@ -1,5 +1,5 @@
 // admin/js/auth.js
-import { db } from '/admin/firebaseInit.js';  // adjust if your folder structure differs
+import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 document.querySelector('button').addEventListener('click', async () => {
@@ -13,7 +13,7 @@ document.querySelector('button').addEventListener('click', async () => {
   }
 
   try {
-    const usersRef = collection(db, 'Users'); // db must be Firestore instance here!
+    const usersRef = collection(db, 'Users');
     const q = query(usersRef, where('accessCode', '==', accessCode));
     const querySnapshot = await getDocs(q);
 
