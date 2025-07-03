@@ -56,6 +56,7 @@ async function loadLeagues(container = null, selectedSport = null) {
     button.addEventListener('click', () => {
       selectedLeague = doc.id;
 
+      // Hide league buttons after selection
       container.style.display = 'none';
 
       updateSummary('League', league.name || doc.id);
