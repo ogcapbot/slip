@@ -1,19 +1,26 @@
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
+let leagueButtonsContainer;
 let selectedLeague = null;
 
-export async function loadLeagues(container, selectedSport) {
+export async function loadLeagues(container = null, selectedSport = null) {
   if (!container) {
-    console.error('[LeagueSelector] No container passed to loadLeagues');
-    return;
+    leagueButtonsContainer = document.getElementById('leagueSelectorContainer');
+    if (!leagueButtonsContainer) {
+      leagueButtonsContainer = document.createElement('div');
+      leagueButtonsContainer.id = 'leagueSelectorContainer';
+      document.body.appendChild(leagueButtonsContainer);
+    }
+  } else {
+    leagueButtonsContainer = container;
   }
 
-  container.innerHTML = '';
+  leagueButtonsContainer.innerHTML = '';
   selectedLeague = null;
 
   if (!selectedSport) {
-    container.textContent = 'No sport selected.';
+    leagueButtonsContainer.textContent = 'No sport selected.';
     return;
   }
 
@@ -28,10 +35,17 @@ export async function loadLeagues(container, selectedSport) {
     });
 
     const leagues = Array.from(leaguesSet).sort((a, b) => a.localeCompare(b));
+
     if (leagues.length === 0) {
-      container.textContent = 'No leagues found';
+      leagueButtonsContainer.textContent = 'No leagues found';
       return;
     }
+
+    leagueButtonsContainer.style.display = 'grid';
+    leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    leagueButtonsContainer.style.gap = '4px 6px';
+    leagueButtonsContainer.style.marginTop = '8px';
+    leagueButtonsContainer.style.alignItems = 'start';
 
     leagues.forEach(league => {
       const btn = document.createElement('button');
@@ -43,28 +57,27 @@ export async function loadLeagues(container, selectedSport) {
       btn.style.boxSizing = 'border-box';
 
       btn.addEventListener('click', () => {
-        selectLeague(league, container);
+        selectLeague(league);
       });
 
-      container.appendChild(btn);
+      leagueButtonsContainer.appendChild(btn);
     });
   } catch (error) {
-    container.textContent = 'Error loading leagues';
+    leagueButtonsContainer.textContent = 'Error loading leagues';
     console.error(error);
   }
 }
 
-function selectLeague(league, container) {
+function selectLeague(league) {
   if (selectedLeague === league) return;
   selectedLeague = league;
 
   const summaryLeague = document.getElementById('summaryLeague');
   if (summaryLeague) summaryLeague.textContent = `League: ${league}`;
 
-  // Hide league buttons after selection
-  container.style.display = 'none';
-  container.innerHTML = '';
+  const leagueContainer = document.getElementById('leagueSelectorContainer');
+  if (leagueContainer) leagueContainer.style.display = 'none';
 
-  // TODO: trigger next step, e.g. loadGames()
-  console.log('[LeagueSelector] League selected:', league);
+  const gameContainer = document.getElementById('gameSelectorContainer');
+  if (gameContainer) gameContainer.style.display = 'block';
 }
