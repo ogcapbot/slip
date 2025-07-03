@@ -1,6 +1,6 @@
 import { db } from "../firebaseInit.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadTeams } from './teamSelector.js';  // Next step selector
+import { loadTeams } from './teamSelector.js';
 
 const gameSelect = document.getElementById("gameSelect");
 let gameButtonsContainer = document.getElementById("gameButtonsContainer");
@@ -30,15 +30,19 @@ export async function loadGames(container = null, selectedLeague = null) {
 
   targetContainer.innerHTML = "";
   selectedGameId = null;
-
   gameSelect.innerHTML = '<option>Select a league first</option>';
   gameSelect.disabled = true;
 
   if (!selectedLeague) {
-    return; // No league selected yet
+    targetContainer.style.display = 'none';
+    return;
   }
 
   targetContainer.textContent = "Loading games...";
+  targetContainer.style.display = 'grid';
+  targetContainer.style.gridTemplateColumns = '1fr';
+  targetContainer.style.gridAutoRows = 'min-content';
+  targetContainer.style.marginTop = '8px';
 
   try {
     const q = query(collection(db, "GameCache"), where("sportName", "==", selectedLeague));
@@ -63,11 +67,6 @@ export async function loadGames(container = null, selectedLeague = null) {
       const bTime = b.data.commenceTimeUTC ? new Date(b.data.commenceTimeUTC).getTime() : 0;
       return aTime - bTime;
     });
-
-    targetContainer.style.display = "grid";
-    targetContainer.style.gridTemplateColumns = "1fr";
-    targetContainer.style.gridAutoRows = "min-content";
-    targetContainer.style.marginTop = "8px";
 
     games.forEach(({ id, data }) => {
       targetContainer.appendChild(createGameButton(id, data));
@@ -106,10 +105,8 @@ function createGameButton(id, gameData) {
 
 function selectGame(gameId, gameDescription, gameData) {
   if (selectedGameId === gameId) return;
-
   selectedGameId = gameId;
 
-  // Clear buttons and show summary line
   gameButtonsContainer.innerHTML = "";
   gameButtonsContainer.style.display = "block";
 
@@ -122,7 +119,6 @@ function selectGame(gameId, gameDescription, gameData) {
 
   gameButtonsContainer.appendChild(summaryLine);
 
-  // Update hidden select for compatibility
   gameSelect.innerHTML = "";
   const option = document.createElement("option");
   option.value = gameId;
@@ -131,6 +127,5 @@ function selectGame(gameId, gameDescription, gameData) {
   gameSelect.disabled = false;
   gameSelect.dispatchEvent(new Event("change"));
 
-  // Call next selector: loadTeams for this game
   loadTeams(null, gameData);
 }
