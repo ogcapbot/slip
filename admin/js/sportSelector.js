@@ -1,88 +1,92 @@
 // admin/js/sportSelector.js
-// --- your original full content starts here ---
-import { db } from '../firebaseInit.js';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadLeagues } from './leagueSelector.js';
 
-const originalSportSelect = document.getElementById('sportSelect');
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-let sportButtonsContainer;
-let hiddenSelect;
-let selectedSport = null;
+/**
+ * Initialize Firebase app and Firestore db instance
+ * Use existing app if already initialized to prevent errors
+ */
+const firebaseConfig = {
+  apiKey: "AIzaSyD9Px_6V0Yl5Dz8HRiLuFNgC3RT6AL9P-o",
+  authDomain: "ogcapperbets.firebaseapp.com",
+  projectId: "ogcapperbets",
+  storageBucket: "ogcapperbets.appspot.com",
+  messagingSenderId: "70543247155",
+  appId: "1:70543247155:web:48f6a17d8d496792b5ec2b"
+};
 
-if (originalSportSelect) {
-  const parent = originalSportSelect.parentNode;
-  parent.removeChild(originalSportSelect);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
 
-  hiddenSelect = document.createElement('select');
-  hiddenSelect.id = 'sportSelect';
-  hiddenSelect.style.display = 'none';
-  parent.appendChild(hiddenSelect);
+/**
+ * Build sport selector buttons from GameEventsData collection.
+ * Shows up to 15 unique sportName buttons sorted alphabetically.
+ * Buttons arranged in 3 columns and up to 5 rows.
+ * 
+ * @param {HTMLElement} container - DOM element to append buttons container into
+ */
+export async function showSportSelector(container) {
+  console.log("[sportSelector] Starting to build sport selector buttons...");
 
-  sportButtonsContainer = document.createElement('div');
-  sportButtonsContainer.id = 'sportButtonsContainer';
-
-  const sportLabel = parent.querySelector('label[for="sportSelect"]');
-  if (sportLabel) {
-    sportLabel.parentNode.insertBefore(sportButtonsContainer, sportLabel.nextSibling);
-  } else {
-    parent.appendChild(sportButtonsContainer);
+  if (!container) {
+    console.error("[sportSelector] No container element provided.");
+    return;
   }
 
-  loadSports();
-}
+  try {
+    // Fetch all documents from GameEventsData
+    const gameEventsRef = collection(db, 'GameEventsData');
+    const querySnapshot = await getDocs(gameEventsRef);
 
-async function loadSports() {
-  sportButtonsContainer.innerHTML = '';
-  selectedSport = null;
+    // Extract unique sportNames
+    const sportNameSet = new Set();
 
-  const sportsRef = collection(db, 'sports');
-  const snapshot = await getDocs(sportsRef);
-
-  snapshot.forEach(doc => {
-    const sport = doc.data();
-    const button = document.createElement('button');
-    button.textContent = sport.name || doc.id;
-    button.classList.add('btn', 'btn-success', 'm-1');
-    button.dataset.sportId = doc.id;
-
-    button.addEventListener('click', () => {
-      selectedSport = doc.id;
-
-      // === Minimal patch to hide buttons on selection ===
-      sportButtonsContainer.style.display = 'none';
-
-      hiddenSelect.value = selectedSport;
-
-      updateSummary('Sport', sport.name || doc.id);
-
-      loadLeagues(null, selectedSport);
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.sportName && typeof data.sportName === 'string') {
+        sportNameSet.add(data.sportName);
+      }
     });
 
-    sportButtonsContainer.appendChild(button);
-  });
+    // Convert to array and sort alphabetically
+    const sportNames = Array.from(sportNameSet).sort((a, b) => a.localeCompare(b));
 
-  sportButtonsContainer.style.display = 'block';
-}
+    console.log(`[sportSelector] Found ${sportNames.length} unique sport names.`);
 
-function resetSportSelectorState() {
-  selectedSport = null;
-  if (sportButtonsContainer) {
-    sportButtonsContainer.style.display = 'block';
+    // Limit to max 15 sports
+    const limitedSports = sportNames.slice(0, 15);
+
+    // Clear previous content if any
+    container.innerHTML = '';
+
+    // Create a div container for buttons with a CSS class for styling
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('sport-selector-grid');
+
+    // Create buttons for each sport
+    limitedSports.forEach(sportName => {
+      const btn = document.createElement('button');
+      btn.textContent = sportName;
+      btn.classList.add('sport-selector-button');
+      // Optionally: add click handlers here to do something when clicked
+      btn.addEventListener('click', () => {
+        console.log(`[sportSelector] Button clicked: ${sportName}`);
+        // TODO: handle sport selection action
+      });
+      buttonsContainer.appendChild(btn);
+    });
+
+    // Append buttons container to the provided container element
+    container.appendChild(buttonsContainer);
+
+    console.log("[sportSelector] Sport selector buttons rendered successfully.");
+
+  } catch (error) {
+    console.error("[sportSelector] Error fetching or rendering sports:", error);
   }
-  if (hiddenSelect) {
-    hiddenSelect.value = '';
-  }
-  // optionally clear summary fields related to sport
 }
-
-function updateSummary(field, value) {
-  const summaryElement = document.getElementById('summary');
-  if (!summaryElement) return;
-
-  const line = document.createElement('div');
-  line.textContent = `${field}: ${value}`;
-  summaryElement.appendChild(line);
-}
-
-export { loadSports, selectedSport, resetSportSelectorState };
