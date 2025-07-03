@@ -1,86 +1,88 @@
 // auth.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Your Firebase config - Replace these with your actual project details!
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  updateDoc,
+  increment
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+import { showAdminOptions } from './adminOptions.js';
+
+// Your actual Firebase config (copied from your firebaseInit.js)
 const firebaseConfig = {
-  apiKey: "AIzaSyD1LnTPfXyil3m7Q9H_EyXpEqz18KMHLJk",
+  apiKey: "AIzaSyD9Px_6V0Yl5Dz8HRiLuFNgC3RT6AL9P-o",
   authDomain: "ogcapperbets.firebaseapp.com",
   projectId: "ogcapperbets",
   storageBucket: "ogcapperbets.appspot.com",
-  messagingSenderId: "280436007170",
-  appId: "1:280436007170:web:7f4c6d21550d9bdf2067ce",
-  measurementId: "G-4K3N92XN1K"
+  messagingSenderId: "70543247155",
+  appId: "1:70543247155:web:48f6a17d8d496792b5ec2b"
 };
 
-// Initialize Firebase app and Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// DOM elements
-const accessCodeInput = document.querySelector('input[type="password"]');
+const loginInput = document.querySelector('input[type="password"]');
 const loginButton = document.querySelector('button');
-const loginError = document.getElementById('loginError');
-const header = document.querySelector('header');
 const loginSection = document.querySelector('section');
+const errorDisplay = document.getElementById('loginError');
 
-// Add displayName paragraph under header text
-const displayNameEl = document.createElement('p');
-displayNameEl.style.color = '#888';
-displayNameEl.style.fontSize = '0.9rem';
-displayNameEl.style.marginTop = '0';
-header.appendChild(displayNameEl);
-
-async function checkAccessCode() {
-  loginError.textContent = ''; // Clear previous error
-
-  const code = accessCodeInput.value.trim();
+loginButton.addEventListener('click', () => {
+  const code = loginInput.value.trim();
   if (!code) {
-    loginError.textContent = 'Please enter access code.';
+    displayError('Please enter access code.');
     return;
   }
+  checkAccessCode(code);
+});
 
+loginInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    loginButton.click();
+  }
+});
+
+function displayError(message) {
+  errorDisplay.textContent = message;
+  errorDisplay.style.color = 'red';
+}
+
+async function checkAccessCode(code) {
   try {
     const usersRef = collection(db, 'Users');
     const q = query(usersRef, where('accessCode', '==', code));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      loginError.textContent = 'Invalid Access Code.';
+      displayError('Invalid Access Code.');
       return;
     }
 
     const userDoc = querySnapshot.docs[0];
     const userData = userDoc.data();
 
-    // Show user display name below header
-    displayNameEl.textContent = `User: ${userData.userDisplayname || 'Unknown'}`;
-
-    // Hide login input section
-    loginSection.style.display = 'none';
-
-    // Increment loginCount in Firestore
-    const userRef = doc(db, 'Users', userDoc.id);
-    await updateDoc(userRef, {
+    // Increment loginCount field (creates it if missing)
+    const userDocRef = doc(db, 'Users', userDoc.id);
+    await updateDoc(userDocRef, {
       loginCount: increment(1)
     });
 
-    // TODO: Call your adminOptions.js method here, e.g.:
-    // showAdminOptions(userData);
+    // Hide login UI after success
+    loginSection.style.display = 'none';
 
-    console.log('Logged in user:', userData);
+    // Clear any previous error messages
+    errorDisplay.textContent = '';
+
+    // Call adminOptions.js to display admin UI and user info
+    showAdminOptions(userData);
 
   } catch (error) {
     console.error('Error checking access code:', error);
-    loginError.textContent = 'An error occurred. Please try again.';
+    displayError('An error occurred. Please try again.');
   }
 }
-
-// Event listeners
-loginButton.addEventListener('click', checkAccessCode);
-accessCodeInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    checkAccessCode();
-  }
-});
