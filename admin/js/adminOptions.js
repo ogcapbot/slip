@@ -5,6 +5,8 @@
  * Creates a 2-row x 3-column button grid with labeled buttons.
  * Shows a welcome message in the main content area.
  * Implements access control for some buttons.
+ * Highlights the active button with a calm green color.
+ * Resets UI on Start Over button click.
  * 
  * @param {Object} userData - The logged-in user's data, including accessType and userName.
  */
@@ -14,52 +16,22 @@ export function showAdminOptions(userData) {
   // Select header to insert below user display name
   const header = document.querySelector('header');
 
-  // Remove existing adminOptions section if it exists, to avoid duplicates
+  // Remove existing admin options if present to avoid duplicates
   const existingAdminOptions = document.getElementById('adminOptionsSection');
   if (existingAdminOptions) {
     console.log("[adminOptions] Existing adminOptionsSection found, removing it.");
     existingAdminOptions.remove();
   }
 
-  // Create main container section for admin options
+  // Create main container for admin options and apply ID for CSS targeting
   const adminOptionsSection = document.createElement('section');
   adminOptionsSection.id = 'adminOptionsSection';
-  adminOptionsSection.style.marginTop = '15px';
-  adminOptionsSection.style.fontFamily = "'Oswald', sans-serif";
 
-  // Create button grid container
+  // Create button grid container and assign CSS class
   const buttonGrid = document.createElement('div');
-  buttonGrid.style.display = 'grid';
-  buttonGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  buttonGrid.style.gridTemplateRows = 'repeat(2, 1fr)';
-  buttonGrid.style.gap = '12px';
-  buttonGrid.style.justifyItems = 'center';
-  buttonGrid.style.alignItems = 'center';
-  buttonGrid.style.marginBottom = '20px';
+  buttonGrid.classList.add('button-grid');
 
-  // Button style shared settings
-  const buttonStyle = {
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '1.1rem',
-    height: '45px',
-    width: '100%',  // full cell width
-    padding: '0',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    userSelect: 'none',
-    whiteSpace: 'normal',  // allow multi-line text
-    lineHeight: '1.1',     // tighter line spacing for 2 lines
-  };
-
-  // List of buttons and their access requirements and labels
-  // If accessRequired is true, only SuperAdmin allowed
+  // Define buttons with labels and access requirements
   const buttons = [
     { label: 'Add New', accessRequired: false },
     { label: 'Win/Loss', accessRequired: true },
@@ -69,69 +41,71 @@ export function showAdminOptions(userData) {
     { label: 'Settings', accessRequired: true },
   ];
 
-  // Main content area below buttons (where messages appear)
+  // Create or select main content area below buttons
   let mainContent = document.getElementById('adminMainContent');
   if (!mainContent) {
     mainContent = document.createElement('div');
     mainContent.id = 'adminMainContent';
-    mainContent.style.fontFamily = "'Oswald', sans-serif";
-    mainContent.style.fontSize = '1rem';
-    mainContent.style.padding = '10px 20px';
-    mainContent.style.border = '1px solid #ddd';
-    mainContent.style.borderRadius = '6px';
-    mainContent.style.minHeight = '100px';
-    mainContent.style.backgroundColor = '#f9f9f9';
-  } else {
-    // Clear previous content
-    mainContent.innerHTML = '';
   }
-
-  // Show welcome message initially
+  // Reset main content styles are in CSS, just clear content here
+  mainContent.innerHTML = '';
   mainContent.textContent = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
 
-  // Append button elements to grid
-  buttons.forEach((btn) => {
-    const button = document.createElement('button');
-    button.textContent = btn.label;
-    Object.assign(button.style, buttonStyle);
+  // Track currently active button for toggling highlight
+  let activeButton = null;
 
-    // Click handler with access control
-    button.addEventListener('click', () => {
-      console.log(`[adminOptions] "${btn.label}" button clicked.`);
+  // Create buttons with class and event listeners
+  buttons.forEach(btnConfig => {
+    const btn = document.createElement('button');
+    btn.textContent = btnConfig.label;
+    btn.classList.add('admin-button');
 
-      // Handle Start Over button separately (no access restriction)
-      if (btn.label === 'Start Over') {
-        console.log("[adminOptions] Processing Start Over - resetting main content.");
-        // Reset main content to welcome message, clear any stored inputs (if applicable)
+    btn.addEventListener('click', () => {
+      console.log(`[adminOptions] "${btnConfig.label}" button clicked.`);
+
+      // Handle Start Over separately - resets main content and clears button highlight
+      if (btnConfig.label === 'Start Over') {
+        console.log("[adminOptions] Resetting UI on Start Over.");
+
         mainContent.textContent = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
+
+        if (activeButton) {
+          activeButton.classList.remove('active');
+          activeButton = null;
+        }
         return;
       }
 
-      // For other buttons, check accessType if accessRequired
-      if (btn.accessRequired && userData.accessType !== 'SuperAdmin') {
-        console.warn(`[adminOptions] Access denied for user type: ${userData.accessType}`);
+      // Access control for restricted buttons
+      if (btnConfig.accessRequired && userData.accessType !== 'SuperAdmin') {
+        console.warn(`[adminOptions] Access denied for user with accessType: ${userData.accessType}`);
         mainContent.textContent = 'Access Denied';
         return;
       }
 
-      // Normal button pressed, update main content accordingly
-      mainContent.textContent = `${btn.label} Button Pressed`;
+      // Highlight clicked button, remove highlight from previous
+      if (activeButton && activeButton !== btn) {
+        activeButton.classList.remove('active');
+      }
+      btn.classList.add('active');
+      activeButton = btn;
+
+      // Show which button was pressed
+      mainContent.textContent = `${btnConfig.label} Button Pressed`;
     });
 
-    buttonGrid.appendChild(button);
+    buttonGrid.appendChild(btn);
   });
 
-  // Append grid and main content to adminOptionsSection
+  // Append button grid and main content to admin options container
   adminOptionsSection.appendChild(buttonGrid);
   adminOptionsSection.appendChild(mainContent);
 
-  // Insert adminOptionsSection just below the user display name in header
-  // Find the user display element (assumed to be a <p> with gray text)
+  // Insert adminOptionsSection just below user display name paragraph
   const userDisplayEl = [...header.querySelectorAll('p')].find(p => p.textContent.startsWith('User:'));
   if (userDisplayEl) {
     userDisplayEl.insertAdjacentElement('afterend', adminOptionsSection);
   } else {
-    // fallback append at the end of header
     header.appendChild(adminOptionsSection);
   }
 
