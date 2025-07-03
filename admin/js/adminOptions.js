@@ -1,5 +1,7 @@
 // admin/js/adminOptions.js
 
+import { AddNewWorkflow } from './addNew.js';
+
 /**
  * Displays the admin options UI below the user display name.
  * Creates a 2-row x 3-column button grid with labeled buttons.
@@ -8,7 +10,7 @@
  * Highlights the active button with a calm green color.
  * Resets UI on Start Over button click.
  * 
- * @param {Object} userData - The logged-in user's data, including accessType and userName.
+ * @param {Object} userData - The logged-in user's data, including accessType and userName and uid.
  */
 export function showAdminOptions(userData) {
   console.log("[adminOptions] Starting to render admin options UI...");
@@ -73,6 +75,11 @@ export function showAdminOptions(userData) {
           activeButton.classList.remove('active');
           activeButton = null;
         }
+
+        // If you want to reset workflow UI on Start Over:
+        // clear mainContent and hide Submit etc
+        mainContent.innerHTML = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
+
         return;
       }
 
@@ -90,7 +97,21 @@ export function showAdminOptions(userData) {
       btn.classList.add('active');
       activeButton = btn;
 
-      // Show which button was pressed
+      // Handle Add New button: launch addNew workflow UI
+      if (btnConfig.label === 'Add New') {
+        // Clear main content container and start new workflow
+        mainContent.innerHTML = '';
+
+        // Pass current userId if you have it (replace 'userData.uid' accordingly)
+        const userId = userData.uid || 'anonymous';
+
+        // Create instance of AddNewWorkflow inside mainContent div
+        const workflow = new AddNewWorkflow(mainContent, userId);
+
+        return;
+      }
+
+      // Show which button was pressed for others
       mainContent.textContent = `${btnConfig.label} Button Pressed`;
     });
 
