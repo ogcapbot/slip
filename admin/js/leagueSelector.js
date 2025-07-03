@@ -83,5 +83,4 @@ function updateSummary(field, value) {
   summaryElement.appendChild(line);
 }
 
-// Only one export statement here
 export { loadLeagues, selectedLeague };
