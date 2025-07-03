@@ -1,4 +1,5 @@
 // admin/js/sportSelector.js
+// --- your original full content starts here ---
 import { db } from '../firebaseInit.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { loadLeagues } from './leagueSelector.js';
@@ -48,7 +49,7 @@ async function loadSports() {
     button.addEventListener('click', () => {
       selectedSport = doc.id;
 
-      // Hide sport buttons after selection
+      // === Minimal patch to hide buttons on selection ===
       sportButtonsContainer.style.display = 'none';
 
       hiddenSelect.value = selectedSport;
@@ -72,7 +73,7 @@ function resetSportSelectorState() {
   if (hiddenSelect) {
     hiddenSelect.value = '';
   }
-  // Optionally clear related summary info if needed
+  // optionally clear summary fields related to sport
 }
 
 function updateSummary(field, value) {
