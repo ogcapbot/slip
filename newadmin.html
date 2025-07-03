@@ -11,47 +11,44 @@
 
   <!-- Your Styles -->
   <link rel="stylesheet" href="admin/css/styles.css" />
-  
 </head>
 <body>
 
-<!-- Global Header -->
-    <header style="text-align: center; padding: 15px 0 6px;">
-      <h3 style="margin: 0;">OG Capper Bets</h3>
-      <h3 style="margin: 0;">Official Pick Admin</h3>
-      <h6 style="margin: 0; color: red;">Official Use Only</h6>
-    </header>
+  <header>
+    <h3>OG Capper Bets</h3>
+    <h3>Official Pick Admin</h3>
+    <h6>Official Use Only</h6>
+  </header>
 
-<!-- Login Section -->
-    <section style="text-align: center;">
-      <br><input style="text-align:center;" inputmode="numeric" type="password" autofocus required placeholder="Enter Access Code" autocomplete="off" />
-      <br><br><button max-width="100px;">Login</button>
+  <main>
+    <!-- Login Section -->
+    <section id="loginSection">
+      <input id="accessCodeInput" type="password" inputmode="numeric" autofocus required placeholder="Enter Access Code" autocomplete="off" />
+      <button id="loginBtn">Login</button>
       <p id="loginError"></p>
     </section>
 
-<!-- Admin Section -->
+    <!-- Admin Section (hidden initially) -->
+    <section id="adminSection" style="display:none;">
+      <div id="adminContent"></div>
+    </section>
+  </main>
 
+  <footer id="versionFooter">
+    Version 7.25
+  </footer>
 
-<!-- Main Content -->
+  <!-- Firebase Initialization and JS modules -->
+  <script type="module" src="admin/firebaseInit.js"></script>
+  <script type="module" src="admin/js/auth.js"></script>
+  <script type="module" src="admin/js/adminOptions.js"></script>
 
-    
-<!-- Global Footer -->
-    <footer id="versionFooter" style="text-align:center; margin-top:30px; color:#666;">
-      Version 7.25
-    </footer>
-
-<!-- Firebase Initialization and JS modules -->
-    <script type="module" src="admin/firebaseInit.js"></script>
-    <script type="module" src="admin/js/auth.js"></script>
-    <script type="module" src="admin/js/adminOptions.js"></script>
-    <script type="module" src="admin/js/adminStats.js"></script>
-    <script type="module" src="admin/js/updateWinloss.js"></script>
-
-    <script>
-     function scaleContainerToFit() {
+  <script>
+    // Optional: scale content on tiny screens below 400px width
+    function scaleContainerToFit() {
       const designWidth = 400;
       const screenWidth = window.innerWidth;
-      const container = document.querySelector('.container');
+      const container = document.querySelector('main');
 
       if (!container) return;
 
@@ -70,8 +67,7 @@
 
     window.addEventListener('load', scaleContainerToFit);
     window.addEventListener('resize', scaleContainerToFit);
-
-    </script>
+  </script>
 
 </body>
 </html>
