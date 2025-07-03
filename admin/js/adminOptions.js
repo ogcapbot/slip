@@ -85,4 +85,9 @@ export function showAdminOptions(user) {
     if (activeButtonId) {
       document.getElementById(activeButtonId).style.backgroundColor = '#007bff';
     }
-    document.getElementById(buttonId).style.b
+    document.getElementById(buttonId).style.backgroundColor = '#28a745';
+    activeButtonId = buttonId;
+  }
+
+  console.log("[adminOptions] Admin options UI shown.");
+}
