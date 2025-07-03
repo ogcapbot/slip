@@ -15,71 +15,63 @@
 </head>
 <body>
 
- 
-
-    <!-- Global Header -->
-    <header id="globalHeader" style="text-align: center; padding: 15px 0 6px;">
+<!-- Global Header -->
+    <header style="text-align: center; padding: 15px 0 6px;">
       <h3 style="margin: 0;">OG Capper Bets</h3>
       <h3 style="margin: 0;">Official Pick Admin</h3>
       <h6 style="margin: 0; color: red;">Official Use Only</h6>
     </header>
 
-    <!-- Login Section -->
-    <section id="loginSection" style="text-align: center;">
-      <br><input style="text-align:center;" inputmode="numeric" type="password" id="AccessCode" autofocus required placeholder="Enter Access Code" autocomplete="off" />
-      <br><br><button id="loginBtn" class="pick-btn blue" max-width="100px;" >Login</button>
-      <p id="loginError" class="error"></p>
+<!-- Login Section -->
+    <section style="text-align: center;">
+      <br><input style="text-align:center;" inputmode="numeric" type="password" autofocus required placeholder="Enter Access Code" autocomplete="off" />
+      <br><br><button max-width="100px;">Login</button>
+      <p id="loginError"></p>
     </section>
 
-    <!-- Admin Section -->
-    <div id="adminSection">
-      <div class="admin-container admin-buttons-box">
-        <div id="adminButtonsContainer" class="admin-buttons-grid"></div>
-      </div>
-    </div>
+<!-- Admin Section -->
 
-    <div id="adminStatsContainer" class="admin-message">
-    <div id="updateWinloss" class="admin-message">
 
-    <!-- Global Footer -->
+<!-- Main Content -->
+
+    
+<!-- Global Footer -->
     <footer id="versionFooter" style="text-align:center; margin-top:30px; color:#666;">
       Version 7.25
     </footer>
 
-  </div>
+<!-- Firebase Initialization and JS modules -->
+    <script type="module" src="admin/firebaseInit.js"></script>
+    <script type="module" src="admin/js/auth.js"></script>
+    <script type="module" src="admin/js/adminOptions.js"></script>
+    <script type="module" src="admin/js/adminStats.js"></script>
+    <script type="module" src="admin/js/updateWinloss.js"></script>
 
-  <!-- Firebase Initialization and JS modules -->
-  <script type="module" src="admin/firebaseInit.js"></script>
-  <script type="module" src="admin/js/auth.js"></script>
-  <script type="module" src="admin/js/adminOptions.js"></script>
-  <script type="module" src="admin/js/adminStats.js"></script>
-  <script type="module" src="admin/js/updateWinloss.js"></script>
+    <script>
+     function scaleContainerToFit() {
+      const designWidth = 400;
+      const screenWidth = window.innerWidth;
+      const container = document.querySelector('.container');
 
-  <script>
-   function scaleContainerToFit() {
-    const designWidth = 400;
-    const screenWidth = window.innerWidth;
-    const container = document.querySelector('.container');
+      if (!container) return;
 
-    if (!container) return;
-
-    if (screenWidth < designWidth) {
-      const scale = screenWidth / designWidth;
-      container.style.transformOrigin = "top left";
-      container.style.transform = `scale(${scale})`;
-      container.style.width = `${designWidth}px`;
-      container.style.overflowX = 'hidden';
-    } else {
-      container.style.transform = "";
-      container.style.width = "100%";
-      container.style.overflowX = '';
+      if (screenWidth < designWidth) {
+        const scale = screenWidth / designWidth;
+        container.style.transformOrigin = "top left";
+        container.style.transform = `scale(${scale})`;
+        container.style.width = `${designWidth}px`;
+        container.style.overflowX = 'hidden';
+      } else {
+        container.style.transform = "";
+        container.style.width = "100%";
+        container.style.overflowX = '';
+      }
     }
-  }
 
-  window.addEventListener('load', scaleContainerToFit);
-  window.addEventListener('resize', scaleContainerToFit);
+    window.addEventListener('load', scaleContainerToFit);
+    window.addEventListener('resize', scaleContainerToFit);
 
-  </script>
+    </script>
 
 </body>
 </html>
