@@ -1,18 +1,18 @@
-// firebaseInit.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+// admin/firebaseInit.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// REPLACE these with your actual Firebase config values:
 const firebaseConfig = {
-  apiKey: "AIzaSyB2ggF-0vtAyLhoftOIVnFbzfSpYYzy6rw",
+  apiKey: "AIzaSyD1LnTPfXyil3m7Q9H_EyXpEqz18KMHLJk",
   authDomain: "ogcapperbets.firebaseapp.com",
   projectId: "ogcapperbets",
-  storageBucket: "ogcapperbets.firebasestorage.app",
-  messagingSenderId: "442564970374",
-  appId: "1:442564970374:web:91e6e1e55eae8e5bc10e07",
-  measurementId: "G-71JGC4DVMG"
+  storageBucket: "ogcapperbets.appspot.com",
+  messagingSenderId: "280436007170",
+  appId: "1:280436007170:web:7f4c6d21550d9bdf2067ce",
+  measurementId: "G-4K3N92XN1K"
 };
 
-// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
