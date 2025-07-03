@@ -447,18 +447,6 @@ button:disabled {
   flex-shrink: 0 !important;
   margin-left: 10px !important;
 }
-.container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.pick-btn {
-  font-size: 1rem;
-  padding: 12px 0;
-  width: 100%;
-  box-sizing: border-box;
-}
 
 
 
