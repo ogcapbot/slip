@@ -1,85 +1,104 @@
 // admin/js/leagueSelector.js
-// --- your original full content starts here ---
-import { db } from '../firebaseInit.js';
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-let leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
-let leagueSelect = document.getElementById('leagueSelect');
-let selectedLeague = null;
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-if (!leagueButtonsContainer) {
-  leagueButtonsContainer = document.createElement('div');
-  leagueButtonsContainer.id = 'leagueButtonsContainer';
+/**
+ * Shows league buttons filtered by selected sport with pagination.
+ * @param {HTMLElement} container - The DOM element to render league buttons inside.
+ * @param {string} selectedSport - The sportName to filter leagues by.
+ * @param {Function} onLeagueSelect - Callback invoked with the selected leagueShortname.
+ */
+export async function showLeagueSelector(container, selectedSport, onLeagueSelect) {
+  console.log(`[leagueSelector] Loading leagues for sport: ${selectedSport}`);
 
-  const leagueLabel = document.querySelector('label[for="leagueSelect"]');
-  if (leagueLabel) {
-    leagueLabel.parentNode.insertBefore(leagueButtonsContainer, leagueLabel.nextSibling);
-  } else if (leagueSelect && leagueSelect.parentNode) {
-    leagueSelect.parentNode.insertBefore(leagueButtonsContainer, leagueSelect.nextSibling);
-  } else {
-    document.body.appendChild(leagueButtonsContainer);
-  }
-}
-
-if (leagueSelect) {
-  leagueSelect.style.display = 'none';
-}
-
-async function loadLeagues(container = null, selectedSport = null) {
   if (!container) {
-    container = leagueButtonsContainer;
+    console.error("[leagueSelector] No container element provided.");
+    return;
   }
-
-  container.innerHTML = '';
-  selectedLeague = null;
-
   if (!selectedSport) {
-    console.warn('[LeagueSelector] No sport selected, cannot load leagues.');
+    console.error("[leagueSelector] No selectedSport provided.");
+    container.textContent = "Error: No sport selected.";
+    return;
+  }
+  if (typeof onLeagueSelect !== "function") {
+    console.error("[leagueSelector] No onLeagueSelect callback provided.");
+    container.textContent = "Error: Missing league selection handler.";
     return;
   }
 
-  const leaguesRef = collection(db, 'leagues');
-  const q = query(leaguesRef, where('sport', '==', selectedSport));
-  const querySnapshot = await getDocs(q);
+  try {
+    const db = getFirestore();
 
-  if (querySnapshot.empty) {
-    container.innerHTML = '<p>No leagues available for selected sport.</p>';
-    return;
-  }
+    // Query GameEventsData where sportName == selectedSport
+    const gameEventsRef = collection(db, 'GameEventsData');
+    const q = query(gameEventsRef, where('sportName', '==', selectedSport));
+    const snapshot = await getDocs(q);
 
-  querySnapshot.forEach(doc => {
-    const league = doc.data();
-    const button = document.createElement('button');
-    button.textContent = league.name || doc.id;
-    button.classList.add('btn', 'btn-primary', 'm-1');
-    button.dataset.leagueId = doc.id;
-
-    button.addEventListener('click', () => {
-      selectedLeague = doc.id;
-
-      // === Minimal patch to hide buttons on selection ===
-      container.style.display = 'none';
-
-      updateSummary('League', league.name || doc.id);
-
-      import('./gameSelector.js').then(module => {
-        module.loadGames(null, selectedLeague);
-      });
+    // Collect unique leagueShortnames
+    const leagueSet = new Set();
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.leagueShortname) {
+        leagueSet.add(data.leagueShortname);
+      }
     });
 
-    container.appendChild(button);
-  });
+    const leagues = Array.from(leagueSet).sort((a, b) => a.localeCompare(b));
 
-  container.style.display = 'block';
+    console.log(`[leagueSelector] Found ${leagues.length} leagues for sport ${selectedSport}`);
+
+    const pageSize = 15;
+    let currentIndex = 0;
+
+    // Clear container
+    container.innerHTML = '';
+
+    // Create buttons container (3 columns grid)
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('button-grid'); // assuming your CSS has this for 3 cols grid
+
+    // Load More button setup
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.classList.add('admin-button');
+    loadMoreBtn.style.display = 'none';
+
+    // Render next page function
+    function renderNextPage() {
+      const nextSlice = leagues.slice(currentIndex, currentIndex + pageSize);
+
+      nextSlice.forEach(league => {
+        const btn = document.createElement('button');
+        btn.textContent = league;
+        btn.classList.add('admin-button');
+        btn.addEventListener('click', () => {
+          console.log(`[leagueSelector] League selected: ${league}`);
+          // Clear container for next step
+          container.innerHTML = '';
+          onLeagueSelect(league);
+        });
+        buttonsContainer.appendChild(btn);
+      });
+
+      currentIndex += pageSize;
+
+      const remaining = leagues.length - currentIndex;
+      if (remaining > 0) {
+        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.textContent = `Load 15 More (${remaining} left)`;
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
+    loadMoreBtn.addEventListener('click', renderNextPage);
+
+    container.appendChild(buttonsContainer);
+    container.appendChild(loadMoreBtn);
+
+    renderNextPage();
+
+  } catch (error) {
+    console.error("[leagueSelector] Error loading leagues:", error);
+    container.textContent = "Failed to load leagues.";
+  }
 }
-
-function updateSummary(field, value) {
-  const summaryElement = document.getElementById('summary');
-  if (!summaryElement) return;
-
-  const line = document.createElement('div');
-  line.textContent = `${field}: ${value}`;
-  summaryElement.appendChild(line);
-}
-
-export { loadLeagues, selectedLeague };
