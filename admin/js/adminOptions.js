@@ -1,13 +1,14 @@
 // adminOptions.js
 
-import { renderSportSelector } from './sportSelector.js';
-
 const mainContent = document.getElementById('mainContent');
 
-export function initAdminOptions() {
-  console.log("[adminOptions] Starting to render admin options UI...");
+/**
+ * Shows the admin options UI for the logged-in user.
+ * @param {Object} user - User object containing user info (e.g. displayName, accessType)
+ */
+export function showAdminOptions(user) {
+  console.log("[adminOptions] Showing admin options for user:", user);
 
-  // Clear main content
   mainContent.innerHTML = '';
 
   // Create admin buttons container
@@ -18,7 +19,7 @@ export function initAdminOptions() {
   adminBtnContainer.style.maxWidth = '400px';
   adminBtnContainer.style.margin = '0 auto 20px auto';
 
-  // Define buttons
+  // Buttons list
   const buttons = [
     { id: 'btnAddNew', label: 'Add New' },
     { id: 'btnWinLoss', label: 'Win/Loss' },
@@ -40,58 +41,48 @@ export function initAdminOptions() {
 
   mainContent.appendChild(adminBtnContainer);
 
-  // Welcome message area
+  // Welcome message
   const welcomeMessage = document.createElement('div');
   welcomeMessage.id = 'welcomeMessage';
   welcomeMessage.style.marginTop = '10px';
   welcomeMessage.style.fontSize = '14px';
   welcomeMessage.style.fontWeight = 'bold';
   welcomeMessage.style.textAlign = 'center';
-  welcomeMessage.textContent = 'Welcome to the Admin Panel!';
+  welcomeMessage.textContent = `Welcome, ${user.displayName || 'User'}!`;
   mainContent.appendChild(welcomeMessage);
 
-  // Event handlers
+  // Store accessType locally
+  const userAccessType = user.accessType || 'User';
+
+  // Button handlers
   document.getElementById('btnAddNew').addEventListener('click', async () => {
-    console.log('[adminOptions] "Add New" button clicked.');
-    try {
-      await renderSportSelector();
-      welcomeMessage.textContent = '';
-    } catch (error) {
-      console.error('[adminOptions] Error loading sportSelector:', error);
-      mainContent.textContent = "Failed to load sport selector.";
-    }
+    console.log('[adminOptions] "Add New" clicked');
+    // Your logic here (e.g., call renderSportSelector)
+    welcomeMessage.textContent = '';
     setActiveButton('btnAddNew');
   });
 
-  // Dummy accessType for demo
-  const userAccessType = window.currentUserAccessType || 'User';
-
   ['btnWinLoss', 'btnStats', 'btnCode', 'btnSettings'].forEach(buttonId => {
     document.getElementById(buttonId).addEventListener('click', () => {
-      console.log(`[adminOptions] "${buttonId.replace('btn','')}" button clicked.`);
+      console.log(`[adminOptions] "${buttonId}" clicked.`);
       if (userAccessType !== 'SuperAdmin') {
         alert("Access Denied");
       } else {
-        welcomeMessage.textContent = `${buttonId.replace('btn','')} Button Pressed`;
+        welcomeMessage.textContent = `${buttonId.replace('btn', '')} Button Pressed`;
       }
       setActiveButton(buttonId);
     });
   });
 
   document.getElementById('btnStartOver').addEventListener('click', () => {
-    console.log('[adminOptions] "Start Over" button clicked.');
+    console.log('[adminOptions] "Start Over" clicked');
     window.location.reload();
   });
 
-  // Active button management
+  // Active button tracking
   let activeButtonId = null;
   function setActiveButton(buttonId) {
     if (activeButtonId) {
       document.getElementById(activeButtonId).style.backgroundColor = '#007bff';
     }
-    document.getElementById(buttonId).style.backgroundColor = '#28a745'; // green
-    activeButtonId = buttonId;
-  }
-
-  console.log("[adminOptions] Admin options UI rendered successfully.");
-}
+    document.getElementById(buttonId).style.b
