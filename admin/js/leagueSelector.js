@@ -1,146 +1,56 @@
-// leagueSelector.js
-// Loads league buttons based on selected sport,
-// manages league selection state,
-// updates the summary,
-// and triggers the next step (game selection).
-
+// admin/js/leagueSelector.js
 import { db } from '../firebaseInit.js';
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-let leagueButtonsContainer;
 let selectedLeague = null;
 
 /**
- * Loads leagues filtered by selected sport.
- * Displays league buttons, updates summary on selection,
- * hides this container after selection,
- * and calls next step loader (e.g., loadGames).
- * @param {HTMLElement|null} container - Optional container override.
- * @param {string|null} selectedSport - Currently selected sport.
+ * Load leagues for the given sport from Firestore and render buttons.
+ * @param {HTMLElement} container - Container to render league buttons in.
+ * @param {string} sportId - The selected sport ID.
  */
-export async function loadLeagues(container = null, selectedSport = null) {
-  // Determine container to use or create new one if missing
-  if (!container) {
-    leagueButtonsContainer = document.getElementById('leagueButtonsContainer');
-    if (!leagueButtonsContainer) {
-      leagueButtonsContainer = document.createElement('div');
-      leagueButtonsContainer.id = 'leagueButtonsContainer';
-      document.body.appendChild(leagueButtonsContainer);
-      console.log('[leagueSelector.js:20] leagueButtonsContainer not found, created new container.');
-    }
-  } else {
-    leagueButtonsContainer = container;
-  }
+export async function loadLeagues(container, sportId) {
+  container.innerHTML = '';  // Clear container
 
-  console.log('[leagueSelector.js:27] loadLeagues called with selectedSport:', selectedSport);
-
-  // Clear container and reset selected league state
-  leagueButtonsContainer.innerHTML = '';
-  leagueButtonsContainer.style.display = 'grid';
-  leagueButtonsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  leagueButtonsContainer.style.gap = '4px 6px';
-  leagueButtonsContainer.style.marginTop = '8px';
-  leagueButtonsContainer.style.alignItems = 'start';
+  const leagueButtonsContainer = document.createElement('div');
+  leagueButtonsContainer.id = 'leagueButtonsContainer';
+  container.appendChild(leagueButtonsContainer);
 
   selectedLeague = null;
 
-  if (!selectedSport) {
-    leagueButtonsContainer.textContent = 'No sport selected.';
-    console.warn('[leagueSelector.js:39] No sport selected to load leagues.');
-    return;
-  }
-
   try {
-    // Query database where leagueGroup (sport) matches selectedSport
-    const q = query(collection(db, 'GameCache'), where('leagueGroup', '==', selectedSport));
-    const snapshot = await getDocs(q);
-    console.log(`[leagueSelector.js:46] Retrieved league documents count: ${snapshot.size}`);
+    const leaguesCol = collection(db, 'leagues');
+    const q = query(leaguesCol, where('sportId', '==', sportId));
+    const leaguesSnapshot = await getDocs(q);
 
-    // Collect unique leagues from docs
-    const leaguesSet = new Set();
-    snapshot.forEach(doc => {
-      // NOTE: sportName is league in your DB mapping
-      const league = doc.data().sportName;
-      if (league) {
-        leaguesSet.add(league);
-        console.log(`[leagueSelector.js:52] Found league: ${league}`);
-      }
-    });
-
-    const leagues = Array.from(leaguesSet).sort((a, b) => a.localeCompare(b));
-    console.log(`[leagueSelector.js:56] Sorted leagues: ${leagues.join(', ')}`);
-
-    if (leagues.length === 0) {
-      leagueButtonsContainer.textContent = 'No leagues found';
-      console.warn('[leagueSelector.js:60] No leagues found for selected sport.');
+    if (leaguesSnapshot.empty) {
+      leagueButtonsContainer.innerHTML = '<p>No leagues found for this sport.</p>';
       return;
     }
 
-    // Create buttons for each league
-    leagues.forEach(league => {
+    leaguesSnapshot.forEach(doc => {
+      const leagueData = doc.data();
       const btn = document.createElement('button');
+      btn.textContent = leagueData.name || doc.id;
       btn.type = 'button';
-      btn.textContent = league;
       btn.className = 'pick-btn blue';
-      btn.style.width = '100%';
-      btn.style.minWidth = '0';
-      btn.style.boxSizing = 'border-box';
+      btn.style.margin = '4px';
+      btn.style.minWidth = '120px';
 
       btn.addEventListener('click', () => {
-        console.log(`[leagueSelector.js:72] League button clicked: ${league}`);
-        selectLeague(league);
+        selectedLeague = doc.id;
+        Array.from(leagueButtonsContainer.children).forEach(b => b.disabled = true);
+        btn.classList.add('selected');
+
+        // TODO: Proceed to next step: load next pick question (e.g. teamSelector)
+        // For now, just log the selection:
+        console.log('[leagueSelector.js] Selected league:', selectedLeague);
       });
 
       leagueButtonsContainer.appendChild(btn);
-      console.log(`[leagueSelector.js:76] Created button for league: ${league}`);
     });
-
-    console.log('[leagueSelector.js:79] All league buttons created and appended.');
   } catch (error) {
-    console.error('[leagueSelector.js:82] Error loading leagues:', error);
-    leagueButtonsContainer.textContent = 'Error loading leagues';
+    console.error('[leagueSelector.js] Error loading leagues:', error);
+    leagueButtonsContainer.innerHTML = '<p>Error loading leagues data.</p>';
   }
 }
-
-/**
- * Handles league selection:
- * - Updates selected league state.
- * - Updates summary dynamically.
- * - Hides league buttons container after selection.
- * - Calls next selector (e.g. loadGames) to continue the process.
- * @param {string} league - The selected league name.
- */
-function selectLeague(league) {
-  if (selectedLeague === league) {
-    console.log('[leagueSelector.js:95] Selected league is the same as current; ignoring.');
-    return;
-  }
-
-  selectedLeague = league;
-
-  // Update summary dynamically
-  const summaryLeague = document.getElementById('summaryLeague');
-  if (summaryLeague) {
-    summaryLeague.textContent = `League: ${league}`;
-    console.log(`[leagueSelector.js:103] Updated summaryLeague text to: ${league}`);
-  } else {
-    console.warn('[leagueSelector.js:106] summaryLeague element not found.');
-  }
-
-  // Hide league buttons container after selection
-  if (leagueButtonsContainer) {
-    leagueButtonsContainer.style.display = 'none';
-    console.log('[leagueSelector.js:111] leagueButtonsContainer hidden after selection.');
-  } else {
-    console.warn('[leagueSelector.js:113] leagueButtonsContainer not found to hide.');
-  }
-
-  // TODO: Show next container here (e.g. gameSelectorContainer)
-  // For now, just log
-  console.log('[leagueSelector.js:117] League selected:', league);
-
-  // Ideally, trigger next load (e.g., loadGames) here, passing league as param
-  // You can export and call that function from games.js
-}
-
-export { selectLeague }; // Export if needed externally
