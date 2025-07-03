@@ -64,6 +64,8 @@ async function loadSports() {
 
     sportButtonsContainer.appendChild(button);
   });
+
+  sportButtonsContainer.style.display = 'block';
 }
 
 function updateSummary(field, value) {
@@ -75,4 +77,4 @@ function updateSummary(field, value) {
   summaryElement.appendChild(line);
 }
 
-export { selectedSport };
+export { loadSports, selectedSport };
