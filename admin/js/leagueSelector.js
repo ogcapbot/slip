@@ -24,7 +24,7 @@ if (leagueSelect) {
   leagueSelect.style.display = 'none';
 }
 
-export async function loadLeagues(container = null, selectedSport = null) {
+async function loadLeagues(container = null, selectedSport = null) {
   if (!container) {
     container = leagueButtonsContainer;
   }
@@ -56,7 +56,7 @@ export async function loadLeagues(container = null, selectedSport = null) {
     button.addEventListener('click', () => {
       selectedLeague = doc.id;
 
-      container.style.display = 'none';  // Hide leagues
+      container.style.display = 'none';
 
       updateSummary('League', league.name || doc.id);
 
