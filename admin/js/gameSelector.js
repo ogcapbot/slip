@@ -1,77 +1,151 @@
 // admin/js/gameSelector.js
-import { db } from "../firebaseInit.js";
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-import { loadTeams } from './teamSelector.js';  // Next step selector
 
-const gameSelect = document.getElementById("gameSelect");
-let gameButtonsContainer = document.getElementById("gameButtonsContainer");
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-if (!gameButtonsContainer) {
-  gameButtonsContainer = document.createElement("div");
-  gameButtonsContainer.id = "gameButtonsContainer";
+/**
+ * Displays a vertical list of game buttons filtered by selected league with pagination.
+ * Each button shows "AwayTeam @ HomeTeam" on first line, then "Date Time (EST)" on second line.
+ * @param {HTMLElement} container - DOM element to append buttons container into.
+ * @param {string} selectedLeague - The leagueShortname selected by user.
+ * @param {Function} onGameSelect - Callback with selected game document data when clicked.
+ */
+export async function showGameSelector(container, selectedLeague, onGameSelect) {
+  console.log(`[gameSelector] Loading games for league: ${selectedLeague}`);
 
-  const gameLabel = document.querySelector('label[for="gameSelect"]');
-  if (gameLabel) {
-    gameLabel.parentNode.insertBefore(gameButtonsContainer, gameLabel.nextSibling);
-  } else if (gameSelect && gameSelect.parentNode) {
-    gameSelect.parentNode.insertBefore(gameButtonsContainer, gameSelect.nextSibling);
-  } else {
-    document.body.appendChild(gameButtonsContainer);
-  }
-}
-
-if (gameSelect) {
-  gameSelect.style.display = "none";
-}
-
-let selectedGameId = null;
-
-export async function loadGames(container = null, selectedLeague = null) {
   if (!container) {
-    container = gameButtonsContainer;
+    console.error("[gameSelector] No container element provided.");
+    return;
   }
-  container.innerHTML = '';
-  selectedGameId = null;
-
   if (!selectedLeague) {
-    console.warn("[GameSelector] No league selected, cannot load games.");
+    console.error("[gameSelector] No selectedLeague provided.");
+    container.textContent = "Error: No league selected.";
+    return;
+  }
+  if (typeof onGameSelect !== "function") {
+    console.error("[gameSelector] No onGameSelect callback provided.");
+    container.textContent = "Error: Missing game selection handler.";
     return;
   }
 
-  // Query games based on the selectedLeague
-  const gamesRef = collection(db, "games");
-  const q = query(gamesRef, where("league", "==", selectedLeague));
-  const querySnapshot = await getDocs(q);
+  try {
+    const db = getFirestore();
 
-  if (querySnapshot.empty) {
-    container.innerHTML = "<p>No games available for the selected league.</p>";
-    return;
-  }
+    // Query GameEventsData where leagueShortname == selectedLeague
+    const gameEventsRef = collection(db, 'GameEventsData');
+    const q = query(gameEventsRef, where('leagueShortname', '==', selectedLeague));
+    const snapshot = await getDocs(q);
 
-  querySnapshot.forEach((doc) => {
-    const game = doc.data();
-    const button = document.createElement("button");
-    button.textContent = game.name || game.id || "Unnamed Game";
-    button.classList.add("btn", "btn-primary", "m-1");
-    button.dataset.gameId = doc.id;
-
-    button.addEventListener("click", () => {
-      selectedGameId = doc.id;
-
-      // Hide all game buttons after selection
-      container.style.display = "none";
-
-      // Update summary or perform any other update (you can trigger an event or call a function here)
-      const event = new CustomEvent('gameSelected', { detail: { gameId: selectedGameId, gameData: game } });
-      window.dispatchEvent(event);
-
-      // Load next selector
-      loadTeams(null, selectedGameId);
+    // Collect all game docs data
+    const games = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      // Make sure required fields exist to avoid display issues
+      if (data.homeTeam && data.awayTeam && data.startTime) {
+        games.push({
+          id: doc.id,
+          homeTeam: data.homeTeam,
+          awayTeam: data.awayTeam,
+          startTime: data.startTime,
+          rawData: data // keep all data in case needed later
+        });
+      }
     });
 
-    container.appendChild(button);
-  });
+    // Sort games by startTime ascending
+    games.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
-  // Show the container after building buttons
-  container.style.display = "block";
+    console.log(`[gameSelector] Found ${games.length} games for league ${selectedLeague}`);
+
+    const pageSize = 15;
+    let currentIndex = 0;
+
+    container.innerHTML = '';
+
+    const listContainer = document.createElement('div');
+    listContainer.style.display = 'flex';
+    listContainer.style.flexDirection = 'column';
+    listContainer.style.gap = '10px';
+    listContainer.style.maxWidth = '400px';
+    listContainer.style.margin = '0 auto';
+
+    // Create Load More button
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.textContent = '';
+    loadMoreBtn.style.display = 'none';
+    loadMoreBtn.classList.add('admin-button');
+    loadMoreBtn.style.alignSelf = 'center';
+    loadMoreBtn.style.width = 'auto';
+
+    // Format startTime to "MMM dd yyyy HH:mm EST"
+    function formatStartTime(dateStr) {
+      const utcDate = new Date(dateStr);
+      return utcDate.toLocaleString('en-US', {
+        timeZone: 'America/New_York',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }) + ' EST';
+    }
+
+    function renderNextPage() {
+      const nextSlice = games.slice(currentIndex, currentIndex + pageSize);
+
+      nextSlice.forEach(game => {
+        const btn = document.createElement('button');
+        btn.classList.add('admin-button');
+        btn.style.width = '100%';
+        btn.style.textAlign = 'left';
+        btn.style.whiteSpace = 'normal';
+        btn.style.lineHeight = '1.2';
+        btn.style.padding = '8px 12px';
+        btn.style.fontSize = '11px';
+        btn.style.display = 'flex';
+        btn.style.flexDirection = 'column';
+
+        const line1 = document.createElement('span');
+        line1.textContent = `${game.awayTeam} @ ${game.homeTeam}`;
+        line1.style.fontWeight = 'bold';
+
+        const line2 = document.createElement('span');
+        line2.textContent = formatStartTime(game.startTime);
+        line2.style.fontSize = '10px';
+        line2.style.color = '#555';
+
+        btn.appendChild(line1);
+        btn.appendChild(line2);
+
+        btn.addEventListener('click', () => {
+          console.log(`[gameSelector] Game selected: ${game.id}`);
+          container.innerHTML = '';
+          onGameSelect(game.rawData);
+        });
+
+        listContainer.appendChild(btn);
+      });
+
+      currentIndex += pageSize;
+
+      const remaining = games.length - currentIndex;
+      if (remaining > 0) {
+        loadMoreBtn.style.display = 'inline-block';
+        loadMoreBtn.textContent = `Load 15 More (${remaining} left)`;
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
+
+    loadMoreBtn.addEventListener('click', () => renderNextPage());
+
+    container.appendChild(listContainer);
+    container.appendChild(loadMoreBtn);
+
+    renderNextPage();
+
+  } catch (error) {
+    console.error("[gameSelector] Error loading games:", error);
+    container.textContent = "Failed to load games.";
+  }
 }
