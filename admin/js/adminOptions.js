@@ -3,7 +3,7 @@
 /**
  * Displays the admin options UI below the user display name.
  * Creates a 2-row x 3-column button grid with labeled buttons.
- * Shows a welcome message in the main content area.
+ * Shows a welcome message or sport selector in the main content area.
  * Implements access control for some buttons.
  * Highlights the active button with a calm green color.
  * Resets UI on Start Over button click.
@@ -13,7 +13,6 @@
 export function showAdminOptions(userData) {
   console.log("[adminOptions] Starting to render admin options UI...");
 
-  // Select header to insert below user display name
   const header = document.querySelector('header');
 
   // Remove existing admin options if present to avoid duplicates
@@ -60,7 +59,7 @@ export function showAdminOptions(userData) {
     btn.textContent = btnConfig.label;
     btn.classList.add('admin-button');
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       console.log(`[adminOptions] "${btnConfig.label}" button clicked.`);
 
       // Handle Start Over separately - resets main content and clears button highlight
@@ -90,7 +89,24 @@ export function showAdminOptions(userData) {
       btn.classList.add('active');
       activeButton = btn;
 
-      // Show which button was pressed
+      // Special behavior for Add New button: dynamically load and show sport selector
+      if (btnConfig.label === 'Add New') {
+        try {
+          console.log("[adminOptions] Loading sportSelector module...");
+          const { showSportSelector } = await import('./sportSelector.js');
+          // Clear main content before showing selector
+          mainContent.innerHTML = '';
+          // Call sport selector, pass mainContent as container
+          await showSportSelector(mainContent);
+          console.log("[adminOptions] Sport selector displayed successfully.");
+        } catch (err) {
+          console.error("[adminOptions] Error loading sportSelector module:", err);
+          mainContent.textContent = "Failed to load sport selector.";
+        }
+        return;
+      }
+
+      // For other buttons, show which button was pressed
       mainContent.textContent = `${btnConfig.label} Button Pressed`;
     });
 
