@@ -47,16 +47,13 @@ function createTeamButton(teamName) {
 
 function selectTeam(button, teamName) {
   if (selectedTeam === teamName) return;
-
   selectedTeam = teamName;
 
   const container = button.parentNode;
   if (!container) return;
 
-  // Clear previous buttons
   container.innerHTML = "";
 
-  // Show summary line only (no change button as per your instructions)
   const summaryLine = document.createElement("div");
   summaryLine.textContent = `Selected Team: ${teamName}`;
   summaryLine.style.fontWeight = "700";
@@ -65,8 +62,4 @@ function selectTeam(button, teamName) {
   summaryLine.style.marginBottom = "6px";
 
   container.appendChild(summaryLine);
-
-  // TODO: Call next selector here or enable next form element
-  // e.g. loadWagerType or enable pick options
 }
-
