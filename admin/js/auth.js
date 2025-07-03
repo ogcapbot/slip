@@ -1,35 +1,29 @@
 // admin/js/auth.js
-import { db } from '/admin/firebaseInit.js';
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { db } from '/admin/firebaseInit.js';  // adjust if your folder structure differs
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-const loginBtn = document.getElementById('loginBtn');
-const accessCodeInput = document.getElementById('accessCodeInput');
-const loginError = document.getElementById('loginError');
-
-loginBtn.addEventListener('click', async () => {
+document.querySelector('button').addEventListener('click', async () => {
+  const accessCode = document.querySelector('input[type="password"]').value.trim();
+  const loginError = document.getElementById('loginError');
   loginError.textContent = '';
-  const accessCode = accessCodeInput.value.trim();
+
   if (!accessCode) {
-    loginError.textContent = 'Please enter access code.';
+    loginError.textContent = 'Please enter an access code.';
     return;
   }
 
   try {
-    const usersRef = collection(db, 'Users');
+    const usersRef = collection(db, 'Users'); // db must be Firestore instance here!
     const q = query(usersRef, where('accessCode', '==', accessCode));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       loginError.textContent = 'Invalid Access Code.';
     } else {
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
+      const userDoc = querySnapshot.docs[0].data();
 
-      document.getElementById('loginSection').style.display = 'none';
-      document.getElementById('adminSection').style.display = 'block';
-
-      import('./adminOptions.js').then(mod => {
-        mod.displayAdminOptions(userData);
+      import('./adminOptions.js').then(({ showAdminOptions }) => {
+        showAdminOptions(userDoc);
       });
     }
   } catch (error) {
