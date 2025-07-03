@@ -50,7 +50,6 @@ export async function loadSports(container = null) {
   hiddenSelect.innerHTML = '';
   hiddenSelect.dispatchEvent(new Event('change'));
 
-  // Show sport buttons container and hide league container
   const sportContainer = document.getElementById('sportSelectorContainer');
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (sportContainer) sportContainer.style.display = 'block';
@@ -106,7 +105,6 @@ function selectSport(sport) {
   const summarySport = document.getElementById('summarySport');
   if (summarySport) summarySport.textContent = `Sport: ${sport}`;
 
-  // Hide sport container, show league container
   const sportContainer = document.getElementById('sportSelectorContainer');
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (sportContainer) sportContainer.style.display = 'none';
@@ -133,7 +131,6 @@ export function resetSportSelectorState() {
     hiddenSelect.dispatchEvent(new Event('change'));
   }
 
-  // Also show sport container, hide league container on reset
   const sportContainer = document.getElementById('sportSelectorContainer');
   const leagueContainer = document.getElementById('leagueSelectorContainer');
   if (sportContainer) sportContainer.style.display = 'block';
