@@ -56,13 +56,10 @@ export async function loadLeagues(container = null, selectedSport = null) {
     button.addEventListener('click', () => {
       selectedLeague = doc.id;
 
-      // Hide league buttons on selection
-      container.style.display = 'none';
+      container.style.display = 'none';  // Hide leagues
 
-      // Update summary
       updateSummary('League', league.name || doc.id);
 
-      // Load games (next step)
       import('./gameSelector.js').then(module => {
         module.loadGames(null, selectedLeague);
       });
