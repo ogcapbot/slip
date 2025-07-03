@@ -1,4 +1,5 @@
 // admin/js/leagueSelector.js
+// --- your original full content starts here ---
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
@@ -56,7 +57,7 @@ async function loadLeagues(container = null, selectedSport = null) {
     button.addEventListener('click', () => {
       selectedLeague = doc.id;
 
-      // Hide league buttons after selection
+      // === Minimal patch to hide buttons on selection ===
       container.style.display = 'none';
 
       updateSummary('League', league.name || doc.id);
