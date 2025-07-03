@@ -1,5 +1,5 @@
 // admin/js/auth.js
-import { db } from '../firebaseInit.js';  // Import the initialized Firestore instance
+import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const loginBtn = document.getElementById('loginBtn');
@@ -25,11 +25,9 @@ loginBtn.addEventListener('click', async () => {
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
 
-      // Hide login, show admin section
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('adminSection').style.display = 'block';
 
-      // Call adminOptions.js to display user info
       import('./adminOptions.js').then(mod => {
         mod.displayAdminOptions(userData);
       });
