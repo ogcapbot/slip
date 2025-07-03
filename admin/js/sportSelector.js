@@ -31,7 +31,7 @@ if (originalSportSelect) {
   loadSports();
 }
 
-export async function loadSports() {
+async function loadSports() {
   sportButtonsContainer.innerHTML = '';
   selectedSport = null;
 
@@ -48,13 +48,13 @@ export async function loadSports() {
     button.addEventListener('click', () => {
       selectedSport = doc.id;
 
-      sportButtonsContainer.style.display = 'none';  // Hide sport buttons
+      sportButtonsContainer.style.display = 'none';
 
       hiddenSelect.value = selectedSport;
 
       updateSummary('Sport', sport.name || doc.id);
 
-      loadLeagues(null, selectedSport);  // Show leagues
+      loadLeagues(null, selectedSport);
     });
 
     sportButtonsContainer.appendChild(button);
