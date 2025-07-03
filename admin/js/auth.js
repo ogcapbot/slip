@@ -2,9 +2,12 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-document.querySelector('button').addEventListener('click', async () => {
-  const accessCode = document.querySelector('input[type="password"]').value.trim();
-  const loginError = document.getElementById('loginError');
+const input = document.getElementById('accessCodeInput');
+const button = document.getElementById('loginButton');
+const loginError = document.getElementById('loginError');
+
+async function checkAccessCode() {
+  const accessCode = input.value.trim();
   loginError.textContent = '';
 
   if (!accessCode) {
@@ -22,6 +25,10 @@ document.querySelector('button').addEventListener('click', async () => {
     } else {
       const userDoc = querySnapshot.docs[0].data();
 
+      // Remove login input and button on successful login
+      input.style.display = 'none';
+      button.style.display = 'none';
+
       import('./adminOptions.js').then(({ showAdminOptions }) => {
         showAdminOptions(userDoc);
       });
@@ -29,5 +36,17 @@ document.querySelector('button').addEventListener('click', async () => {
   } catch (error) {
     console.error('Error checking access code:', error);
     loginError.textContent = 'An error occurred. Please try again.';
+  }
+}
+
+// Listen for button click
+button.addEventListener('click', () => {
+  checkAccessCode();
+});
+
+// Listen for Enter key press on input
+input.addEventListener('keyup', (event) => {
+  if (event.key === 'Enter' || event.keyCode === 13) {
+    checkAccessCode();
   }
 });
