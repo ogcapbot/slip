@@ -48,6 +48,7 @@ async function loadSports() {
     button.addEventListener('click', () => {
       selectedSport = doc.id;
 
+      // Hide sport buttons after selection
       sportButtonsContainer.style.display = 'none';
 
       hiddenSelect.value = selectedSport;
@@ -63,6 +64,17 @@ async function loadSports() {
   sportButtonsContainer.style.display = 'block';
 }
 
+function resetSportSelectorState() {
+  selectedSport = null;
+  if (sportButtonsContainer) {
+    sportButtonsContainer.style.display = 'block';
+  }
+  if (hiddenSelect) {
+    hiddenSelect.value = '';
+  }
+  // Optionally clear related summary info if needed
+}
+
 function updateSummary(field, value) {
   const summaryElement = document.getElementById('summary');
   if (!summaryElement) return;
@@ -72,4 +84,4 @@ function updateSummary(field, value) {
   summaryElement.appendChild(line);
 }
 
-export { loadSports, selectedSport };
+export { loadSports, selectedSport, resetSportSelectorState };
