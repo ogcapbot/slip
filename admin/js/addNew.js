@@ -498,8 +498,6 @@ export class AddNewWorkflow {
 
         btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
 
-        // We DO NOT add click listener here for wagerType buttons,
-        // handled separately to show number input if [[NUM]] exists
         this.buttonsWrapper.appendChild(btn);
       });
     }
@@ -512,24 +510,21 @@ export class AddNewWorkflow {
 
         btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
 
-        // Same here, no click listener
         this.buttonsWrapper.appendChild(btn);
       });
     }
 
-    // Add click listeners for wagerType buttons AFTER rendering all buttons
-    // so we can handle [[NUM]] special case with modal input
     Array.from(this.buttonsWrapper.children).forEach((btn) => {
       btn.addEventListener('click', () => {
         const label = btn.textContent;
         this.selectedWagerType = label;
         if (label.includes('[[NUM]]')) {
-          this.showNumberInputModal(label).then((numValue) => {
-            this.wagerNumberValue = numValue;
+          this.showNumberInputModal(label).then((num) => {
+            this.wagerNumberValue = num;
             this.loadUnits();
           });
         } else {
-          this.wagerNumberValue = null; // clear any previous number
+          this.wagerNumberValue = null;
           this.loadUnits();
         }
       });
@@ -922,7 +917,7 @@ export class AddNewWorkflow {
   showNumberInputModal(wagerLabel) {
     return new Promise((resolve) => {
       const modal = document.createElement('div');
-      modal.id = 'numberModal';  // Added this ID for CSS targeting
+      modal.id = 'numberModal';
       modal.style.position = 'fixed';
       modal.style.top = '0';
       modal.style.left = '0';
@@ -943,11 +938,11 @@ export class AddNewWorkflow {
       content.style.width = '280px';
       content.style.maxWidth = '90vw';
       content.style.boxSizing = 'border-box';
-      content.style.fontFamily = "'Oswald', sans-serif";
 
       const title = document.createElement('h3');
       title.textContent = `Enter Number for: ${wagerLabel}`;
       title.style.marginBottom = '15px';
+      title.style.fontFamily = "'Oswald', sans-serif";
       title.style.fontWeight = '700';
       title.style.fontSize = '1.25rem';
       title.style.wordBreak = 'break-word';
@@ -964,6 +959,7 @@ export class AddNewWorkflow {
       input.style.border = '1px solid #ccc';
       input.style.borderRadius = '6px';
       input.style.fontFamily = "'Oswald', sans-serif";
+      // Removed inline width here so CSS controls input width
       content.appendChild(input);
 
       const submitBtn = document.createElement('button');
