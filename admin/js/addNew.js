@@ -254,10 +254,10 @@ export class AddNewWorkflow {
   formatGameDisplay(game) {
     const awayTeam = game.awayTeam || '';
     const homeTeam = game.homeTeam || '';
-// If it's a Firestore Timestamp object, convert it to Date; else use directly
-const startTime = game.startTimeET instanceof Date
-  ? game.startTimeET
-  : (game.startTimeET?.toDate ? game.startTimeET.toDate() : new Date(game.startTimeET));
+    // If it's a Firestore Timestamp object, convert it to Date; else use directly
+    const startTime = game.startTimeET instanceof Date
+      ? game.startTimeET
+      : (game.startTimeET?.toDate ? game.startTimeET.toDate() : new Date(game.startTimeET));
     if (!startTime) return `${awayTeam}\n@ ${homeTeam}\nDate TBD`;
 
     const now = new Date();
@@ -418,6 +418,7 @@ const startTime = game.startTimeET instanceof Date
     this.submitBtn.style.display = 'none';
 
     try {
+      console.log('Selected Sport:', this.selectedSport);
       // Global wagers (Sport == "All")
       const globalQuery = query(
         collection(db, 'WagerTypes'),
@@ -437,6 +438,9 @@ const startTime = game.startTimeET instanceof Date
       );
       const sportSnap = await getDocs(sportQuery);
       const sportWagers = sportSnap.docs.map((doc) => doc.data());
+
+      console.log('Global wagers:', globalWagers);
+      console.log('Sport-specific wagers:', sportWagers);
 
       this.renderWagerTypes(globalWagers, sportWagers);
     } catch (error) {
