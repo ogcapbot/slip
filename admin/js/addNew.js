@@ -29,7 +29,7 @@ export class AddNewWorkflow {
     this.phraseLastVisible = null;
 
     // Limits
-    this.PAGE_LIMIT = 15;
+    this.PAGE_LIMIT = 200;
 
     // Data storage for buttons
     this.sportButtonsData = [];
