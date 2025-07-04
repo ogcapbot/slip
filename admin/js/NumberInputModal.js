@@ -1,6 +1,5 @@
 showNumberInputModal(wagerLabel) {
   return new Promise((resolve) => {
-    // Create modal background
     const modal = document.createElement('div');
     modal.id = 'numberModal';
     modal.style.position = 'fixed';
@@ -14,7 +13,6 @@ showNumberInputModal(wagerLabel) {
     modal.style.alignItems = 'center';
     modal.style.zIndex = '1000';
 
-    // Modal content container - smaller and centered
     const content = document.createElement('div');
     content.style.backgroundColor = '#fff';
     content.style.padding = '20px 15px';
@@ -24,8 +22,10 @@ showNumberInputModal(wagerLabel) {
     content.style.width = '280px';
     content.style.maxWidth = '90vw';
     content.style.boxSizing = 'border-box';
-    content.style.maxHeight = '90vh';  // <--- added this to constrain height
-    content.style.overflowY = 'auto';  // <--- added this for scrolling if needed
+
+    // Prevent vertical stretching inside flex container:
+    content.style.alignSelf = 'center';  // center vertically explicitly
+    content.style.flexShrink = '0';      // don’t shrink/stretch vertically
 
     // Title
     const title = document.createElement('h3');
@@ -37,7 +37,6 @@ showNumberInputModal(wagerLabel) {
     title.style.wordBreak = 'break-word';
     content.appendChild(title);
 
-    // Input field
     const input = document.createElement('input');
     input.type = 'number';
     input.min = '0';
@@ -51,7 +50,6 @@ showNumberInputModal(wagerLabel) {
     input.style.fontFamily = "'Oswald', sans-serif";
     content.appendChild(input);
 
-    // Submit button
     const submitBtn = document.createElement('button');
     submitBtn.textContent = 'Submit';
     submitBtn.style.backgroundColor = '#3a8bfd';
@@ -68,10 +66,8 @@ showNumberInputModal(wagerLabel) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Focus input on modal show
     input.focus();
 
-    // Validation helper
     function isValidNumber(value) {
       const num = parseFloat(value);
       return (
