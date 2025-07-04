@@ -2,7 +2,7 @@ showNumberInputModal(wagerLabel) {
   return new Promise((resolve) => {
     // Create modal background
     const modal = document.createElement('div');
-    modal.id = 'numberModal'; // <-- added to match your CSS
+    modal.id = 'numberModal';
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
@@ -22,8 +22,10 @@ showNumberInputModal(wagerLabel) {
     content.style.boxShadow = '0 2px 15px rgba(0,0,0,0.25)';
     content.style.textAlign = 'center';
     content.style.width = '280px';
-    content.style.maxWidth = '90vw';  // make sure it fits on very small screens
+    content.style.maxWidth = '90vw';
     content.style.boxSizing = 'border-box';
+    content.style.maxHeight = '90vh';  // <--- added this to constrain height
+    content.style.overflowY = 'auto';  // <--- added this for scrolling if needed
 
     // Title
     const title = document.createElement('h3');
@@ -32,7 +34,7 @@ showNumberInputModal(wagerLabel) {
     title.style.fontFamily = "'Oswald', sans-serif";
     title.style.fontWeight = '700';
     title.style.fontSize = '1.25rem';
-    title.style.wordBreak = 'break-word'; // allow breaking long labels
+    title.style.wordBreak = 'break-word';
     content.appendChild(title);
 
     // Input field
@@ -41,7 +43,6 @@ showNumberInputModal(wagerLabel) {
     input.min = '0';
     input.step = '0.5';
     input.placeholder = 'e.g. 1, 1.5, 2';
-    // Removed input.style.width so CSS controls it
     input.style.fontSize = '1rem';
     input.style.padding = '6px 8px';
     input.style.marginBottom = '18px';
@@ -76,7 +77,7 @@ showNumberInputModal(wagerLabel) {
       return (
         !isNaN(num) &&
         num >= 0 &&
-        Number.isInteger(num * 2) // allows whole or half increments
+        Number.isInteger(num * 2)
       );
     }
 
