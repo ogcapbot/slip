@@ -865,7 +865,7 @@ export class AddNewWorkflow {
       this.submitBtn.style.display = 'none';
       this.notesContainer.style.display = 'none';
 
-      this.resetWorkflow();
+      // this.resetWorkflow(); // This would reset the UI instead of showing the message.
     } catch (error) {
       console.error('[Submit] Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
