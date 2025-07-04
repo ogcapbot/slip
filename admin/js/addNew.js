@@ -84,23 +84,24 @@ export class AddNewWorkflow {
   }
 
   async loadSports(loadMore = false) {
-    if (this.step !== 1) return; // Guard: only load if in step 1
+    if (this.step !== 1) return;
 
     this.setStatus('Loading sports...');
+
     try {
       let q;
       if (!loadMore || !this.sportLastVisible) {
         q = query(
           collection(db, 'SportsData'),
           where('active', '==', true),
-          orderBy('title'),
+          orderBy('group'),
           limit(this.PAGE_LIMIT)
         );
       } else {
         q = query(
           collection(db, 'SportsData'),
           where('active', '==', true),
-          orderBy('title'),
+          orderBy('group'),
           startAfter(this.sportLastVisible),
           limit(this.PAGE_LIMIT)
         );
@@ -115,28 +116,24 @@ export class AddNewWorkflow {
 
       this.sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      const newSports = [];
+      // Deduplicate unique groups (sports)
+      const newGroups = [];
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (
-          data.title &&
-          !this.sportButtonsData.includes(data.title)
+          data.group &&
+          !this.sportButtonsData.includes(data.group)
         ) {
-          newSports.push(data.title);
+          newGroups.push(data.group);
         }
       });
 
-      this.sportButtonsData.push(...newSports);
+      this.sportButtonsData.push(...newGroups);
       this.sportButtonsData = [...new Set(this.sportButtonsData)].sort((a,b) => a.localeCompare(b));
 
       this.renderButtons(this.sportButtonsData, 'sport');
 
-      if (snapshot.docs.length === this.PAGE_LIMIT) {
-        this.loadMoreBtn.style.display = 'inline-block';
-      } else {
-        this.loadMoreBtn.style.display = 'none';
-      }
-
+      this.loadMoreBtn.style.display = snapshot.docs.length === this.PAGE_LIMIT ? 'inline-block' : 'none';
       this.setStatus('');
     } catch (error) {
       console.error('Error loading sports:', error);
@@ -145,7 +142,7 @@ export class AddNewWorkflow {
   }
 
   async loadLeagues(loadMore = false) {
-    if (this.step !== 2) return; // Guard: only load if in step 2
+    if (this.step !== 2) return;
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
       return;
@@ -157,16 +154,18 @@ export class AddNewWorkflow {
       let q;
       if (!loadMore || !this.leagueLastVisible) {
         q = query(
-          collection(db, 'GameEventsData'),
-          where('sportName', '==', this.selectedSport),
-          orderBy('leagueShortname'),
+          collection(db, 'SportsData'),
+          where('active', '==', true),
+          where('group', '==', this.selectedSport),
+          orderBy('title'),
           limit(this.PAGE_LIMIT)
         );
       } else {
         q = query(
-          collection(db, 'GameEventsData'),
-          where('sportName', '==', this.selectedSport),
-          orderBy('leagueShortname'),
+          collection(db, 'SportsData'),
+          where('active', '==', true),
+          where('group', '==', this.selectedSport),
+          orderBy('title'),
           startAfter(this.leagueLastVisible),
           limit(this.PAGE_LIMIT)
         );
@@ -185,10 +184,10 @@ export class AddNewWorkflow {
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (
-          data.leagueShortname &&
-          !this.leagueButtonsData.includes(data.leagueShortname)
+          data.title &&
+          !this.leagueButtonsData.includes(data.title)
         ) {
-          newLeagues.push(data.leagueShortname);
+          newLeagues.push(data.title);
         }
       });
 
@@ -197,12 +196,7 @@ export class AddNewWorkflow {
 
       this.renderButtons(this.leagueButtonsData, 'league');
 
-      if (snapshot.docs.length === this.PAGE_LIMIT) {
-        this.loadMoreBtn.style.display = 'inline-block';
-      } else {
-        this.loadMoreBtn.style.display = 'none';
-      }
-
+      this.loadMoreBtn.style.display = snapshot.docs.length === this.PAGE_LIMIT ? 'inline-block' : 'none';
       this.setStatus('');
     } catch (error) {
       console.error('Error loading leagues:', error);
@@ -211,7 +205,7 @@ export class AddNewWorkflow {
   }
 
   async loadGames(loadMore = false) {
-    if (this.step !== 3) return; // Guard: only load if in step 3
+    if (this.step !== 3) return;
     if (!this.selectedSport || !this.selectedLeague) {
       this.setStatus('Please select both sport and league first.', true);
       return;
@@ -267,12 +261,7 @@ export class AddNewWorkflow {
 
       this.renderButtons(this.gameButtonsData.map(g => g.label), 'game');
 
-      if (snapshot.docs.length === this.PAGE_LIMIT) {
-        this.loadMoreBtn.style.display = 'inline-block';
-      } else {
-        this.loadMoreBtn.style.display = 'none';
-      }
-
+      this.loadMoreBtn.style.display = snapshot.docs.length === this.PAGE_LIMIT ? 'inline-block' : 'none';
       this.setStatus('');
     } catch (error) {
       console.error('Error loading games:', error);
@@ -299,6 +288,10 @@ export class AddNewWorkflow {
       btn.addEventListener('click', () => {
         if (type === 'sport') {
           if (this.selectedSport !== label) {
+            this.buttonsWrapper.innerHTML = '';
+            this.loadMoreBtn.style.display = 'none';
+            this.submitBtn.style.display = 'none';
+
             this.selectedSport = label;
             this.selectedLeague = null;
             this.leagueButtonsData = [];
@@ -312,10 +305,6 @@ export class AddNewWorkflow {
 
             this.step = 2;
 
-            this.buttonsWrapper.innerHTML = '';
-            this.loadMoreBtn.style.display = 'none';
-            this.submitBtn.style.display = 'none';
-
             document.getElementById('workflowTitle').textContent =
               `Selected Sport: ${label} — Select a League`;
 
@@ -323,6 +312,10 @@ export class AddNewWorkflow {
           }
         } else if (type === 'league') {
           if (this.selectedLeague !== label) {
+            this.buttonsWrapper.innerHTML = '';
+            this.loadMoreBtn.style.display = 'none';
+            this.submitBtn.style.display = 'none';
+
             this.selectedLeague = label;
 
             this.selectedGame = null;
@@ -333,10 +326,6 @@ export class AddNewWorkflow {
 
             this.step = 3;
 
-            this.buttonsWrapper.innerHTML = '';
-            this.loadMoreBtn.style.display = 'none';
-            this.submitBtn.style.display = 'none';
-
             document.getElementById('workflowTitle').textContent =
               `Selected League: ${label} — Select a Game`;
 
@@ -344,14 +333,15 @@ export class AddNewWorkflow {
           }
         } else if (type === 'game') {
           if (this.selectedGame !== label) {
+            this.buttonsWrapper.innerHTML = '';
+            this.loadMoreBtn.style.display = 'none';
+
             this.selectedGame = label;
 
             this.selectedTeam = null;
 
             this.step = 4;
 
-            this.buttonsWrapper.innerHTML = '';
-            this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'inline-block';
 
             document.getElementById('workflowTitle').textContent =
