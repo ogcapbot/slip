@@ -490,40 +490,25 @@ export class AddNewWorkflow {
 
       console.log(`[LoadWagerTypes] Global wagers count: ${globalWagers.length}, Sport-specific wagers count: ${sportWagers.length}`);
 
-      this.renderWagerTypes(globalWagers, sportWagers);
+      // Combine wagers with global first, then sport-specific, no separator
+      this.renderWagerTypes([...globalWagers, ...sportWagers]);
     } catch (error) {
       console.error('[LoadWagerTypes] Error loading wager types:', error);
       this.setStatus('Failed to load wager types.', true);
     }
   }
 
-  renderWagerTypes(globalWagers, sportWagers) {
+  renderWagerTypes(wagers) {
     this.buttonsWrapper.innerHTML = '';
 
-    // Render global wager buttons first
-    if (globalWagers.length) {
-      console.log(`[RenderWagerTypes] Rendering ${globalWagers.length} global wager buttons`);
-      globalWagers.forEach((wager) => {
+    if (wagers.length) {
+      console.log(`[RenderWagerTypes] Rendering ${wagers.length} wager buttons`);
+      wagers.forEach((wager) => {
         const btn = document.createElement('button');
-        btn.textContent = wager.wager_label_template || 'Unnamed';  // Use correct display field
+        btn.textContent = wager.wager_label_template || 'Unnamed';
         btn.classList.add('admin-button');
         btn.addEventListener('click', () => {
-          this.selectedWagerType = wager.wager_label_template || wager.WagerType;  // Store label for selection
-          this.loadUnits();
-        });
-        this.buttonsWrapper.appendChild(btn);
-      });
-    }
-
-    // Then render sport-specific wager buttons if any, no separator now
-    if (sportWagers.length) {
-      console.log(`[RenderWagerTypes] Rendering ${sportWagers.length} sport-specific wager buttons`);
-      sportWagers.forEach((wager) => {
-        const btn = document.createElement('button');
-        btn.textContent = wager.wager_label_template || 'Unnamed';  // Use correct display field
-        btn.classList.add('admin-button');
-        btn.addEventListener('click', () => {
-          this.selectedWagerType = wager.wager_label_template || wager.WagerType;
+          this.selectedWagerType = wager.wager_label_template;
           this.loadUnits();
         });
         this.buttonsWrapper.appendChild(btn);
