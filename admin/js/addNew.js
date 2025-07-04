@@ -12,7 +12,7 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const PAGE_LIMIT = 56;
+const PAGE_LIMIT = 54;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
@@ -56,74 +56,74 @@ export class AddNewWorkflow {
   }
 
   renderInitialUI() {
-  console.log('[Init] Rendering initial UI');
-  this.clearContainer();
+    console.log('[Init] Rendering initial UI');
+    this.clearContainer();
 
-  // Title element: displays current step instructions or selections
-  this.titleEl = document.createElement('h2');
-  this.titleEl.id = 'workflowTitle';
-  this.container.appendChild(this.titleEl);
+    // Title element: displays current step instructions or selections
+    this.titleEl = document.createElement('h2');
+    this.titleEl.id = 'workflowTitle';
+    this.container.appendChild(this.titleEl);
 
-  // Container div for all buttons in the workflow
-  this.buttonsWrapper = document.createElement('div');
-  this.buttonsWrapper.id = 'buttonsWrapper';
-  this.buttonsWrapper.style.display = 'grid';
-  this.buttonsWrapper.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  this.buttonsWrapper.style.gap = '8px';
-  this.container.appendChild(this.buttonsWrapper);
+    // Container div for all buttons in the workflow
+    this.buttonsWrapper = document.createElement('div');
+    this.buttonsWrapper.id = 'buttonsWrapper';
+    this.buttonsWrapper.style.display = 'grid';
+    this.buttonsWrapper.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    this.buttonsWrapper.style.gap = '8px';
+    this.container.appendChild(this.buttonsWrapper);
 
-  // "Load More" button for paginated data loading, hidden by default
-  this.loadMoreBtn = document.createElement('button');
-  this.loadMoreBtn.textContent = 'Load More';
-  this.loadMoreBtn.classList.add('admin-button');
-  this.loadMoreBtn.style.marginTop = '12px';
-  this.loadMoreBtn.style.display = 'none';
-  this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
-  this.container.appendChild(this.loadMoreBtn);
+    // "Load More" button for paginated data loading, hidden by default
+    this.loadMoreBtn = document.createElement('button');
+    this.loadMoreBtn.textContent = 'Load More';
+    this.loadMoreBtn.classList.add('admin-button');
+    this.loadMoreBtn.style.marginTop = '12px';
+    this.loadMoreBtn.style.display = 'none';
+    this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
+    this.container.appendChild(this.loadMoreBtn);
 
-  // Submit button, only shown on the last step after phrase selection
-  this.submitBtn = document.createElement('button');
-  this.submitBtn.textContent = 'Submit';
-  this.submitBtn.classList.add('admin-button');
-  this.submitBtn.style.marginTop = '20px';
-  this.submitBtn.style.display = 'none';
-  this.submitBtn.addEventListener('click', () => this.onSubmit());
-  this.container.appendChild(this.submitBtn);
+    // Submit button, only shown on the last step after phrase selection
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.textContent = 'Submit';
+    this.submitBtn.classList.add('admin-button');
+    this.submitBtn.style.marginTop = '20px';
+    this.submitBtn.style.display = 'none';
+    this.submitBtn.addEventListener('click', () => this.onSubmit());
+    this.container.appendChild(this.submitBtn);
 
-  // Status message paragraph for user feedback and errors
-  this.statusMsg = document.createElement('p');
-  this.statusMsg.style.marginTop = '16px';
-  this.container.appendChild(this.statusMsg);
+    // Status message paragraph for user feedback and errors
+    this.statusMsg = document.createElement('p');
+    this.statusMsg.style.marginTop = '16px';
+    this.container.appendChild(this.statusMsg);
 
-  // Notes container with textarea, shown on last step, above Submit button
-  this.notesContainer = document.createElement('div');
-  this.notesContainer.style.marginTop = '16px';
-  this.notesContainer.style.display = 'none';
+    // Notes container with textarea, shown on last step, above Submit button
+    this.notesContainer = document.createElement('div');
+    this.notesContainer.style.marginTop = '16px';
+    this.notesContainer.style.display = 'none';
 
-  this.notesTextarea = document.createElement('textarea');
-  this.notesTextarea.maxLength = 100;
-  this.notesTextarea.rows = 2;
-  this.notesTextarea.cols = 50;
-  this.notesTextarea.style.fontFamily = "'Oswald', sans-serif";
-  this.notesTextarea.addEventListener('input', () => {
-    const remaining = 100 - this.notesTextarea.value.length;
-    this.charCount.textContent = `${remaining} characters remaining`;
-    this.notes = this.notesTextarea.value;
-    console.log(`[Notes] User typed notes: ${this.notes}`);
-  });
-  this.notesContainer.appendChild(this.notesTextarea);
+    this.notesTextarea = document.createElement('textarea');
+    this.notesTextarea.maxLength = 100;
+    this.notesTextarea.rows = 2;
+    this.notesTextarea.cols = 50;
+    this.notesTextarea.style.fontFamily = "'Oswald', sans-serif";
+    this.notesTextarea.addEventListener('input', () => {
+      const remaining = 100 - this.notesTextarea.value.length;
+      this.charCount.textContent = `${remaining} characters remaining`;
+      this.notes = this.notesTextarea.value;
+      console.log(`[Notes] User typed notes: ${this.notes}`);
+    });
+    this.notesContainer.appendChild(this.notesTextarea);
 
-  this.charCount = document.createElement('div');
-  this.charCount.style.fontSize = '0.8em';
-  this.charCount.style.color = '#555';
-  this.charCount.textContent = '100 characters remaining';
-  this.notesContainer.appendChild(this.charCount);
+    this.charCount = document.createElement('div');
+    this.charCount.style.fontSize = '0.8em';
+    this.charCount.style.color = '#555';
+    this.charCount.textContent = '100 characters remaining';
+    this.notesContainer.appendChild(this.charCount);
 
-  this.container.appendChild(this.notesContainer);
+    this.container.appendChild(this.notesContainer);
 
-  // ** Insert notesContainer before submitBtn so notes appear above Submit button **
-  this.container.insertBefore(this.notesContainer, this.submitBtn);
-}
+    // ** Insert notesContainer before submitBtn so notes appear above Submit button **
+    this.container.insertBefore(this.notesContainer, this.submitBtn);
+  }
 
   setStatus(msg, isError = false) {
     this.statusMsg.textContent = msg;
@@ -860,15 +860,61 @@ export class AddNewWorkflow {
 
       console.log('[Submit] Submission successful');
 
-      this.setStatus(`Your ${this.selectedTeam} ${this.selectedUnit} ${this.selectedWagerType} Official Pick has been Successfully Saved.`);
+      // Show submission summary instead of resetting workflow
+      this.showSubmissionSummary();
 
-      this.submitBtn.style.display = 'none';
-      this.notesContainer.style.display = 'none';
-
-      // this.resetWorkflow(); // This would reset the UI instead of showing the message.
     } catch (error) {
       console.error('[Submit] Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
+    }
+  }
+
+  // ########################################
+  // Show Submission Summary (NEW)
+  // ########################################
+  showSubmissionSummary() {
+    this.titleEl.textContent = 'Submission Summary';
+
+    // Compose the success message
+    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${this.selectedWagerType} Official Pick has been Successfully Saved.`;
+
+    // Clear buttons and hide notes + submit
+    this.buttonsWrapper.innerHTML = '';
+    this.notesContainer.style.display = 'none';
+    this.submitBtn.style.display = 'none';
+
+    // Show success message in status
+    this.statusMsg.textContent = successMsg;
+    this.statusMsg.style.color = 'inherit';
+
+    // Create summary container
+    const summaryDiv = document.createElement('div');
+    summaryDiv.style.marginTop = '12px';
+    summaryDiv.style.fontWeight = 'bold';
+
+    // List fields to display
+    const fields = [
+      { label: 'Sport', value: this.selectedSport },
+      { label: 'League', value: this.selectedLeague },
+      { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
+      { label: 'Team', value: this.selectedTeam },
+      { label: 'Wager Type', value: this.selectedWagerType },
+      { label: 'Unit', value: this.selectedUnit },
+      { label: 'Phrase', value: this.selectedPhrase },
+      { label: 'Notes', value: this.notes || 'None' },
+    ];
+
+    fields.forEach(({ label, value }) => {
+      const p = document.createElement('p');
+      p.textContent = `${label}: ${value}`;
+      summaryDiv.appendChild(p);
+    });
+
+    // Append summary after statusMsg
+    if (this.statusMsg.nextSibling) {
+      this.container.insertBefore(summaryDiv, this.statusMsg.nextSibling);
+    } else {
+      this.container.appendChild(summaryDiv);
     }
   }
 
