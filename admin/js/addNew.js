@@ -57,7 +57,7 @@ export class AddNewWorkflow {
     console.log('[Init] Rendering initial UI');
     this.clearContainer();
 
-    this.titleEl = document.createElement('h5'); // Changed to h5 for smaller header
+    this.titleEl = document.createElement('h5'); // Smaller header
     this.titleEl.id = 'workflowTitle';
     this.container.appendChild(this.titleEl);
 
@@ -788,7 +788,9 @@ export class AddNewWorkflow {
   showSubmissionSummary() {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
-    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : '')} Official Pick has been Successfully Saved.`;
+    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
+
+    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
     this.buttonsWrapper.innerHTML = '';
     this.notesContainer.style.display = 'none';
@@ -796,17 +798,19 @@ export class AddNewWorkflow {
 
     this.statusMsg.textContent = successMsg;
     this.statusMsg.style.color = 'inherit';
+    this.statusMsg.style.textAlign = 'left'; // Left align success message
 
     const summaryDiv = document.createElement('div');
     summaryDiv.style.marginTop = '12px';
     summaryDiv.style.fontWeight = 'bold';
+    summaryDiv.style.textAlign = 'left'; // Left align summary
 
     const fields = [
       { label: 'Sport', value: this.selectedSport },
       { label: 'League', value: this.selectedLeague },
       { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
       { label: 'Team', value: this.selectedTeam },
-      { label: 'Wager Type', value: this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : '') },
+      { label: 'Wager Type', value: wagerTypeFixed },
       { label: 'Unit', value: this.selectedUnit },
       { label: 'Phrase', value: this.selectedPhrase },
       { label: 'Notes', value: this.notes || 'None' },
@@ -814,6 +818,7 @@ export class AddNewWorkflow {
 
     fields.forEach(({ label, value }) => {
       const p = document.createElement('p');
+      p.style.margin = '4px 0';
       p.textContent = `${label}: ${value}`;
       summaryDiv.appendChild(p);
     });
