@@ -254,7 +254,10 @@ export class AddNewWorkflow {
   formatGameDisplay(game) {
     const awayTeam = game.awayTeam || '';
     const homeTeam = game.homeTeam || '';
-    const startTime = game.startTimeET ? game.startTimeET.toDate() : null;
+// If it's a Firestore Timestamp object, convert it to Date; else use directly
+const startTime = game.startTimeET instanceof Date
+  ? game.startTimeET
+  : (game.startTimeET?.toDate ? game.startTimeET.toDate() : new Date(game.startTimeET));
     if (!startTime) return `${awayTeam}\n@ ${homeTeam}\nDate TBD`;
 
     const now = new Date();
