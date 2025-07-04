@@ -28,7 +28,7 @@ export class AddNewWorkflow {
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
 
-    this.PAGE_LIMIT = 15;
+    this.PAGE_LIMIT = 200; // Load all sports/leagues in one go
 
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
@@ -61,7 +61,7 @@ export class AddNewWorkflow {
     this.loadMoreBtn.textContent = 'Load More';
     this.loadMoreBtn.classList.add('admin-button');
     this.loadMoreBtn.style.marginTop = '12px';
-    this.loadMoreBtn.style.display = 'none';
+    this.loadMoreBtn.style.display = 'none'; // not needed with big page limit but kept for future
     this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
     this.container.appendChild(this.loadMoreBtn);
 
@@ -116,7 +116,6 @@ export class AddNewWorkflow {
 
       this.sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      // Deduplicate unique groups (sports)
       const newGroups = [];
       snapshot.docs.forEach(doc => {
         const data = doc.data();
