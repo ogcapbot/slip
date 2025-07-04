@@ -12,7 +12,7 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const PAGE_LIMIT = 42;
+const PAGE_LIMIT = 15;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
