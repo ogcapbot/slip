@@ -1,123 +1,88 @@
-// NumberInputModal.js
-
-export class NumberInputModal {
-  constructor(parentContainer = document.body) {
-    this.parent = parentContainer;
-
-    // Create modal overlay
-    this.overlay = document.createElement('div');
-    Object.assign(this.overlay.style, {
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999,
-      visibility: 'hidden',
-    });
-
-    // Create modal box
-    this.modalBox = document.createElement('div');
-    Object.assign(this.modalBox.style, {
-      backgroundColor: '#fff',
-      padding: '20px',
-      borderRadius: '8px',
-      width: '90%',
-      maxWidth: '320px',
-      boxSizing: 'border-box',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-      textAlign: 'center',
-      fontFamily: "'Oswald', sans-serif",
-    });
-
-    // Instruction text
-    this.instruction = document.createElement('p');
-    this.instruction.textContent = 'Please enter the required number (multiples of 0.5)';
-    this.instruction.style.marginBottom = '12px';
-    this.modalBox.appendChild(this.instruction);
-
-    // Number input
-    this.input = document.createElement('input');
-    this.input.type = 'number';
-    this.input.step = '0.5';
-    this.input.min = '0.5';
-    this.input.placeholder = 'e.g., 1, 1.5, 2, 2.5';
-    Object.assign(this.input.style, {
-      width: '100%',
-      fontSize: '1.2em',
-      padding: '8px',
-      boxSizing: 'border-box',
-      marginBottom: '12px',
-      borderRadius: '4px',
-      border: '1px solid #ccc',
-      textAlign: 'center',
-    });
-    this.modalBox.appendChild(this.input);
-
-    // Error message
-    this.errorMsg = document.createElement('div');
-    this.errorMsg.style.color = 'red';
-    this.errorMsg.style.minHeight = '18px';
-    this.errorMsg.style.marginBottom = '12px';
-    this.modalBox.appendChild(this.errorMsg);
-
-    // Submit button
-    this.submitBtn = document.createElement('button');
-    this.submitBtn.textContent = 'Submit';
-    this.submitBtn.classList.add('admin-button');
-    this.submitBtn.style.width = '100%';
-    this.submitBtn.style.padding = '10px';
-    this.submitBtn.style.fontSize = '1.1em';
-    this.modalBox.appendChild(this.submitBtn);
-
-    this.overlay.appendChild(this.modalBox);
-    this.parent.appendChild(this.overlay);
-
-    this.submitBtn.addEventListener('click', () => this.validateAndSubmit());
-
-    // Bindings for promise resolve/reject
-    this._resolve = null;
-    this._reject = null;
+showNumberInputModal(wagerLabel) {
+  if (this.numberModal) {
+    this.numberModal.remove();
   }
 
-  show() {
-    this.errorMsg.textContent = '';
-    this.input.value = '';
-    this.overlay.style.visibility = 'visible';
-    this.input.focus();
+  this.numberModal = document.createElement('div');
+  this.numberModal.style.position = 'fixed';
+  this.numberModal.style.top = '0';
+  this.numberModal.style.left = '0';
+  this.numberModal.style.width = '100vw';
+  this.numberModal.style.height = '100vh';
+  this.numberModal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+  this.numberModal.style.display = 'flex';
+  this.numberModal.style.justifyContent = 'center';
+  this.numberModal.style.alignItems = 'center';
+  this.numberModal.style.zIndex = '1000';
 
-    // Return a promise that resolves with the valid number input
-    return new Promise((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
-    });
-  }
+  const modalContent = document.createElement('div');
+  modalContent.style.background = '#fff';
+  modalContent.style.padding = '20px';
+  modalContent.style.borderRadius = '8px';
+  modalContent.style.width = '90%';
+  modalContent.style.maxWidth = '320px';
+  modalContent.style.textAlign = 'center';
+  modalContent.style.fontFamily = "'Oswald', sans-serif";
 
-  hide() {
-    this.overlay.style.visibility = 'hidden';
-  }
+  // Fix spaces before PLUS, MINUS, OVER, UNDER in title
+  let cleanLabel = wagerLabel.replace(/\[\[NUM\]\]/g, '').trim();
+  cleanLabel = cleanLabel.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
 
-  validateAndSubmit() {
-    const val = this.input.value.trim();
-    if (!val) {
-      this.errorMsg.textContent = 'Input cannot be empty.';
-      return;
-    }
-    const num = Number(val);
-    if (isNaN(num) || num <= 0) {
-      this.errorMsg.textContent = 'Please enter a positive number.';
-      return;
-    }
-    // Check if multiple of 0.5: (num * 2) should be integer
-    if (!Number.isInteger(num * 2)) {
-      this.errorMsg.textContent = 'Number must be in increments of 0.5.';
+  const modalTitle = document.createElement('h3');
+  modalTitle.textContent = `Enter Number for: ${cleanLabel}`;
+  modalContent.appendChild(modalTitle);
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.step = '0.5';
+  input.min = '0.5';
+  input.style.fontSize = '1em';   // smaller font
+  input.style.padding = '6px';    // smaller padding
+  input.style.width = '70%';      // smaller width
+  input.style.margin = '10px 0';
+  input.placeholder = 'Enter whole or half number (e.g. 1, 1.5, 2)';
+  modalContent.appendChild(input);
+
+  const errorMsg = document.createElement('div');
+  errorMsg.style.color = 'red';
+  errorMsg.style.marginBottom = '10px';
+  errorMsg.style.height = '1.2em';
+  modalContent.appendChild(errorMsg);
+
+  const submitBtn = document.createElement('button');
+  submitBtn.textContent = 'Submit';
+  submitBtn.classList.add('admin-button');
+  submitBtn.style.width = '100%';
+  submitBtn.style.fontSize = '1.1em';
+  modalContent.appendChild(submitBtn);
+
+  submitBtn.addEventListener('click', () => {
+    const val = input.value.trim();
+
+    if (!val || isNaN(val)) {
+      errorMsg.textContent = 'Please enter a valid number.';
       return;
     }
 
-    // Valid input: resolve promise and hide modal
-    this.errorMsg.textContent = '';
-    this.hide();
-    if (this._resolve) this._resolve(num);
-  }
+    const numVal = parseFloat(val);
+    if (numVal < 0.5) {
+      errorMsg.textContent = 'Number must be at least 0.5.';
+      return;
+    }
+
+    if ((numVal * 2) % 1 !== 0) {
+      errorMsg.textContent = 'Number must be in 0.5 increments.';
+      return;
+    }
+
+    this.wagerNumberValue = numVal;
+    this.numberModal.remove();
+    this.numberModal = null;
+    this.loadUnits();
+  });
+
+  this.numberModal.appendChild(modalContent);
+  document.body.appendChild(this.numberModal);
+
+  input.focus();
 }
