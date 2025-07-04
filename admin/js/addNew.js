@@ -28,7 +28,7 @@ export class AddNewWorkflow {
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
 
-    this.PAGE_LIMIT = 200; // load all sports/leagues/games in one go
+    this.PAGE_LIMIT = 200; // large limit to fetch all
 
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
@@ -63,7 +63,7 @@ export class AddNewWorkflow {
     this.loadMoreBtn.textContent = 'Load More';
     this.loadMoreBtn.classList.add('admin-button');
     this.loadMoreBtn.style.marginTop = '12px';
-    this.loadMoreBtn.style.display = 'none'; 
+    this.loadMoreBtn.style.display = 'none';
     this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
     this.container.appendChild(this.loadMoreBtn);
 
@@ -252,13 +252,18 @@ export class AddNewWorkflow {
           label &&
           !this.gameButtonsData.some(g => g.label === label)
         ) {
-          newGames.push({ label, docId: doc.id });
+          newGames.push({ label, docId: doc.id, startTimeET: data.startTimeET });
         }
       });
 
+      // Sort games by startTimeET ascending
+      newGames.sort((a,b) => new Date(a.startTimeET) - new Date(b.startTimeET));
+
       this.gameButtonsData.push(...newGames);
       this.gameButtonsData = this.gameButtonsData.filter((v,i,a) => a.findIndex(t => (t.label === v.label)) === i);
-      this.gameButtonsData.sort((a,b) => a.label.localeCompare(b.label));
+
+      // Sort full list after merge, just in case
+      this.gameButtonsData.sort((a,b) => new Date(a.startTimeET) - new Date(b.startTimeET));
 
       this.renderButtons(this.gameButtonsData.map(g => g.label), 'game');
 
@@ -299,41 +304,53 @@ export class AddNewWorkflow {
           const estDate = new Date(dateStr);
           const now = new Date();
 
-          const estOffset = -4;
-          const estNow = new Date(now.getTime() + estOffset * 60 * 60 * 1000);
-          const estToday = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate());
-          const estGameDay = new Date(estDate.getFullYear(), estDate.getMonth(), estDate.getDate());
+          // Calculate time differences in EST
+          const estOffsetMinutes = -4 * 60; // EST is UTC-4 hours
+          // Adjust date objects to EST by subtracting offset (naive approach)
+          const estNow = new Date(now.getTime() + estOffsetMinutes * 60 * 1000);
+          const estGameDate = new Date(estDate.getTime() + estOffsetMinutes * 60 * 1000);
 
-          const dayDiff = Math.floor((estGameDay - estToday) / (1000 * 60 * 60 * 24));
-          let dayLabel = '';
-          if (dayDiff === 0) dayLabel = 'Today';
-          else if (dayDiff === 1) dayLabel = 'Tomorrow';
-          else if (dayDiff > 1) dayLabel = `${dayDiff}+ Days away`;
-          else dayLabel = 'Past';
+          const diffMs = estGameDate - estNow;
+          const diffMinutes = diffMs / (1000 * 60);
 
-          const options = { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: 'America/New_York' };
-          const timeLabel = estDate.toLocaleTimeString('en-US', options);
+          let bottomLine = '';
+          const optionsTime = { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: 'America/New_York' };
+          const timeLabel = estDate.toLocaleTimeString('en-US', optionsTime);
+
+          if (diffMinutes < 0) {
+            bottomLine = `Game Started @ ${timeLabel} EST`;
+          } else if (diffMinutes <= 15) {
+            bottomLine = `Game Starting Soon @ ${timeLabel} EST`;
+          } else if (diffMinutes <= 60) {
+            bottomLine = `Game Starts @ ${timeLabel} EST`;
+          } else {
+            // Calculate days diff ignoring time
+            const estToday = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate());
+            const estGameDay = new Date(estDate.getFullYear(), estDate.getMonth(), estDate.getDate());
+            const dayDiff = Math.floor((estGameDay - estToday) / (1000 * 60 * 60 * 24));
+
+            if (dayDiff >= 2) {
+              const optionsDate = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/New_York' };
+              const formattedDate = estDate.toLocaleDateString('en-US', optionsDate);
+              bottomLine = `${formattedDate} @ ${timeLabel} EST`;
+            } else {
+              const dayLabel = dayDiff === 0 ? 'Today' : 'Tomorrow';
+              bottomLine = `${dayLabel} ${timeLabel} EST`;
+            }
+          }
 
           btn.innerHTML = `
-            <div style="display:flex; justify-content: space-between; white-space: nowrap; font-weight: bold;">
-              <span style="text-align: left;">${awayTeam}</span>
-              <span style="text-align: right;">@ ${homeTeam}</span>
+            <div style="white-space: nowrap; text-align: left; font-weight: bold; overflow: hidden; text-overflow: ellipsis;">
+              ${awayTeam}
             </div>
-            <div style="text-align: center; font-size: 0.85em; margin-top: 4px;">
-              ${dayLabel} [[${timeLabel} EST]]
+            <div style="text-align: right; font-weight: normal; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              @ ${homeTeam}
+            </div>
+            <div style="text-align: center; font-size: 0.85em; margin-top: 4px; font-style: italic;">
+              ${bottomLine}
             </div>
           `;
         }
-      } else if (type === 'wagerSeparator') {
-        // special non-clickable separator
-        btn.textContent = label;
-        btn.disabled = true;
-        btn.classList.add('separator-button');
-        btn.style.textAlign = 'center';
-        btn.style.backgroundColor = '#ddd';
-        btn.style.color = '#444';
-        btn.style.fontWeight = 'bold';
-        btn.style.cursor = 'default';
       } else {
         btn.textContent = label;
       }
@@ -402,9 +419,6 @@ export class AddNewWorkflow {
 
             this.renderTeamsButtons();
           }
-        } else if (type === 'wager') {
-          this.selectedWager = label;
-          this.setStatus(`Selected Wager Type: ${label}`);
         }
       });
 
@@ -451,60 +465,7 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'inline-block';
   }
 
-  async loadWagerTypes() {
-    if (this.step !== 5) return;
-    if (!this.selectedSport) {
-      this.setStatus('Please select a sport first.', true);
-      return;
-    }
-
-    this.setStatus('Loading wager types...');
-
-    try {
-      // Load all wagers where Sport == "All"
-      const qAll = query(
-        collection(db, 'WagerTypes'),
-        where('Sport', '==', 'All'),
-        orderBy('id'),
-        limit(this.PAGE_LIMIT)
-      );
-      const snapshotAll = await getDocs(qAll);
-
-      this.wagerButtonsAll = snapshotAll.docs.map(doc => doc.data().WagerName || doc.id);
-
-      // Load wagers for selected sport
-      const qSport = query(
-        collection(db, 'WagerTypes'),
-        where('Sport', '==', this.selectedSport),
-        orderBy('id'),
-        limit(this.PAGE_LIMIT)
-      );
-      const snapshotSport = await getDocs(qSport);
-
-      this.wagerButtonsSport = snapshotSport.docs.map(doc => doc.data().WagerName || doc.id);
-
-      // Render buttons: first All wagers, then separator, then sport-specific wagers
-      const combinedButtons = [
-        ...this.wagerButtonsAll,
-        '----- Sport Specific Wagers -----',
-        ...this.wagerButtonsSport
-      ];
-
-      this.renderButtons(combinedButtons.map((label, idx) => {
-        if (label === '----- Sport Specific Wagers -----') return { label, type: 'wagerSeparator' };
-        else return label;
-      }), 'wager');
-
-      this.setStatus('');
-      this.submitBtn.style.display = 'inline-block';
-    } catch (error) {
-      console.error('Error loading wager types:', error);
-      this.setStatus('Failed to load wager types.', true);
-    }
-  }
-
   async onLoadMore() {
-    // For now, large PAGE_LIMIT means no paging needed here
     if (this.step === 1) {
       await this.loadSports(true);
     } else if (this.step === 2) {
@@ -536,9 +497,6 @@ export class AddNewWorkflow {
       if (this.step >= 4) {
         dataToSubmit.gameLabel = this.selectedGame;
         dataToSubmit.teamName = this.selectedTeam;
-      }
-      if (this.step >= 5) {
-        dataToSubmit.wagerType = this.selectedWager || null;
       }
 
       await addDoc(collection(db, 'UserSubmissions'), dataToSubmit);
