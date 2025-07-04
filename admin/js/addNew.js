@@ -45,7 +45,6 @@ export class AddNewWorkflow {
     this.loadSports();
   }
 
-  // Helper to add space before PLUS, MINUS, OVER, UNDER keywords
   addSpaceBeforeKeywords(label) {
     return label.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
   }
@@ -58,8 +57,7 @@ export class AddNewWorkflow {
     console.log('[Init] Rendering initial UI');
     this.clearContainer();
 
-    // Changed from h2 to h5 for smaller header
-    this.titleEl = document.createElement('h5');
+    this.titleEl = document.createElement('h5'); // Changed to h5 for smaller header
     this.titleEl.id = 'workflowTitle';
     this.container.appendChild(this.titleEl);
 
@@ -127,7 +125,7 @@ export class AddNewWorkflow {
   async loadSports(loadMore = false) {
     console.log('[LoadSports] Loading sports...');
     this.step = 1;
-    this.titleEl.textContent = 'Please select a Sport';
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.setStatus('Loading sports...');
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
@@ -198,7 +196,7 @@ export class AddNewWorkflow {
 
     console.log(`[LoadLeagues] Loading leagues for sport: ${this.selectedSport}`);
     this.step = 2;
-    this.titleEl.textContent = `Selected Sport: ${this.selectedSport} — Select a League`;
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected Sport: ${this.selectedSport} — Select a League`);
     this.setStatus(`Loading leagues for ${this.selectedSport}...`);
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
@@ -271,7 +269,7 @@ export class AddNewWorkflow {
 
     console.log(`[LoadGames] Loading games for league: ${this.selectedLeague}`);
     this.step = 3;
-    this.titleEl.textContent = `Selected League: ${this.selectedLeague} — Select a Game`;
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected League: ${this.selectedLeague} — Select a Game`);
     this.setStatus(`Loading games for league ${this.selectedLeague}...`);
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
@@ -407,7 +405,7 @@ export class AddNewWorkflow {
 
     console.log('[LoadTeams] Loading team buttons');
     this.step = 4;
-    this.titleEl.textContent = 'Select a Team';
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Select a Team');
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -429,7 +427,7 @@ export class AddNewWorkflow {
 
     console.log(`[LoadWagerTypes] Loading wager types for selected team: ${this.selectedTeam}`);
     this.step = 5;
-    this.titleEl.textContent = `Select a Wager Type for ${this.selectedTeam}`;
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select a Wager Type for ${this.selectedTeam}`);
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -519,7 +517,7 @@ export class AddNewWorkflow {
 
     console.log(`[LoadUnits] Loading units for wager type: ${this.selectedWagerType}`);
     this.step = 6;
-    this.titleEl.textContent = `Select Units for ${this.addSpaceBeforeKeywords(this.selectedWagerType)}`;
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select Units for ${this.selectedWagerType}`);
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -558,7 +556,7 @@ export class AddNewWorkflow {
 
     console.log('[LoadPhrases] Loading phrases...');
     this.step = 7;
-    this.titleEl.textContent = `Select a Phrase`;
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Select a Phrase');
     this.notesContainer.style.display = 'none';
     this.submitBtn.style.display = 'none';
 
@@ -619,7 +617,7 @@ export class AddNewWorkflow {
     this.notesContainer.style.display = 'block';
     this.submitBtn.style.display = 'inline-block';
 
-    this.titleEl.textContent = 'Notes/Comments (Optional)';
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Notes/Comments (Optional)');
 
     this.buttonsWrapper.innerHTML = '';
   }
@@ -788,7 +786,7 @@ export class AddNewWorkflow {
   }
 
   showSubmissionSummary() {
-    this.titleEl.textContent = 'Submission Summary';
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
     const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : '')} Official Pick has been Successfully Saved.`;
 
@@ -850,7 +848,7 @@ export class AddNewWorkflow {
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
 
-    this.titleEl.textContent = 'Please select a Sport';
+    this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
     this.notesContainer.style.display = 'none';
@@ -884,8 +882,11 @@ export class AddNewWorkflow {
       content.style.maxWidth = '90vw';
       content.style.boxSizing = 'border-box';
 
+      content.style.alignSelf = 'center';
+      content.style.flexShrink = '0';
+
       const title = document.createElement('h3');
-      title.textContent = `Enter Number for: ${wagerLabel}`;
+      title.textContent = `Enter Number for: ${this.addSpaceBeforeKeywords(wagerLabel)}`;
       title.style.marginBottom = '15px';
       title.style.fontFamily = "'Oswald', sans-serif";
       title.style.fontWeight = '700';
