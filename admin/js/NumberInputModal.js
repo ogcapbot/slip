@@ -1,88 +1,91 @@
 showNumberInputModal(wagerLabel) {
-  if (this.numberModal) {
-    this.numberModal.remove();
-  }
+  return new Promise((resolve) => {
+    // Create modal background
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '1000';
 
-  this.numberModal = document.createElement('div');
-  this.numberModal.style.position = 'fixed';
-  this.numberModal.style.top = '0';
-  this.numberModal.style.left = '0';
-  this.numberModal.style.width = '100vw';
-  this.numberModal.style.height = '100vh';
-  this.numberModal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-  this.numberModal.style.display = 'flex';
-  this.numberModal.style.justifyContent = 'center';
-  this.numberModal.style.alignItems = 'center';
-  this.numberModal.style.zIndex = '1000';
+    // Modal content container
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#fff';
+    content.style.padding = '25px';
+    content.style.borderRadius = '12px';
+    content.style.boxShadow = '0 2px 15px rgba(0,0,0,0.3)';
+    content.style.textAlign = 'center';
+    content.style.width = '90%';
+    content.style.maxWidth = '280px'; // Smaller max width for mobile
 
-  const modalContent = document.createElement('div');
-  modalContent.style.background = '#fff';
-  modalContent.style.padding = '20px';
-  modalContent.style.borderRadius = '8px';
-  modalContent.style.width = '90%';
-  modalContent.style.maxWidth = '320px';
-  modalContent.style.textAlign = 'center';
-  modalContent.style.fontFamily = "'Oswald', sans-serif";
+    // Title
+    const title = document.createElement('h3');
+    title.textContent = `Enter Number for: ${wagerLabel}`;
+    title.style.marginBottom = '20px';
+    title.style.fontFamily = "'Oswald', sans-serif";
+    title.style.fontWeight = '700';
+    title.style.fontSize = '1.3rem';
+    content.appendChild(title);
 
-  // Fix spaces before PLUS, MINUS, OVER, UNDER in title
-  let cleanLabel = wagerLabel.replace(/\[\[NUM\]\]/g, '').trim();
-  cleanLabel = cleanLabel.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
+    // Input field
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.step = '0.5';
+    input.placeholder = 'Enter whole or half number (e.g. 1, 1.5, 2)';
+    input.style.width = '140px';       // Smaller width
+    input.style.fontSize = '1.1rem';   // Smaller font size
+    input.style.padding = '8px';       // Reduced padding
+    input.style.marginBottom = '20px';
+    input.style.border = '1px solid #ccc';
+    input.style.borderRadius = '6px';
+    input.style.fontFamily = "'Oswald', sans-serif";
+    content.appendChild(input);
 
-  const modalTitle = document.createElement('h3');
-  modalTitle.textContent = `Enter Number for: ${cleanLabel}`;
-  modalContent.appendChild(modalTitle);
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Submit';
+    submitBtn.style.backgroundColor = '#3a8bfd';
+    submitBtn.style.color = 'white';
+    submitBtn.style.border = 'none';
+    submitBtn.style.padding = '12px 25px';
+    submitBtn.style.borderRadius = '8px';
+    submitBtn.style.cursor = 'pointer';
+    submitBtn.style.fontFamily = "'Oswald', sans-serif";
+    submitBtn.style.fontWeight = '700';
+    submitBtn.style.fontSize = '1.1rem';
+    content.appendChild(submitBtn);
 
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.step = '0.5';
-  input.min = '0.5';
-  input.style.fontSize = '1em';   // smaller font
-  input.style.padding = '6px';    // smaller padding
-  input.style.width = '70%';      // smaller width
-  input.style.margin = '10px 0';
-  input.placeholder = 'Enter whole or half number (e.g. 1, 1.5, 2)';
-  modalContent.appendChild(input);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
 
-  const errorMsg = document.createElement('div');
-  errorMsg.style.color = 'red';
-  errorMsg.style.marginBottom = '10px';
-  errorMsg.style.height = '1.2em';
-  modalContent.appendChild(errorMsg);
+    // Focus input on modal show
+    input.focus();
 
-  const submitBtn = document.createElement('button');
-  submitBtn.textContent = 'Submit';
-  submitBtn.classList.add('admin-button');
-  submitBtn.style.width = '100%';
-  submitBtn.style.fontSize = '1.1em';
-  modalContent.appendChild(submitBtn);
-
-  submitBtn.addEventListener('click', () => {
-    const val = input.value.trim();
-
-    if (!val || isNaN(val)) {
-      errorMsg.textContent = 'Please enter a valid number.';
-      return;
+    // Validation helper
+    function isValidNumber(value) {
+      const num = parseFloat(value);
+      return (
+        !isNaN(num) &&
+        num >= 0 &&
+        Number.isInteger(num * 2) // ensures whole or half increments (e.g., 0.5, 1, 1.5)
+      );
     }
 
-    const numVal = parseFloat(val);
-    if (numVal < 0.5) {
-      errorMsg.textContent = 'Number must be at least 0.5.';
-      return;
-    }
-
-    if ((numVal * 2) % 1 !== 0) {
-      errorMsg.textContent = 'Number must be in 0.5 increments.';
-      return;
-    }
-
-    this.wagerNumberValue = numVal;
-    this.numberModal.remove();
-    this.numberModal = null;
-    this.loadUnits();
+    submitBtn.addEventListener('click', () => {
+      if (isValidNumber(input.value.trim())) {
+        const numValue = parseFloat(input.value.trim());
+        document.body.removeChild(modal);
+        resolve(numValue);
+      } else {
+        alert('Please enter a valid positive whole or half number (e.g., 0.5, 1, 1.5)');
+        input.focus();
+      }
+    });
   });
-
-  this.numberModal.appendChild(modalContent);
-  document.body.appendChild(this.numberModal);
-
-  input.focus();
 }
