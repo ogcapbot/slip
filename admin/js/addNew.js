@@ -356,7 +356,7 @@ const startTime = game.startTimeET instanceof Date
             display: this.formatGameDisplay(data),
             awayTeam: data.awayTeam,
             homeTeam: data.homeTeam,
-            startTimeET: data.startTimeET.toDate(),
+            startTimeET: data.startTimeET,
           });
         }
       });
