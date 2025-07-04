@@ -15,23 +15,21 @@ import {
 
 export class AddNewWorkflow {
   constructor(container, userId) {
-    this.container = container; // DOM element to render UI
+    this.container = container;
     this.userId = userId;
 
     this.step = 1; // 1=sport, 2=league, 3=game, 4=teams
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
+    this.selectedTeam = null;
 
-    // Pagination state
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
 
-    // Button limit per page
     this.PAGE_LIMIT = 15;
 
-    // Store fetched buttons per step
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
@@ -85,7 +83,6 @@ export class AddNewWorkflow {
     this.statusMsg.style.color = isError ? 'red' : 'inherit';
   }
 
-  // --- Load sports from SportsData collection ---
   async loadSports(loadMore = false) {
     this.setStatus('Loading sports...');
     try {
@@ -128,7 +125,6 @@ export class AddNewWorkflow {
       });
 
       this.sportButtonsData.push(...newSports);
-
       this.sportButtonsData = [...new Set(this.sportButtonsData)].sort((a,b) => a.localeCompare(b));
 
       this.renderButtons(this.sportButtonsData, 'sport');
@@ -146,7 +142,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // --- Load leagues filtered by selectedSport from GameEventsData ---
   async loadLeagues(loadMore = false) {
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
@@ -195,7 +190,6 @@ export class AddNewWorkflow {
       });
 
       this.leagueButtonsData.push(...newLeagues);
-
       this.leagueButtonsData = [...new Set(this.leagueButtonsData)].sort((a,b) => a.localeCompare(b));
 
       this.renderButtons(this.leagueButtonsData, 'league');
@@ -213,7 +207,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // --- Load games filtered by selected sport & league ---
   async loadGames(loadMore = false) {
     if (!this.selectedSport || !this.selectedLeague) {
       this.setStatus('Please select both sport and league first.', true);
@@ -255,19 +248,16 @@ export class AddNewWorkflow {
       const newGames = [];
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        // Compose label like: "AwayTeam @ HomeTeam [[startTimeET]]"
         const label = `${data.awayTeam} @ ${data.homeTeam} [[${data.startTimeET}]]`;
         if (
           label &&
-          !this.gameButtonsData.includes(label)
+          !this.gameButtonsData.some(g => g.label === label)
         ) {
           newGames.push({ label, docId: doc.id });
         }
       });
 
       this.gameButtonsData.push(...newGames);
-
-      // Unique by label, sort by label alphabetically
       this.gameButtonsData = this.gameButtonsData.filter((v,i,a) => a.findIndex(t => (t.label === v.label)) === i);
       this.gameButtonsData.sort((a,b) => a.label.localeCompare(b.label));
 
@@ -286,8 +276,8 @@ export class AddNewWorkflow {
     }
   }
 
-  // --- Render buttons and handle click events ---
   renderButtons(buttons, type) {
+    // Clear buttons container before rendering new buttons
     this.buttonsWrapper.innerHTML = '';
 
     buttons.forEach(label => {
@@ -295,7 +285,6 @@ export class AddNewWorkflow {
       btn.textContent = label;
       btn.classList.add('admin-button');
 
-      // Highlight selected
       if (
         (type === 'sport' && this.selectedSport === label) ||
         (type === 'league' && this.selectedLeague === label) ||
@@ -316,7 +305,12 @@ export class AddNewWorkflow {
             this.gameButtonsData = [];
             this.gameLastVisible = null;
 
+            this.selectedTeam = null;
+
             this.step = 2;
+
+            // Clear buttons and UI for new step
+            this.buttonsWrapper.innerHTML = '';
             this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'none';
 
@@ -333,7 +327,11 @@ export class AddNewWorkflow {
             this.gameButtonsData = [];
             this.gameLastVisible = null;
 
+            this.selectedTeam = null;
+
             this.step = 3;
+
+            this.buttonsWrapper.innerHTML = '';
             this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'none';
 
@@ -346,14 +344,17 @@ export class AddNewWorkflow {
           if (this.selectedGame !== label) {
             this.selectedGame = label;
 
+            this.selectedTeam = null;
+
             this.step = 4;
+
+            this.buttonsWrapper.innerHTML = '';
             this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'inline-block';
 
             document.getElementById('workflowTitle').textContent =
               `Selected Game: ${label} — Select Away or Home Team`;
 
-            // Render two buttons: awayTeam and homeTeam
             this.renderTeamsButtons();
           }
         }
@@ -363,18 +364,15 @@ export class AddNewWorkflow {
     });
   }
 
-  // --- Render two buttons for awayTeam and homeTeam ---
   renderTeamsButtons() {
     this.buttonsWrapper.innerHTML = '';
 
-    // Find the selected game object
     const gameObj = this.gameButtonsData.find(g => g.label === this.selectedGame);
     if (!gameObj) {
       this.setStatus('Selected game data not found.', true);
       return;
     }
 
-    // Parse awayTeam and homeTeam from label (formatted as "AwayTeam @ HomeTeam [[time]]")
     const regex = /^(.+?) @ (.+?) \[\[.*\]\]$/;
     const match = regex.exec(gameObj.label);
     if (!match) {
@@ -400,9 +398,9 @@ export class AddNewWorkflow {
   }
 
   onTeamSelected(teamName) {
+    this.selectedTeam = teamName;
     this.setStatus(`You selected team: ${teamName}`);
     this.submitBtn.style.display = 'inline-block';
-    // You can handle team selection submission here or elsewhere
   }
 
   async onLoadMore() {
@@ -416,6 +414,11 @@ export class AddNewWorkflow {
   }
 
   async onSubmit() {
+    if (this.step < 2) {
+      this.setStatus('Please select a sport before submitting.', true);
+      return;
+    }
+
     this.setStatus('Submitting your selection...');
     try {
       const dataToSubmit = {
@@ -423,21 +426,15 @@ export class AddNewWorkflow {
         timestamp: Timestamp.now(),
       };
 
-      if (this.step === 2) {
+      if (this.step >= 2) {
         dataToSubmit.sportName = this.selectedSport;
+      }
+      if (this.step >= 3) {
         dataToSubmit.leagueName = this.selectedLeague;
-      } else if (this.step === 3) {
-        dataToSubmit.sportName = this.selectedSport;
-        dataToSubmit.leagueName = this.selectedLeague;
+      }
+      if (this.step >= 4) {
         dataToSubmit.gameLabel = this.selectedGame;
-      } else if (this.step === 4) {
         dataToSubmit.teamName = this.selectedTeam;
-        dataToSubmit.sportName = this.selectedSport;
-        dataToSubmit.leagueName = this.selectedLeague;
-        dataToSubmit.gameLabel = this.selectedGame;
-      } else {
-        this.setStatus('Nothing selected to submit.', true);
-        return;
       }
 
       await addDoc(collection(db, 'UserSubmissions'), dataToSubmit);
