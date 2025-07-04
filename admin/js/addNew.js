@@ -12,7 +12,7 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const PAGE_LIMIT = 15;
+const PAGE_LIMIT = 42;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
@@ -72,7 +72,30 @@ export class AddNewWorkflow {
     this.buttonsWrapper.style.gap = '8px';
     this.container.appendChild(this.buttonsWrapper);
 
-    // Notes container with textarea, initially hidden, shown on request
+    // "Load More" button for paginated data loading, hidden by default
+    this.loadMoreBtn = document.createElement('button');
+    this.loadMoreBtn.textContent = 'Load More';
+    this.loadMoreBtn.classList.add('admin-button');
+    this.loadMoreBtn.style.marginTop = '12px';
+    this.loadMoreBtn.style.display = 'none';
+    this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
+    this.container.appendChild(this.loadMoreBtn);
+
+    // Submit button, only shown on the last step after phrase selection
+    this.submitBtn = document.createElement('button');
+    this.submitBtn.textContent = 'Submit';
+    this.submitBtn.classList.add('admin-button');
+    this.submitBtn.style.marginTop = '20px';
+    this.submitBtn.style.display = 'none';
+    this.submitBtn.addEventListener('click', () => this.onSubmit());
+    this.container.appendChild(this.submitBtn);
+
+    // Status message paragraph for user feedback and errors
+    this.statusMsg = document.createElement('p');
+    this.statusMsg.style.marginTop = '16px';
+    this.container.appendChild(this.statusMsg);
+
+    // Notes container with textarea, shown on last step, above Submit button
     this.notesContainer = document.createElement('div');
     this.notesContainer.style.marginTop = '16px';
     this.notesContainer.style.display = 'none';
@@ -96,22 +119,7 @@ export class AddNewWorkflow {
     this.charCount.textContent = '100 characters remaining';
     this.notesContainer.appendChild(this.charCount);
 
-    // Append notes container BEFORE submit button to place notes textarea above submit
     this.container.appendChild(this.notesContainer);
-
-    // Submit button, only shown on the last step after phrase selection
-    this.submitBtn = document.createElement('button');
-    this.submitBtn.textContent = 'Submit';
-    this.submitBtn.classList.add('admin-button');
-    this.submitBtn.style.marginTop = '20px';
-    this.submitBtn.style.display = 'none';
-    this.submitBtn.addEventListener('click', () => this.onSubmit());
-    this.container.appendChild(this.submitBtn);
-
-    // Status message paragraph for user feedback and errors
-    this.statusMsg = document.createElement('p');
-    this.statusMsg.style.marginTop = '16px';
-    this.container.appendChild(this.statusMsg);
   }
 
   setStatus(msg, isError = false) {
@@ -273,7 +281,8 @@ export class AddNewWorkflow {
   // ########################################
   // Game Buttons  #games
   // ########################################
-  // Loads games filtered by selected league, sorted ascending by start time, paginated
+  // Loads games filtered by selected league, filtered for now()-5h and forward,
+  // sorted ascending by start time, paginated
   async loadGames(loadMore = false) {
     if (!this.selectedLeague) {
       this.setStatus('Please select a league first.', true);
@@ -288,17 +297,21 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'none';
     this.notesContainer.style.display = 'none';
 
-    try {
-      // Calculate cutoff date/time for 5 hours ago from now
-      const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+    // Compute cutoff date string (now - 5 hours) in format "YYYY-MM-DD HH:mm:ss"
+    const now = new Date();
+    const fiveHoursAgoDate = new Date(now.getTime() - 5 * 60 * 60 * 1000);
 
+    // Format date to Firestore string format (without "T" or "Z")
+    const pad = (num) => (num < 10 ? '0' + num : num);
+    const cutoffString = `${fiveHoursAgoDate.getFullYear()}-${pad(fiveHoursAgoDate.getMonth() + 1)}-${pad(fiveHoursAgoDate.getDate())} ${pad(fiveHoursAgoDate.getHours())}:${pad(fiveHoursAgoDate.getMinutes())}:${pad(fiveHoursAgoDate.getSeconds())}`;
+
+    try {
       let q;
       if (!loadMore || !this.gameLastVisible) {
-        // Initial query: games with startTimeET >= fiveHoursAgo and leagueShortname matches
         q = query(
           collection(db, 'GameEventsData'),
           where('leagueShortname', '==', this.selectedLeague),
-          where('startTimeET', '>=', fiveHoursAgo),
+          where('startTimeET', '>=', cutoffString),
           orderBy('startTimeET'),
           limit(PAGE_LIMIT)
         );
@@ -306,7 +319,7 @@ export class AddNewWorkflow {
         q = query(
           collection(db, 'GameEventsData'),
           where('leagueShortname', '==', this.selectedLeague),
-          where('startTimeET', '>=', fiveHoursAgo),
+          where('startTimeET', '>=', cutoffString),
           orderBy('startTimeET'),
           startAfter(this.gameLastVisible),
           limit(PAGE_LIMIT)
@@ -328,10 +341,7 @@ export class AddNewWorkflow {
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
         const gameId = doc.id;
-        if (
-          gameId &&
-          !this.gameButtonsData.some((g) => g.id === gameId)
-        ) {
+        if (!this.gameButtonsData.some((g) => g.id === gameId)) {
           this.gameButtonsData.push({
             id: gameId,
             display: this.formatGameDisplay(data),
@@ -342,10 +352,7 @@ export class AddNewWorkflow {
         }
       });
 
-      // Sort games ascending by start time
-      this.gameButtonsData.sort(
-        (a, b) => a.startTimeET - b.startTimeET
-      );
+      this.gameButtonsData.sort((a, b) => a.startTimeET.localeCompare(b.startTimeET));
 
       console.log(`[LoadGames] Total unique games loaded: ${this.gameButtonsData.length}`);
 
@@ -370,54 +377,58 @@ export class AddNewWorkflow {
   // ########################################
   // Format Game Display Text  #formatGame
   // ########################################
-  // Formats game info into multiline string with date/time labels following your rules
+  // Formats game info into multiline string with contextual date/time labels for display on buttons
   formatGameDisplay(game) {
     const awayTeam = game.awayTeam || '';
     const homeTeam = game.homeTeam || '';
 
-    // Normalize Firestore Timestamp or string to Date object
-    const startTime = game.startTimeET instanceof Date
-      ? game.startTimeET
-      : (game.startTimeET?.toDate ? game.startTimeET.toDate() : new Date(game.startTimeET));
-    if (!startTime) return `${awayTeam}\n@ ${homeTeam}\nDate TBD`;
+    // Parse startTimeET string "YYYY-MM-DD HH:mm:ss" into Date object in local timezone
+    const parts = game.startTimeET.split(/[- :]/);
+    const startTime = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
 
     const now = new Date();
     const diffMs = startTime - now;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    // Format time with or without EST based on conditions
-    const timeOptionsEST = {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'America/New_York',
-    };
-    const timeOptionsNoEST = {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    };
+    // Format times with and without EST suffix as requested
+    const formatESTTime = (date) =>
+      date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/New_York',
+      });
 
-    let dayLabel = '';
-    let timeLabelEST = startTime.toLocaleTimeString('en-US', timeOptionsEST);
-    let timeLabelNoEST = startTime.toLocaleTimeString('en-US', timeOptionsNoEST);
+    const formatLocalTime = (date) =>
+      date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+    let timeLabel, dateLabel;
 
     if (diffMs < 0) {
-      // Game started: show "Started @ h:mm AM/PM EST"
-      return `${awayTeam}\n@ ${homeTeam}\nStarted @ ${timeLabelEST}`;
+      // Game started
+      timeLabel = formatESTTime(startTime);
+      dateLabel = `Started @ ${timeLabel}`;
     } else if (diffDays === 0) {
-      // Game today: "Today @ h:mm AM/PM EST"
-      return `${awayTeam}\n@ ${homeTeam}\nToday @ ${timeLabelEST}`;
+      // Today
+      timeLabel = formatESTTime(startTime);
+      dateLabel = `Today @ ${timeLabel}`;
     } else if (diffDays === 1) {
-      // Game tomorrow: "Tomorrow @ h:mm AM/PM"
-      return `${awayTeam}\n@ ${homeTeam}\nTomorrow @ ${timeLabelNoEST}`;
-    } else if (diffDays > 1) {
-      // Game days away: "{N} Days Away @ h:mm AM/PM"
-      return `${awayTeam}\n@ ${homeTeam}\n${diffDays} Days Away @ ${timeLabelNoEST}`;
+      // Tomorrow (no EST)
+      timeLabel = formatLocalTime(startTime);
+      dateLabel = `Tomorrow @ ${timeLabel}`;
+    } else if (diffDays >= 2) {
+      // 2 or more days away (no EST)
+      timeLabel = formatLocalTime(startTime);
+      dateLabel = `${diffDays} Days Away @ ${timeLabel}`;
+    } else {
+      dateLabel = startTime.toLocaleDateString();
     }
 
-    // Fallback (should not reach here)
-    return `${awayTeam}\n@ ${homeTeam}\n${startTime.toLocaleDateString()} @ ${timeLabelNoEST}`;
+    return `${awayTeam}\n@ ${homeTeam}\n${dateLabel}`;
   }
 
   // ########################################
@@ -500,8 +511,12 @@ export class AddNewWorkflow {
       console.log(`[RenderWagerTypes] Rendering ${globalWagers.length} global wager buttons`);
       globalWagers.forEach((wager) => {
         const btn = document.createElement('button');
-        btn.textContent = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
         btn.classList.add('admin-button');
+
+        // Format wager label per requirements: parentheses on second line,
+        // and for PLUS, MINUS, OVER, UNDER put from space before these words on new line
+        btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
+
         btn.addEventListener('click', () => {
           this.selectedWagerType = wager.wager_label_template || wager.WagerType;
           this.loadUnits();
@@ -513,12 +528,14 @@ export class AddNewWorkflow {
     // Then render sport-specific wager buttons if any
     if (sportWagers.length) {
       console.log(`[RenderWagerTypes] Rendering ${sportWagers.length} sport-specific wager buttons`);
-      // No separator per your request — just continuous list
+      // No separator per user request — just render sport wagers after global
 
       sportWagers.forEach((wager) => {
         const btn = document.createElement('button');
-        btn.textContent = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
         btn.classList.add('admin-button');
+
+        btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
+
         btn.addEventListener('click', () => {
           this.selectedWagerType = wager.wager_label_template || wager.WagerType;
           this.loadUnits();
@@ -528,13 +545,13 @@ export class AddNewWorkflow {
     }
   }
 
-  // Format wager label with multiline for parentheses and capital keywords
+  // Helper: format wager label per requirements
   formatWagerLabel(label) {
-    // Handle parentheses: move content inside parentheses to new line
-    let formatted = label.replace(/\s*\(([^)]+)\)/, '\n($1)');
+    // Handle parentheses portion on new line
+    let formatted = label.replace(/\(([^)]+)\)/g, '<br>($1)');
 
-    // Handle keywords like PLUS, MINUS, OVER, UNDER - break before keyword
-    formatted = formatted.replace(/ (PLUS|MINUS|OVER|UNDER)/, '\n$1');
+    // Handle PLUS, MINUS, OVER, UNDER preceded by space to new line
+    formatted = formatted.replace(/ (\bPLUS\b|\bMINUS\b|\bOVER\b|\bUNDER\b)/g, '<br>$1');
 
     return formatted;
   }
@@ -567,22 +584,27 @@ export class AddNewWorkflow {
       const units = snapshot.docs.map((doc) => doc.data());
 
       console.log(`[LoadUnits] Loaded ${units.length} units`);
-      this.renderButtons(units.map((u) => this.formatUnitLabel(u.display_unit)), 'unit');
+
+      this.renderButtons(
+        units.map((u) => this.formatUnitLabel(u.display_unit)),
+        'unit'
+      );
     } catch (error) {
       console.error('[LoadUnits] Error loading units:', error);
       this.setStatus('Failed to load units.', true);
     }
   }
 
-  // Format unit label with multiline for parentheses
+  // Helper: format unit label to place parentheses portion on new line
   formatUnitLabel(label) {
-    return label.replace(/\s*\(([^)]+)\)/, '\n($1)');
+    return label.replace(/\(([^)]+)\)/g, '<br>($1)');
   }
 
   // ########################################
   // Phrases Buttons  #phrases
   // ########################################
-  // Loads active hype phrases showing sport-specific first, then "OG Cap" type, then the rest randomized
+  // Loads active hype phrases showing sport-specific first (random order),
+  // then "OG Cap" type phrases (random), then rest (random)
   async loadPhrases(loadMore = false) {
     if (!this.selectedUnit) {
       this.setStatus('Please select units first.', true);
@@ -596,57 +618,28 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'none';
 
     try {
-      // Fetch sport-specific active phrases (Sport matches)
-      const sportQuery = query(
-        collection(db, 'HypePhrases'),
-        where('active_status', '==', 'active'),
-        where('Sport', '==', this.selectedSport)
-      );
-      const sportSnap = await getDocs(sportQuery);
-      let sportPhrases = sportSnap.docs.map(doc => doc.data());
-
-      // Fetch active "OG Cap" type phrases
-      const ogCapQuery = query(
-        collection(db, 'HypePhrases'),
-        where('active_status', '==', 'active'),
-        where('Type', '==', 'OG Cap')
-      );
-      const ogCapSnap = await getDocs(ogCapQuery);
-      let ogCapPhrases = ogCapSnap.docs.map(doc => doc.data());
-
-      // Fetch all other active phrases excluding above sets
-      const allQuery = query(
+      // Fetch all active phrases
+      const phrasesQuery = query(
         collection(db, 'HypePhrases'),
         where('active_status', '==', 'active')
       );
-      const allSnap = await getDocs(allQuery);
-      let allPhrases = allSnap.docs.map(doc => doc.data());
+      const phrasesSnap = await getDocs(phrasesQuery);
+      const allPhrases = phrasesSnap.docs.map((doc) => doc.data());
 
-      // Filter out sport-specific and OG Cap from allPhrases
-      const sportIds = new Set(sportPhrases.map(p => p.Phrase));
-      const ogCapIds = new Set(ogCapPhrases.map(p => p.Phrase));
-      allPhrases = allPhrases.filter(p => !sportIds.has(p.Phrase) && !ogCapIds.has(p.Phrase));
+      // Filter by categories
+      const sportSpecific = allPhrases.filter(p => p.Sport === this.selectedSport);
+      const ogCapType = allPhrases.filter(p => p.Type === 'OG Cap' && p.Sport !== this.selectedSport);
+      const others = allPhrases.filter(p => p.Sport !== this.selectedSport && p.Type !== 'OG Cap');
 
-      // Shuffle function
-      function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-      }
+      // Shuffle helper
+      const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
-      // Shuffle each group except sport-specific which is already prioritized
-      sportPhrases = shuffle(sportPhrases);
-      ogCapPhrases = shuffle(ogCapPhrases);
-      allPhrases = shuffle(allPhrases);
-
-      // Combine all phrases with desired priority order
-      const combinedPhrases = [...sportPhrases, ...ogCapPhrases, ...allPhrases];
+      // Combine per spec
+      const combined = [...shuffle(sportSpecific), ...shuffle(ogCapType), ...shuffle(others)];
 
       // Pagination slice
       const startIndex = loadMore ? this.phraseButtonsData.length : 0;
-      const phrasesToLoad = combinedPhrases.slice(startIndex, startIndex + PAGE_LIMIT);
+      const phrasesToLoad = combined.slice(startIndex, startIndex + PAGE_LIMIT);
 
       if (phrasesToLoad.length === 0) {
         console.log('[LoadPhrases] No more phrases to load.');
@@ -664,7 +657,7 @@ export class AddNewWorkflow {
 
       this.renderButtons(this.phraseButtonsData, 'phrase');
 
-      if (startIndex + PAGE_LIMIT < combinedPhrases.length) {
+      if (startIndex + PAGE_LIMIT < combined.length) {
         this.loadMoreBtn.style.display = 'inline-block';
       } else {
         this.loadMoreBtn.style.display = 'none';
@@ -680,14 +673,19 @@ export class AddNewWorkflow {
   // ########################################
   // Notes Section  #notes
   // ########################################
-  // Notes textarea is always shown above Submit (no question ask anymore)
-  askNotes() {
-    console.log('[AskNotes] Displaying notes/comments section');
+  // Display Notes textarea above Submit, no longer ask question
+  showNotesSection() {
+    console.log('[Notes] Showing Notes/Comments section (optional)');
     this.step = 8;
+    this.notesTextarea.value = this.notes || '';
+    const remaining = 100 - this.notesTextarea.value.length;
+    this.charCount.textContent = `${remaining} characters remaining`;
     this.notesContainer.style.display = 'block';
     this.submitBtn.style.display = 'inline-block';
 
     this.titleEl.textContent = 'Notes/Comments (Optional)';
+
+    // Clear buttons, no other buttons at this stage
     this.buttonsWrapper.innerHTML = '';
   }
 
@@ -726,7 +724,7 @@ export class AddNewWorkflow {
       btn.classList.add('admin-button');
 
       // Format multiline games with line breaks
-      if (type === 'game') {
+      if (type === 'game' || type === 'unit') {
         btn.style.whiteSpace = 'pre-line';
         btn.innerHTML = label.replace(/\n/g, '<br>');
       } else {
@@ -810,7 +808,7 @@ export class AddNewWorkflow {
               this.step = 8;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'inline-block';
-              this.askNotes();
+              this.showNotesSection();
             }
             break;
         }
@@ -858,7 +856,9 @@ export class AddNewWorkflow {
       });
 
       console.log('[Submit] Submission successful');
+
       this.setStatus(`Your ${this.selectedTeam} ${this.selectedUnit} ${this.selectedWagerType} Official Pick has been Successfully Saved.`);
+
       this.submitBtn.style.display = 'none';
       this.notesContainer.style.display = 'none';
 
