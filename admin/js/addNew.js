@@ -19,19 +19,16 @@ export class AddNewWorkflow {
     this.container = container;
     this.userId = userId;
 
-    // Pagination cursors: track the last visible doc for each paginated collection
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
     this.phraseLastVisible = null;
 
-    // Data arrays to keep track of fetched buttons and prevent duplicates
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
 
-    // User selections across steps
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
@@ -40,18 +37,19 @@ export class AddNewWorkflow {
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
-    this.wagerNumberValue = null; // For number input in wagerType
+    this.wagerNumberValue = null;
 
-    this.step = 1; // Current workflow step tracker
+    this.step = 1;
 
-    // Initialize UI elements and begin by loading sports buttons
     this.renderInitialUI();
     this.loadSports();
   }
 
-  // ###############################
-  // UI INITIALIZATION
-  // ###############################
+  // Helper to add space before PLUS, MINUS, OVER, UNDER keywords
+  addSpaceBeforeKeywords(label) {
+    return label.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
+  }
+
   clearContainer() {
     this.container.innerHTML = '';
   }
@@ -60,12 +58,11 @@ export class AddNewWorkflow {
     console.log('[Init] Rendering initial UI');
     this.clearContainer();
 
-    // Title element: displays current step instructions or selections
-    this.titleEl = document.createElement('h2');
+    // Changed from h2 to h5 for smaller header
+    this.titleEl = document.createElement('h5');
     this.titleEl.id = 'workflowTitle';
     this.container.appendChild(this.titleEl);
 
-    // Container div for all buttons in the workflow
     this.buttonsWrapper = document.createElement('div');
     this.buttonsWrapper.id = 'buttonsWrapper';
     this.buttonsWrapper.style.display = 'grid';
@@ -73,7 +70,6 @@ export class AddNewWorkflow {
     this.buttonsWrapper.style.gap = '8px';
     this.container.appendChild(this.buttonsWrapper);
 
-    // "Load More" button for paginated data loading, hidden by default
     this.loadMoreBtn = document.createElement('button');
     this.loadMoreBtn.textContent = 'Load More';
     this.loadMoreBtn.classList.add('admin-button');
@@ -82,7 +78,6 @@ export class AddNewWorkflow {
     this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
     this.container.appendChild(this.loadMoreBtn);
 
-    // Submit button, only shown on the last step after phrase selection
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = 'Submit';
     this.submitBtn.classList.add('admin-button');
@@ -91,12 +86,10 @@ export class AddNewWorkflow {
     this.submitBtn.addEventListener('click', () => this.onSubmit());
     this.container.appendChild(this.submitBtn);
 
-    // Status message paragraph for user feedback and errors
     this.statusMsg = document.createElement('p');
     this.statusMsg.style.marginTop = '16px';
     this.container.appendChild(this.statusMsg);
 
-    // Notes container with textarea, shown on last step, above Submit button
     this.notesContainer = document.createElement('div');
     this.notesContainer.style.marginTop = '16px';
     this.notesContainer.style.display = 'none';
@@ -122,7 +115,6 @@ export class AddNewWorkflow {
 
     this.container.appendChild(this.notesContainer);
 
-    // ** Insert notesContainer before submitBtn so notes appear above Submit button **
     this.container.insertBefore(this.notesContainer, this.submitBtn);
   }
 
@@ -132,9 +124,6 @@ export class AddNewWorkflow {
     console.log(`[Status] ${msg}`);
   }
 
-  // ########################################
-  // Sport Buttons  #sports
-  // ########################################
   async loadSports(loadMore = false) {
     console.log('[LoadSports] Loading sports...');
     this.step = 1;
@@ -201,9 +190,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // League Buttons  #league
-  // ########################################
   async loadLeagues(loadMore = false) {
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
@@ -277,9 +263,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Game Buttons  #games
-  // ########################################
   async loadGames(loadMore = false) {
     if (!this.selectedLeague) {
       this.setStatus('Please select a league first.', true);
@@ -369,9 +352,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Format Game Display Text  #formatGame
-  // ########################################
   formatGameDisplay(game) {
     const awayTeam = game.awayTeam || '';
     const homeTeam = game.homeTeam || '';
@@ -419,9 +399,6 @@ export class AddNewWorkflow {
     return `${awayTeam}\n@ ${homeTeam}\n${dateLabel}`;
   }
 
-  // ########################################
-  // Team Selection Buttons  #teams
-  // ########################################
   async loadTeams() {
     if (!this.selectedGame) {
       this.setStatus('Please select a game first.', true);
@@ -444,9 +421,6 @@ export class AddNewWorkflow {
     this.renderButtons(teams, 'team');
   }
 
-  // ########################################
-  // Wager Types Buttons  #wagerTypes
-  // ########################################
   async loadWagerTypes() {
     if (!this.selectedTeam) {
       this.setStatus('Please select a team first.', true);
@@ -537,9 +511,6 @@ export class AddNewWorkflow {
     return formatted;
   }
 
-  // ########################################
-  // Units Buttons  #units
-  // ########################################
   async loadUnits() {
     if (!this.selectedWagerType) {
       this.setStatus('Please select a wager type first.', true);
@@ -548,7 +519,7 @@ export class AddNewWorkflow {
 
     console.log(`[LoadUnits] Loading units for wager type: ${this.selectedWagerType}`);
     this.step = 6;
-    this.titleEl.textContent = `Select Units for ${this.selectedWagerType}`;
+    this.titleEl.textContent = `Select Units for ${this.addSpaceBeforeKeywords(this.selectedWagerType)}`;
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -579,9 +550,6 @@ export class AddNewWorkflow {
     return label.replace(/\(([^)]+)\)/g, '<br>($1)');
   }
 
-  // ########################################
-  // Phrases Buttons  #phrases
-  // ########################################
   async loadPhrases(loadMore = false) {
     if (!this.selectedUnit) {
       this.setStatus('Please select units first.', true);
@@ -642,9 +610,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Notes Section  #notes
-  // ########################################
   showNotesSection() {
     console.log('[Notes] Showing Notes/Comments section (optional)');
     this.step = 8;
@@ -659,9 +624,6 @@ export class AddNewWorkflow {
     this.buttonsWrapper.innerHTML = '';
   }
 
-  // ########################################
-  // Load More Pagination Button Handler
-  // ########################################
   async onLoadMore() {
     console.log(`[LoadMore] Load More clicked at step ${this.step}`);
     switch (this.step) {
@@ -682,9 +644,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Button Rendering and Click Handling  #renderButtons
-  // ########################################
   renderButtons(items, type) {
     console.log(`[RenderButtons] Rendering ${items.length} buttons for type: ${type}`);
     this.buttonsWrapper.innerHTML = '';
@@ -751,7 +710,6 @@ export class AddNewWorkflow {
             }
             break;
           case 'wagerType':
-            // WagerType clicks handled in renderWagerTypes()
             break;
           case 'unit':
             if (this.selectedUnit !== label) {
@@ -780,9 +738,6 @@ export class AddNewWorkflow {
     });
   }
 
-  // ########################################
-  // Final Submit Handler  #submit
-  // ########################################
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
@@ -799,7 +754,6 @@ export class AddNewWorkflow {
       return;
     }
 
-    // Validate wager number if required
     if (this.selectedWagerType.includes('[[NUM]]') && (this.wagerNumberValue === null || this.wagerNumberValue === undefined)) {
       this.setStatus('Please enter a valid wager number.', true);
       return;
@@ -833,9 +787,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Show Submission Summary (NEW)
-  // ########################################
   showSubmissionSummary() {
     this.titleEl.textContent = 'Submission Summary';
 
@@ -876,9 +827,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // ########################################
-  // Reset Workflow for Fresh Start  #reset
-  // ########################################
   resetWorkflow() {
     console.log('[Reset] Resetting workflow for new submission');
     this.step = 1;
@@ -911,9 +859,6 @@ export class AddNewWorkflow {
     this.loadSports();
   }
 
-  // ########################################
-  // Number Input Modal for WagerType with [[NUM]]
-  // ########################################
   showNumberInputModal(wagerLabel) {
     return new Promise((resolve) => {
       const modal = document.createElement('div');
@@ -959,7 +904,6 @@ export class AddNewWorkflow {
       input.style.border = '1px solid #ccc';
       input.style.borderRadius = '6px';
       input.style.fontFamily = "'Oswald', sans-serif";
-      // Removed inline width here so CSS controls input width
       content.appendChild(input);
 
       const submitBtn = document.createElement('button');
