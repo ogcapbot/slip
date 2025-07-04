@@ -13,34 +13,28 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-/**
- * This module manages the 2-step selection workflow:
- * Step 1: Select sportName
- * Step 2: Select leagueName filtered by sportName
- * Shows buttons in 3 columns, paginated with Load More
- * Only after both selections, shows Submit button.
- * On submit, saves selection to UserSubmissions collection.
- */
-
 export class AddNewWorkflow {
   constructor(container, userId) {
     this.container = container; // DOM element to render UI
     this.userId = userId;
 
-    this.step = 1; // Current step: 1 = sport, 2 = league
+    this.step = 1; // 1=sport, 2=league, 3=game, 4=teams
     this.selectedSport = null;
     this.selectedLeague = null;
+    this.selectedGame = null;
 
     // Pagination state
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
+    this.gameLastVisible = null;
 
     // Button limit per page
     this.PAGE_LIMIT = 15;
 
-    // Store fetched buttons per step to avoid duplicates
+    // Store fetched buttons per step
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
+    this.gameButtonsData = [];
 
     this.renderInitialUI();
     this.loadSports();
@@ -53,13 +47,11 @@ export class AddNewWorkflow {
   renderInitialUI() {
     this.clearContainer();
 
-    // Title
     const title = document.createElement('h2');
     title.textContent = 'Please select a Sport';
     title.id = 'workflowTitle';
     this.container.appendChild(title);
 
-    // Buttons container
     this.buttonsWrapper = document.createElement('div');
     this.buttonsWrapper.id = 'buttonsWrapper';
     this.buttonsWrapper.style.display = 'grid';
@@ -67,7 +59,6 @@ export class AddNewWorkflow {
     this.buttonsWrapper.style.gap = '8px';
     this.container.appendChild(this.buttonsWrapper);
 
-    // Load More button (hidden initially)
     this.loadMoreBtn = document.createElement('button');
     this.loadMoreBtn.textContent = 'Load More';
     this.loadMoreBtn.classList.add('admin-button');
@@ -76,7 +67,6 @@ export class AddNewWorkflow {
     this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
     this.container.appendChild(this.loadMoreBtn);
 
-    // Submit button (hidden initially)
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = 'Submit';
     this.submitBtn.classList.add('admin-button');
@@ -85,7 +75,6 @@ export class AddNewWorkflow {
     this.submitBtn.addEventListener('click', () => this.onSubmit());
     this.container.appendChild(this.submitBtn);
 
-    // Status message
     this.statusMsg = document.createElement('p');
     this.statusMsg.style.marginTop = '16px';
     this.container.appendChild(this.statusMsg);
@@ -96,25 +85,23 @@ export class AddNewWorkflow {
     this.statusMsg.style.color = isError ? 'red' : 'inherit';
   }
 
+  // --- Load sports from SportsData collection ---
   async loadSports(loadMore = false) {
     this.setStatus('Loading sports...');
     try {
-      // Firestore does NOT support distinct queries, so we:
-      // 1) Query all sportNames with limit + pagination
-      // 2) Filter unique sportNames client side
-
-      // Query all documents ordered by sportName (to paginate)
       let q;
       if (!loadMore || !this.sportLastVisible) {
         q = query(
-          collection(db, 'GameEventsData'),
-          orderBy('sportName'),
+          collection(db, 'SportsData'),
+          where('active', '==', true),
+          orderBy('title'),
           limit(this.PAGE_LIMIT)
         );
       } else {
         q = query(
-          collection(db, 'GameEventsData'),
-          orderBy('sportName'),
+          collection(db, 'SportsData'),
+          where('active', '==', true),
+          orderBy('title'),
           startAfter(this.sportLastVisible),
           limit(this.PAGE_LIMIT)
         );
@@ -129,29 +116,23 @@ export class AddNewWorkflow {
 
       this.sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      // Extract sportNames and deduplicate
       const newSports = [];
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (
-          data.sportName &&
-          !this.sportButtonsData.find(s => s === data.sportName)
+          data.title &&
+          !this.sportButtonsData.includes(data.title)
         ) {
-          newSports.push(data.sportName);
+          newSports.push(data.title);
         }
       });
 
       this.sportButtonsData.push(...newSports);
 
-      // Alphabetize full sport list
-      this.sportButtonsData = [...new Set(this.sportButtonsData)].sort((a, b) =>
-        a.localeCompare(b)
-      );
+      this.sportButtonsData = [...new Set(this.sportButtonsData)].sort((a,b) => a.localeCompare(b));
 
-      // Render sport buttons
       this.renderButtons(this.sportButtonsData, 'sport');
 
-      // Show Load More only if snapshot size == PAGE_LIMIT (might be more data)
       if (snapshot.docs.length === this.PAGE_LIMIT) {
         this.loadMoreBtn.style.display = 'inline-block';
       } else {
@@ -165,6 +146,7 @@ export class AddNewWorkflow {
     }
   }
 
+  // --- Load leagues filtered by selectedSport from GameEventsData ---
   async loadLeagues(loadMore = false) {
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
@@ -179,14 +161,14 @@ export class AddNewWorkflow {
         q = query(
           collection(db, 'GameEventsData'),
           where('sportName', '==', this.selectedSport),
-          orderBy('leagueName'),
+          orderBy('leagueShortname'),
           limit(this.PAGE_LIMIT)
         );
       } else {
         q = query(
           collection(db, 'GameEventsData'),
           where('sportName', '==', this.selectedSport),
-          orderBy('leagueName'),
+          orderBy('leagueShortname'),
           startAfter(this.leagueLastVisible),
           limit(this.PAGE_LIMIT)
         );
@@ -205,18 +187,16 @@ export class AddNewWorkflow {
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (
-          data.leagueName &&
-          !this.leagueButtonsData.find(l => l === data.leagueName)
+          data.leagueShortname &&
+          !this.leagueButtonsData.includes(data.leagueShortname)
         ) {
-          newLeagues.push(data.leagueName);
+          newLeagues.push(data.leagueShortname);
         }
       });
 
       this.leagueButtonsData.push(...newLeagues);
 
-      this.leagueButtonsData = [...new Set(this.leagueButtonsData)].sort((a, b) =>
-        a.localeCompare(b)
-      );
+      this.leagueButtonsData = [...new Set(this.leagueButtonsData)].sort((a,b) => a.localeCompare(b));
 
       this.renderButtons(this.leagueButtonsData, 'league');
 
@@ -233,8 +213,81 @@ export class AddNewWorkflow {
     }
   }
 
+  // --- Load games filtered by selected sport & league ---
+  async loadGames(loadMore = false) {
+    if (!this.selectedSport || !this.selectedLeague) {
+      this.setStatus('Please select both sport and league first.', true);
+      return;
+    }
+
+    this.setStatus(`Loading games for ${this.selectedSport} / ${this.selectedLeague}...`);
+
+    try {
+      let q;
+      if (!loadMore || !this.gameLastVisible) {
+        q = query(
+          collection(db, 'GameEventsData'),
+          where('sportName', '==', this.selectedSport),
+          where('leagueShortname', '==', this.selectedLeague),
+          orderBy('startTimeET'),
+          limit(this.PAGE_LIMIT)
+        );
+      } else {
+        q = query(
+          collection(db, 'GameEventsData'),
+          where('sportName', '==', this.selectedSport),
+          where('leagueShortname', '==', this.selectedLeague),
+          orderBy('startTimeET'),
+          startAfter(this.gameLastVisible),
+          limit(this.PAGE_LIMIT)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        this.loadMoreBtn.style.display = 'none';
+        this.setStatus('No more games to load.');
+        return;
+      }
+
+      this.gameLastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+      const newGames = [];
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        // Compose label like: "AwayTeam @ HomeTeam [[startTimeET]]"
+        const label = `${data.awayTeam} @ ${data.homeTeam} [[${data.startTimeET}]]`;
+        if (
+          label &&
+          !this.gameButtonsData.includes(label)
+        ) {
+          newGames.push({ label, docId: doc.id });
+        }
+      });
+
+      this.gameButtonsData.push(...newGames);
+
+      // Unique by label, sort by label alphabetically
+      this.gameButtonsData = this.gameButtonsData.filter((v,i,a) => a.findIndex(t => (t.label === v.label)) === i);
+      this.gameButtonsData.sort((a,b) => a.label.localeCompare(b.label));
+
+      this.renderButtons(this.gameButtonsData.map(g => g.label), 'game');
+
+      if (snapshot.docs.length === this.PAGE_LIMIT) {
+        this.loadMoreBtn.style.display = 'inline-block';
+      } else {
+        this.loadMoreBtn.style.display = 'none';
+      }
+
+      this.setStatus('');
+    } catch (error) {
+      console.error('Error loading games:', error);
+      this.setStatus('Failed to load games.', true);
+    }
+  }
+
+  // --- Render buttons and handle click events ---
   renderButtons(buttons, type) {
-    // Clear previous buttons for this step
     this.buttonsWrapper.innerHTML = '';
 
     buttons.forEach(label => {
@@ -242,10 +295,11 @@ export class AddNewWorkflow {
       btn.textContent = label;
       btn.classList.add('admin-button');
 
-      // Highlight if selected
+      // Highlight selected
       if (
         (type === 'sport' && this.selectedSport === label) ||
-        (type === 'league' && this.selectedLeague === label)
+        (type === 'league' && this.selectedLeague === label) ||
+        (type === 'game' && this.selectedGame === label)
       ) {
         btn.classList.add('active');
       }
@@ -257,26 +311,51 @@ export class AddNewWorkflow {
             this.selectedLeague = null;
             this.leagueButtonsData = [];
             this.leagueLastVisible = null;
+
+            this.selectedGame = null;
+            this.gameButtonsData = [];
+            this.gameLastVisible = null;
+
             this.step = 2;
             this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'none';
 
-            // Update title and load leagues
             document.getElementById('workflowTitle').textContent =
               `Selected Sport: ${label} — Select a League`;
+
             this.loadLeagues();
           }
         } else if (type === 'league') {
-          this.selectedLeague = label;
+          if (this.selectedLeague !== label) {
+            this.selectedLeague = label;
 
-          // Update highlight
-          this.renderButtons(this.leagueButtonsData, 'league');
+            this.selectedGame = null;
+            this.gameButtonsData = [];
+            this.gameLastVisible = null;
 
-          // Show Submit button now
-          this.submitBtn.style.display = 'inline-block';
-          this.setStatus(
-            `Selected Sport: ${this.selectedSport}, League: ${this.selectedLeague}`
-          );
+            this.step = 3;
+            this.loadMoreBtn.style.display = 'none';
+            this.submitBtn.style.display = 'none';
+
+            document.getElementById('workflowTitle').textContent =
+              `Selected League: ${label} — Select a Game`;
+
+            this.loadGames();
+          }
+        } else if (type === 'game') {
+          if (this.selectedGame !== label) {
+            this.selectedGame = label;
+
+            this.step = 4;
+            this.loadMoreBtn.style.display = 'none';
+            this.submitBtn.style.display = 'inline-block';
+
+            document.getElementById('workflowTitle').textContent =
+              `Selected Game: ${label} — Select Away or Home Team`;
+
+            // Render two buttons: awayTeam and homeTeam
+            this.renderTeamsButtons();
+          }
         }
       });
 
@@ -284,56 +363,90 @@ export class AddNewWorkflow {
     });
   }
 
+  // --- Render two buttons for awayTeam and homeTeam ---
+  renderTeamsButtons() {
+    this.buttonsWrapper.innerHTML = '';
+
+    // Find the selected game object
+    const gameObj = this.gameButtonsData.find(g => g.label === this.selectedGame);
+    if (!gameObj) {
+      this.setStatus('Selected game data not found.', true);
+      return;
+    }
+
+    // Parse awayTeam and homeTeam from label (formatted as "AwayTeam @ HomeTeam [[time]]")
+    const regex = /^(.+?) @ (.+?) \[\[.*\]\]$/;
+    const match = regex.exec(gameObj.label);
+    if (!match) {
+      this.setStatus('Failed to parse teams from selected game.', true);
+      return;
+    }
+
+    const awayTeam = match[1];
+    const homeTeam = match[2];
+
+    const awayBtn = document.createElement('button');
+    awayBtn.textContent = awayTeam;
+    awayBtn.classList.add('admin-button');
+    awayBtn.addEventListener('click', () => this.onTeamSelected(awayTeam));
+
+    const homeBtn = document.createElement('button');
+    homeBtn.textContent = homeTeam;
+    homeBtn.classList.add('admin-button');
+    homeBtn.addEventListener('click', () => this.onTeamSelected(homeTeam));
+
+    this.buttonsWrapper.appendChild(awayBtn);
+    this.buttonsWrapper.appendChild(homeBtn);
+  }
+
+  onTeamSelected(teamName) {
+    this.setStatus(`You selected team: ${teamName}`);
+    this.submitBtn.style.display = 'inline-block';
+    // You can handle team selection submission here or elsewhere
+  }
+
   async onLoadMore() {
     if (this.step === 1) {
       await this.loadSports(true);
     } else if (this.step === 2) {
       await this.loadLeagues(true);
+    } else if (this.step === 3) {
+      await this.loadGames(true);
     }
   }
 
   async onSubmit() {
-    if (!this.selectedSport || !this.selectedLeague) {
-      this.setStatus('Please select both sport and league before submitting.', true);
-      return;
-    }
-
     this.setStatus('Submitting your selection...');
-
     try {
-      await addDoc(collection(db, 'UserSubmissions'), {
+      const dataToSubmit = {
         userId: this.userId,
-        sportName: this.selectedSport,
-        leagueName: this.selectedLeague,
         timestamp: Timestamp.now(),
-      });
+      };
+
+      if (this.step === 2) {
+        dataToSubmit.sportName = this.selectedSport;
+        dataToSubmit.leagueName = this.selectedLeague;
+      } else if (this.step === 3) {
+        dataToSubmit.sportName = this.selectedSport;
+        dataToSubmit.leagueName = this.selectedLeague;
+        dataToSubmit.gameLabel = this.selectedGame;
+      } else if (this.step === 4) {
+        dataToSubmit.teamName = this.selectedTeam;
+        dataToSubmit.sportName = this.selectedSport;
+        dataToSubmit.leagueName = this.selectedLeague;
+        dataToSubmit.gameLabel = this.selectedGame;
+      } else {
+        this.setStatus('Nothing selected to submit.', true);
+        return;
+      }
+
+      await addDoc(collection(db, 'UserSubmissions'), dataToSubmit);
 
       this.setStatus('Submission successful! Thank you.');
       this.submitBtn.style.display = 'none';
-
-      // Optionally reset workflow or keep selection locked
-      // this.resetWorkflow();
-
     } catch (error) {
       console.error('Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
     }
-  }
-
-  resetWorkflow() {
-    this.step = 1;
-    this.selectedSport = null;
-    this.selectedLeague = null;
-    this.sportLastVisible = null;
-    this.leagueLastVisible = null;
-    this.sportButtonsData = [];
-    this.leagueButtonsData = [];
-
-    document.getElementById('workflowTitle').textContent = 'Please select a Sport';
-    this.loadMoreBtn.style.display = 'none';
-    this.submitBtn.style.display = 'none';
-    this.setStatus('');
-
-    this.loadSports();
   }
 }
