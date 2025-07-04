@@ -2,6 +2,7 @@ showNumberInputModal(wagerLabel) {
   return new Promise((resolve) => {
     // Create modal background
     const modal = document.createElement('div');
+    modal.id = 'numberModal'; // <-- added to match your CSS
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
@@ -40,7 +41,7 @@ showNumberInputModal(wagerLabel) {
     input.min = '0';
     input.step = '0.5';
     input.placeholder = 'e.g. 1, 1.5, 2';
-    input.style.width = '130px';
+    // Removed input.style.width so CSS controls it
     input.style.fontSize = '1rem';
     input.style.padding = '6px 8px';
     input.style.marginBottom = '18px';
