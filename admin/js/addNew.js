@@ -20,7 +20,6 @@ export class AddNewWorkflow {
 
     this.step = 1; // 1=Sport,2=League,3=Game,4=Team,5=WagerType,6=Unit,7=Phrase,8=Notes
 
-    // Pagination cursors for each collection
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
@@ -28,10 +27,8 @@ export class AddNewWorkflow {
     this.unitLastVisible = null;
     this.phraseLastVisible = null;
 
-    // Limits
     this.PAGE_LIMIT = 200;
 
-    // Data storage for buttons
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
@@ -39,7 +36,6 @@ export class AddNewWorkflow {
     this.unitButtonsData = [];
     this.phraseButtonsData = [];
 
-    // Selected values
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
@@ -49,7 +45,6 @@ export class AddNewWorkflow {
     this.selectedPhrase = null;
     this.notesText = '';
 
-    // Initialize UI
     this.renderInitialUI();
     this.loadSports();
   }
@@ -62,9 +57,9 @@ export class AddNewWorkflow {
     this.clearContainer();
 
     // Title
-    this.titleEl = document.createElement('h2');
-    this.titleEl.id = 'workflowTitle';
-    this.container.appendChild(this.titleEl);
+    this.title = document.createElement('h2');
+    this.title.id = 'workflowTitle';
+    this.container.appendChild(this.title);
 
     // Buttons container
     this.buttonsWrapper = document.createElement('div');
@@ -97,13 +92,44 @@ export class AddNewWorkflow {
     this.statusMsg.style.marginTop = '16px';
     this.container.appendChild(this.statusMsg);
 
-    // Notes container (for step 8)
+    // Notes textarea (hidden initially)
     this.notesContainer = document.createElement('div');
     this.notesContainer.style.marginTop = '16px';
     this.notesContainer.style.display = 'none';
     this.container.appendChild(this.notesContainer);
 
-    this.setStatus('');
+    this.renderStatusAndTitle();
+  }
+
+  renderStatusAndTitle() {
+    switch (this.step) {
+      case 1:
+        this.title.textContent = 'Please select a Sport';
+        break;
+      case 2:
+        this.title.textContent = `Selected Sport: ${this.selectedSport} — Select a League`;
+        break;
+      case 3:
+        this.title.textContent = `Selected League: ${this.selectedLeague} — Select a Game`;
+        break;
+      case 4:
+        this.title.textContent = `Selected Game: ${this.selectedGame.awayTeam} @ ${this.selectedGame.homeTeam} — Select a Team`;
+        break;
+      case 5:
+        this.title.textContent = `Selected Team: ${this.selectedTeam} — Select a Wager Type`;
+        break;
+      case 6:
+        this.title.textContent = `Selected Wager Type: ${this.selectedWagerType} — Select a Unit`;
+        break;
+      case 7:
+        this.title.textContent = `Selected Unit: ${this.selectedUnit} — Select a Phrase`;
+        break;
+      case 8:
+        this.title.textContent = `Selected Phrase: ${this.selectedPhrase} — Notes?`;
+        break;
+      default:
+        this.title.textContent = '';
+    }
   }
 
   setStatus(message, isError = false) {
@@ -112,27 +138,16 @@ export class AddNewWorkflow {
   }
 
   async loadSports(loadMore = false) {
-    this.step = 1;
-    this.titleEl.textContent = 'Please select a Sport';
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.sportLastVisible = null;
-      this.sportButtonsData = [];
-    }
-
     this.setStatus('Loading sports...');
     try {
       const sportsRef = collection(db, 'SportsData');
       let q;
 
-      if (this.sportLastVisible) {
+      if (!loadMore || !this.sportLastVisible) {
         q = query(
           sportsRef,
           where('active', '==', true),
-          orderBy('group'), // group = sport
-          startAfter(this.sportLastVisible),
+          orderBy('group'),
           limit(this.PAGE_LIMIT)
         );
       } else {
@@ -140,32 +155,29 @@ export class AddNewWorkflow {
           sportsRef,
           where('active', '==', true),
           orderBy('group'),
+          startAfter(this.sportLastVisible),
           limit(this.PAGE_LIMIT)
         );
       }
 
       const snapshot = await getDocs(q);
-
       if (snapshot.empty) {
         this.loadMoreBtn.style.display = 'none';
-        if (!loadMore) {
-          this.setStatus('No sports found.');
-        } else {
-          this.setStatus('No more sports to load.');
-        }
+        this.setStatus('No more sports to load.');
         return;
       }
 
       this.sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      // Extract unique sports by group field
-      const newSports = snapshot.docs
-        .map((doc) => doc.data().group)
-        .filter((group) => !this.sportButtonsData.includes(group));
+      const newSports = [];
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.group && !this.sportButtonsData.includes(data.group)) {
+          newSports.push(data.group);
+        }
+      });
 
       this.sportButtonsData.push(...newSports);
-
-      // Alphabetize
       this.sportButtonsData = [...new Set(this.sportButtonsData)].sort();
 
       this.renderButtons(this.sportButtonsData, 'sport');
@@ -185,58 +197,48 @@ export class AddNewWorkflow {
       this.setStatus('Please select a sport first.', true);
       return;
     }
-    this.step = 2;
-    this.titleEl.textContent = `Selected Sport: ${this.selectedSport} — Select a League`;
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.leagueLastVisible = null;
-      this.leagueButtonsData = [];
-    }
-
-    this.setStatus('Loading leagues...');
+    this.setStatus(`Loading leagues for ${this.selectedSport}...`);
     try {
       const sportsRef = collection(db, 'SportsData');
       let q;
 
-      if (this.leagueLastVisible) {
+      if (!loadMore || !this.leagueLastVisible) {
         q = query(
           sportsRef,
           where('group', '==', this.selectedSport),
-          orderBy('title'), // title = league
-          startAfter(this.leagueLastVisible),
+          where('active', '==', true),
+          orderBy('title'),
           limit(this.PAGE_LIMIT)
         );
       } else {
         q = query(
           sportsRef,
           where('group', '==', this.selectedSport),
+          where('active', '==', true),
           orderBy('title'),
+          startAfter(this.leagueLastVisible),
           limit(this.PAGE_LIMIT)
         );
       }
 
       const snapshot = await getDocs(q);
-
       if (snapshot.empty) {
         this.loadMoreBtn.style.display = 'none';
-        if (!loadMore) {
-          this.setStatus('No leagues found.');
-        } else {
-          this.setStatus('No more leagues to load.');
-        }
+        this.setStatus('No more leagues to load.');
         return;
       }
 
       this.leagueLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      const newLeagues = snapshot.docs
-        .map((doc) => doc.data().title)
-        .filter((title) => !this.leagueButtonsData.includes(title));
+      const newLeagues = [];
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.title && !this.leagueButtonsData.includes(data.title)) {
+          newLeagues.push(data.title);
+        }
+      });
 
       this.leagueButtonsData.push(...newLeagues);
-
       this.leagueButtonsData = [...new Set(this.leagueButtonsData)].sort();
 
       this.renderButtons(this.leagueButtonsData, 'league');
@@ -256,27 +258,16 @@ export class AddNewWorkflow {
       this.setStatus('Please select a league first.', true);
       return;
     }
-    this.step = 3;
-    this.titleEl.textContent = `Selected League: ${this.selectedLeague} — Select a Game`;
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.gameLastVisible = null;
-      this.gameButtonsData = [];
-    }
-
-    this.setStatus('Loading games...');
+    this.setStatus(`Loading games for ${this.selectedLeague}...`);
     try {
       const gamesRef = collection(db, 'GameEventsData');
       let q;
 
-      if (this.gameLastVisible) {
+      if (!loadMore || !this.gameLastVisible) {
         q = query(
           gamesRef,
           where('leagueShortname', '==', this.selectedLeague),
           orderBy('startTimeUTC'),
-          startAfter(this.gameLastVisible),
           limit(this.PAGE_LIMIT)
         );
       } else {
@@ -284,44 +275,41 @@ export class AddNewWorkflow {
           gamesRef,
           where('leagueShortname', '==', this.selectedLeague),
           orderBy('startTimeUTC'),
+          startAfter(this.gameLastVisible),
           limit(this.PAGE_LIMIT)
         );
       }
 
       const snapshot = await getDocs(q);
-
       if (snapshot.empty) {
         this.loadMoreBtn.style.display = 'none';
-        if (!loadMore) {
-          this.setStatus('No games found.');
-        } else {
-          this.setStatus('No more games to load.');
-        }
+        this.setStatus('No more games to load.');
         return;
       }
 
       this.gameLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-      // Prepare formatted games list
       const newGames = [];
-
-      snapshot.docs.forEach((doc) => {
-        const d = doc.data();
-
-        // Format game date/time display
-        const gameDate = new Date(d.startTimeUTC);
-        const displayDate = this.getFormattedGameDate(gameDate);
-
-        const gameLabel = `${d.awayTeam}<br>@ ${d.homeTeam}<br>${displayDate}`;
-
-        if (!this.gameButtonsData.find((g) => g.id === doc.id)) {
-          newGames.push({ id: doc.id, label: gameLabel });
-        }
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        // Store the full data object for rendering and selection
+        newGames.push({
+          id: doc.id,
+          awayTeam: data.awayTeam,
+          homeTeam: data.homeTeam,
+          startTimeUTC: data.startTimeUTC,
+          startTimeET: data.startTimeET,
+        });
       });
 
       this.gameButtonsData.push(...newGames);
+      // Remove duplicates by id
+      const uniqueGames = [...new Map(this.gameButtonsData.map(g => [g.id, g])).values()];
+      this.gameButtonsData = uniqueGames.sort(
+        (a, b) => new Date(a.startTimeUTC) - new Date(b.startTimeUTC)
+      );
 
-      this.renderButtons(this.gameButtonsData.map((g) => g.label), 'game');
+      this.renderGameButtons(this.gameButtonsData);
 
       this.loadMoreBtn.style.display =
         snapshot.docs.length === this.PAGE_LIMIT ? 'inline-block' : 'none';
@@ -333,87 +321,18 @@ export class AddNewWorkflow {
     }
   }
 
-  // Format the game date/time as requested
-  getFormattedGameDate(gameDate) {
-    const now = new Date();
-    const estOptions = { timeZone: 'America/New_York', hour12: true };
-    const diffMs = gameDate.getTime() - now.getTime();
-    const diffMins = diffMs / (1000 * 60);
-
-    const estTime = gameDate.toLocaleTimeString('en-US', {
-      ...estOptions,
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-
-    // More than 2 days away, show full date & time
-    if (diffMins > 2 * 24 * 60) {
-      return gameDate.toLocaleDateString('en-US', {
-        ...estOptions,
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      }) + ` @ ${estTime} EST`;
-    }
-
-    // Within 15 mins: Starting Soon
-    if (diffMins >= 0 && diffMins <= 15) {
-      return `Game Starting Soon @ ${estTime} EST`;
-    }
-
-    // Within 60 mins: Game Starts
-    if (diffMins > 15 && diffMins <= 60) {
-      return `Game Starts @ ${estTime} EST`;
-    }
-
-    // Already started
-    if (diffMins < 0) {
-      return `Game Started @ ${estTime} EST`;
-    }
-
-    // Otherwise show day label + time
-    const dayLabel = this.getDayLabel(gameDate, now);
-    return `${dayLabel} ${estTime} EST`;
-  }
-
-  // Helper to get day label: Today, Tomorrow, or "Wed"
-  getDayLabel(gameDate, now) {
-    const gameDay = new Date(
-      gameDate.getFullYear(),
-      gameDate.getMonth(),
-      gameDate.getDate()
-    ).getTime();
-    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-    if (gameDay === nowDay) return 'Today';
-    if (gameDay === nowDay + 86400000) return 'Tomorrow';
-
-    return gameDate.toLocaleDateString('en-US', { weekday: 'short' });
-  }
-
   renderButtons(buttons, type) {
-    // Clear previous buttons for this step
     this.buttonsWrapper.innerHTML = '';
 
-    buttons.forEach((label, idx) => {
+    buttons.forEach(label => {
       const btn = document.createElement('button');
+      btn.textContent = label;
       btn.classList.add('admin-button');
 
-      // Use innerHTML for multi-line game buttons
-      if (type === 'game') {
-        btn.innerHTML = label;
-      } else {
-        btn.textContent = label;
-      }
-
-      // Highlight if selected
       if (
         (type === 'sport' && this.selectedSport === label) ||
         (type === 'league' && this.selectedLeague === label) ||
-        (type === 'game' && this.selectedGame === label) ||
-        (type === 'team' && this.selectedTeam === label) ||
-        (type === 'wager' && this.selectedWagerType === label) ||
+        (type === 'wagerType' && this.selectedWagerType === label) ||
         (type === 'unit' && this.selectedUnit === label) ||
         (type === 'phrase' && this.selectedPhrase === label)
       ) {
@@ -421,334 +340,166 @@ export class AddNewWorkflow {
       }
 
       btn.addEventListener('click', () => {
-        switch (type) {
-          case 'sport':
-            if (this.selectedSport !== label) {
-              this.selectedSport = label;
-              this.selectedLeague = null;
-              this.selectedGame = null;
-              this.selectedTeam = null;
-              this.selectedWagerType = null;
-              this.selectedUnit = null;
-              this.selectedPhrase = null;
-
-              this.leagueButtonsData = [];
-              this.leagueLastVisible = null;
-
-              this.gameButtonsData = [];
-              this.gameLastVisible = null;
-
-              this.wagerButtonsData = [];
-              this.wagerLastVisible = null;
-
-              this.unitButtonsData = [];
-              this.unitLastVisible = null;
-
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.step = 2;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.renderButtons([], 'league'); // clear leagues area first
-              this.loadLeagues();
-            }
-            break;
-
-          case 'league':
-            if (this.selectedLeague !== label) {
-              this.selectedLeague = label;
-              this.selectedGame = null;
-              this.selectedTeam = null;
-              this.selectedWagerType = null;
-              this.selectedUnit = null;
-              this.selectedPhrase = null;
-
-              this.gameButtonsData = [];
-              this.gameLastVisible = null;
-
-              this.wagerButtonsData = [];
-              this.wagerLastVisible = null;
-
-              this.unitButtonsData = [];
-              this.unitLastVisible = null;
-
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.step = 3;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.renderButtons([], 'game'); // clear games area first
-              this.loadGames();
-            }
-            break;
-
-          case 'game':
-            if (this.selectedGame !== label) {
-              this.selectedGame = label;
-              this.selectedTeam = null;
-              this.selectedWagerType = null;
-              this.selectedUnit = null;
-              this.selectedPhrase = null;
-
-              this.wagerButtonsData = [];
-              this.wagerLastVisible = null;
-
-              this.unitButtonsData = [];
-              this.unitLastVisible = null;
-
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.step = 4;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.renderButtons([], 'team'); // clear teams area first
-              this.renderTeamsButtons();
-            }
-            break;
-
-          case 'team':
-            if (this.selectedTeam !== label) {
-              this.selectedTeam = label;
-
-              this.step = 5;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.wagerButtonsData = [];
-              this.wagerLastVisible = null;
-              this.unitButtonsData = [];
-              this.unitLastVisible = null;
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.renderButtons([], 'wager'); // clear wager area first
-              this.loadWagerTypes();
-            }
-            break;
-
-          case 'wager':
-            if (this.selectedWagerType !== label) {
-              this.selectedWagerType = label;
-              this.selectedUnit = null;
-              this.selectedPhrase = null;
-
-              this.unitButtonsData = [];
-              this.unitLastVisible = null;
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.step = 6;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.renderButtons([], 'unit'); // clear unit area first
-              this.loadUnits();
-            }
-            break;
-
-          case 'unit':
-            if (this.selectedUnit !== label) {
-              this.selectedUnit = label;
-              this.selectedPhrase = null;
-
-              this.phraseButtonsData = [];
-              this.phraseLastVisible = null;
-
-              this.step = 7;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-
-              this.renderButtons([], 'phrase'); // clear phrase area first
-              this.loadHypePhrases();
-            }
-            break;
-
-          case 'phrase':
-            if (this.selectedPhrase !== label) {
-              this.selectedPhrase = label;
-
-              this.step = 8;
-              this.loadMoreBtn.style.display = 'none';
-
-              // Show notes question
-              this.renderNotesQuestion();
-            }
-            break;
-        }
+        this.onButtonClick(type, label);
       });
 
       this.buttonsWrapper.appendChild(btn);
     });
   }
 
-  renderTeamsButtons() {
-    // Teams step - display Away and Home buttons for selected game
+  renderGameButtons(games) {
     this.buttonsWrapper.innerHTML = '';
 
-    if (!this.selectedGame) {
-      this.setStatus('No game selected.', true);
-      return;
-    }
+    games.forEach(game => {
+      const btn = document.createElement('button');
+      btn.classList.add('admin-button');
 
-    this.setStatus('Select Away or Home Team');
+      // Format display with line breaks
+      btn.innerHTML = `
+        <div style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${game.awayTeam}
+        </div>
+        <div style="text-align:center; white-space: nowrap;">
+          @ ${game.homeTeam}
+        </div>
+        <div style="text-align:center; font-style: italic; font-size: smaller; white-space: nowrap;">
+          ${this.formatGameTime(game.startTimeUTC)}
+        </div>
+      `;
 
-    // Find the game object in gameButtonsData
-    const gameObj = this.gameButtonsData.find((g) => g.label === this.selectedGame);
-    if (!gameObj) {
-      this.setStatus('Game data not found.', true);
-      return;
-    }
+      btn.addEventListener('click', () => {
+        this.selectedGame = game;
+        this.step = 4;
+        this.selectedTeam = null;
+        this.renderStatusAndTitle();
+        this.loadMoreBtn.style.display = 'none';
+        this.submitBtn.style.display = 'none';
+        this.renderTeamButtons();
+      });
 
-    // Game label format: Away<br>@ Home<br>DateTime - extract teams
-    // We'll parse teams from the label safely:
-
-    // Using the stored GameEventData doc directly might be better, so let's store the actual doc data on gameButtonsData when loading
-
-    // Let's rework loadGames to store doc data for team selection (done above)
-
-    // Instead, here, find the doc from snapshot? For simplicity, store doc data on gameButtonsData for now.
-
-    // But for now, this simplified approach (might want to adjust):
-
-    // Find game data doc by id from Firestore (better way):
-
-    // I'll assume selectedGame is label string, but we stored id and label. Let's fix selection to store id for games.
-
-    // To fix: when clicking game, store game id, not label.
-
-    // Let's do that:
-    // - store selectedGame as id
-    // - display buttons with labels from gameButtonsData
-
-    // We will adjust renderButtons for game to store button dataset id for reference
-
-    this.setStatus('Loading teams...');
-
-    // Hide Load More button & Submit
-    this.loadMoreBtn.style.display = 'none';
-    this.submitBtn.style.display = 'none';
-
-    // Clear buttonsWrapper and add two buttons: awayTeam and homeTeam
-
-    // Get doc for selectedGame
-    const gameDoc = this.gameButtonsData.find((g) => g.id === this.selectedGame);
-    if (!gameDoc) {
-      this.setStatus('Game data not found.', true);
-      return;
-    }
-    const data = gameDoc.data;
-
-    // Build away and home buttons
-
-    this.buttonsWrapper.innerHTML = '';
-
-    // Away team button
-    const btnAway = document.createElement('button');
-    btnAway.textContent = data.awayTeam;
-    btnAway.classList.add('admin-button');
-    btnAway.addEventListener('click', () => this.onTeamSelected(data.awayTeam));
-    this.buttonsWrapper.appendChild(btnAway);
-
-    // Home team button
-    const btnHome = document.createElement('button');
-    btnHome.textContent = data.homeTeam;
-    btnHome.classList.add('admin-button');
-    btnHome.addEventListener('click', () => this.onTeamSelected(data.homeTeam));
-    this.buttonsWrapper.appendChild(btnHome);
+      this.buttonsWrapper.appendChild(btn);
+    });
   }
 
-  onTeamSelected(teamName) {
-    this.selectedTeam = teamName;
+  formatGameTime(startTimeUTC) {
+    const now = new Date();
+    const gameDate = new Date(startTimeUTC);
 
-    this.step = 5;
-    this.submitBtn.style.display = 'none';
-    this.loadMoreBtn.style.display = 'none';
+    const diffMs = gameDate - now;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
-    // Clear wager data and load wager types
-    this.wagerButtonsData = [];
-    this.wagerLastVisible = null;
+    // Convert to EST for display
+    const estOptions = { timeZone: 'America/New_York', hour12: true, hour: 'numeric', minute: '2-digit' };
+    const timeLabel = gameDate.toLocaleTimeString('en-US', estOptions);
 
-    this.unitButtonsData = [];
-    this.unitLastVisible = null;
+    if (diffMinutes < 0) {
+      return `Game Started @ ${timeLabel} EST`;
+    } else if (diffMinutes <= 15) {
+      return `Game Starting Soon @ ${timeLabel} EST`;
+    } else if (diffMinutes <= 60) {
+      return `Game Starts @ ${timeLabel} EST`;
+    } else if (diffHours < 2) {
+      return `Today ${timeLabel} EST`;
+    } else if (diffHours < 24) {
+      return `Tomorrow ${timeLabel} EST`;
+    } else {
+      // For 2+ days away, show full date + time
+      const options = {
+        timeZone: 'America/New_York',
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      };
+      return gameDate.toLocaleString('en-US', options) + ' EST';
+    }
+  }
 
-    this.phraseButtonsData = [];
-    this.phraseLastVisible = null;
+  renderTeamButtons() {
+    this.buttonsWrapper.innerHTML = '';
 
-    this.renderButtons([], 'wager');
-    this.loadWagerTypes();
+    ['awayTeam', 'homeTeam'].forEach(teamType => {
+      const teamName = this.selectedGame[teamType];
+      if (!teamName) return;
+
+      const btn = document.createElement('button');
+      btn.classList.add('admin-button');
+      btn.textContent = teamName;
+
+      if (this.selectedTeam === teamName) {
+        btn.classList.add('active');
+      }
+
+      btn.addEventListener('click', () => {
+        this.selectedTeam = teamName;
+        this.step = 5;
+        this.selectedWagerType = null;
+        this.renderStatusAndTitle();
+        this.loadMoreBtn.style.display = 'none';
+        this.submitBtn.style.display = 'none';
+        this.loadWagerTypes();
+      });
+
+      this.buttonsWrapper.appendChild(btn);
+    });
   }
 
   async loadWagerTypes(loadMore = false) {
-    if (!this.selectedSport) {
-      this.setStatus('Select a sport first.', true);
+    if (!this.selectedTeam) {
+      this.setStatus('Please select a team first.', true);
       return;
     }
-    this.step = 5;
-    this.titleEl.textContent = `Selected Sport: ${this.selectedSport} — Select a Wager Type`;
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.wagerLastVisible = null;
-      this.wagerButtonsData = [];
-    }
-
-    this.setStatus('Loading wager types...');
+    this.setStatus(`Loading wager types for ${this.selectedSport}...`);
     try {
-      const wagersRef = collection(db, 'WagerTypes');
+      const wagerRef = collection(db, 'WagerTypes');
+      let qGlobal, qSport;
 
-      // First, get 'All' wagers
-      const allQuery = query(
-        wagersRef,
+      qGlobal = query(
+        wagerRef,
         where('Sport', '==', 'All'),
         orderBy('Rank'),
         limit(this.PAGE_LIMIT)
       );
-      const allSnapshot = await getDocs(allQuery);
-      const allWagers = allSnapshot.docs.map((doc) => doc.data().Type || doc.id);
 
-      // Then get sport-specific wagers with pagination
-      let sportQuery;
-      if (this.wagerLastVisible) {
-        sportQuery = query(
-          wagersRef,
-          where('Sport', '==', this.selectedSport),
-          orderBy('Rank'),
-          startAfter(this.wagerLastVisible),
-          limit(this.PAGE_LIMIT)
-        );
-      } else {
-        sportQuery = query(
-          wagersRef,
-          where('Sport', '==', this.selectedSport),
-          orderBy('Rank'),
-          limit(this.PAGE_LIMIT)
-        );
+      qSport = query(
+        wagerRef,
+        where('Sport', '==', this.selectedSport),
+        orderBy('Rank'),
+        limit(this.PAGE_LIMIT)
+      );
+
+      const [globalSnap, sportSnap] = await Promise.all([getDocs(qGlobal), getDocs(qSport)]);
+
+      const globalWagers = [];
+      globalSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.WagerType && !this.wagerButtonsData.includes(data.WagerType)) {
+          globalWagers.push(data.WagerType);
+        }
+      });
+
+      const sportWagers = [];
+      sportSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.WagerType && !this.wagerButtonsData.includes(data.WagerType)) {
+          sportWagers.push(data.WagerType);
+        }
+      });
+
+      // Merge with a separator
+      this.wagerButtonsData = [];
+      this.wagerButtonsData.push(...globalWagers);
+      if (sportWagers.length > 0) {
+        this.wagerButtonsData.push('--- Sport Specific ---');
+        this.wagerButtonsData.push(...sportWagers);
       }
 
-      const sportSnapshot = await getDocs(sportQuery);
-      const sportWagers = sportSnapshot.docs.map((doc) => doc.data().Type || doc.id);
-
-      // Combine, deduplicate keeping order
-      const combined = [...new Set([...allWagers, ...sportWagers])];
-
-      // Pagination control - stop if no more sport wagers
-      if (sportSnapshot.docs.length === this.PAGE_LIMIT) {
-        this.wagerLastVisible = sportSnapshot.docs[sportSnapshot.docs.length - 1];
-        this.loadMoreBtn.style.display = 'inline-block';
-      } else {
-        this.loadMoreBtn.style.display = 'none';
-      }
-
-      this.wagerButtonsData = combined;
-      this.renderButtons(this.wagerButtonsData, 'wager');
-
+      this.renderWagerButtons(this.wagerButtonsData);
+      this.loadMoreBtn.style.display = 'none'; // no pagination for wagers now
       this.setStatus('');
     } catch (error) {
       console.error('Error loading wager types:', error);
@@ -756,54 +507,66 @@ export class AddNewWorkflow {
     }
   }
 
+  renderWagerButtons(buttons) {
+    this.buttonsWrapper.innerHTML = '';
+
+    buttons.forEach(label => {
+      if (label === '--- Sport Specific ---') {
+        const separator = document.createElement('div');
+        separator.textContent = 'Sport Specific Wagers';
+        separator.style.fontWeight = 'bold';
+        separator.style.margin = '10px 0';
+        this.buttonsWrapper.appendChild(separator);
+        return;
+      }
+
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.classList.add('admin-button');
+
+      if (this.selectedWagerType === label) {
+        btn.classList.add('active');
+      }
+
+      btn.addEventListener('click', () => {
+        this.selectedWagerType = label;
+        this.step = 6;
+        this.selectedUnit = null;
+        this.renderStatusAndTitle();
+        this.loadMoreBtn.style.display = 'none';
+        this.submitBtn.style.display = 'none';
+        this.loadUnits();
+      });
+
+      this.buttonsWrapper.appendChild(btn);
+    });
+  }
+
   async loadUnits(loadMore = false) {
-    this.step = 6;
-    this.titleEl.textContent = `Selected Wager Type: ${this.selectedWagerType} — Select a Unit`;
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.unitLastVisible = null;
-      this.unitButtonsData = [];
-    }
-
     this.setStatus('Loading units...');
     try {
       const unitsRef = collection(db, 'Units');
       let q;
 
-      if (this.unitLastVisible) {
-        q = query(unitsRef, orderBy('Rank'), startAfter(this.unitLastVisible), limit(this.PAGE_LIMIT));
-      } else {
-        q = query(unitsRef, orderBy('Rank'), limit(this.PAGE_LIMIT));
-      }
+      q = query(unitsRef, orderBy('Rank'), limit(this.PAGE_LIMIT));
 
       const snapshot = await getDocs(q);
-
       if (snapshot.empty) {
         this.loadMoreBtn.style.display = 'none';
-        if (!loadMore) {
-          this.setStatus('No units found.');
-        } else {
-          this.setStatus('No more units to load.');
-        }
+        this.setStatus('No units found.');
         return;
       }
 
-      this.unitLastVisible = snapshot.docs[snapshot.docs.length - 1];
+      this.unitButtonsData = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.display_unit && !this.unitButtonsData.includes(data.display_unit)) {
+          this.unitButtonsData.push(data.display_unit);
+        }
+      });
 
-      const newUnits = snapshot.docs
-        .map((doc) => doc.data().display_unit)
-        .filter((unit) => !this.unitButtonsData.includes(unit));
-
-      this.unitButtonsData.push(...newUnits);
-      this.unitButtonsData = [...new Set(this.unitButtonsData)];
-
-      this.renderButtons(this.unitButtonsData, 'unit');
-
-      this.loadMoreBtn.style.display =
-        snapshot.docs.length === this.PAGE_LIMIT ? 'inline-block' : 'none';
-
+      this.renderUnitButtons(this.unitButtonsData);
+      this.loadMoreBtn.style.display = 'none';
       this.setStatus('');
     } catch (error) {
       console.error('Error loading units:', error);
@@ -811,130 +574,219 @@ export class AddNewWorkflow {
     }
   }
 
-  async loadHypePhrases(loadMore = false) {
-    if (!this.selectedSport) {
-      this.setStatus('Select a sport first.', true);
-      return;
-    }
-    this.step = 7;
-    this.titleEl.textContent = `Select a Hype Phrase`;
-    this.submitBtn.style.display = 'none';
-    this.notesContainer.style.display = 'none';
-
-    if (!loadMore) {
-      this.phraseLastVisible = null;
-      this.phraseButtonsData = [];
-    }
-
-    this.setStatus('Loading hype phrases...');
-    try {
-      const hypeRef = collection(db, 'HypePhrases');
-
-      // Query active_status = active AND Sport = selectedSport
-      let sportQuery = query(
-        hypeRef,
-        where('active_status', '==', 'active'),
-        where('Sport', '==', this.selectedSport),
-        limit(this.PAGE_LIMIT)
-      );
-
-      const sportSnapshot = await getDocs(sportQuery);
-      const sportPhrases = sportSnapshot.docs.map((doc) => doc.data().Phrase || doc.id);
-
-      // Query active_status = active AND Sport != selectedSport (for random order)
-      let otherQuery = query(
-        hypeRef,
-        where('active_status', '==', 'active'),
-        where('Sport', '!=', this.selectedSport),
-        limit(this.PAGE_LIMIT)
-      );
-
-      const otherSnapshot = await getDocs(otherQuery);
-      const otherPhrases = otherSnapshot.docs.map((doc) => doc.data().Phrase || doc.id);
-
-      // Combine with sport phrases first, then others randomized
-      const combined = [...sportPhrases, ...this.shuffleArray(otherPhrases)];
-
-      this.phraseButtonsData = combined;
-      this.renderButtons(this.phraseButtonsData, 'phrase');
-
-      this.loadMoreBtn.style.display = 'none'; // For now no pagination on phrases
-
-      this.setStatus('');
-    } catch (error) {
-      console.error('Error loading hype phrases:', error);
-      this.setStatus('Failed to load hype phrases.', true);
-    }
-  }
-
-  shuffleArray(arr) {
-    let array = [...arr];
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
-
-  renderNotesQuestion() {
-    this.titleEl.textContent = 'Do you want to leave Notes/Comments for the pick?';
+  renderUnitButtons(buttons) {
     this.buttonsWrapper.innerHTML = '';
 
-    // Yes button
+    buttons.forEach(label => {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.classList.add('admin-button');
+
+      if (this.selectedUnit === label) {
+        btn.classList.add('active');
+      }
+
+      btn.addEventListener('click', () => {
+        this.selectedUnit = label;
+        this.step = 7;
+        this.selectedPhrase = null;
+        this.renderStatusAndTitle();
+        this.loadMoreBtn.style.display = 'none';
+        this.submitBtn.style.display = 'none';
+        this.loadPhrases();
+      });
+
+      this.buttonsWrapper.appendChild(btn);
+    });
+  }
+
+  async loadPhrases(loadMore = false) {
+    if (!this.selectedSport) {
+      this.setStatus('Please select a sport first.', true);
+      return;
+    }
+    this.setStatus('Loading phrases...');
+    try {
+      const phrasesRef = collection(db, 'HypePhrases');
+      let qActive, qSport;
+
+      qActive = query(
+        phrasesRef,
+        where('active_status', '==', 'active'),
+        where('Sport', '==', this.selectedSport),
+        orderBy('Phrase'),
+        limit(this.PAGE_LIMIT)
+      );
+
+      qSport = query(
+        phrasesRef,
+        where('active_status', '==', 'active'),
+        where('Sport', '!=', this.selectedSport),
+        orderBy('Phrase'),
+        limit(this.PAGE_LIMIT)
+      );
+
+      const [activeSnap, otherSnap] = await Promise.all([getDocs(qActive), getDocs(qSport)]);
+
+      const activePhrases = [];
+      activeSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.Phrase && !this.phraseButtonsData.includes(data.Phrase)) {
+          activePhrases.push(data.Phrase);
+        }
+      });
+
+      const otherPhrases = [];
+      otherSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.Phrase && !this.phraseButtonsData.includes(data.Phrase)) {
+          otherPhrases.push(data.Phrase);
+        }
+      });
+
+      this.phraseButtonsData = [...activePhrases, ...otherPhrases];
+
+      this.renderPhraseButtons(this.phraseButtonsData);
+      this.loadMoreBtn.style.display = 'inline-block'; // pagination here
+      this.setStatus('');
+    } catch (error) {
+      console.error('Error loading phrases:', error);
+      this.setStatus('Failed to load phrases.', true);
+    }
+  }
+
+  renderPhraseButtons(buttons) {
+    this.buttonsWrapper.innerHTML = '';
+
+    buttons.forEach(label => {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.classList.add('admin-button');
+
+      if (this.selectedPhrase === label) {
+        btn.classList.add('active');
+      }
+
+      btn.addEventListener('click', () => {
+        this.selectedPhrase = label;
+        this.step = 8;
+        this.renderStatusAndTitle();
+        this.loadMoreBtn.style.display = 'none';
+        this.submitBtn.style.display = 'inline-block';
+        this.renderNotesPrompt();
+      });
+
+      this.buttonsWrapper.appendChild(btn);
+    });
+  }
+
+  renderNotesPrompt() {
+    this.buttonsWrapper.innerHTML = '';
+
+    const question = document.createElement('p');
+    question.textContent = 'Do you want to leave Notes/Comments for the pick?';
+    question.style.fontWeight = 'bold';
+    this.buttonsWrapper.appendChild(question);
+
     const yesBtn = document.createElement('button');
     yesBtn.textContent = 'Yes';
     yesBtn.classList.add('admin-button');
-    yesBtn.addEventListener('click', () => this.renderNotesTextarea());
+    yesBtn.addEventListener('click', () => this.showNotesTextarea());
     this.buttonsWrapper.appendChild(yesBtn);
 
-    // No button
     const noBtn = document.createElement('button');
     noBtn.textContent = 'No';
     noBtn.classList.add('admin-button');
     noBtn.addEventListener('click', () => {
-      this.notesContainer.style.display = 'none';
-      this.submitBtn.style.display = 'inline-block';
-      this.loadMoreBtn.style.display = 'none';
       this.buttonsWrapper.innerHTML = '';
-      this.setStatus('Ready to submit.');
+      this.submitBtn.style.display = 'inline-block';
     });
     this.buttonsWrapper.appendChild(noBtn);
-
-    this.notesContainer.style.display = 'none';
-    this.submitBtn.style.display = 'none';
-    this.loadMoreBtn.style.display = 'none';
   }
 
-  renderNotesTextarea() {
+  showNotesTextarea() {
     this.buttonsWrapper.innerHTML = '';
-    this.notesContainer.style.display = 'block';
-    this.submitBtn.style.display = 'inline-block';
-    this.loadMoreBtn.style.display = 'none';
-
-    this.notesContainer.innerHTML = '';
 
     const textarea = document.createElement('textarea');
     textarea.maxLength = 100;
     textarea.rows = 2;
     textarea.cols = 40;
-    textarea.style.fontFamily = 'Oswald, sans-serif';
-    textarea.style.fontSize = '1.1rem';
-    textarea.placeholder = 'Enter your notes/comments (max 100 characters)...';
-
-    const counter = document.createElement('div');
-    counter.textContent = '100 characters remaining';
-    counter.style.marginTop = '4px';
-    counter.style.fontSize = '0.9rem';
-    counter.style.color = '#555';
-
+    textarea.style.fontFamily = "'Oswald', sans-serif";
+    textarea.style.fontSize = '16px';
+    textarea.style.padding = '8px';
+    textarea.style.border = '1px solid #ccc';
+    textarea.style.borderRadius = '4px';
+    textarea.placeholder = 'Enter notes/comments here... (max 100 characters)';
     textarea.addEventListener('input', () => {
       const remaining = 100 - textarea.value.length;
-      counter.textContent = `${remaining} characters remaining`;
-      this.notesText = textarea.value;
+      this.statusMsg.textContent = `${remaining} characters remaining`;
     });
 
-    this.notesContainer.appendChild(textarea);
-    this.notesContainer.appendChild(counter);
+    this.buttonsWrapper.appendChild(textarea);
+    textarea.focus();
+  }
+
+  onButtonClick(type, label) {
+    switch (type) {
+      case 'sport':
+        if (this.selectedSport !== label) {
+          this.selectedSport = label;
+          this.selectedLeague = null;
+          this.selectedGame = null;
+          this.selectedTeam = null;
+          this.selectedWagerType = null;
+          this.selectedUnit = null;
+          this.selectedPhrase = null;
+
+          this.leagueButtonsData = [];
+          this.gameButtonsData = [];
+          this.wagerButtonsData = [];
+          this.unitButtonsData = [];
+          this.phraseButtonsData = [];
+
+          this.leagueLastVisible = null;
+          this.gameLastVisible = null;
+
+          this.step = 2;
+          this.renderStatusAndTitle();
+          this.loadLeagues();
+          this.loadMoreBtn.style.display = 'none';
+          this.submitBtn.style.display = 'none';
+        }
+        break;
+      case 'league':
+        if (this.selectedLeague !== label) {
+          this.selectedLeague = label;
+          this.selectedGame = null;
+          this.selectedTeam = null;
+          this.selectedWagerType = null;
+          this.selectedUnit = null;
+          this.selectedPhrase = null;
+
+          this.gameButtonsData = [];
+          this.wagerButtonsData = [];
+          this.unitButtonsData = [];
+          this.phraseButtonsData = [];
+
+          this.gameLastVisible = null;
+
+          this.step = 3;
+          this.renderStatusAndTitle();
+          this.loadGames();
+          this.loadMoreBtn.style.display = 'none';
+          this.submitBtn.style.display = 'none';
+        }
+        break;
+      case 'wagerType':
+        // Not used, handled in renderWagerButtons click
+        break;
+      case 'unit':
+        // Not used, handled in renderUnitButtons click
+        break;
+      case 'phrase':
+        // Not used, handled in renderPhraseButtons click
+        break;
+    }
   }
 
   async onLoadMore() {
@@ -948,14 +800,8 @@ export class AddNewWorkflow {
       case 3:
         await this.loadGames(true);
         break;
-      case 5:
-        await this.loadWagerTypes(true);
-        break;
-      case 6:
-        await this.loadUnits(true);
-        break;
       case 7:
-        await this.loadHypePhrases(true);
+        await this.loadPhrases(true);
         break;
       default:
         this.loadMoreBtn.style.display = 'none';
@@ -976,61 +822,37 @@ export class AddNewWorkflow {
       return;
     }
 
+    let notes = '';
+    const textarea = this.buttonsWrapper.querySelector('textarea');
+    if (textarea) {
+      notes = textarea.value.trim();
+    }
+
     this.setStatus('Submitting your selection...');
-    this.submitBtn.style.display = 'none';
-    this.loadMoreBtn.style.display = 'none';
 
     try {
       await addDoc(collection(db, 'UserSubmissions'), {
         userId: this.userId,
         sportName: this.selectedSport,
         leagueName: this.selectedLeague,
-        gameId: this.selectedGame,
-        team: this.selectedTeam,
+        gameId: this.selectedGame.id,
+        awayTeam: this.selectedGame.awayTeam,
+        homeTeam: this.selectedGame.homeTeam,
+        gameStartUTC: this.selectedGame.startTimeUTC,
+        selectedTeam: this.selectedTeam,
         wagerType: this.selectedWagerType,
         unit: this.selectedUnit,
         phrase: this.selectedPhrase,
-        notes: this.notesText || '',
+        notes: notes,
         timestamp: Timestamp.now(),
       });
 
       this.setStatus('Submission successful! Thank you.');
-      // Optionally reset workflow:
-      this.resetWorkflow();
+      this.submitBtn.style.display = 'none';
+      this.loadMoreBtn.style.display = 'none';
     } catch (error) {
       console.error('Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
-      this.submitBtn.style.display = 'inline-block';
     }
-  }
-
-  resetWorkflow() {
-    this.step = 1;
-
-    this.sportLastVisible = null;
-    this.leagueLastVisible = null;
-    this.gameLastVisible = null;
-    this.wagerLastVisible = null;
-    this.unitLastVisible = null;
-    this.phraseLastVisible = null;
-
-    this.sportButtonsData = [];
-    this.leagueButtonsData = [];
-    this.gameButtonsData = [];
-    this.wagerButtonsData = [];
-    this.unitButtonsData = [];
-    this.phraseButtonsData = [];
-
-    this.selectedSport = null;
-    this.selectedLeague = null;
-    this.selectedGame = null;
-    this.selectedTeam = null;
-    this.selectedWagerType = null;
-    this.selectedUnit = null;
-    this.selectedPhrase = null;
-    this.notesText = '';
-
-    this.renderInitialUI();
-    this.loadSports();
   }
 }
