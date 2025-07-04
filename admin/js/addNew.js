@@ -84,6 +84,8 @@ export class AddNewWorkflow {
   }
 
   async loadSports(loadMore = false) {
+    if (this.step !== 1) return; // Guard: only load if in step 1
+
     this.setStatus('Loading sports...');
     try {
       let q;
@@ -143,6 +145,7 @@ export class AddNewWorkflow {
   }
 
   async loadLeagues(loadMore = false) {
+    if (this.step !== 2) return; // Guard: only load if in step 2
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
       return;
@@ -208,6 +211,7 @@ export class AddNewWorkflow {
   }
 
   async loadGames(loadMore = false) {
+    if (this.step !== 3) return; // Guard: only load if in step 3
     if (!this.selectedSport || !this.selectedLeague) {
       this.setStatus('Please select both sport and league first.', true);
       return;
@@ -277,7 +281,6 @@ export class AddNewWorkflow {
   }
 
   renderButtons(buttons, type) {
-    // Clear buttons container before rendering new buttons
     this.buttonsWrapper.innerHTML = '';
 
     buttons.forEach(label => {
@@ -309,7 +312,6 @@ export class AddNewWorkflow {
 
             this.step = 2;
 
-            // Clear buttons and UI for new step
             this.buttonsWrapper.innerHTML = '';
             this.loadMoreBtn.style.display = 'none';
             this.submitBtn.style.display = 'none';
