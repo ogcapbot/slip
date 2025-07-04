@@ -13,23 +13,25 @@ showNumberInputModal(wagerLabel) {
     modal.style.alignItems = 'center';
     modal.style.zIndex = '1000';
 
-    // Modal content container
+    // Modal content container - smaller and centered
     const content = document.createElement('div');
     content.style.backgroundColor = '#fff';
-    content.style.padding = '25px';
-    content.style.borderRadius = '12px';
-    content.style.boxShadow = '0 2px 15px rgba(0,0,0,0.3)';
+    content.style.padding = '20px 15px';
+    content.style.borderRadius = '10px';
+    content.style.boxShadow = '0 2px 15px rgba(0,0,0,0.25)';
     content.style.textAlign = 'center';
-    content.style.width = '90%';
-    content.style.maxWidth = '280px'; // Smaller max width for mobile
+    content.style.width = '280px';
+    content.style.maxWidth = '90vw';  // make sure it fits on very small screens
+    content.style.boxSizing = 'border-box';
 
     // Title
     const title = document.createElement('h3');
     title.textContent = `Enter Number for: ${wagerLabel}`;
-    title.style.marginBottom = '20px';
+    title.style.marginBottom = '15px';
     title.style.fontFamily = "'Oswald', sans-serif";
     title.style.fontWeight = '700';
-    title.style.fontSize = '1.3rem';
+    title.style.fontSize = '1.25rem';
+    title.style.wordBreak = 'break-word'; // allow breaking long labels
     content.appendChild(title);
 
     // Input field
@@ -37,11 +39,11 @@ showNumberInputModal(wagerLabel) {
     input.type = 'number';
     input.min = '0';
     input.step = '0.5';
-    input.placeholder = 'Enter whole or half number (e.g. 1, 1.5, 2)';
-    input.style.width = '140px';       // Smaller width
-    input.style.fontSize = '1.1rem';   // Smaller font size
-    input.style.padding = '8px';       // Reduced padding
-    input.style.marginBottom = '20px';
+    input.placeholder = 'e.g. 1, 1.5, 2';
+    input.style.width = '130px';
+    input.style.fontSize = '1rem';
+    input.style.padding = '6px 8px';
+    input.style.marginBottom = '18px';
     input.style.border = '1px solid #ccc';
     input.style.borderRadius = '6px';
     input.style.fontFamily = "'Oswald', sans-serif";
@@ -53,12 +55,12 @@ showNumberInputModal(wagerLabel) {
     submitBtn.style.backgroundColor = '#3a8bfd';
     submitBtn.style.color = 'white';
     submitBtn.style.border = 'none';
-    submitBtn.style.padding = '12px 25px';
-    submitBtn.style.borderRadius = '8px';
+    submitBtn.style.padding = '10px 22px';
+    submitBtn.style.borderRadius = '7px';
     submitBtn.style.cursor = 'pointer';
     submitBtn.style.fontFamily = "'Oswald', sans-serif";
     submitBtn.style.fontWeight = '700';
-    submitBtn.style.fontSize = '1.1rem';
+    submitBtn.style.fontSize = '1rem';
     content.appendChild(submitBtn);
 
     modal.appendChild(content);
@@ -73,7 +75,7 @@ showNumberInputModal(wagerLabel) {
       return (
         !isNaN(num) &&
         num >= 0 &&
-        Number.isInteger(num * 2) // ensures whole or half increments (e.g., 0.5, 1, 1.5)
+        Number.isInteger(num * 2) // allows whole or half increments
       );
     }
 
