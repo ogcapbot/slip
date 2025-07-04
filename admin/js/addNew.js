@@ -12,12 +12,18 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
+// Import the NumberInputModal from the same folder
+import { NumberInputModal } from './NumberInputModal.js';
+
 const PAGE_LIMIT = 54;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
     this.container = container;
     this.userId = userId;
+
+    // Initialize the NumberInputModal instance here
+    this.numberInputModal = new NumberInputModal(this.container);
 
     // Pagination cursors: track the last visible doc for each paginated collection
     this.sportLastVisible = null;
@@ -40,6 +46,7 @@ export class AddNewWorkflow {
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
+    this.wagerNumberValue = null; // for number input from modal
 
     this.step = 1; // Current workflow step tracker
 
@@ -520,9 +527,17 @@ export class AddNewWorkflow {
         // and for PLUS, MINUS, OVER, UNDER put from space before these words on new line
         btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
 
-        btn.addEventListener('click', () => {
-          this.selectedWagerType = wager.wager_label_template || wager.WagerType;
-          this.loadUnits();
+        btn.addEventListener('click', async () => {
+          // If wager label contains [[NUM]], prompt for number input modal
+          if ((wager.wager_label_template || wager.WagerType || '').includes('[[NUM]]')) {
+            const num = await this.numberInputModal.show();
+            this.wagerNumberValue = num;
+            this.selectedWagerType = (wager.wager_label_template || wager.WagerType).replace('[[NUM]]', num);
+            this.loadUnits();
+          } else {
+            this.selectedWagerType = wager.wager_label_template || wager.WagerType;
+            this.loadUnits();
+          }
         });
         this.buttonsWrapper.appendChild(btn);
       });
@@ -539,9 +554,16 @@ export class AddNewWorkflow {
 
         btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
 
-        btn.addEventListener('click', () => {
-          this.selectedWagerType = wager.wager_label_template || wager.WagerType;
-          this.loadUnits();
+        btn.addEventListener('click', async () => {
+          if ((wager.wager_label_template || wager.WagerType || '').includes('[[NUM]]')) {
+            const num = await this.numberInputModal.show();
+            this.wagerNumberValue = num;
+            this.selectedWagerType = (wager.wager_label_template || wager.WagerType).replace('[[NUM]]', num);
+            this.loadUnits();
+          } else {
+            this.selectedWagerType = wager.wager_label_template || wager.WagerType;
+            this.loadUnits();
+          }
         });
         this.buttonsWrapper.appendChild(btn);
       });
@@ -785,14 +807,7 @@ export class AddNewWorkflow {
             }
             break;
           case 'wagerType':
-            if (this.selectedWagerType !== label) {
-              console.log(`[Selection] Wager Type selected: ${label}`);
-              this.selectedWagerType = label;
-              this.step = 6;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-              this.loadUnits();
-            }
+            // We handle wagerType click logic in renderWagerTypes, so here just skip
             break;
           case 'unit':
             if (this.selectedUnit !== label) {
@@ -891,6 +906,7 @@ export class AddNewWorkflow {
     const summaryDiv = document.createElement('div');
     summaryDiv.style.marginTop = '12px';
     summaryDiv.style.fontWeight = 'bold';
+    summaryDiv.style.textAlign = 'left'; // align left as requested
 
     // List fields to display
     const fields = [
@@ -932,6 +948,7 @@ export class AddNewWorkflow {
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
+    this.wagerNumberValue = null;
 
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
