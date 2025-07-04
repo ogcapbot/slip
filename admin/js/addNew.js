@@ -19,19 +19,16 @@ export class AddNewWorkflow {
     this.container = container;
     this.userId = userId;
 
-    // Pagination cursors
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
     this.phraseLastVisible = null;
 
-    // Data arrays for deduplication
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
 
-    // Selection state
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
@@ -43,7 +40,6 @@ export class AddNewWorkflow {
 
     this.step = 1;
 
-    // Initialize UI elements and render first step
     this.renderInitialUI();
     this.loadSports();
   }
@@ -55,12 +51,10 @@ export class AddNewWorkflow {
   renderInitialUI() {
     this.clearContainer();
 
-    // Title
     this.titleEl = document.createElement('h2');
     this.titleEl.id = 'workflowTitle';
     this.container.appendChild(this.titleEl);
 
-    // Buttons container
     this.buttonsWrapper = document.createElement('div');
     this.buttonsWrapper.id = 'buttonsWrapper';
     this.buttonsWrapper.style.display = 'grid';
@@ -68,7 +62,6 @@ export class AddNewWorkflow {
     this.buttonsWrapper.style.gap = '8px';
     this.container.appendChild(this.buttonsWrapper);
 
-    // Load More button
     this.loadMoreBtn = document.createElement('button');
     this.loadMoreBtn.textContent = 'Load More';
     this.loadMoreBtn.classList.add('admin-button');
@@ -77,7 +70,6 @@ export class AddNewWorkflow {
     this.loadMoreBtn.addEventListener('click', () => this.onLoadMore());
     this.container.appendChild(this.loadMoreBtn);
 
-    // Submit button
     this.submitBtn = document.createElement('button');
     this.submitBtn.textContent = 'Submit';
     this.submitBtn.classList.add('admin-button');
@@ -86,12 +78,10 @@ export class AddNewWorkflow {
     this.submitBtn.addEventListener('click', () => this.onSubmit());
     this.container.appendChild(this.submitBtn);
 
-    // Status message
     this.statusMsg = document.createElement('p');
     this.statusMsg.style.marginTop = '16px';
     this.container.appendChild(this.statusMsg);
 
-    // Notes container & elements
     this.notesContainer = document.createElement('div');
     this.notesContainer.style.marginTop = '16px';
     this.notesContainer.style.display = 'none';
@@ -254,7 +244,7 @@ export class AddNewWorkflow {
   formatGameDisplay(game) {
     const awayTeam = game.awayTeam || '';
     const homeTeam = game.homeTeam || '';
-    // If it's a Firestore Timestamp object, convert it to Date; else use directly
+
     const startTime = game.startTimeET instanceof Date
       ? game.startTimeET
       : (game.startTimeET?.toDate ? game.startTimeET.toDate() : new Date(game.startTimeET));
@@ -418,12 +408,10 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'none';
 
     try {
-      console.log('Selected Sport:', this.selectedSport);
       // Global wagers (Sport == "All")
       const globalQuery = query(
         collection(db, 'WagerTypes'),
         where('Sport', '==', 'All'),
-        orderBy('Rank'),
         limit(50)
       );
       const globalSnap = await getDocs(globalQuery);
@@ -433,14 +421,10 @@ export class AddNewWorkflow {
       const sportQuery = query(
         collection(db, 'WagerTypes'),
         where('Sport', '==', this.selectedSport),
-        orderBy('Rank'),
         limit(50)
       );
       const sportSnap = await getDocs(sportQuery);
       const sportWagers = sportSnap.docs.map((doc) => doc.data());
-
-      console.log('Global wagers:', globalWagers);
-      console.log('Sport-specific wagers:', sportWagers);
 
       this.renderWagerTypes(globalWagers, sportWagers);
     } catch (error) {
@@ -526,47 +510,48 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'none';
 
     try {
-      let q;
-      if (!loadMore || !this.phraseLastVisible) {
-        q = query(
-          collection(db, 'HypePhrases'),
-          where('active_status', '==', 'active'),
-          orderBy('Phrase'),
-          limit(PAGE_LIMIT)
-        );
-      } else {
-        q = query(
-          collection(db, 'HypePhrases'),
-          where('active_status', '==', 'active'),
-          orderBy('Phrase'),
-          startAfter(this.phraseLastVisible),
-          limit(PAGE_LIMIT)
-        );
-      }
+      // Load all sport-specific active phrases
+      const sportQuery = query(
+        collection(db, 'HypePhrases'),
+        where('active_status', '==', 'active'),
+        where('Sport', '==', this.selectedSport)
+      );
+      const sportSnap = await getDocs(sportQuery);
+      const sportPhrases = sportSnap.docs.map(doc => doc.data().Phrase);
 
-      const snapshot = await getDocs(q);
+      // Load all other active phrases not matching the selected sport
+      const otherQuery = query(
+        collection(db, 'HypePhrases'),
+        where('active_status', '==', 'active'),
+        where('Sport', '!=', this.selectedSport)
+      );
+      const otherSnap = await getDocs(otherQuery);
+      let otherPhrases = otherSnap.docs.map(doc => doc.data().Phrase);
 
-      if (snapshot.empty) {
+      // Shuffle the other phrases randomly
+      otherPhrases = otherPhrases.sort(() => Math.random() - 0.5);
+
+      // Combine sport-specific phrases first, then shuffled others
+      const allPhrases = [...sportPhrases, ...otherPhrases];
+
+      // Implement pagination on allPhrases for Load More
+      const startIndex = loadMore ? this.phraseButtonsData.length : 0;
+      const phrasesToLoad = allPhrases.slice(startIndex, startIndex + PAGE_LIMIT);
+
+      if (phrasesToLoad.length === 0) {
         this.loadMoreBtn.style.display = 'none';
         this.setStatus('No more phrases to load.');
         return;
       }
 
-      this.phraseLastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-      const newPhrases = [];
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        if (data.Phrase && !this.phraseButtonsData.includes(data.Phrase)) {
-          newPhrases.push(data.Phrase);
-        }
-      });
-
-      this.phraseButtonsData.push(...newPhrases);
+      if (!loadMore) {
+        this.phraseButtonsData = [];
+      }
+      this.phraseButtonsData.push(...phrasesToLoad);
 
       this.renderButtons(this.phraseButtonsData, 'phrase');
 
-      if (snapshot.size === PAGE_LIMIT) {
+      if (startIndex + PAGE_LIMIT < allPhrases.length) {
         this.loadMoreBtn.style.display = 'inline-block';
       } else {
         this.loadMoreBtn.style.display = 'none';
@@ -642,7 +627,6 @@ export class AddNewWorkflow {
       const btn = document.createElement('button');
       btn.classList.add('admin-button');
 
-      // multiline for game buttons
       if (type === 'game') {
         btn.style.whiteSpace = 'pre-line';
         btn.innerHTML = label.replace(/\n/g, '<br>');
@@ -764,7 +748,6 @@ export class AddNewWorkflow {
       this.submitBtn.style.display = 'none';
       this.notesContainer.style.display = 'none';
 
-      // Reset everything for new workflow
       this.resetWorkflow();
     } catch (error) {
       console.error('Error submitting:', error);
