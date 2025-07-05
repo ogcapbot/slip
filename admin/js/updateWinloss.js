@@ -55,23 +55,23 @@ export async function loadUpdateWinLoss(container) {
       const leftCol = document.createElement('div');
       leftCol.style.flex = '1 1 auto';
 
-      // TEAM_SELECTED bold and bigger
+      // teamSelected bold and bigger
       const teamSelected = document.createElement('div');
-      teamSelected.textContent = data.TEAM_SELECTED || 'N/A';
+      teamSelected.textContent = data.teamSelected || 'N/A';
       teamSelected.style.fontWeight = 'bold';
       teamSelected.style.fontSize = '1.2em';
       teamSelected.style.marginBottom = '6px';
       leftCol.appendChild(teamSelected);
 
-      // WAGER_TYPE_wNUM_SELECTED normal text
+      // wagerType normal text
       const wagerType = document.createElement('div');
-      wagerType.textContent = data.WAGER_TYPE_wNUM_SELECTED || 'N/A';
+      wagerType.textContent = data.wagerType || 'N/A';
       wagerType.style.marginBottom = '4px';
       leftCol.appendChild(wagerType);
 
-      // UNITS_SELECTED normal text
+      // unit normal text
       const unitsSelected = document.createElement('div');
-      unitsSelected.textContent = data.UNITS_SELECTED || 'N/A';
+      unitsSelected.textContent = data.unit || 'N/A';
       leftCol.appendChild(unitsSelected);
 
       // Right images column container
@@ -108,9 +108,9 @@ export async function loadUpdateWinLoss(container) {
               await updateDoc(docRef, { gameWinLossDraw: '' });
               data.gameWinLossDraw = '';
               rightCol.innerHTML = '';
-              rightCol.appendChild(createStatusImage('Win', './images/greenWinner.png'));
-              rightCol.appendChild(createStatusImage('Push', './images/bluePush.png'));
-              rightCol.appendChild(createStatusImage('Lost', './images/redLost.png'));
+              rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
+              rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
+              rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
               docDiv.style.backgroundColor = '#fff9db';
             } catch (error) {
               console.error('Error resetting win/loss:', error);
@@ -141,14 +141,14 @@ export async function loadUpdateWinLoss(container) {
       }
 
       if (needsSelection) {
-        rightCol.appendChild(createStatusImage('Win', './images/greenWinner.png'));
-        rightCol.appendChild(createStatusImage('Push', './images/bluePush.png'));
-        rightCol.appendChild(createStatusImage('Lost', './images/redLost.png'));
+        rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
+        rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
+        rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
       } else {
         const statusMap = {
-          'Win': './images/greenWinner.png',
-          'Push': './images/bluePush.png',
-          'Lost': './images/redLost.png'
+          'Win': '/admin/images/greenWinner.png',
+          'Push': '/admin/images/bluePush.png',
+          'Lost': '/admin/images/redLost.png'
         };
         rightCol.appendChild(createStatusImage(val, statusMap[val]));
       }
