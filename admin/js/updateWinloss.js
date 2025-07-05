@@ -42,14 +42,9 @@ export async function loadUpdateWinLoss(container) {
       docDiv.style.display = 'flex';
       docDiv.style.justifyContent = 'space-between';
       docDiv.style.alignItems = 'flex-start';
-      docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff'; // alternate gray
 
-      // Highlight yellow if win/loss is null/""/"null"
-      const val = data.gameWinLossDraw;
-      const needsSelection = val === null || val === undefined || val === '' || val === 'null';
-      if (needsSelection) {
-        docDiv.style.backgroundColor = '#fff9db';
-      }
+      // Alternating background colors: odd rows light gray, even rows white
+      docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
 
       // Left text column container
       const leftCol = document.createElement('div');
@@ -111,7 +106,8 @@ export async function loadUpdateWinLoss(container) {
               rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
               rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
               rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
-              docDiv.style.backgroundColor = '#fff9db';
+              // Reset background color to original alternating row color
+              docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
             } catch (error) {
               console.error('Error resetting win/loss:', error);
               alert('Failed to reset status.');
@@ -130,7 +126,8 @@ export async function loadUpdateWinLoss(container) {
               image.style.pointerEvents = (image === img) ? 'auto' : 'none';
             });
 
-            docDiv.style.backgroundColor = ''; // remove highlight
+            // Keep background color consistent with alternating pattern
+            docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
           } catch (error) {
             console.error('Error updating win/loss:', error);
             alert('Failed to update status.');
@@ -140,7 +137,8 @@ export async function loadUpdateWinLoss(container) {
         return img;
       }
 
-      if (needsSelection) {
+      // Show all 3 images if no selection, else show only selected
+      if (val === null || val === undefined || val === '' || val === 'null') {
         rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
         rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
         rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
