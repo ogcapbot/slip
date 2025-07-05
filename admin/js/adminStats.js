@@ -84,26 +84,27 @@ function computeStats(picks) {
   return counts;
 }
 
-// Create a status icon element with count and tooltip
+// Create a status icon element with count and tooltip (vertical layout)
 function createStatusSummaryIcon(status, count) {
   const container = document.createElement('div');
-  container.style.display = 'inline-flex';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
   container.style.alignItems = 'center';
-  container.style.marginRight = '15px';
+  container.style.margin = '0 20px';
   container.style.cursor = 'default';
 
   const img = document.createElement('img');
   img.src = statusIcons[status];
   img.alt = status;
   img.title = `${status}: ${count}`;
-  img.style.width = '24px';
-  img.style.height = '24px';
-  img.style.marginRight = '6px';
+  img.style.width = '50px';
+  img.style.height = '50px';
+  img.style.marginBottom = '6px';
 
   const text = document.createElement('span');
   text.textContent = count;
-  text.style.fontWeight = '600';
-  text.style.fontSize = '14px';
+  text.style.fontWeight = '700';
+  text.style.fontSize = '16px';
 
   container.appendChild(img);
   container.appendChild(text);
@@ -111,26 +112,44 @@ function createStatusSummaryIcon(status, count) {
   return container;
 }
 
-// Render the stats summary bar
+// Render the stats summary bar, centered + win percentage
 function renderStatsSummary(counts, container) {
-  container.innerHTML = ''; // clear
+  container.innerHTML = '';
 
+  // Calculate win percentage excluding Pending
+  const completed = counts.Win + counts.Lost + counts.Push;
+  const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
+
+  // Win Percentage display
+  const winPercentDiv = document.createElement('div');
+  winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
+  winPercentDiv.style.fontWeight = '800';
+  winPercentDiv.style.fontSize = '18px';
+  winPercentDiv.style.marginBottom = '15px';
+  winPercentDiv.style.textAlign = 'center';
+  container.appendChild(winPercentDiv);
+
+  // Total Picks text, centered above totals icons
   const totalText = document.createElement('div');
   totalText.textContent = `Total Picks: ${counts.Total}`;
   totalText.style.fontWeight = '700';
   totalText.style.fontSize = '16px';
-  totalText.style.marginBottom = '8px';
+  totalText.style.marginBottom = '10px';
+  totalText.style.textAlign = 'center';
   container.appendChild(totalText);
 
-  const summaryRow = document.createElement('div');
-  summaryRow.style.display = 'flex';
-  summaryRow.style.marginBottom = '12px';
+  // Totals container (flex centered)
+  const totalsRow = document.createElement('div');
+  totalsRow.style.display = 'flex';
+  totalsRow.style.justifyContent = 'center';
+  totalsRow.style.marginBottom = '20px';
 
+  // Add each status icon + count vertically
   STATUS_VALUES.forEach(status => {
-    summaryRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
+    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
   });
 
-  container.appendChild(summaryRow);
+  container.appendChild(totalsRow);
 }
 
 // Create a small clickable status image for listings
@@ -180,9 +199,9 @@ function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
   return img;
 }
 
-// Render a compact listing for picks
+// Render a compact listing for picks (show only selected status image)
 function renderPickListing(picks, container) {
-  container.innerHTML = ''; // clear
+  container.innerHTML = '';
 
   picks.forEach(({ id, data }) => {
     const listingDiv = document.createElement('div');
@@ -195,7 +214,6 @@ function renderPickListing(picks, container) {
     listingDiv.style.fontFamily = 'Arial, sans-serif';
     listingDiv.style.color = '#222';
 
-    // Left text block: team, wager, units
     const leftBlock = document.createElement('div');
     leftBlock.style.flex = '1 1 auto';
     leftBlock.style.textAlign = 'left';
@@ -219,29 +237,24 @@ function renderPickListing(picks, container) {
 
     listingDiv.appendChild(leftBlock);
 
-    // Right buttons block: Win, Push, Lost, Pending (gray)
+    // Right block: only show the selected status image
     const rightBlock = document.createElement('div');
     rightBlock.style.display = 'flex';
     rightBlock.style.alignItems = 'center';
 
-    // Current status or pending if empty
     let currentStatus = data.gameWinLossDraw;
     if (currentStatus === null || currentStatus === undefined || currentStatus === '' || currentStatus === 'null') {
       currentStatus = 'Pending';
     }
 
-    STATUS_VALUES.forEach(status => {
-      rightBlock.appendChild(createStatusButton(status, id, currentStatus, (newStatus) => {
-        // Update UI on status change
-        currentStatus = newStatus;
-        // Re-render this pick's buttons to reflect change:
-        rightBlock.innerHTML = '';
-        STATUS_VALUES.forEach(s => rightBlock.appendChild(createStatusButton(s, id, currentStatus, arguments.callee)));
-      }));
-    });
+    // Show only the button/image matching currentStatus
+    rightBlock.appendChild(createStatusButton(currentStatus, id, currentStatus, (newStatus) => {
+      currentStatus = newStatus;
+      rightBlock.innerHTML = '';
+      rightBlock.appendChild(createStatusButton(currentStatus, id, currentStatus, arguments.callee));
+    }));
 
     listingDiv.appendChild(rightBlock);
-
     container.appendChild(listingDiv);
   });
 
