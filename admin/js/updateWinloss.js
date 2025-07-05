@@ -13,63 +13,103 @@ export async function loadUpdateWinLoss(container) {
     const officialPicksRef = collection(db, 'OfficialPicks');
     const snapshot = await getDocs(officialPicksRef);
 
-    const docsData = snapshot.docs.map(doc => ({
+    let docsData = snapshot.docs.map(doc => ({
       id: doc.id,
       data: doc.data()
     }));
 
-    // Sort: docs with null/""/"null" first, others after
-    docsData.sort((a, b) => {
-      function needsUpdate(docData) {
-        const val = docData.gameWinLossDraw;
-        return val === null || val === undefined || val === '' || val === 'null';
-      }
-      if (needsUpdate(a.data) && !needsUpdate(b.data)) return -1;
-      if (!needsUpdate(a.data) && needsUpdate(b.data)) return 1;
-      return 0;
+    // Filter: only picks with empty/null 'gameWinLossDraw'
+    docsData = docsData.filter(({ data }) => {
+      const val = data.gameWinLossDraw;
+      return val === null || val === undefined || val === '' || val === 'null';
     });
 
     if (docsData.length === 0) {
-      container.textContent = 'No picks found.';
+      container.textContent = 'No picks needing update found.';
       return;
     }
 
+    /**
+     * Converts a given date to EST by subtracting a fixed 5-hour offset.
+     * NOTE: This does not account for Daylight Saving Time (DST) adjustments.
+     * This simplification is intentional to keep code simple as DST edge cases
+     * are expected to be rare for submissions.
+     * 
+     * If DST handling becomes necessary in future, consider using Intl.DateTimeFormat
+     * or libraries like Luxon for timezone-aware date manipulations.
+     */
+    function getESTDate(d) {
+      const estOffsetMs = 5 * 60 * 60 * 1000; // fixed 5 hours in milliseconds
+      return new Date(d.getTime() - estOffsetMs);
+    }
+
+    const now = new Date();
+    const estNow = getESTDate(now);
+    const estToday = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate()); // 00:00 EST today
+
     docsData.forEach(({ id, data }, i) => {
+      // Parse submission timestamp (Firestore Timestamp or ISO string)
+      let submittedDate = null;
+      if (data.timestampSubmitted) {
+        if (data.timestampSubmitted.toDate) {
+          submittedDate = data.timestampSubmitted.toDate();
+        } else {
+          submittedDate = new Date(data.timestampSubmitted);
+        }
+      }
+
+      let estSubmittedDate = submittedDate ? getESTDate(submittedDate) : null;
+      let estSubDateOnly = estSubmittedDate ? new Date(estSubmittedDate.getFullYear(), estSubmittedDate.getMonth(), estSubmittedDate.getDate()) : null;
+
+      let daysDiff = estSubDateOnly ? Math.floor((estToday - estSubDateOnly) / (1000 * 60 * 60 * 24)) : null;
+
+      // Decide calendar image path
+      let calendarImgSrc = '/admin/images/2daysold.png'; // default
+      if (daysDiff === 0) calendarImgSrc = '/admin/images/today.png';
+      else if (daysDiff === 1) calendarImgSrc = '/admin/images/yesterday.png';
+
       const val = data.gameWinLossDraw;
 
       const docDiv = document.createElement('div');
-      docDiv.style.marginBottom = '8px';           // smaller margin
-      docDiv.style.padding = '10px 15px';           // reduced padding
+      docDiv.style.marginBottom = '8px';
+      docDiv.style.padding = '10px 15px';
       docDiv.style.borderRadius = '6px';
       docDiv.style.display = 'flex';
       docDiv.style.justifyContent = 'space-between';
-      docDiv.style.alignItems = 'center';           // vertically center items
-      // Remove border for cleaner look
-      // docDiv.style.border = '1px solid #ccc';    // removed border
-
-      // Alternating background colors: odd rows light gray, even rows white
+      docDiv.style.alignItems = 'center';
       docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
+
+      // Calendar image container
+      const calendarCol = document.createElement('div');
+      calendarCol.style.flexShrink = '0';
+      calendarCol.style.marginRight = '10px';
+
+      const calendarImg = document.createElement('img');
+      calendarImg.src = calendarImgSrc;
+      calendarImg.alt = 'Submission Date';
+      calendarImg.title = 'Submission Date';
+      calendarImg.style.width = '50px';
+      calendarImg.style.height = '50px';
+      calendarImg.style.objectFit = 'contain';
+      calendarCol.appendChild(calendarImg);
 
       // Left text column container
       const leftCol = document.createElement('div');
       leftCol.style.flex = '1 1 auto';
-      leftCol.style.textAlign = 'left';              // left align text
+      leftCol.style.textAlign = 'left';
 
-      // teamSelected bold and bigger
       const teamSelected = document.createElement('div');
       teamSelected.textContent = data.teamSelected || 'N/A';
       teamSelected.style.fontWeight = 'bold';
       teamSelected.style.fontSize = '1.2em';
-      teamSelected.style.marginBottom = '4px';       // reduced margin bottom
+      teamSelected.style.marginBottom = '4px';
       leftCol.appendChild(teamSelected);
 
-      // wagerType normal text
       const wagerType = document.createElement('div');
       wagerType.textContent = data.wagerType || 'N/A';
-      wagerType.style.marginBottom = '2px';          // smaller margin
+      wagerType.style.marginBottom = '2px';
       leftCol.appendChild(wagerType);
 
-      // unit normal text
       const unitsSelected = document.createElement('div');
       unitsSelected.textContent = data.unit || 'N/A';
       leftCol.appendChild(unitsSelected);
@@ -87,7 +127,7 @@ export async function loadUpdateWinLoss(container) {
         img.src = imgSrc;
         img.alt = statusText;
         img.title = statusText;
-        img.style.width = '40px';            // increased size to 40px
+        img.style.width = '40px';
         img.style.height = '40px';
         img.style.cursor = 'pointer';
         img.style.borderRadius = '8px';
@@ -124,7 +164,6 @@ export async function loadUpdateWinLoss(container) {
             await updateDoc(docRef, { gameWinLossDraw: statusText });
             data.gameWinLossDraw = statusText;
 
-            // Highlight selected image, dim others
             Array.from(rightCol.children).forEach(image => {
               image.style.opacity = (image === img) ? '1' : '0.4';
               image.style.pointerEvents = (image === img) ? 'auto' : 'none';
@@ -140,21 +179,14 @@ export async function loadUpdateWinLoss(container) {
         return img;
       }
 
-      if (val === null || val === undefined || val === '' || val === 'null') {
-        rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', i));
-        rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', i));
-        rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', i));
-      } else {
-        const statusMap = {
-          'Win': '/admin/images/greenWinner.png',
-          'Push': '/admin/images/bluePush.png',
-          'Lost': '/admin/images/redLost.png'
-        };
-        rightCol.appendChild(createStatusImage(val, statusMap[val], i));
-      }
+      rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', i));
+      rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', i));
+      rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', i));
 
+      docDiv.appendChild(calendarCol);
       docDiv.appendChild(leftCol);
       docDiv.appendChild(rightCol);
+
       container.appendChild(docDiv);
     });
   } catch (error) {
