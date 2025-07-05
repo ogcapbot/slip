@@ -1,15 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-const requiredFields = [
-  'sport',
-  'league',
-  'pick',
-  'unit',
-  'wagerTypeDesc',
-  'timestampSubmitted'
-];
-
 export async function loadUpdateWinLoss(container) {
   if (!container) {
     console.error('No container element provided to loadUpdateWinLoss');
@@ -46,8 +37,12 @@ export async function loadUpdateWinLoss(container) {
     docsData.forEach(({ id, data }, i) => {
       const docDiv = document.createElement('div');
       docDiv.style.marginBottom = '15px';
-      docDiv.style.padding = '10px';
+      docDiv.style.padding = '15px 20px';
       docDiv.style.borderRadius = '6px';
+      docDiv.style.display = 'flex';
+      docDiv.style.justifyContent = 'space-between';
+      docDiv.style.alignItems = 'flex-start';
+      docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff'; // alternate gray
 
       // Highlight yellow if win/loss is null/""/"null"
       const val = data.gameWinLossDraw;
@@ -56,69 +51,67 @@ export async function loadUpdateWinLoss(container) {
         docDiv.style.backgroundColor = '#fff9db';
       }
 
-      // Left text column
+      // Left text column container
       const leftCol = document.createElement('div');
-      leftCol.style.display = 'inline-block';
-      leftCol.style.width = 'calc(100% - 130px)';
-      leftCol.style.verticalAlign = 'top';
+      leftCol.style.flex = '1 1 auto';
 
-      // Right buttons column
+      // TEAM_SELECTED bold and bigger
+      const teamSelected = document.createElement('div');
+      teamSelected.textContent = data.TEAM_SELECTED || 'N/A';
+      teamSelected.style.fontWeight = 'bold';
+      teamSelected.style.fontSize = '1.2em';
+      teamSelected.style.marginBottom = '6px';
+      leftCol.appendChild(teamSelected);
+
+      // WAGER_TYPE_wNUM_SELECTED normal text
+      const wagerType = document.createElement('div');
+      wagerType.textContent = data.WAGER_TYPE_wNUM_SELECTED || 'N/A';
+      wagerType.style.marginBottom = '4px';
+      leftCol.appendChild(wagerType);
+
+      // UNITS_SELECTED normal text
+      const unitsSelected = document.createElement('div');
+      unitsSelected.textContent = data.UNITS_SELECTED || 'N/A';
+      leftCol.appendChild(unitsSelected);
+
+      // Right images column container
       const rightCol = document.createElement('div');
-      rightCol.style.display = 'inline-block';
-      rightCol.style.width = '120px';
-      rightCol.style.verticalAlign = 'top';
-      rightCol.style.textAlign = 'right';
+      rightCol.style.display = 'flex';
+      rightCol.style.flexDirection = 'column';
+      rightCol.style.gap = '6px';
+      rightCol.style.width = '60px';
+      rightCol.style.flexShrink = '0';
 
-      requiredFields.forEach(field => {
-        const p = document.createElement('p');
-        p.style.margin = '2px 0';
-        p.textContent = `${field}: ${data[field] !== undefined ? data[field] : 'N/A'}`;
-        leftCol.appendChild(p);
-      });
+      function createStatusImage(statusText, imgSrc) {
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = statusText;
+        img.title = statusText;
+        img.style.width = '35px';
+        img.style.height = '35px';
+        img.style.cursor = 'pointer';
+        img.style.borderRadius = '8px';
+        img.style.objectFit = 'contain';
+        img.style.userSelect = 'none';
+        img.style.transition = 'opacity 0.3s ease';
+        img.style.opacity = '1';
 
-      docDiv.appendChild(leftCol);
-      docDiv.appendChild(rightCol);
-
-      function createStatusButton(text, color) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = text;
-        btn.className = 'pick-btn blue';
-        btn.style.display = 'block';
-        btn.style.marginBottom = '6px';
-        btn.style.width = '100%';
-        btn.style.minWidth = '0';
-        btn.style.boxSizing = 'border-box';
-
-        if (color) {
-          btn.style.backgroundColor = color;
-          btn.style.borderColor = color;
-          btn.style.color = '#fff';
-        }
-
-        btn.addEventListener('click', async () => {
-          if (data.gameWinLossDraw === text) {
-            // Existing status clicked, prompt for password to reset
+        img.addEventListener('click', async () => {
+          if (data.gameWinLossDraw === statusText) {
             const pw = prompt('Password required to change existing status:');
             if (pw !== 'super123') {
               alert('Incorrect password. Status not changed.');
               return;
             }
-
-            // Reset status to blank in DB
             try {
               const docRef = doc(db, 'OfficialPicks', id);
-              await updateDoc(docRef, {
-                gameWinLossDraw: ''
-              });
-
+              await updateDoc(docRef, { gameWinLossDraw: '' });
               data.gameWinLossDraw = '';
-              // Show all 3 buttons again
               rightCol.innerHTML = '';
-              rightCol.appendChild(createStatusButton('Win', null));
-              rightCol.appendChild(createStatusButton('Push', null));
-              rightCol.appendChild(createStatusButton('Lost', null));
-              docDiv.style.backgroundColor = '#fff9db'; // highlight yellow
+              rightCol.appendChild(createStatusImage('Win', './images/greenWinner.png'));
+              rightCol.appendChild(createStatusImage('Push', './images/bluePush.png'));
+              rightCol.appendChild(createStatusImage('Lost', './images/redLost.png'));
+              docDiv.style.backgroundColor = '#fff9db';
             } catch (error) {
               console.error('Error resetting win/loss:', error);
               alert('Failed to reset status.');
@@ -126,62 +119,43 @@ export async function loadUpdateWinLoss(container) {
             return;
           }
 
-          // Update DB with new status
           try {
             const docRef = doc(db, 'OfficialPicks', id);
-            await updateDoc(docRef, {
-              gameWinLossDraw: text
+            await updateDoc(docRef, { gameWinLossDraw: statusText });
+            data.gameWinLossDraw = statusText;
+
+            // Highlight selected image, dim others
+            Array.from(rightCol.children).forEach(image => {
+              image.style.opacity = (image === img) ? '1' : '0.4';
+              image.style.pointerEvents = (image === img) ? 'auto' : 'none';
             });
 
-            data.gameWinLossDraw = text;
-
-            // Hide other buttons except clicked one
-            Array.from(rightCol.children).forEach(button => {
-              if (button !== btn) button.style.display = 'none';
-            });
-
-            // Update button colors accordingly
-            if (text === 'Win') {
-              btn.style.backgroundColor = '#4CAF50';
-              btn.style.borderColor = '#4CAF50';
-              btn.style.color = '#fff';
-            } else if (text === 'Push') {
-              btn.style.backgroundColor = '#2196F3';
-              btn.style.borderColor = '#2196F3';
-              btn.style.color = '#fff';
-            } else if (text === 'Lost') {
-              btn.style.backgroundColor = '#B74141';
-              btn.style.borderColor = '#B74141';
-              btn.style.color = '#fff';
-            }
-
-            // Remove yellow highlight because it's now set
-            docDiv.style.backgroundColor = '';
+            docDiv.style.backgroundColor = ''; // remove highlight
           } catch (error) {
             console.error('Error updating win/loss:', error);
             alert('Failed to update status.');
           }
         });
 
-        return btn;
+        return img;
       }
 
-      // Show all 3 buttons if no selection, otherwise show only selected button
       if (needsSelection) {
-        rightCol.appendChild(createStatusButton('Win', null));
-        rightCol.appendChild(createStatusButton('Push', null));
-        rightCol.appendChild(createStatusButton('Lost', null));
+        rightCol.appendChild(createStatusImage('Win', './images/greenWinner.png'));
+        rightCol.appendChild(createStatusImage('Push', './images/bluePush.png'));
+        rightCol.appendChild(createStatusImage('Lost', './images/redLost.png'));
       } else {
-        const color = val === 'Win' ? '#4CAF50' : val === 'Push' ? '#2196F3' : val === 'Lost' ? '#B74141' : null;
-        rightCol.appendChild(createStatusButton(val, color));
+        const statusMap = {
+          'Win': './images/greenWinner.png',
+          'Push': './images/bluePush.png',
+          'Lost': './images/redLost.png'
+        };
+        rightCol.appendChild(createStatusImage(val, statusMap[val]));
       }
 
+      docDiv.appendChild(leftCol);
+      docDiv.appendChild(rightCol);
       container.appendChild(docDiv);
-
-      if (i < docsData.length - 1) {
-        const hr = document.createElement('hr');
-        container.appendChild(hr);
-      }
     });
   } catch (error) {
     console.error('Error loading updateWinLoss picks:', error);
