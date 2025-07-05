@@ -35,13 +35,17 @@ export async function loadUpdateWinLoss(container) {
     }
 
     docsData.forEach(({ id, data }, i) => {
+      const val = data.gameWinLossDraw;
+
       const docDiv = document.createElement('div');
-      docDiv.style.marginBottom = '15px';
-      docDiv.style.padding = '15px 20px';
+      docDiv.style.marginBottom = '8px';           // smaller margin
+      docDiv.style.padding = '10px 15px';           // reduced padding
       docDiv.style.borderRadius = '6px';
       docDiv.style.display = 'flex';
       docDiv.style.justifyContent = 'space-between';
-      docDiv.style.alignItems = 'flex-start';
+      docDiv.style.alignItems = 'center';           // vertically center items
+      // Remove border for cleaner look
+      // docDiv.style.border = '1px solid #ccc';    // removed border
 
       // Alternating background colors: odd rows light gray, even rows white
       docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
@@ -49,19 +53,20 @@ export async function loadUpdateWinLoss(container) {
       // Left text column container
       const leftCol = document.createElement('div');
       leftCol.style.flex = '1 1 auto';
+      leftCol.style.textAlign = 'left';              // left align text
 
       // teamSelected bold and bigger
       const teamSelected = document.createElement('div');
       teamSelected.textContent = data.teamSelected || 'N/A';
       teamSelected.style.fontWeight = 'bold';
       teamSelected.style.fontSize = '1.2em';
-      teamSelected.style.marginBottom = '6px';
+      teamSelected.style.marginBottom = '4px';       // reduced margin bottom
       leftCol.appendChild(teamSelected);
 
       // wagerType normal text
       const wagerType = document.createElement('div');
       wagerType.textContent = data.wagerType || 'N/A';
-      wagerType.style.marginBottom = '4px';
+      wagerType.style.marginBottom = '2px';          // smaller margin
       leftCol.appendChild(wagerType);
 
       // unit normal text
@@ -77,13 +82,13 @@ export async function loadUpdateWinLoss(container) {
       rightCol.style.width = '60px';
       rightCol.style.flexShrink = '0';
 
-      function createStatusImage(statusText, imgSrc) {
+      function createStatusImage(statusText, imgSrc, rowIndex) {
         const img = document.createElement('img');
         img.src = imgSrc;
         img.alt = statusText;
         img.title = statusText;
-        img.style.width = '35px';
-        img.style.height = '35px';
+        img.style.width = '40px';            // increased size to 40px
+        img.style.height = '40px';
         img.style.cursor = 'pointer';
         img.style.borderRadius = '8px';
         img.style.objectFit = 'contain';
@@ -103,11 +108,10 @@ export async function loadUpdateWinLoss(container) {
               await updateDoc(docRef, { gameWinLossDraw: '' });
               data.gameWinLossDraw = '';
               rightCol.innerHTML = '';
-              rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
-              rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
-              rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
-              // Reset background color to original alternating row color
-              docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
+              rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', rowIndex));
+              rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', rowIndex));
+              rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', rowIndex));
+              docDiv.style.backgroundColor = (rowIndex % 2 === 1) ? '#f2f2f2' : '#fff';
             } catch (error) {
               console.error('Error resetting win/loss:', error);
               alert('Failed to reset status.');
@@ -126,8 +130,7 @@ export async function loadUpdateWinLoss(container) {
               image.style.pointerEvents = (image === img) ? 'auto' : 'none';
             });
 
-            // Keep background color consistent with alternating pattern
-            docDiv.style.backgroundColor = (i % 2 === 1) ? '#f2f2f2' : '#fff';
+            docDiv.style.backgroundColor = (rowIndex % 2 === 1) ? '#f2f2f2' : '#fff';
           } catch (error) {
             console.error('Error updating win/loss:', error);
             alert('Failed to update status.');
@@ -137,18 +140,17 @@ export async function loadUpdateWinLoss(container) {
         return img;
       }
 
-      // Show all 3 images if no selection, else show only selected
       if (val === null || val === undefined || val === '' || val === 'null') {
-        rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png'));
-        rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png'));
-        rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png'));
+        rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', i));
+        rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', i));
+        rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', i));
       } else {
         const statusMap = {
           'Win': '/admin/images/greenWinner.png',
           'Push': '/admin/images/bluePush.png',
           'Lost': '/admin/images/redLost.png'
         };
-        rightCol.appendChild(createStatusImage(val, statusMap[val]));
+        rightCol.appendChild(createStatusImage(val, statusMap[val], i));
       }
 
       docDiv.appendChild(leftCol);
