@@ -13,7 +13,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
 const PAGE_LIMIT = 15;
-const PAGE_LIMIT = 100;
+const PAGE_LIMIT_SPORTS = 100;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
