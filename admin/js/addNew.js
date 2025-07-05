@@ -12,7 +12,8 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const PAGE_LIMIT = 36;
+const PAGE_LIMIT = 15;
+const PAGE_LIMIT = 100;
 
 export class AddNewWorkflow {
   constructor(container, userId) {
@@ -138,7 +139,7 @@ export class AddNewWorkflow {
           collection(db, 'SportsData'),
           where('active', '==', true),
           orderBy('group'),
-          limit(PAGE_LIMIT)
+          limit(PAGE_LIMIT_SPORTS)
         );
       } else {
         q = query(
@@ -146,7 +147,7 @@ export class AddNewWorkflow {
           where('active', '==', true),
           orderBy('group'),
           startAfter(this.sportLastVisible),
-          limit(PAGE_LIMIT)
+          limit(PAGE_LIMIT_SPORTS)
         );
       }
 
