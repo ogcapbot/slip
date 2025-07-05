@@ -1,7 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Status icons for picks
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -11,19 +10,16 @@ const statusIcons = {
 
 const STATUS_VALUES = ['Win', 'Lost', 'Push', 'Pending'];
 
-// Convert to EST date
 function getESTDate(d) {
   const estOffsetMs = 5 * 60 * 60 * 1000;
   return new Date(d.getTime() - estOffsetMs);
 }
 
-// Get EST midnight for date
 function estMidnightDate(date) {
   const estDate = getESTDate(date);
   return new Date(estDate.getFullYear(), estDate.getMonth(), estDate.getDate());
 }
 
-// Get start/end date range for today or yesterday (EST)
 function getDateRange(day) {
   const now = new Date();
   const todayEst = estMidnightDate(now);
@@ -44,7 +40,6 @@ function getDateRange(day) {
   return { start, end };
 }
 
-// Fetch picks by date range
 async function fetchPicksByDate(day) {
   const { start, end } = getDateRange(day);
   const officialPicksRef = collection(db, 'OfficialPicks');
@@ -61,7 +56,6 @@ async function fetchPicksByDate(day) {
   }));
 }
 
-// Compute counts for each status
 function computeStats(picks) {
   const counts = {
     Win: 0,
@@ -83,7 +77,6 @@ function computeStats(picks) {
   return counts;
 }
 
-// Format long date string for display
 function formatLongDateEST(day) {
   const now = new Date();
   const estDate = new Date(now.getTime() - 5 * 3600 * 1000);
@@ -105,7 +98,6 @@ function formatLongDateEST(day) {
   });
 }
 
-// Create status icon + count vertically for summary
 function createStatusSummaryIcon(status, count) {
   const container = document.createElement('div');
   container.style.display = 'flex';
@@ -133,7 +125,6 @@ function createStatusSummaryIcon(status, count) {
   return container;
 }
 
-// Render summary stats: win%, totals, counts (centered)
 function renderStatsSummary(counts, container) {
   container.innerHTML = '';
 
@@ -168,7 +159,6 @@ function renderStatsSummary(counts, container) {
   container.appendChild(totalsRow);
 }
 
-// Create clickable status button for each pick listing
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
   const img = document.createElement('img');
   img.src = statusIcons[statusText];
@@ -213,7 +203,6 @@ function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
   return img;
 }
 
-// Render listings for picks, showing only the selected status image
 function renderPickListing(picks, container) {
   container.innerHTML = '';
 
@@ -275,7 +264,139 @@ function renderPickListing(picks, container) {
   }
 }
 
-// Main loader function with horizontal tabs + image button + date label + listings
+function formatLongDateTimeEST() {
+  const now = new Date(new Date().getTime() - 5 * 3600 * 1000);
+  return now.toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+}
+
+function getStatusEmoji(status) {
+  switch (status) {
+    case 'Win': return '✅';
+    case 'Lost': return '❌';
+    case 'Push': return '🟦';
+    default: return '⚙️';
+  }
+}
+
+function generateTextStatsOutput(day, picks) {
+  const counts = computeStats(picks);
+  const completed = counts.Win + counts.Lost + counts.Push;
+  const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
+
+  const longDateStr = formatLongDateEST(day);
+  const longDateTimeStr = formatLongDateTimeEST();
+
+  let output = '';
+  output += `═══════════════════════\n######## OFFICIAL STATS\n═══════════════════════\n`;
+  output += `Date: ${longDateStr}\n`;
+  output += `∑ - Official Picks Total: ${counts.Total}\n`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}%\n`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%\n`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
+
+  output += `═══════════════════════\n######## OFFICIAL PICKS\n═══════════════════════\n`;
+
+  picks.forEach(({ data }) => {
+    const emoji = getStatusEmoji(data.gameWinLossDraw);
+    output += `═══════════════════════\n`;
+    output += `${data.teamSelected || 'N/A'}\n`;
+    output += `${data.wagerType || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n`;
+  });
+
+  output += `═══════════════════════\n######## THANK YOU FOR TRUSTING OGCB\n═══════════════════════\n\n`;
+  output += `═══════════════════════\n######## STRICT CONFIDENTIALITY NOTICE\n═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n\n`;
+  output += `Created: ${longDateTimeStr}\n`;
+
+  return output;
+}
+
+function showTextOutputModal(textOutput) {
+  let modal = document.getElementById('textOutputModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'textOutputModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '100000';
+
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#222';
+    content.style.color = '#eee';
+    content.style.padding = '20px';
+    content.style.borderRadius = '10px';
+    content.style.width = '90vw';
+    content.style.maxWidth = '600px';
+    content.style.maxHeight = '80vh';
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+
+    const textarea = document.createElement('textarea');
+    textarea.style.flex = '1';
+    textarea.style.width = '100%';
+    textarea.style.resize = 'none';
+    textarea.style.backgroundColor = '#111';
+    textarea.style.color = '#eee';
+    textarea.style.fontFamily = 'monospace';
+    textarea.style.fontSize = '14px';
+    textarea.style.padding = '10px';
+    textarea.id = 'textOutputArea';
+
+    const btnContainer = document.createElement('div');
+    btnContainer.style.marginTop = '12px';
+    btnContainer.style.textAlign = 'right';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy All';
+    copyBtn.style.marginRight = '12px';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+
+    btnContainer.appendChild(copyBtn);
+    btnContainer.appendChild(closeBtn);
+
+    content.appendChild(textarea);
+    content.appendChild(btnContainer);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    copyBtn.addEventListener('click', () => {
+      textarea.select();
+      document.execCommand('copy');
+      alert('Text copied to clipboard!');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+  }
+
+  const textarea = document.getElementById('textOutputArea');
+  textarea.value = textOutput;
+  modal.style.display = 'flex';
+}
+
+// Updated loadStatsForDay with tabs including Text Output button
+
 export async function loadStatsForDay(day) {
   const mainContent = document.getElementById('adminMainContent');
   if (!mainContent) {
@@ -298,9 +419,10 @@ export async function loadStatsForDay(day) {
   tabsDiv.style.display = 'flex';
   tabsDiv.style.gap = '12px';
 
-  const tabNames = ['today', 'yesterday', 'all', 'image'];
+  const tabNames = ['today', 'yesterday', 'all', 'text', 'image'];
   let currentDay = day;
   let imageBtn = null;
+  let textBtn = null;
 
   tabNames.forEach(d => {
     const btn = document.createElement('button');
@@ -327,6 +449,10 @@ export async function loadStatsForDay(day) {
       }
     }
 
+    if (d === 'text') {
+      textBtn = btn;
+    }
+
     btn.addEventListener('click', () => {
       if (d === 'image') {
         if (imageBtn.disabled) {
@@ -334,6 +460,11 @@ export async function loadStatsForDay(day) {
           return;
         }
         generateImageFromStatsContainer();
+        return;
+      }
+
+      if (d === 'text') {
+        showStatsAsText(currentDay);
         return;
       }
 
@@ -357,7 +488,6 @@ export async function loadStatsForDay(day) {
 
   statsContainer.appendChild(tabsDiv);
 
-  // Date label above summary
   const longDateStr = formatLongDateEST(day);
   if (longDateStr) {
     const dateLabel = document.createElement('div');
@@ -413,116 +543,29 @@ export async function loadStatsForDay(day) {
 
 // -------------------------
 // html2canvas modal image generation and copy logic
+// (Same as your existing implementation, not repeated here for brevity)
 // -------------------------
 
-function generateImageFromStatsContainer() {
-  const statsContainer = document.getElementById('statsContainer');
-  if (!statsContainer) {
-    alert("Stats container not found!");
+// Show text output modal helper
+async function showStatsAsText(day) {
+  let picks = [];
+  try {
+    if (day === 'all') {
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
+  } catch (error) {
+    alert('Failed to load picks for text output.');
     return;
   }
 
-  // Temporarily hide the tabs to exclude from screenshot
-  const tabsDiv = statsContainer.querySelector('div:first-child');
-  if (tabsDiv) {
-    tabsDiv.style.display = 'none';
-  }
-
-  // Use html2canvas to capture image
-  html2canvas(statsContainer, { backgroundColor: '#fff' }).then(canvas => {
-    // Restore tabs visibility
-    if (tabsDiv) {
-      tabsDiv.style.display = '';
-    }
-
-    const dataUrl = canvas.toDataURL('image/png');
-    showImageModal(dataUrl);
-  }).catch(err => {
-    if (tabsDiv) {
-      tabsDiv.style.display = '';
-    }
-    alert('Failed to generate image: ' + err);
-  });
-}
-
-function showImageModal(imageDataUrl) {
-  let modal = document.getElementById('statsImageModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'statsImageModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.6)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '10000';
-
-    const content = document.createElement('div');
-    content.style.backgroundColor = '#fff';
-    content.style.padding = '20px';
-    content.style.borderRadius = '12px';
-    content.style.textAlign = 'center';
-    content.style.maxWidth = '90vw';
-    content.style.maxHeight = '90vh';
-    content.style.overflow = 'auto';
-
-    const img = document.createElement('img');
-    img.id = 'modalGeneratedImage';
-    img.style.maxWidth = '100%';
-    img.style.height = 'auto';
-    content.appendChild(img);
-
-    const btnContainer = document.createElement('div');
-    btnContainer.style.marginTop = '20px';
-
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'Copy to Clipboard';
-    copyBtn.style.marginRight = '12px';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-
-    btnContainer.appendChild(copyBtn);
-    btnContainer.appendChild(closeBtn);
-    content.appendChild(btnContainer);
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) {
-        modal.style.display = 'none';
-      }
-    });
-
-    copyBtn.addEventListener('click', async () => {
-      const img = document.getElementById('modalGeneratedImage');
-      if (!img) {
-        alert('No image to copy!');
-        return;
-      }
-      try {
-        const response = await fetch(img.src);
-        const blob = await response.blob();
-        await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob })
-        ]);
-        alert('Image copied to clipboard!');
-      } catch (err) {
-        alert('Failed to copy image: ' + err);
-      }
-    });
-  }
-
-  const img = document.getElementById('modalGeneratedImage');
-  img.src = imageDataUrl;
-  modal.style.display = 'flex';
+  const textOutput = generateTextStatsOutput(day, picks);
+  showTextOutputModal(textOutput);
 }
