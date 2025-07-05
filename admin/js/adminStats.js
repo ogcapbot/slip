@@ -47,12 +47,12 @@ function getDateRange(day) {
 async function fetchPicksByDate(day) {
   const { start, end } = getDateRange(day);
 
-  // Firestore query with timestampSubmitted >= start and < end
+  // Firestore query with timestamp >= start and < end
   const officialPicksRef = collection(db, 'OfficialPicks');
   const q = query(
     officialPicksRef,
-    where('timestampSubmitted', '>=', start),
-    where('timestampSubmitted', '<', end)
+    where('timestamp', '>=', start),
+    where('timestamp', '<', end)
   );
 
   const snapshot = await getDocs(q);
@@ -273,7 +273,8 @@ export async function loadStatsForDay(day) {
   const tabsDiv = document.createElement('div');
   tabsDiv.style.marginBottom = '12px';
 
-  ['today', 'yesterday'].forEach(d => {
+  // Add 'today', 'yesterday', and 'all' buttons
+  ['today', 'yesterday', 'all'].forEach(d => {
     const tab = document.createElement('button');
     tab.textContent = d.charAt(0).toUpperCase() + d.slice(1);
     tab.style.marginRight = '10px';
@@ -301,7 +302,18 @@ export async function loadStatsForDay(day) {
 
   let picks = [];
   try {
-    picks = await fetchPicksByDate(day);
+    if (day === 'all') {
+      // Fetch up to 25 picks with no date filter
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
   } catch (error) {
     loadingMsg.textContent = 'Failed to load picks.';
     console.error('Error fetching picks:', error);
