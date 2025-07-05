@@ -8,29 +8,23 @@ async function generateImageWithWatermarkAndText(watermarkUrl, textLines) {
     watermarkImg.src = watermarkUrl;
 
     watermarkImg.onload = () => {
-      const padding = 20; // padding inside watermark for text
+      const padding = 20;
       const lineHeight = 24;
 
-      // Use watermark's natural width/height exactly (no extra bottom padding)
       canvas.width = watermarkImg.width;
       canvas.height = watermarkImg.height;
 
-      // Draw watermark image at top-left corner
       ctx.drawImage(watermarkImg, 0, 0);
 
-      // Text style: solid black, no background fill
-      ctx.fillStyle = '#000'; // black text, change if needed
+      ctx.fillStyle = '#000';
       ctx.font = '18px Oswald, sans-serif';
       ctx.textBaseline = 'top';
 
-      // Draw each line of text starting near top-left + padding
       textLines.forEach((line, i) => {
         ctx.fillText(line, padding, padding + i * lineHeight);
       });
 
-      // Export PNG Data URL
-      const pngDataUrl = canvas.toDataURL('image/png');
-      resolve(pngDataUrl);
+      resolve(canvas);
     };
 
     watermarkImg.onerror = () => {
@@ -39,29 +33,109 @@ async function generateImageWithWatermarkAndText(watermarkUrl, textLines) {
   });
 }
 
-// Example usage:
-const watermarkUrl = 'http://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+function openImageModal(canvas) {
+  // Remove existing modal if present
+  const existingModal = document.getElementById('imageModal');
+  if (existingModal) existingModal.remove();
 
-const exampleLines = [
-  "═══════════════════════",
-  "######## OFFICIAL STATS",
-  "═══════════════════════",
-  "Date: Friday, July 4, 2025",
-  "∑ - Official Picks Total: 11",
-  "✅ - Official Pick Winners: 5 - 45.5%",
-  "❌ - Official Picks Lost: 3 - 27.3%",
-  "🟦 - Official Picks Pushed: 1 - 9.1%",
-  "⚙️ - Official Picks Pending : 2"
-];
+  const modal = document.createElement('div');
+  modal.id = 'imageModal';
+  Object.assign(modal.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: '100000',
+    padding: '20px',
+    boxSizing: 'border-box',
+  });
 
-generateImageWithWatermarkAndText(watermarkUrl, exampleLines)
-  .then(pngDataUrl => {
-    const imgPreview = document.createElement('img');
-    imgPreview.src = pngDataUrl;
-    imgPreview.style.border = '1px solid #ccc';
-    imgPreview.style.marginTop = '12px';
-    imgPreview.style.maxWidth = '100%';
+  const img = document.createElement('img');
+  img.src = canvas.toDataURL('image/png');
+  img.style.maxWidth = '90vw';
+  img.style.maxHeight = '70vh';
+  img.style.border = '2px solid white';
+  img.style.marginBottom = '20px';
+  modal.appendChild(img);
 
-    document.body.appendChild(imgPreview);
-  })
-  .catch(console.error);
+  const btnContainer = document.createElement('div');
+  btnContainer.style.display = 'flex';
+  btnContainer.style.gap = '15px';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = 'Copy Image';
+  copyBtn.style.padding = '10px 20px';
+
+  const downloadBtn = document.createElement('button');
+  downloadBtn.textContent = 'Download Image';
+  downloadBtn.style.padding = '10px 20px';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.style.padding = '10px 20px';
+
+  btnContainer.appendChild(copyBtn);
+  btnContainer.appendChild(downloadBtn);
+  btnContainer.appendChild(closeBtn);
+  modal.appendChild(btnContainer);
+
+  document.body.appendChild(modal);
+
+  copyBtn.onclick = async () => {
+    try {
+      // Convert canvas to blob and write to clipboard
+      canvas.toBlob(async (blob) => {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        alert('Image copied to clipboard!');
+      });
+    } catch (err) {
+      alert('Failed to copy image: ' + err.message);
+    }
+  };
+
+  downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'official-stats.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  closeBtn.onclick = () => {
+    modal.remove();
+  };
+}
+
+async function testImageModal() {
+  const watermarkUrl = 'http://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+  const exampleLines = [
+    "═══════════════════════",
+    "######## OFFICIAL STATS",
+    "═══════════════════════",
+    "Date: Friday, July 4, 2025",
+    "∑ - Official Picks Total: 11",
+    "✅ - Official Pick Winners: 5 - 45.5%",
+    "❌ - Official Picks Lost: 3 - 27.3%",
+    "🟦 - Official Picks Pushed: 1 - 9.1%",
+    "⚙️ - Official Picks Pending : 2"
+  ];
+
+  try {
+    const canvas = await generateImageWithWatermarkAndText(watermarkUrl, exampleLines);
+    openImageModal(canvas);
+  } catch (err) {
+    alert('Error generating image: ' + err.message);
+  }
+}
+
+// Run test
+testImageModal();
