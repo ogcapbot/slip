@@ -16,15 +16,17 @@
   </header>
 
   <section>
-  <input id="accessCodeInput" type="password" inputmode="numeric" autofocus required placeholder="Enter Access Code" autocomplete="off" />
-  <button class="login-button">Login</button>
-  <p id="loginError" class="error-text"></p>
-</section>
+    <input id="accessCodeInput" type="password" inputmode="numeric" autofocus required placeholder="Enter Access Code" autocomplete="off" />
+    <button class="login-button">Login</button>
+    <p id="loginError" class="error-text"></p>
+  </section>
 
+  <section id="adminSection" style="display:none;">
+    <!-- Main container for admin dynamic content -->
+    <div id="adminMainContent"></div>
+  </section>
 
-  <section id="adminSection" style="display:none;"></section>
-
-  <footer id="versionFooter"><H6>Version 7.25</H6></footer>
+  <footer id="versionFooter"><h6>Version 7.25</h6></footer>
 
   <script type="module" src="admin/firebaseInit.js"></script>
   <script type="module" src="admin/js/auth.js"></script>
