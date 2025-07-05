@@ -1,6 +1,5 @@
 // addNew.js
 import { db } from '../firebaseInit.js';
-import { generateSlidePreview } from './generateImage.js';
 import {
   collection,
   query,
@@ -805,48 +804,7 @@ export class AddNewWorkflow {
     summaryDiv.style.marginTop = '12px';
     summaryDiv.style.fontWeight = 'bold';
     summaryDiv.style.textAlign = 'left'; // Left align summary
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// inside showSubmissionSummary() or wherever your summary is displayed
 
-const generateBtn = document.createElement('button');
-generateBtn.textContent = 'Generate Slide Preview';
-generateBtn.classList.add('admin-button');
-generateBtn.style.marginTop = '16px';
-
-// Import your generateImage.js module at the top of addNew.js
-// import { generateSlidePreview } from './generateImage.js';
-
-generateBtn.addEventListener('click', () => {
-  const data = {
-    FULL_TEAM_ENTERED: this.selectedTeam,
-    FULL_BET_TYPE: this.selectedWagerType,
-    FULL_WAGER_OUTPUT: /* your wager output string */,
-    PICK_DESC: /* fetch or store this somewhere */,
-    NOTES: this.notes || 'None',
-    FULL_SPORT_NAME: this.selectedSport,
-    FULL_LEAGUE_NAME: this.selectedLeague,
-    HOME_TEAM_FULL_NAME: this.selectedGame.homeTeam,
-    AWAY_TEAM_FULL_NAME: this.selectedGame.awayTeam,
-    DATE_AND_TIME_OF_GAME_START: this.selectedGame.startTimeET,
-    TITLE: 'Official Pick',
-    PICKID: 'some-pick-id',
-    CAPPERS_NAME: 'Your Capper Name',
-    USER_INPUT_VALUE: this.wagerNumberValue !== null ? this.wagerNumberValue : 'N/A',
-    LONG_DATE_SECONDS: new Date().toLocaleString(),
-  };
-
-  generateSlidePreview('slidePreviewContainer', data, 'https://capper.ogcapperbets.com/admin/templateSingle.svg');
-});
-
-this.container.appendChild(generateBtn);
-
-// Also, add a container div below summary where SVG preview will be inserted:
-const previewDiv = document.createElement('div');
-previewDiv.id = 'slidePreviewContainer';
-previewDiv.style.marginTop = '20px';
-this.container.appendChild(previewDiv);
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
     const fields = [
       { label: 'Sport', value: this.selectedSport },
       { label: 'League', value: this.selectedLeague },
