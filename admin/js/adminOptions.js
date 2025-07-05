@@ -83,6 +83,11 @@ export function showAdminOptions(userData) {
 
       if (btnConfig.label === 'Stats') {
         mainContent.innerHTML = '';
+        // Create statsContainer dynamically here to avoid missing container errors
+        let statsContainer = document.createElement('div');
+        statsContainer.id = 'statsContainer';
+        mainContent.appendChild(statsContainer);
+
         // Load stats UI with default tab "today"
         loadStatsForDay('today');
         return;
