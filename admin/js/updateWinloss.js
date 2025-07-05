@@ -1,5 +1,5 @@
 import { db } from '../firebaseInit.js';
-import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 export async function loadUpdateWinLoss(container) {
   if (!container) {
