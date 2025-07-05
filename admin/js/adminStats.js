@@ -1,13 +1,11 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-const statsContainer = document.getElementById('statsContainer'); // main container in your admin page
-
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
   Push: '/admin/images/bluePush.png',
-  Pending: '/admin/images/grayPending.png' // make sure you add this
+  Pending: '/admin/images/grayPending.png' // make sure you have this icon uploaded
 };
 
 const STATUS_VALUES = ['Win', 'Lost', 'Push', 'Pending'];
@@ -58,12 +56,10 @@ async function fetchPicksByDate(day) {
   );
 
   const snapshot = await getDocs(q);
-  const picks = snapshot.docs.map(doc => ({
+  return snapshot.docs.map(doc => ({
     id: doc.id,
     data: doc.data()
   }));
-
-  return picks;
 }
 
 // Count statuses and prepare summary data
@@ -254,14 +250,24 @@ function renderPickListing(picks, container) {
   }
 }
 
-// Main function to load stats UI for given day filter ('today' or 'yesterday')
 export async function loadStatsForDay(day) {
-  if (!statsContainer) {
-    console.error('Stats container element not found!');
+  const mainContent = document.getElementById('adminMainContent');
+  if (!mainContent) {
+    console.error('Main content container not found!');
     return;
   }
 
-  statsContainer.innerHTML = '';
+  mainContent.innerHTML = '';
+
+  // Create or reuse statsContainer inside mainContent
+  let statsContainer = document.getElementById('statsContainer');
+  if (!statsContainer) {
+    statsContainer = document.createElement('div');
+    statsContainer.id = 'statsContainer';
+    mainContent.appendChild(statsContainer);
+  } else {
+    statsContainer.innerHTML = '';
+  }
 
   // Create tabs UI
   const tabsDiv = document.createElement('div');
@@ -293,7 +299,6 @@ export async function loadStatsForDay(day) {
   loadingMsg.style.marginBottom = '10px';
   statsContainer.appendChild(loadingMsg);
 
-  // Fetch picks for selected day
   let picks = [];
   try {
     picks = await fetchPicksByDate(day);
@@ -303,16 +308,13 @@ export async function loadStatsForDay(day) {
     return;
   }
 
-  // Remove loading message
   statsContainer.removeChild(loadingMsg);
 
-  // Compute and render stats summary
   const counts = computeStats(picks);
   const summaryDiv = document.createElement('div');
   statsContainer.appendChild(summaryDiv);
   renderStatsSummary(counts, summaryDiv);
 
-  // Render picks listing
   const picksDiv = document.createElement('div');
   picksDiv.style.maxHeight = '400px';
   picksDiv.style.overflowY = 'auto';
