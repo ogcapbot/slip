@@ -341,7 +341,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh';
+    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -354,6 +354,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
+    textarea.style.minHeight = '70vh'; // Fill most of modal height
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -394,8 +395,6 @@ function showTextOutputModal(textOutput) {
   textarea.value = textOutput;
   modal.style.display = 'flex';
 }
-
-// Updated loadStatsForDay with tabs including Text Output button
 
 export async function loadStatsForDay(day) {
   const mainContent = document.getElementById('adminMainContent');
@@ -539,33 +538,4 @@ export async function loadStatsForDay(day) {
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
-}
-
-// -------------------------
-// html2canvas modal image generation and copy logic
-// (Same as your existing implementation, not repeated here for brevity)
-// -------------------------
-
-// Show text output modal helper
-async function showStatsAsText(day) {
-  let picks = [];
-  try {
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.slice(0, 25).map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-  } catch (error) {
-    alert('Failed to load picks for text output.');
-    return;
-  }
-
-  const textOutput = generateTextStatsOutput(day, picks);
-  showTextOutputModal(textOutput);
 }
