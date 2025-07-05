@@ -9,13 +9,15 @@ async function generateImageWithWatermarkAndText(watermarkUrl, textLines) {
 
     watermarkImg.onload = () => {
       const padding = 20;
+      const extraWatermarkBottomPadding = 300; // prevent watermark cutoff
       const lineHeight = 24;
-      const textStartY = watermarkImg.height + padding;
+      const textStartY = watermarkImg.height + extraWatermarkBottomPadding + padding;
 
       const maxWidth = watermarkImg.width;
       const textHeight = lineHeight * textLines.length;
+
       canvas.width = maxWidth;
-      canvas.height = watermarkImg.height + padding + textHeight + padding;
+      canvas.height = watermarkImg.height + extraWatermarkBottomPadding + padding + textHeight + padding;
 
       ctx.drawImage(watermarkImg, 0, 0);
 
