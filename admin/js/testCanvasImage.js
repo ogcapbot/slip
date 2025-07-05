@@ -8,27 +8,27 @@ async function generateImageWithWatermarkAndText(watermarkUrl, textLines) {
     watermarkImg.src = watermarkUrl;
 
     watermarkImg.onload = () => {
-      const padding = 20;
-      const extraWatermarkBottomPadding = 300; // prevent watermark cutoff
+      const padding = 20; // padding inside watermark for text
       const lineHeight = 24;
-      const textStartY = watermarkImg.height + extraWatermarkBottomPadding + padding;
 
-      const maxWidth = watermarkImg.width;
-      const textHeight = lineHeight * textLines.length;
+      // Use watermark's natural width/height exactly (no extra bottom padding)
+      canvas.width = watermarkImg.width;
+      canvas.height = watermarkImg.height;
 
-      canvas.width = maxWidth;
-      canvas.height = watermarkImg.height + extraWatermarkBottomPadding + padding + textHeight + padding;
-
+      // Draw watermark image at top-left corner
       ctx.drawImage(watermarkImg, 0, 0);
 
-      ctx.fillStyle = '#222';
+      // Text style: solid black, no background fill
+      ctx.fillStyle = '#000'; // black text, change if needed
       ctx.font = '18px Oswald, sans-serif';
       ctx.textBaseline = 'top';
 
+      // Draw each line of text starting near top-left + padding
       textLines.forEach((line, i) => {
-        ctx.fillText(line, padding, textStartY + i * lineHeight);
+        ctx.fillText(line, padding, padding + i * lineHeight);
       });
 
+      // Export PNG Data URL
       const pngDataUrl = canvas.toDataURL('image/png');
       resolve(pngDataUrl);
     };
@@ -39,6 +39,7 @@ async function generateImageWithWatermarkAndText(watermarkUrl, textLines) {
   });
 }
 
+// Example usage:
 const watermarkUrl = 'http://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
 const exampleLines = [
