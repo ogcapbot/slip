@@ -1,6 +1,7 @@
 // admin/js/adminOptions.js
 
 import { AddNewWorkflow } from './addNew.js';
+import { loadUpdateWinLoss } from './updateWinloss.js'; // <-- Adjust this path to your actual file location
 
 /**
  * Displays the admin options UI below the user display name.
@@ -108,6 +109,15 @@ export function showAdminOptions(userData) {
         // Create instance of AddNewWorkflow inside mainContent div
         const workflow = new AddNewWorkflow(mainContent, userId);
 
+        return;
+      }
+
+      // Handle Win/Loss button: load your picks UI
+      if (btnConfig.label === 'Win/Loss') {
+        // Clear main content container
+        mainContent.innerHTML = '';
+        // Call your function passing mainContent as container
+        loadUpdateWinLoss(mainContent);
         return;
       }
 
