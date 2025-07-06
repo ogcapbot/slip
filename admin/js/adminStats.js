@@ -300,7 +300,7 @@ function generateTextStatsOutput(day, picks) {
   output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
   output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
   output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
 
   output += `═══════════════════════\n`;
   output += `######## OFFICIAL PICKS\n`;
@@ -349,7 +349,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +362,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; // Fill most of modal height
+    textarea.style.minHeight = '70vh';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -404,93 +404,39 @@ function showTextOutputModal(textOutput) {
   modal.style.display = 'flex';
 }
 
-// Mobile detector helper
-function isMobile() {
-  return /Mobi|Android/i.test(navigator.userAgent);
-}
+async function showStatsAsText(day) {
+  try {
+    let picks = [];
+    if (day === 'all') {
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
 
-// Show image modal for mobile downloads
-function showImageModal(dataUrl) {
-  let modal = document.getElementById('imageSaveModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'imageSaveModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100001';
-
-    const content = document.createElement('div');
-    content.style.backgroundColor = '#222';
-    content.style.borderRadius = '10px';
-    content.style.padding = '20px';
-    content.style.maxWidth = '90vw';
-    content.style.maxHeight = '80vh';
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-    content.style.alignItems = 'center';
-
-    const img = document.createElement('img');
-    img.style.maxWidth = '100%';
-    img.style.maxHeight = '70vh';
-    img.src = dataUrl;
-
-    const saveBtn = document.createElement('a');
-    saveBtn.textContent = 'Download Image';
-    saveBtn.href = dataUrl;
-    saveBtn.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-    saveBtn.style.marginTop = '15px';
-    saveBtn.style.padding = '10px 20px';
-    saveBtn.style.backgroundColor = '#4CAF50';
-    saveBtn.style.color = '#fff';
-    saveBtn.style.textDecoration = 'none';
-    saveBtn.style.borderRadius = '6px';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.style.marginTop = '10px';
-    closeBtn.style.padding = '8px 16px';
-    closeBtn.style.border = 'none';
-    closeBtn.style.borderRadius = '6px';
-    closeBtn.style.cursor = 'pointer';
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    content.appendChild(img);
-    content.appendChild(saveBtn);
-    content.appendChild(closeBtn);
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
+    const textOutput = generateTextStatsOutput(day, picks);
+    showTextOutputModal(textOutput);
+  } catch (error) {
+    console.error('Failed to show stats as text:', error);
+    alert('Error loading stats as text.');
   }
-
-  modal.style.display = 'flex';
 }
 
 /**
  * NEW FUNCTION
- * Generates and shows (or downloads on desktop) an image of the entire statsContainer content below the date label,
- * including all picks no matter how long (no clipping, full content).
- * It overlays a background watermark image and fits the stats image onto it preserving aspect ratio.
+ * Generates and displays an image of the entire statsContainer content below the date label,
+ * combined with the watermark background image.
+ * The combined image keeps aspect ratios and fits within the watermark.
+ * Shows the final combined image in a modal with a manual download button.
  */
 async function generateImageFromStatsContainer() {
   try {
-    // Correct dynamic import for html-to-image UMD version on jsDelivr
-    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/lib/html-to-image.js');
-
-    const mainContent = document.getElementById('adminMainContent');
-    if (!mainContent) {
-      alert('Content container not found.');
-      return;
-    }
+    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js');
 
     const statsContainer = document.getElementById('statsContainer');
     if (!statsContainer) {
@@ -498,87 +444,161 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    const picksDiv = [...statsContainer.children].find(child => child.style && child.style.overflowY === 'auto');
+    // Find the picks listing div inside statsContainer (has overflowY auto)
+    const picksDiv = [...statsContainer.children].find(child => {
+      return child.style && child.style.overflowY === 'auto';
+    });
 
     if (!picksDiv) {
       alert('Picks list container not found.');
       return;
     }
 
-    // Temporarily disable scroll and max height to capture full content
+    // Save original styles
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
 
+    // Temporarily disable scroll for full height rendering
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
-    // Generate PNG data URL of statsContainer
+    // Generate PNG of statsContainer
     const statsDataUrl = await htmlToImage.toPng(statsContainer, {
       pixelRatio: 2,
       cacheBust: true
     });
 
-    // Restore styles
+    // Restore original styles
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Load background watermark image
-    const backgroundImg = new Image();
-    backgroundImg.crossOrigin = 'anonymous';
-    backgroundImg.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
-
+    // Load watermark background image
+    const bgImageUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+    const bgImage = new Image();
+    bgImage.crossOrigin = 'anonymous'; // to avoid tainted canvas
     await new Promise((resolve, reject) => {
-      backgroundImg.onload = resolve;
-      backgroundImg.onerror = () => reject(new Error('Background image failed to load'));
+      bgImage.onload = resolve;
+      bgImage.onerror = reject;
+      bgImage.src = bgImageUrl;
     });
 
-    // Load stats image from data URL
-    const statsImg = new Image();
-    statsImg.src = statsDataUrl;
-
+    // Load stats image from dataURL
+    const statsImage = new Image();
+    statsImage.crossOrigin = 'anonymous';
     await new Promise((resolve, reject) => {
-      statsImg.onload = resolve;
-      statsImg.onerror = () => reject(new Error('Stats image failed to load'));
+      statsImage.onload = resolve;
+      statsImage.onerror = reject;
+      statsImage.src = statsDataUrl;
     });
 
-    // Create canvas matching background image size
+    // Create a canvas sized to watermark image
     const canvas = document.createElement('canvas');
-    canvas.width = backgroundImg.width;
-    canvas.height = backgroundImg.height;
+    canvas.width = bgImage.width;
+    canvas.height = bgImage.height;
     const ctx = canvas.getContext('2d');
 
-    // Draw background watermark fully (no stretch)
-    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    // Draw watermark background full canvas
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-    // Calculate scale to fit stats image with 2 inch top padding (~100px)
-    const paddingTopPx = 100;
-    const maxWidth = canvas.width * 0.9; // 10% horizontal margin
-    const maxHeight = canvas.height - paddingTopPx - 50; // bottom margin
+    // Calculate scaling to fit stats image inside watermark (with some margin)
+    const margin = 40; // pixels from edges
+    const maxWidth = canvas.width - margin * 2;
+    const maxHeight = canvas.height - margin * 2;
 
-    let scale = Math.min(maxWidth / statsImg.width, maxHeight / statsImg.height);
-    if (scale > 1) scale = 1; // only scale down, never up
+    let drawWidth = statsImage.width;
+    let drawHeight = statsImage.height;
 
-    const drawWidth = statsImg.width * scale;
-    const drawHeight = statsImg.height * scale;
+    // Scale down if needed, keeping aspect ratio
+    const widthRatio = maxWidth / drawWidth;
+    const heightRatio = maxHeight / drawHeight;
+    const scale = Math.min(widthRatio, heightRatio, 1);
 
-    const dx = (canvas.width - drawWidth) / 2;
-    const dy = paddingTopPx;
+    drawWidth = drawWidth * scale;
+    drawHeight = drawHeight * scale;
 
-    ctx.drawImage(statsImg, dx, dy, drawWidth, drawHeight);
+    // Center the stats image horizontally, and place it about 2 inches from top (approx 190px)
+    const dpi = 96; // typical screen dpi
+    const topOffsetPx = dpi * 2; // 2 inches down
 
-    const finalDataUrl = canvas.toDataURL('image/png');
+    const xPos = (canvas.width - drawWidth) / 2;
+    const yPos = topOffsetPx;
 
-    if (isMobile()) {
-      showImageModal(finalDataUrl);
-    } else {
-      // Desktop: trigger download
-      const link = document.createElement('a');
-      link.href = finalDataUrl;
-      link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    ctx.drawImage(statsImage, xPos, yPos, drawWidth, drawHeight);
+
+    // Create or update modal to show combined image
+    let modal = document.getElementById('imageOutputModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'imageOutputModal';
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100vw';
+      modal.style.height = '100vh';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = '100000';
+
+      const content = document.createElement('div');
+      content.style.backgroundColor = '#222';
+      content.style.padding = '12px';
+      content.style.borderRadius = '10px';
+      content.style.textAlign = 'center';
+      content.style.maxWidth = '95vw';
+      content.style.maxHeight = '90vh';
+      content.style.display = 'flex';
+      content.style.flexDirection = 'column';
+      content.style.alignItems = 'center';
+
+      const img = document.createElement('img');
+      img.id = 'imageOutputImg';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '80vh';
+      img.style.borderRadius = '6px';
+      content.appendChild(img);
+
+      const btnContainer = document.createElement('div');
+      btnContainer.style.marginTop = '12px';
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download Image';
+      downloadBtn.style.padding = '8px 14px';
+      downloadBtn.style.borderRadius = '6px';
+      downloadBtn.style.border = 'none';
+      downloadBtn.style.cursor = 'pointer';
+      downloadBtn.style.backgroundColor = '#4CAF50';
+      downloadBtn.style.color = '#fff';
+      downloadBtn.style.fontWeight = '700';
+
+      btnContainer.appendChild(downloadBtn);
+      content.appendChild(btnContainer);
+
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+
+      // Close modal on background click
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+
+      // Download image on button click
+      downloadBtn.addEventListener('click', () => {
+        const combinedImg = document.getElementById('imageOutputImg');
+        if (!combinedImg) return;
+        const link = document.createElement('a');
+        link.href = combinedImg.src;
+        link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
     }
+
+    const img = document.getElementById('imageOutputImg');
+    img.src = canvas.toDataURL('image/png');
+    modal.style.display = 'flex';
 
   } catch (error) {
     console.error('Failed to generate image:', error);
@@ -728,27 +748,4 @@ export async function loadStatsForDay(day) {
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
-}
-
-async function showStatsAsText(day) {
-  try {
-    let picks = [];
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.slice(0, 25).map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-
-    const textOutput = generateTextStatsOutput(day, picks);
-    showTextOutputModal(textOutput);
-  } catch (error) {
-    console.error('Failed to show stats as text:', error);
-    alert('Error loading stats as text.');
-  }
 }
