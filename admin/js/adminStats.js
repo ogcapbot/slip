@@ -2,7 +2,6 @@ import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 // Import html-to-image from CDN (make sure this script is loaded in your HTML or adapt as needed)
 // Example CDN: https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js
-import * as htmlToImage from 'https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js';
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
