@@ -562,3 +562,45 @@ export async function loadStatsForDay(day) {
 
   renderPickListing(picks, picksDiv);
 }
+
+// === ADDITION: Load html2canvas dynamically & generate image ===
+
+function loadHtml2Canvas(callback) {
+  if (window.html2canvas) {
+    callback();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+  script.onload = () => callback();
+  document.head.appendChild(script);
+}
+
+function generateImageFromStatsContainer() {
+  loadHtml2Canvas(() => {
+    const container = document.getElementById('statsContainer');
+    if (!container) {
+      alert('Stats container not found!');
+      return;
+    }
+
+    html2canvas(container, {
+      scrollY: -window.scrollY,
+      scrollX: -window.scrollX,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      scale: 1
+    }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const imgWindow = window.open('');
+      if (!imgWindow) {
+        alert('Popup blocked! Please allow popups to view the image.');
+        return;
+      }
+      imgWindow.document.write(`<title>Stats Image</title><img src="${imgData}" style="width:100%; height:auto;" alt="Stats Image"/>`);
+    }).catch(err => {
+      console.error('Failed to generate image:', err);
+      alert('Failed to generate image.');
+    });
+  });
+}
