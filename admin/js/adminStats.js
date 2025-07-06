@@ -1,7 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Status icons mapping
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -305,23 +304,23 @@ function generateTextStatsOutput(day, picks) {
 
   output += `═══════════════════════\n`;
   output += `######## OFFICIAL PICKS\n`;
-  output += `═══════════════════════\n\n`;
+  output += `═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
     output += `═══════════════════════\n`;
     output += `${data.teamSelected || 'N/A'}\n`;
     output += `${data.wagerType || 'N/A'}\n`;
-    output += `${emoji} - ${data.unit || 'N/A'}\n\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n`;
   });
 
   output += `═══════════════════════\n`;
   output += `######## THANK YOU FOR TRUSTING OGCB\n`;
-  output += `═══════════════════════\n\n`;
+  output += `═══════════════════════\n`;
   output += `═══════════════════════\n`;
   output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
-  output += `═══════════════════════\n\n`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n\n`;
+  output += `═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
   output += `Created: ${longDateTimeStr}\n`;
 
   return output;
@@ -430,10 +429,8 @@ async function showStatsAsText(day) {
 
 /**
  * NEW FUNCTION
- * Generates and opens a new tab with an image of the statsContainer content below the date label,
- * overlaying a background image, starting 1 inch down from top,
- * scaling the stats image to fit the background with aspect ratio,
- * then cropping 150px from the bottom of the combined image.
+ * Generates and opens an image in a new tab that includes the statsContainer content starting at the date label,
+ * overlays a background image, positions content 1 inch down, and crops 150px from the bottom.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -443,110 +440,60 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find the date label element (the first child after tabs with font size 12)
+    // Find the date label element inside statsContainer (text aligned center, fontSize 12px, color #666)
     const dateLabel = [...statsContainer.children].find(el => {
-      return el.style && el.style.fontSize === '12px' && el.textContent.length > 0;
+      return el.style && el.style.textAlign === 'center' && el.style.fontSize === '12px' && el.style.color === 'rgb(102, 102, 102)';
     });
 
     if (!dateLabel) {
-      alert('Date label not found.');
+      alert('Date label element not found.');
       return;
     }
 
-    // We'll create a clone container including the dateLabel and everything after it
-    const cloneContainer = document.createElement('div');
-    cloneContainer.style.position = 'relative';
-    cloneContainer.style.backgroundColor = 'white';
-    cloneContainer.style.paddingTop = '96px'; // 1 inch top padding approx (96px)
-    cloneContainer.style.width = '800px'; // fixed width for consistent image
-    cloneContainer.style.boxSizing = 'border-box';
-    cloneContainer.style.fontFamily = window.getComputedStyle(statsContainer).fontFamily;
+    // Create a wrapper div for image generation with background image
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.backgroundImage = 'url("https://capper.ogcapperbets.com/admin/images/blankWatermark.png")';
+    wrapper.style.backgroundRepeat = 'no-repeat';
+    wrapper.style.backgroundPosition = 'center top';
+    wrapper.style.backgroundSize = 'contain';
+    wrapper.style.paddingTop = '96px'; // ~1 inch top padding (adjust as needed)
+    wrapper.style.width = `${statsContainer.offsetWidth}px`;
 
-    // Clone dateLabel and all siblings after it into cloneContainer
-    let foundDate = false;
-    for (const child of statsContainer.children) {
-      if (child === dateLabel) foundDate = true;
-      if (!foundDate) continue;
-      cloneContainer.appendChild(child.cloneNode(true));
+    // Clone dateLabel and all following siblings into wrapper
+    let sibling = dateLabel;
+    while (sibling) {
+      wrapper.appendChild(sibling.cloneNode(true));
+      sibling = sibling.nextElementSibling;
     }
 
-    // Load the watermark background image
-    const bgImage = new Image();
-    bgImage.crossOrigin = "anonymous";
-    bgImage.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+    // Use domtoimage to generate PNG
+    const dataUrl = await window.domtoimage.toPng(wrapper, { pixelRatio: 2, cacheBust: true });
 
-    await new Promise((res, rej) => {
-      bgImage.onload = res;
-      bgImage.onerror = () => rej(new Error('Failed to load background image'));
-    });
+    // Create an image element to crop the bottom by 150px
+    const img = new Image();
+    img.src = dataUrl;
 
-    // Generate PNG of the cloned stats content (without background)
-    const statsImageDataUrl = await domtoimage.toPng(cloneContainer, {
-      cacheBust: true,
-      pixelRatio: 2,
-      style: {
-        backgroundColor: 'transparent',
-      }
-    });
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height - 150; // crop bottom 150px
 
-    // Create an image from the generated PNG
-    const statsImage = new Image();
-    statsImage.src = statsImageDataUrl;
-    await new Promise(res => statsImage.onload = res);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, img.width, img.height - 150, 0, 0, canvas.width, canvas.height);
 
-    // Create canvas with background image size
-    const canvas = document.createElement('canvas');
-    canvas.width = bgImage.width;
-    canvas.height = bgImage.height;
+      // Open cropped image in new tab
+      const croppedDataUrl = canvas.toDataURL('image/png');
+      window.open(croppedDataUrl, '_blank');
+    };
 
-    const ctx = canvas.getContext('2d');
-
-    // Draw the background image first
-    ctx.drawImage(bgImage, 0, 0);
-
-    // Calculate scale to fit statsImage inside background, preserving aspect ratio
-    const maxWidth = bgImage.width * 0.9;
-    const maxHeight = bgImage.height * 0.9;
-
-    let scale = Math.min(maxWidth / statsImage.width, maxHeight / statsImage.height);
-
-    const scaledWidth = statsImage.width * scale;
-    const scaledHeight = statsImage.height * scale;
-
-    // Calculate position so top starts 1 inch down from top (96px)
-    const x = (bgImage.width - scaledWidth) / 2;
-    const y = 96;
-
-    // Draw the scaled stats image on top of background
-    ctx.drawImage(statsImage, x, y, scaledWidth, scaledHeight);
-
-    // Crop 150px from bottom
-    const croppedHeight = canvas.height - 150;
-
-    // Create a final canvas with cropped height
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = canvas.width;
-    finalCanvas.height = croppedHeight;
-    const finalCtx = finalCanvas.getContext('2d');
-
-    finalCtx.drawImage(canvas, 0, 0, canvas.width, croppedHeight, 0, 0, canvas.width, croppedHeight);
-
-    // Convert final canvas to data URL
-    const finalDataUrl = finalCanvas.toDataURL('image/png');
-
-    // Open the image in a new tab/window
-    const newWindow = window.open();
-    if (!newWindow) {
-      alert('Please allow popups for this site to open the image.');
-      return;
-    }
-    newWindow.document.write(`<title>Official Stats Image</title>`);
-    newWindow.document.write(`<img src="${finalDataUrl}" style="width:100%;height:auto;display:block;margin:auto;" />`);
-    newWindow.document.close();
+    img.onerror = () => {
+      alert('Failed to load generated image for cropping.');
+    };
 
   } catch (error) {
     console.error('Failed to generate image:', error);
-    alert('Failed to generate image: ' + error.message);
+    alert('Failed to generate image.');
   }
 }
 
