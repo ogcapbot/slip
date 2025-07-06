@@ -563,7 +563,7 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
-// === ADDITION: Load html2canvas dynamically & generate image ===
+// === ADDITION: Load html2canvas dynamically & generate cropped image with max width 500px ===
 
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
@@ -584,20 +584,38 @@ function generateImageFromStatsContainer() {
       return;
     }
 
+    // Find the date label element inside the container (based on margin-bottom: 8px style)
+    const dateLabel = container.querySelector('div[style*="margin-bottom: 8px"]');
+    // Get offsetTop or fallback 0
+    const cropTop = dateLabel ? dateLabel.offsetTop : 0;
+
     html2canvas(container, {
       scrollY: -window.scrollY,
       scrollX: -window.scrollX,
       windowWidth: document.documentElement.scrollWidth,
       windowHeight: document.documentElement.scrollHeight,
       scale: 1
-    }).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
+    }).then(fullCanvas => {
+      // Crop canvas from cropTop down
+      const croppedHeight = fullCanvas.height - cropTop;
+      const croppedCanvas = document.createElement('canvas');
+      croppedCanvas.width = fullCanvas.width;
+      croppedCanvas.height = croppedHeight;
+
+      const ctx = croppedCanvas.getContext('2d');
+      ctx.drawImage(fullCanvas, 0, cropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
+
+      const imgData = croppedCanvas.toDataURL('image/png');
       const imgWindow = window.open('');
       if (!imgWindow) {
         alert('Popup blocked! Please allow popups to view the image.');
         return;
       }
-      imgWindow.document.write(`<title>Stats Image</title><img src="${imgData}" style="width:100%; height:auto;" alt="Stats Image"/>`);
+      imgWindow.document.write(`
+        <title>Stats Image</title>
+        <style>body{margin:0;display:flex;justify-content:center;align-items:flex-start; background:#fff;}</style>
+        <img src="${imgData}" style="max-width:500px; width:100%; height:auto; margin-top:10px;" alt="Stats Image"/>
+      `);
     }).catch(err => {
       console.error('Failed to generate image:', err);
       alert('Failed to generate image.');
