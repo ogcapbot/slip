@@ -652,8 +652,13 @@ function generateImageFromStatsContainer() {
         imagesLoaded++;
         if (imagesLoaded < 3) return;
 
+        // Use paddedCanvas here for content layer
+        const contentCanvas = paddedCanvas;
+        const contentWidth = contentCanvas.width;
+        const contentHeight = contentCanvas.height;
+
         // Combined canvas height: header + headerPadding + content + footerPadding + footer
-        const totalHeight = headerImg.height + headerPadding + scaledCroppedCanvas.height + footerPadding + footerImg.height;
+        const totalHeight = headerImg.height + headerPadding + contentHeight + footerPadding + footerImg.height;
         const combinedCanvas = document.createElement('canvas');
         combinedCanvas.width = finalWidth;
         combinedCanvas.height = totalHeight;
@@ -667,9 +672,7 @@ function generateImageFromStatsContainer() {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, headerImg.height, finalWidth, headerPadding);
 
-        // Draw watermark tiled behind content area
         const contentYStart = headerImg.height + headerPadding;
-        const contentHeight = scaledCroppedCanvas.height;
 
         // Fill content area with white background first
         ctx.fillStyle = 'white';
@@ -693,8 +696,8 @@ function generateImageFromStatsContainer() {
         }
         ctx.globalAlpha = 1.0; // reset alpha
 
-        // Draw the content on top
-        ctx.drawImage(scaledCroppedCanvas, 0, contentYStart, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
+        // Draw the content on top (with padding)
+        ctx.drawImage(contentCanvas, 0, contentYStart, contentWidth, contentHeight);
 
         // Draw 10px white padding before footer
         ctx.fillStyle = 'white';
