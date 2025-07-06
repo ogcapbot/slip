@@ -563,7 +563,7 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
-// === ADDITION: Load html2canvas dynamically & generate cropped image with max width 500px ===
+// === ADDITION: Load html2canvas dynamically & generate combined image with header/footer at 384px wide & high quality ===
 
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
@@ -583,39 +583,104 @@ function generateImageFromStatsContainer() {
       alert('Stats container not found!');
       return;
     }
+    const tabsDiv = container.firstElementChild;
+    const cropTop = tabsDiv ? (tabsDiv.offsetTop + tabsDiv.offsetHeight) : 0;
 
-    // Find the date label element inside the container (based on margin-bottom: 8px style)
-    const dateLabel = container.querySelector('div[style*="margin-bottom: 8px"]');
-    // Get offsetTop or fallback 0
-    const cropTop = dateLabel ? dateLabel.offsetTop : 0;
+    // We want a higher quality capture, so use scale=3
+    const captureScale = 3;
+    const finalWidth = 384; // fixed width for header/footer and final image
 
     html2canvas(container, {
       scrollY: -window.scrollY,
       scrollX: -window.scrollX,
       windowWidth: document.documentElement.scrollWidth,
       windowHeight: document.documentElement.scrollHeight,
-      scale: 1
+      scale: captureScale
     }).then(fullCanvas => {
-      // Crop canvas from cropTop down
-      const croppedHeight = fullCanvas.height - cropTop;
+      // Crop canvas from cropTop downward (cropTop scaled)
+      const scaledCropTop = cropTop * captureScale;
+      const croppedHeight = fullCanvas.height - scaledCropTop;
+
+      // Crop out top part
       const croppedCanvas = document.createElement('canvas');
       croppedCanvas.width = fullCanvas.width;
       croppedCanvas.height = croppedHeight;
+      const ctxCropped = croppedCanvas.getContext('2d');
+      ctxCropped.drawImage(fullCanvas, 0, scaledCropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
 
-      const ctx = croppedCanvas.getContext('2d');
-      ctx.drawImage(fullCanvas, 0, cropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
+      // Calculate scaled width to 384px for header/footer & main content
+      const scaleFactor = finalWidth / fullCanvas.width;
 
-      const imgData = croppedCanvas.toDataURL('image/png');
-      const imgWindow = window.open('');
-      if (!imgWindow) {
-        alert('Popup blocked! Please allow popups to view the image.');
-        return;
+      // Scale cropped canvas to final width 384px with proportional height
+      const scaledCroppedCanvas = document.createElement('canvas');
+      scaledCroppedCanvas.width = finalWidth;
+      scaledCroppedCanvas.height = croppedCanvas.height * scaleFactor;
+      const ctxScaled = scaledCroppedCanvas.getContext('2d');
+      ctxScaled.imageSmoothingEnabled = true;
+      ctxScaled.imageSmoothingQuality = 'high';
+      ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
+
+      // Load header and footer images
+      const headerSrc = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
+      const footerSrc = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
+
+      const headerImg = new Image();
+      const footerImg = new Image();
+
+      headerImg.crossOrigin = 'anonymous';
+      footerImg.crossOrigin = 'anonymous';
+
+      let imagesLoaded = 0;
+      function tryCombine() {
+        imagesLoaded++;
+        if (imagesLoaded < 2) return;
+
+        // Calculate combined canvas height = header + content + footer
+        const totalHeight = headerImg.height + scaledCroppedCanvas.height + footerImg.height;
+
+        const combinedCanvas = document.createElement('canvas');
+        combinedCanvas.width = finalWidth;
+        combinedCanvas.height = totalHeight;
+
+        const ctx = combinedCanvas.getContext('2d');
+
+        // Draw header at top (stretch to finalWidth width)
+        ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
+
+        // Draw scaled cropped stats content below header
+        ctx.drawImage(scaledCroppedCanvas, 0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height, 0, headerImg.height, finalWidth, scaledCroppedCanvas.height);
+
+        // Draw footer at bottom (stretch to finalWidth width)
+        ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, headerImg.height + scaledCroppedCanvas.height, finalWidth, footerImg.height);
+
+        // Export combined canvas to data URL
+        const imgData = combinedCanvas.toDataURL('image/png');
+
+        // Open in new tab
+        const imgWindow = window.open('');
+        if (!imgWindow) {
+          alert('Popup blocked! Please allow popups to view the image.');
+          return;
+        }
+        imgWindow.document.write(`
+          <title>Stats Image with Header & Footer</title>
+          <style>body{margin:0;display:flex;justify-content:center;align-items:flex-start; background:#fff;}</style>
+          <img src="${imgData}" style="max-width:${finalWidth}px; width:100%; height:auto; margin-top:10px;" alt="Stats Image"/>
+        `);
       }
-      imgWindow.document.write(`
-        <title>Stats Image</title>
-        <style>body{margin:0;display:flex;justify-content:center;align-items:flex-start; background:#fff;}</style>
-        <img src="${imgData}" style="max-width:500px; width:100%; height:auto; margin-top:10px;" alt="Stats Image"/>
-      `);
+
+      headerImg.onload = tryCombine;
+      footerImg.onload = tryCombine;
+
+      headerImg.onerror = () => {
+        alert('Failed to load header image.');
+      };
+      footerImg.onerror = () => {
+        alert('Failed to load footer image.');
+      };
+
+      headerImg.src = headerSrc;
+      footerImg.src = footerSrc;
     }).catch(err => {
       console.error('Failed to generate image:', err);
       alert('Failed to generate image.');
