@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Watermark + Stats Composite with Cropping</title>
+  <title>Watermark + Stats Composite with Cropping Fix</title>
   <style>
     body {
       background: #222;
@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-  <h1>Watermark + Stats Composite Image (With Bottom Cropping)</h1>
+  <h1>Watermark + Stats Composite Image (With Bottom Crop Fix)</h1>
 
   <div id="statsContainer">
     <h2>Official Stats</h2>
@@ -107,6 +107,40 @@
       return canvas;
     }
 
+    // Crop transparent bottom whitespace from image element (watermark)
+    function cropImageBottom(image) {
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = image.width;
+      tempCanvas.height = image.height;
+      tempCtx.drawImage(image, 0, 0);
+
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+
+      let lastVisibleRow = tempCanvas.height;
+
+      outer: for (let y = tempCanvas.height - 1; y >= 0; y--) {
+        for (let x = 0; x < tempCanvas.width; x++) {
+          const alpha = data[(y * tempCanvas.width + x) * 4 + 3];
+          if (alpha > 10) {
+            lastVisibleRow = y + 1;
+            break outer;
+          }
+        }
+      }
+
+      if (lastVisibleRow < tempCanvas.height) {
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = tempCanvas.width;
+        croppedCanvas.height = lastVisibleRow;
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, lastVisibleRow, 0, 0, tempCanvas.width, lastVisibleRow);
+        return croppedCanvas;
+      }
+      return tempCanvas;
+    }
+
     async function createComposite() {
       const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
       const statsContainer = document.getElementById('statsContainer');
@@ -115,31 +149,30 @@
 
       try {
         const watermarkImg = await loadImage(watermarkUrl);
-        let statsCanvas = await html2canvas(statsContainer);
 
-        // Crop bottom whitespace of stats canvas
+        // Crop watermark bottom whitespace first
+        const croppedWatermarkCanvas = cropImageBottom(watermarkImg);
+
+        let statsCanvas = await html2canvas(statsContainer);
         statsCanvas = cropCanvasBottom(statsCanvas);
 
         const width = 600;
 
-        const watermarkHeight = watermarkImg.height * (width / watermarkImg.width);
+        // Use cropped watermark canvas natural size for aspect ratio
+        const watermarkHeight = croppedWatermarkCanvas.height * (width / croppedWatermarkCanvas.width);
 
         const statsScale = width / statsCanvas.width;
         const statsHeight = statsCanvas.height * statsScale;
 
-        // Set canvas size for combined image
         canvas.width = width;
         canvas.height = watermarkHeight + statsHeight;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw watermark background
-        ctx.drawImage(watermarkImg, 0, 0, width, watermarkHeight);
+        ctx.drawImage(croppedWatermarkCanvas, 0, 0, width, watermarkHeight);
 
-        // Draw cropped stats below watermark
         ctx.drawImage(statsCanvas, 0, watermarkHeight, width, statsHeight);
 
-        // Show the final combined image
         const resultImg = document.getElementById('resultImg');
         resultImg.src = canvas.toDataURL('image/png');
       } catch (err) {
