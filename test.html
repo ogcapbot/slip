@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Watermark + Stats Overlay at Fixed Position</title>
+  <title>Watermark + Stats Overlay with Transparent Background & Adjusted Position</title>
   <style>
     body {
       background: #222;
@@ -15,7 +15,9 @@
       align-items: center;
     }
     #statsContainer {
-      background: #333;
+      background: transparent; /* transparent background */
+      /* Optional slight translucency for readability: */
+      /* background: rgba(51, 51, 51, 0.6); */
       padding: 20px;
       border-radius: 8px;
       max-width: 600px;
@@ -47,7 +49,7 @@
   </style>
 </head>
 <body>
-  <h1>Watermark + Stats Overlay at Fixed Position</h1>
+  <h1>Watermark + Stats Overlay with Transparent Background & Adjusted Position</h1>
 
   <div id="statsContainer">
     <h2>Official Stats</h2>
@@ -65,7 +67,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    // Helper to load image
     async function loadImage(src) {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -76,7 +77,6 @@
       });
     }
 
-    // Crop transparent bottom whitespace from canvas
     function cropCanvasBottom(canvas) {
       const ctx = canvas.getContext('2d');
       const width = canvas.width;
@@ -107,7 +107,6 @@
       return canvas;
     }
 
-    // Crop transparent bottom whitespace from image element (watermark)
     function cropImageBottom(image) {
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
@@ -150,41 +149,34 @@
       try {
         const watermarkImg = await loadImage(watermarkUrl);
 
-        // Crop watermark bottom whitespace first
         const croppedWatermarkCanvas = cropImageBottom(watermarkImg);
 
         let statsCanvas = await html2canvas(statsContainer);
         statsCanvas = cropCanvasBottom(statsCanvas);
 
         const desiredWidth = 600;
-        const dpi = 96; // pixels per inch for CSS
+        const dpi = 96;
 
-        // Calculate scaling factor for watermark image
         const watermarkScale = desiredWidth / croppedWatermarkCanvas.width;
         const watermarkHeight = croppedWatermarkCanvas.height * watermarkScale;
 
-        // Scale stats canvas dimensions accordingly
         const statsScale = desiredWidth / statsCanvas.width;
         const statsWidth = desiredWidth;
         const statsHeight = statsCanvas.height * statsScale;
 
-        // Set canvas size same as watermark scaled size
         canvas.width = desiredWidth;
         canvas.height = watermarkHeight;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw watermark background full canvas
         ctx.drawImage(croppedWatermarkCanvas, 0, 0, desiredWidth, watermarkHeight);
 
-        // Position stats on top at 0.5 inch from left and 1.5 inch from top
-        const statsX = 0.5 * dpi;  // 48 pixels
-        const statsY = 1.5 * dpi;  // 144 pixels
+        // Move stats down 2 inches (1.5 + 0.5)
+        const statsX = 0.5 * dpi;
+        const statsY = 2.0 * dpi;
 
-        // Draw stats canvas overlay scaled, positioned at (statsX, statsY)
         ctx.drawImage(statsCanvas, 0, 0, statsCanvas.width, statsCanvas.height, statsX, statsY, statsWidth, statsHeight);
 
-        // Show result image
         const resultImg = document.getElementById('resultImg');
         resultImg.src = canvas.toDataURL('image/png');
       } catch (err) {
