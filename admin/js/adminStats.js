@@ -587,6 +587,8 @@ function generateImageFromStatsContainer() {
     const captureScale = 3;
     const finalWidth = 384;
     const footerPadding = 10; // 10px white space above footer
+    const headerPadding = 10; // 10px white space below header
+    const listingsPadding = 5; // 5px padding around listings container box
     const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
     const watermarkSize = 50;
 
@@ -615,7 +617,23 @@ function generateImageFromStatsContainer() {
       const ctxScaled = scaledCroppedCanvas.getContext('2d');
       ctxScaled.imageSmoothingEnabled = true;
       ctxScaled.imageSmoothingQuality = 'high';
-      ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
+
+      // Add 2*listingsPadding to width and height so we can draw padding around listings box
+      const paddedWidth = scaledCroppedCanvas.width + listingsPadding * 2;
+      const paddedHeight = scaledCroppedCanvas.height + listingsPadding * 2;
+
+      // Create canvas with padding included
+      const paddedCanvas = document.createElement('canvas');
+      paddedCanvas.width = paddedWidth;
+      paddedCanvas.height = paddedHeight;
+      const ctxPadded = paddedCanvas.getContext('2d');
+      ctxPadded.fillStyle = 'white';
+      ctxPadded.fillRect(0, 0, paddedWidth, paddedHeight);
+      ctxPadded.drawImage(scaledCroppedCanvas, listingsPadding, listingsPadding);
+
+      // Use paddedCanvas as content canvas now
+      ctxScaled.clearRect(0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
+      ctxScaled.drawImage(paddedCanvas, 0, 0);
 
       // Load header, footer, watermark
       const headerSrc = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
@@ -634,8 +652,8 @@ function generateImageFromStatsContainer() {
         imagesLoaded++;
         if (imagesLoaded < 3) return;
 
-        // Combined canvas height: header + content + padding + footer
-        const totalHeight = headerImg.height + scaledCroppedCanvas.height + footerPadding + footerImg.height;
+        // Combined canvas height: header + headerPadding + content + footerPadding + footer
+        const totalHeight = headerImg.height + headerPadding + scaledCroppedCanvas.height + footerPadding + footerImg.height;
         const combinedCanvas = document.createElement('canvas');
         combinedCanvas.width = finalWidth;
         combinedCanvas.height = totalHeight;
@@ -645,19 +663,31 @@ function generateImageFromStatsContainer() {
         // Draw header (stretch width)
         ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
 
+        // Draw 10px white padding below header
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, headerImg.height, finalWidth, headerPadding);
+
         // Draw watermark tiled behind content area
-        const contentYStart = headerImg.height;
+        const contentYStart = headerImg.height + headerPadding;
         const contentHeight = scaledCroppedCanvas.height;
 
         // Fill content area with white background first
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
-        // Draw watermarks randomly scattered behind content
-        const watermarkCount = 20; // number of watermarks
+        // Calculate approx number of watermarks based on 1 per inch vertically (approx 96px per inch scaled)
+        const inchesVert = contentHeight / 96;
+        const watermarkCount = Math.max(5, Math.round(inchesVert)); // at least 5 watermarks
+
         for (let i = 0; i < watermarkCount; i++) {
+          // Y positions evenly spaced vertically but with random offset ± 20px
+          const segmentHeight = contentHeight / watermarkCount;
+          let y = contentYStart + i * segmentHeight + (Math.random() * 40 - 20); // ±20 px jitter
+          y = Math.min(Math.max(y, contentYStart), contentYStart + contentHeight - watermarkSize); // clamp inside content
+
+          // X random anywhere horizontal
           const x = Math.random() * (finalWidth - watermarkSize);
-          const y = contentYStart + Math.random() * (contentHeight - watermarkSize);
+
           ctx.globalAlpha = 0.15; // faint watermark
           ctx.drawImage(watermarkImg, x, y, watermarkSize, watermarkSize);
         }
@@ -676,33 +706,47 @@ function generateImageFromStatsContainer() {
         // Export final image
         const imgData = combinedCanvas.toDataURL('image/png');
 
-        // Open new tab with viewport meta + image fullscreen on phones
-        const imgWindow = window.open('');
-        if (!imgWindow) {
-          alert('Popup blocked! Please allow popups to view the image.');
-          return;
+        // Open in modal overlay on current page instead of new window
+        let modal = document.getElementById('statsImageModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'statsImageModal';
+          Object.assign(modal.style, {
+            position: 'fixed',
+            top: '0', left: '0', width: '100vw', height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: '100000'
+          });
+
+          const img = document.createElement('img');
+          img.id = 'statsImageModalImg';
+          img.src = imgData;
+          img.alt = 'Stats Image';
+          img.style.maxWidth = '384px';
+          img.style.width = '100%';
+          img.style.height = 'auto';
+          img.style.borderRadius = '8px';
+          img.style.backgroundColor = 'white';
+          img.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+          modal.appendChild(img);
+
+          // Close modal on click outside image
+          modal.addEventListener('click', e => {
+            if (e.target === modal) {
+              modal.style.display = 'none';
+            }
+          });
+
+          // Append modal to body
+          document.body.appendChild(modal);
+        } else {
+          const img = document.getElementById('statsImageModalImg');
+          img.src = imgData;
+          modal.style.display = 'flex';
         }
-        imgWindow.document.write(`
-          <html>
-            <head>
-              <title>Stats Image with Header & Footer</title>
-              <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-              <style>
-                body {
-                  margin: 0; display: flex; justify-content: center; align-items: flex-start; background: #fff; height: 100vh;
-                  overflow: hidden;
-                }
-                img {
-                  max-width: 100vw; width: 384px; height: auto; margin-top: 10px;
-                  display: block;
-                }
-              </style>
-            </head>
-            <body>
-              <img src="${imgData}" alt="Stats Image" />
-            </body>
-          </html>
-        `);
       }
 
       headerImg.onload = tryCombine;
