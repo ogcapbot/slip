@@ -3,75 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stats Image Copy Test</title>
+  <title>Canvas Header + Stats Demo</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background: #222;
       color: #eee;
-      margin: 0; padding: 20px;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh;
-    }
-    #statsContainer {
-      background: #333;
+      font-family: Arial, sans-serif;
       padding: 20px;
-      border-radius: 8px;
-      max-width: 400px;
-      width: 100%;
-      margin-bottom: 20px;
-      color: white;
-      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #4caf50;
-      color: white;
-      transition: background 0.3s ease;
-      margin-bottom: 20px;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    #generatedImageContainer {
+    #resultImg {
       margin-top: 20px;
-      text-align: center;
-    }
-    #generatedImageContainer img {
-      max-width: 90vw;
       border: 2px solid #ccc;
       border-radius: 8px;
-      user-select: none;
-    }
-    #instructions {
-      margin-top: 10px;
-      color: #ccc;
-      font-size: 14px;
+      max-width: 90vw;
     }
   </style>
 </head>
 <body>
-  <h1>Stats Image Copy Test</h1>
-  <div id="statsContainer">
-    <h2>Official Stats</h2>
-    <p>Total Picks: 25</p>
-    <p>Win: 15 ✅</p>
-    <p>Lost: 5 ❌</p>
-    <p>Push: 3 🟦</p>
-    <p>Pending: 2 ⚙️</p>
-  </div>
-  <button id="generateImageBtn">Generate Image to Copy</button>
+  <h1>Canvas Header + Stats Demo</h1>
+  <button id="generateBtn">Generate Image</button>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="resultImg" alt="Generated Image" />
 
-  <div id="generatedImageContainer" style="display:none;">
-    <!-- Image will appear here -->
-    <div id="instructions">Long press the image above and select "Copy" to paste inline in Patreon.</div>
-  </div>
+  <script>
+    function createCompositeImage(headerUrl, statsText, callback) {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="index.js"></script>
+      const headerImg = new Image();
+      headerImg.crossOrigin = 'anonymous'; // Important for cross-origin images
+
+      headerImg.onload = () => {
+        const headerHeight = 100;
+        const width = 600;
+        const padding = 20;
+
+        // Set canvas dimensions
+        canvas.width = width;
+        canvas.height = headerHeight + 150;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw header image at top
+        ctx.drawImage(headerImg, 0, 0, width, headerHeight);
+
+        // Draw background rectangle for stats area (optional)
+        ctx.fillStyle = '#333';
+        ctx.fillRect(0, headerHeight, width, canvas.height - headerHeight);
+
+        // Draw stats text below header
+        ctx.fillStyle = '#eee';
+        ctx.font = '20px Arial';
+        ctx.textBaseline = 'top';
+
+        // Example multiline stats text
+        const lines = statsText.split('\n');
+        lines.forEach((line, index) => {
+          ctx.fillText(line, padding, headerHeight + padding + index * 28);
+        });
+
+        // Return the canvas via callback
+        if (callback) callback(canvas);
+      };
+
+      headerImg.onerror = () => {
+        alert('Failed to load header image.');
+        if (callback) callback(null);
+      };
+
+      headerImg.src = headerUrl;
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const stats = [
+        'Official Stats:',
+        'Total Picks: 25',
+        'Wins: 15 ✅',
+        'Losses: 5 ❌',
+        'Push: 3 🟦',
+        'Pending: 2 ⚙️'
+      ].join('\n');
+
+      createCompositeImage('https://capper.ogcapperbets.com/admin/images/blankWatermark.png', stats, (canvas) => {
+        if (!canvas) return;
+
+        // Show image on page
+        const img = document.getElementById('resultImg');
+        img.src = canvas.toDataURL('image/png');
+      });
+    });
+  </script>
 </body>
 </html>
