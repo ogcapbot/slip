@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Canvas Header + Stats Demo</title>
+  <title>Watermark + Stats Composite with Cropping</title>
   <style>
     body {
       background: #222;
@@ -14,6 +14,30 @@
       flex-direction: column;
       align-items: center;
     }
+    #statsContainer {
+      background: #333;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 20px;
+      color: white;
+      user-select: none;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      transition: background 0.3s ease;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background: #45a049;
+    }
     #resultImg {
       margin-top: 20px;
       border: 2px solid #ccc;
@@ -23,79 +47,108 @@
   </style>
 </head>
 <body>
-  <h1>Canvas Header + Stats Demo</h1>
-  <button id="generateBtn">Generate Image</button>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <img id="resultImg" alt="Generated Image" />
+  <h1>Watermark + Stats Composite Image (With Bottom Cropping)</h1>
 
+  <div id="statsContainer">
+    <h2>Official Stats</h2>
+    <p>Total Picks: 25</p>
+    <p>Wins: 15 ✅</p>
+    <p>Losses: 5 ❌</p>
+    <p>Push: 3 🟦</p>
+    <p>Pending: 2 ⚙️</p>
+  </div>
+
+  <button id="generateBtn">Generate Composite Image</button>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="resultImg" alt="Composite Image" />
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    function createCompositeImage(headerUrl, statsText, callback) {
+    // Load image helper
+    async function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Image load error: ' + src));
+        img.src = src;
+      });
+    }
+
+    // Crop transparent bottom whitespace from canvas
+    function cropCanvasBottom(canvas) {
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      let lastVisibleRow = height;
+
+      outer: for (let y = height - 1; y >= 0; y--) {
+        for (let x = 0; x < width; x++) {
+          const alpha = data[(y * width + x) * 4 + 3];
+          if (alpha > 10) { // threshold for visible pixel
+            lastVisibleRow = y + 1;
+            break outer;
+          }
+        }
+      }
+
+      if (lastVisibleRow < height) {
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = width;
+        croppedCanvas.height = lastVisibleRow;
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCtx.drawImage(canvas, 0, 0, width, lastVisibleRow, 0, 0, width, lastVisibleRow);
+        return croppedCanvas;
+      }
+      return canvas;
+    }
+
+    async function createComposite() {
+      const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+      const statsContainer = document.getElementById('statsContainer');
       const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
 
-      const headerImg = new Image();
-      headerImg.crossOrigin = 'anonymous'; // Important for cross-origin images
+      try {
+        const watermarkImg = await loadImage(watermarkUrl);
+        let statsCanvas = await html2canvas(statsContainer);
 
-      headerImg.onload = () => {
-        const headerHeight = 100;
+        // Crop bottom whitespace of stats canvas
+        statsCanvas = cropCanvasBottom(statsCanvas);
+
         const width = 600;
-        const padding = 20;
 
-        // Set canvas dimensions
+        const watermarkHeight = watermarkImg.height * (width / watermarkImg.width);
+
+        const statsScale = width / statsCanvas.width;
+        const statsHeight = statsCanvas.height * statsScale;
+
+        // Set canvas size for combined image
         canvas.width = width;
-        canvas.height = headerHeight + 150;
+        canvas.height = watermarkHeight + statsHeight;
 
-        // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw header image at top
-        ctx.drawImage(headerImg, 0, 0, width, headerHeight);
+        // Draw watermark background
+        ctx.drawImage(watermarkImg, 0, 0, width, watermarkHeight);
 
-        // Draw background rectangle for stats area (optional)
-        ctx.fillStyle = '#333';
-        ctx.fillRect(0, headerHeight, width, canvas.height - headerHeight);
+        // Draw cropped stats below watermark
+        ctx.drawImage(statsCanvas, 0, watermarkHeight, width, statsHeight);
 
-        // Draw stats text below header
-        ctx.fillStyle = '#eee';
-        ctx.font = '20px Arial';
-        ctx.textBaseline = 'top';
-
-        // Example multiline stats text
-        const lines = statsText.split('\n');
-        lines.forEach((line, index) => {
-          ctx.fillText(line, padding, headerHeight + padding + index * 28);
-        });
-
-        // Return the canvas via callback
-        if (callback) callback(canvas);
-      };
-
-      headerImg.onerror = () => {
-        alert('Failed to load header image.');
-        if (callback) callback(null);
-      };
-
-      headerImg.src = headerUrl;
+        // Show the final combined image
+        const resultImg = document.getElementById('resultImg');
+        resultImg.src = canvas.toDataURL('image/png');
+      } catch (err) {
+        alert('Failed to create composite image: ' + err.message);
+        console.error(err);
+      }
     }
 
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      const stats = [
-        'Official Stats:',
-        'Total Picks: 25',
-        'Wins: 15 ✅',
-        'Losses: 5 ❌',
-        'Push: 3 🟦',
-        'Pending: 2 ⚙️'
-      ].join('\n');
-
-      createCompositeImage('https://capper.ogcapperbets.com/admin/images/blankWatermark.png', stats, (canvas) => {
-        if (!canvas) return;
-
-        // Show image on page
-        const img = document.getElementById('resultImg');
-        img.src = canvas.toDataURL('image/png');
-      });
-    });
+    document.getElementById('generateBtn').addEventListener('click', createComposite);
   </script>
 </body>
 </html>
