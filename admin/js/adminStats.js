@@ -1,6 +1,7 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Status icons mapping
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -300,27 +301,27 @@ function generateTextStatsOutput(day, picks) {
   output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
   output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
   output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
 
   output += `═══════════════════════\n`;
   output += `######## OFFICIAL PICKS\n`;
-  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
     output += `═══════════════════════\n`;
     output += `${data.teamSelected || 'N/A'}\n`;
     output += `${data.wagerType || 'N/A'}\n`;
-    output += `${emoji} - ${data.unit || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n\n`;
   });
 
   output += `═══════════════════════\n`;
   output += `######## THANK YOU FOR TRUSTING OGCB\n`;
-  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n\n`;
   output += `═══════════════════════\n`;
   output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
-  output += `═══════════════════════\n`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `═══════════════════════\n\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n\n`;
   output += `Created: ${longDateTimeStr}\n`;
 
   return output;
@@ -349,7 +350,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh';
+    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +363,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh';
+    textarea.style.minHeight = '70vh'; // Fill most of modal height
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -428,8 +429,11 @@ async function showStatsAsText(day) {
 }
 
 /**
- * Generates and opens an image of the statsContainer with background watermark
- * starting about 1 inch from the top, including the date label, cropping extra 150px bottom.
+ * NEW FUNCTION
+ * Generates and opens a new tab with an image of the statsContainer content below the date label,
+ * overlaying a background image, starting 1 inch down from top,
+ * scaling the stats image to fit the background with aspect ratio,
+ * then cropping 150px from the bottom of the combined image.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -439,70 +443,110 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Save original font family, set safe fallback for rendering
-    const oldFontFamily = statsContainer.style.fontFamily;
-    statsContainer.style.fontFamily = 'Arial, sans-serif';
+    // Find the date label element (the first child after tabs with font size 12)
+    const dateLabel = [...statsContainer.children].find(el => {
+      return el.style && el.style.fontSize === '12px' && el.textContent.length > 0;
+    });
 
-    // Clone the stats container for off-screen rendering
-    const clone = statsContainer.cloneNode(true);
-    clone.style.position = 'fixed';
-    clone.style.left = '-9999px';
-    clone.style.top = '0px';
-    clone.style.backgroundImage = 'url("/admin/images/blankWatermark.png")';
-    clone.style.backgroundRepeat = 'no-repeat';
-    clone.style.backgroundPosition = 'center top';
-    clone.style.backgroundSize = 'contain';
-    clone.style.paddingTop = '96px'; // ~1 inch from top (96px approx)
-    clone.style.width = statsContainer.offsetWidth + 'px';
-    clone.style.boxSizing = 'border-box';
+    if (!dateLabel) {
+      alert('Date label not found.');
+      return;
+    }
 
-    // Add to body temporarily
-    document.body.appendChild(clone);
+    // We'll create a clone container including the dateLabel and everything after it
+    const cloneContainer = document.createElement('div');
+    cloneContainer.style.position = 'relative';
+    cloneContainer.style.backgroundColor = 'white';
+    cloneContainer.style.paddingTop = '96px'; // 1 inch top padding approx (96px)
+    cloneContainer.style.width = '800px'; // fixed width for consistent image
+    cloneContainer.style.boxSizing = 'border-box';
+    cloneContainer.style.fontFamily = window.getComputedStyle(statsContainer).fontFamily;
 
-    // Wait a bit to ensure layout completes
-    await new Promise(r => setTimeout(r, 100));
+    // Clone dateLabel and all siblings after it into cloneContainer
+    let foundDate = false;
+    for (const child of statsContainer.children) {
+      if (child === dateLabel) foundDate = true;
+      if (!foundDate) continue;
+      cloneContainer.appendChild(child.cloneNode(true));
+    }
 
-    // Use dynamic import of html-to-image module (latest version, ESM)
-    const htmlToImageModule = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.esm.js');
+    // Load the watermark background image
+    const bgImage = new Image();
+    bgImage.crossOrigin = "anonymous";
+    bgImage.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
-    // Calculate height to crop: total height + 150px to cut off bottom
-    const cropHeight = clone.offsetHeight - 150;
+    await new Promise((res, rej) => {
+      bgImage.onload = res;
+      bgImage.onerror = () => rej(new Error('Failed to load background image'));
+    });
 
-    // Generate PNG with clip to crop bottom
-    const dataUrl = await htmlToImageModule.toPng(clone, {
-      pixelRatio: 2,
+    // Generate PNG of the cloned stats content (without background)
+    const statsImageDataUrl = await domtoimage.toPng(cloneContainer, {
       cacheBust: true,
-      clip: {
-        x: 0,
-        y: 0,
-        width: clone.offsetWidth,
-        height: cropHeight > 0 ? cropHeight : clone.offsetHeight
-      },
+      pixelRatio: 2,
       style: {
-        // Ensure no background color override
-        backgroundColor: 'transparent'
+        backgroundColor: 'transparent',
       }
     });
 
-    // Remove clone from DOM
-    document.body.removeChild(clone);
+    // Create an image from the generated PNG
+    const statsImage = new Image();
+    statsImage.src = statsImageDataUrl;
+    await new Promise(res => statsImage.onload = res);
 
-    // Restore original font family
-    statsContainer.style.fontFamily = oldFontFamily;
+    // Create canvas with background image size
+    const canvas = document.createElement('canvas');
+    canvas.width = bgImage.width;
+    canvas.height = bgImage.height;
 
-    // Open generated image in new tab/window
-    const imageWindow = window.open('');
-    if (!imageWindow) {
-      alert('Popup blocked! Please allow popups for this site to view the image.');
+    const ctx = canvas.getContext('2d');
+
+    // Draw the background image first
+    ctx.drawImage(bgImage, 0, 0);
+
+    // Calculate scale to fit statsImage inside background, preserving aspect ratio
+    const maxWidth = bgImage.width * 0.9;
+    const maxHeight = bgImage.height * 0.9;
+
+    let scale = Math.min(maxWidth / statsImage.width, maxHeight / statsImage.height);
+
+    const scaledWidth = statsImage.width * scale;
+    const scaledHeight = statsImage.height * scale;
+
+    // Calculate position so top starts 1 inch down from top (96px)
+    const x = (bgImage.width - scaledWidth) / 2;
+    const y = 96;
+
+    // Draw the scaled stats image on top of background
+    ctx.drawImage(statsImage, x, y, scaledWidth, scaledHeight);
+
+    // Crop 150px from bottom
+    const croppedHeight = canvas.height - 150;
+
+    // Create a final canvas with cropped height
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = canvas.width;
+    finalCanvas.height = croppedHeight;
+    const finalCtx = finalCanvas.getContext('2d');
+
+    finalCtx.drawImage(canvas, 0, 0, canvas.width, croppedHeight, 0, 0, canvas.width, croppedHeight);
+
+    // Convert final canvas to data URL
+    const finalDataUrl = finalCanvas.toDataURL('image/png');
+
+    // Open the image in a new tab/window
+    const newWindow = window.open();
+    if (!newWindow) {
+      alert('Please allow popups for this site to open the image.');
       return;
     }
-    imageWindow.document.write(`<title>Official Stats Image</title>`);
-    imageWindow.document.write(`<img src="${dataUrl}" style="max-width:100%; height:auto; display:block; margin: 0 auto;" alt="Official Stats Image" />`);
-    imageWindow.document.close();
+    newWindow.document.write(`<title>Official Stats Image</title>`);
+    newWindow.document.write(`<img src="${finalDataUrl}" style="width:100%;height:auto;display:block;margin:auto;" />`);
+    newWindow.document.close();
 
   } catch (error) {
     console.error('Failed to generate image:', error);
-    alert('Failed to generate image.');
+    alert('Failed to generate image: ' + error.message);
   }
 }
 
