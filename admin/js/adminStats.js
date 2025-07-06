@@ -1,6 +1,8 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Removed incorrect top-level await here — will be handled inside functions now
+
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -292,36 +294,36 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL STATS`;
-  output += `═══════════════════════`;
-  output += `Date: ${longDateStr}`;
-  output += `∑ - Official Picks Total: ${counts.Total}`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL STATS\n`;
+  output += `═══════════════════════\n`;
+  output += `Date: ${longDateStr}\n`;
+  output += `∑ - Official Picks Total: ${counts.Total}\n`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
 
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL PICKS`;
-  output += `═══════════════════════`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL PICKS\n`;
+  output += `═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════`;
-    output += `${data.teamSelected || 'N/A'}`;
-    output += `${data.wagerType || 'N/A'}`;
-    output += `${emoji} - ${data.unit || 'N/A'}`;
+    output += `═══════════════════════\n`;
+    output += `${data.teamSelected || 'N/A'}\n`;
+    output += `${data.wagerType || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n`;
   });
 
-  output += `═══════════════════════`;
-  output += `######## THANK YOU FOR TRUSTING OGCB`;
-  output += `═══════════════════════`;
-  output += `═══════════════════════`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE`;
-  output += `═══════════════════════`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-  output += `Created: ${longDateTimeStr}`;
+  output += `═══════════════════════\n`;
+  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
+  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
+  output += `═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `Created: ${longDateTimeStr}\n`;
 
   return output;
 }
@@ -418,7 +420,7 @@ async function showStatsAsText(day) {
     } else {
       picks = await fetchPicksByDate(day);
     }
-    
+
     const textOutput = generateTextStatsOutput(day, picks);
     showTextOutputModal(textOutput);
   } catch (error) {
@@ -428,9 +430,8 @@ async function showStatsAsText(day) {
 }
 
 /**
- * NEW FUNCTION
- * Generates and downloads an image of the entire statsContainer content below the date label,
- * including all picks no matter how long (no clipping, full content).
+ * NEW FUNCTION: Generates and downloads an image of the entire statsContainer content
+ * overlayed on the watermark background, with proper aspect ratio scaling to fit.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -440,19 +441,13 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // The container with the stats summary and picks listing (everything after the date label)
-    // This is the same container we fill inside loadStatsForDay()
     const statsContainer = document.getElementById('statsContainer');
-
     if (!statsContainer) {
       alert('Stats container not found.');
       return;
     }
 
-    // To capture everything, including overflow content in picks listing,
-    // we temporarily disable scrolling and force full height for the inner picks div
-
-    // Find the picks listing div inside statsContainer (it has border + overflowY)
+    // Find picks list div inside statsContainer (overflow container)
     const picksDiv = [...statsContainer.children].find(child => {
       return child.style && child.style.overflowY === 'auto';
     });
@@ -462,30 +457,79 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Save current styles
+    // Save old styles to restore later
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
 
-    // Temporarily disable scroll to reveal full content for image generation
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
-    // Use html-to-image to generate PNG of the entire statsContainer
-    const dataUrl = await htmlToImage.toPng(statsContainer, {
-      // Increase quality for clarity, you can tweak as needed
-      pixelRatio: 2,
-      // Optional: backgroundColor: '#fff', // white bg if needed
-      cacheBust: true
-    });
+    // Create a wrapper div to hold background watermark + stats
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    wrapper.style.backgroundImage = "url('https://capper.ogcapperbets.com/admin/images/blankWatermark.png')";
+    wrapper.style.backgroundRepeat = 'no-repeat';
+    wrapper.style.backgroundPosition = 'center top';
+    wrapper.style.backgroundSize = 'contain';
 
-    // Restore old styles
+    // Set wrapper size to watermark image's natural dimensions (adjust if you know real size)
+    const backgroundWidth = 800;  // approx width in px
+    const backgroundHeight = 1200; // approx height in px
+
+    wrapper.style.width = `${backgroundWidth}px`;
+    wrapper.style.height = `${backgroundHeight}px`;
+
+    // Clone stats container to not modify original
+    const statsClone = statsContainer.cloneNode(true);
+    statsClone.style.margin = '0';
+    statsClone.style.position = 'absolute';
+    statsClone.style.top = '0';
+    statsClone.style.left = '50%';
+    statsClone.style.transformOrigin = 'top center';
+
+    wrapper.appendChild(statsClone);
+
+    // Temporarily append wrapper offscreen to measure
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    document.body.appendChild(wrapper);
+
+    // Measure stats size
+    const statsRect = statsClone.getBoundingClientRect();
+
+    // Calculate scale to fit inside watermark container
+    const scaleX = backgroundWidth / statsRect.width;
+    const scaleY = backgroundHeight / statsRect.height;
+    const scale = Math.min(scaleX, scaleY, 1); // never upscale, only downscale
+
+    // Apply scale and horizontal centering transform
+    statsClone.style.transform = `translateX(-50%) scale(${scale})`;
+
+    // Force height for the scaled stats content for proper rendering
+    statsClone.style.height = `${statsRect.height * scale}px`;
+
+    // Wait a tick for styles to apply
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    // Import html-to-image here dynamically to avoid loading errors outside browser environment
+    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.esm.js');
+
+    // Generate PNG of the wrapper with background + scaled stats
+    const dataUrl = await toPng(wrapper, { pixelRatio: 2, cacheBust: true });
+
+    // Cleanup appended wrapper
+    document.body.removeChild(wrapper);
+
+    // Restore old picksDiv styles
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Create a temporary link to download the image
+    // Download the generated image
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+    link.download = `official_stats_${new Date().toISOString().slice(0, 10)}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -512,13 +556,6 @@ export async function loadStatsForDay(day) {
   } else {
     statsContainer.innerHTML = '';
   }
-
-  // Add background image and top padding for the container
-  statsContainer.style.backgroundImage = "url('https://capper.ogcapperbets.com/admin/images/blankWatermark.png')";
-  statsContainer.style.backgroundRepeat = "no-repeat";
-  statsContainer.style.backgroundPosition = "center top";
-  statsContainer.style.backgroundSize = "contain";
-  statsContainer.style.paddingTop = "2in";
 
   const tabsDiv = document.createElement('div');
   tabsDiv.style.marginBottom = '12px';
