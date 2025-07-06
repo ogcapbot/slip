@@ -295,7 +295,9 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════\n######## OFFICIAL STATS\n═══════════════════════\n`;
+  output += `═══════════════════════`;
+  output += `######## OFFICIAL STATS`;
+  output += `═══════════════════════`;
   output += `Date: ${longDateStr}`;
   output += `∑ - Official Picks Total: ${counts.Total}`;
   output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
@@ -303,9 +305,9 @@ function generateTextStatsOutput(day, picks) {
   output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
   output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
 
-  output += `═══════════════════════';
-  output += '######## OFFICIAL PICKS';
-  output += '═══════════════════════`;
+  output += `═══════════════════════`;
+  output += `######## OFFICIAL PICKS`;
+  output += `═══════════════════════`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
@@ -315,11 +317,11 @@ function generateTextStatsOutput(day, picks) {
     output += `${emoji} - ${data.unit || 'N/A'}`;
   });
 
-  output += `═══════════════════════';
-  output += `######## THANK YOU FOR TRUSTING OGCB';
   output += `═══════════════════════`;
-  output += `═══════════════════════';
-  output += `######## STRICT CONFIDENTIALITY NOTICE';
+  output += `######## THANK YOU FOR TRUSTING OGCB`;
+  output += `═══════════════════════`;
+  output += `═══════════════════════`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE`;
   output += `═══════════════════════`;
   output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
   output += `Created: ${longDateTimeStr}`;
