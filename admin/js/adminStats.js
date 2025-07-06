@@ -1,8 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Import html-to-image dynamically inside generateImageFromStatsContainer()
-
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -406,35 +404,12 @@ function showTextOutputModal(textOutput) {
   modal.style.display = 'flex';
 }
 
-async function showStatsAsText(day) {
-  try {
-    let picks = [];
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.slice(0, 25).map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-    
-    const textOutput = generateTextStatsOutput(day, picks);
-    showTextOutputModal(textOutput);
-  } catch (error) {
-    console.error('Failed to show stats as text:', error);
-    alert('Error loading stats as text.');
-  }
-}
-
-// Helper to detect mobile devices
+// Mobile detector helper
 function isMobile() {
   return /Mobi|Android/i.test(navigator.userAgent);
 }
 
-// Modal to show generated image on mobile for manual saving
+// Show image modal for mobile downloads
 function showImageModal(dataUrl) {
   let modal = document.getElementById('imageSaveModal');
   if (!modal) {
@@ -506,14 +481,14 @@ function showImageModal(dataUrl) {
 
 /**
  * NEW FUNCTION
- * Generates and downloads (or shows modal on mobile) an image of the entire statsContainer content below the date label,
+ * Generates and shows (or downloads on desktop) an image of the entire statsContainer content below the date label,
  * including all picks no matter how long (no clipping, full content).
- * It also overlays a background image and fits the stats image on top of it.
+ * It overlays a background watermark image and fits the stats image onto it preserving aspect ratio.
  */
 async function generateImageFromStatsContainer() {
   try {
-    // Dynamically import html-to-image here
-    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/lib/html-to-image.js');
+    // Correct dynamic import for html-to-image UMD version
+    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/dist/html-to-image.umd.js');
 
     const mainContent = document.getElementById('adminMainContent');
     if (!mainContent) {
@@ -527,7 +502,6 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find picks listing div inside statsContainer with overflowY auto
     const picksDiv = [...statsContainer.children].find(child => child.style && child.style.overflowY === 'auto');
 
     if (!picksDiv) {
@@ -535,15 +509,14 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Save current styles to restore later
+    // Temporarily disable scroll and max height to capture full content
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
 
-    // Disable scrolling and max height to show full picks for capture
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
-    // Generate PNG of statsContainer
+    // Generate PNG data URL of statsContainer
     const statsDataUrl = await htmlToImage.toPng(statsContainer, {
       pixelRatio: 2,
       cacheBust: true
@@ -553,7 +526,7 @@ async function generateImageFromStatsContainer() {
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Create image elements to compose final canvas
+    // Load background watermark image
     const backgroundImg = new Image();
     backgroundImg.crossOrigin = 'anonymous';
     backgroundImg.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
@@ -563,6 +536,7 @@ async function generateImageFromStatsContainer() {
       backgroundImg.onerror = () => reject(new Error('Background image failed to load'));
     });
 
+    // Load stats image from data URL
     const statsImg = new Image();
     statsImg.src = statsDataUrl;
 
@@ -571,37 +545,33 @@ async function generateImageFromStatsContainer() {
       statsImg.onerror = () => reject(new Error('Stats image failed to load'));
     });
 
-    // Create canvas sized to background image
+    // Create canvas matching background image size
     const canvas = document.createElement('canvas');
     canvas.width = backgroundImg.width;
     canvas.height = backgroundImg.height;
     const ctx = canvas.getContext('2d');
 
-    // Draw background image filling canvas fully (no stretch)
+    // Draw background watermark fully (no stretch)
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-    // Calculate scaling to fit stats image on background with aspect ratio preserved
-    const paddingTopPx = 100; // approx 2 inches depending on DPI, adjust as needed
-    const maxWidth = canvas.width * 0.9; // leave some horizontal margin
-    const maxHeight = canvas.height - paddingTopPx - 50; // leave bottom margin
+    // Calculate scale to fit stats image with 2 inch top padding (~100px)
+    const paddingTopPx = 100;
+    const maxWidth = canvas.width * 0.9; // 10% horizontal margin
+    const maxHeight = canvas.height - paddingTopPx - 50; // bottom margin
 
-    // Calculate scale to fit
     let scale = Math.min(maxWidth / statsImg.width, maxHeight / statsImg.height);
-    if (scale > 1) scale = 1; // Do not upscale, only shrink
+    if (scale > 1) scale = 1; // only scale down, never up
 
     const drawWidth = statsImg.width * scale;
     const drawHeight = statsImg.height * scale;
 
-    // Center horizontally, start about 2 inches down from top (paddingTopPx)
     const dx = (canvas.width - drawWidth) / 2;
     const dy = paddingTopPx;
 
     ctx.drawImage(statsImg, dx, dy, drawWidth, drawHeight);
 
-    // Final composed image
     const finalDataUrl = canvas.toDataURL('image/png');
 
-    // Show modal on mobile, or trigger download on desktop
     if (isMobile()) {
       showImageModal(finalDataUrl);
     } else {
@@ -761,4 +731,27 @@ export async function loadStatsForDay(day) {
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
+}
+
+async function showStatsAsText(day) {
+  try {
+    let picks = [];
+    if (day === 'all') {
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
+
+    const textOutput = generateTextStatsOutput(day, picks);
+    showTextOutputModal(textOutput);
+  } catch (error) {
+    console.error('Failed to show stats as text:', error);
+    alert('Error loading stats as text.');
+  }
 }
