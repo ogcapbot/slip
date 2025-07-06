@@ -1,6 +1,9 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Import dom-to-image-more as ES module
+import domtoimage from 'https://cdn.jsdelivr.net/npm/dom-to-image-more@2.9.0/src/dom-to-image-more.js';
+
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -468,7 +471,7 @@ async function generateImageFromStatsContainer() {
     }
 
     // Use domtoimage to generate PNG
-    const dataUrl = await window.domtoimage.toPng(wrapper, { pixelRatio: 2, cacheBust: true });
+    const dataUrl = await domtoimage.toPng(wrapper, { pixelRatio: 2, cacheBust: true });
 
     // Create an image element to crop the bottom by 150px
     const img = new Image();
