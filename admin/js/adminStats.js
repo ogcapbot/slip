@@ -1,6 +1,9 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Add html-to-image library for image export feature
+import * as htmlToImage from 'https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/lib/index.min.js';
+
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -416,6 +419,75 @@ async function showStatsAsText(day) {
   } catch (error) {
     console.error('Failed to show stats as text:', error);
     alert('Error loading stats as text.');
+  }
+}
+
+/**
+ * NEW FUNCTION
+ * Generates and downloads an image of the entire statsContainer content below the date label,
+ * including all picks no matter how long (no clipping, full content).
+ */
+async function generateImageFromStatsContainer() {
+  try {
+    const mainContent = document.getElementById('adminMainContent');
+    if (!mainContent) {
+      alert('Content container not found.');
+      return;
+    }
+
+    // The container with the stats summary and picks listing (everything after the date label)
+    // This is the same container we fill inside loadStatsForDay()
+    const statsContainer = document.getElementById('statsContainer');
+
+    if (!statsContainer) {
+      alert('Stats container not found.');
+      return;
+    }
+
+    // To capture everything, including overflow content in picks listing,
+    // we temporarily disable scrolling and force full height for the inner picks div
+
+    // Find the picks listing div inside statsContainer (it has border + overflowY)
+    const picksDiv = [...statsContainer.children].find(child => {
+      return child.style && child.style.overflowY === 'auto';
+    });
+
+    if (!picksDiv) {
+      alert('Picks list container not found.');
+      return;
+    }
+
+    // Save current styles
+    const oldOverflow = picksDiv.style.overflowY;
+    const oldMaxHeight = picksDiv.style.maxHeight;
+
+    // Temporarily disable scroll to reveal full content for image generation
+    picksDiv.style.overflowY = 'visible';
+    picksDiv.style.maxHeight = 'none';
+
+    // Use html-to-image to generate PNG of the entire statsContainer
+    const dataUrl = await htmlToImage.toPng(statsContainer, {
+      // Increase quality for clarity, you can tweak as needed
+      pixelRatio: 2,
+      // Optional: backgroundColor: '#fff', // white bg if needed
+      cacheBust: true
+    });
+
+    // Restore old styles
+    picksDiv.style.overflowY = oldOverflow;
+    picksDiv.style.maxHeight = oldMaxHeight;
+
+    // Create a temporary link to download the image
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (error) {
+    console.error('Failed to generate image:', error);
+    alert('Failed to generate image.');
   }
 }
 
