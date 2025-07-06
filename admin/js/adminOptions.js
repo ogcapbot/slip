@@ -31,6 +31,8 @@ export function showAdminOptions(userData) {
   if (!mainContent) {
     mainContent = document.createElement('div');
     mainContent.id = 'adminMainContent';
+    // Append newly created mainContent to DOM (important!)
+    header.appendChild(mainContent);
   }
   mainContent.innerHTML = '';
   mainContent.textContent = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
@@ -52,7 +54,6 @@ export function showAdminOptions(userData) {
           activeButton.classList.remove('active');
           activeButton = null;
         }
-        mainContent.innerHTML = `Welcome, ${userData.userName || 'User'}! Ready to get started?`;
         return;
       }
 
@@ -83,12 +84,7 @@ export function showAdminOptions(userData) {
 
       if (btnConfig.label === 'Stats') {
         mainContent.innerHTML = '';
-        // Create statsContainer dynamically here to avoid missing container errors
-        let statsContainer = document.createElement('div');
-        statsContainer.id = 'statsContainer';
-        mainContent.appendChild(statsContainer);
-
-        // Load stats UI with default tab "today"
+        // Just call loadStatsForDay, it creates the statsContainer internally
         loadStatsForDay('today');
         return;
       }
