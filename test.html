@@ -1,19 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Modal Test</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Oswald&display=swap');
-
-  
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stats Image Generation Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #222;
+      color: #eee;
+      margin: 0; padding: 20px;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh;
+    }
+    #statsContainer {
+      background: #333;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 100%;
+      margin-bottom: 20px;
+      color: white;
+      user-select: none;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
 </head>
 <body>
+  <h1>Stats Image Generation Test</h1>
+  <div id="statsContainer">
+    <h2>Official Stats</h2>
+    <p>Total Picks: 25</p>
+    <p>Win: 15 ✅</p>
+    <p>Lost: 5 ❌</p>
+    <p>Push: 3 🟦</p>
+    <p>Pending: 2 ⚙️</p>
+  </div>
+  <button id="generateImageBtn">Generate Image & Open in New Tab</button>
 
-<script type="module" src="admin/js/testCanvasImage.js"></script>
-
-
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="index.js"></script>
 </body>
 </html>
