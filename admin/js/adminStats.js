@@ -1,9 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Import dom-to-image-more as ES module from esm.sh CDN
-import domtoimage from 'https://esm.sh/dom-to-image-more';
-
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -295,19 +292,15 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════\n`;
-  output += `######## OFFICIAL STATS\n`;
-  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n######## OFFICIAL STATS\n═══════════════════════\n`;
   output += `Date: ${longDateStr}\n`;
   output += `∑ - Official Picks Total: ${counts.Total}\n`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}%\n`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%\n`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%\n`;
   output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
 
-  output += `═══════════════════════\n`;
-  output += `######## OFFICIAL PICKS\n`;
-  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n######## OFFICIAL PICKS\n═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
@@ -317,13 +310,9 @@ function generateTextStatsOutput(day, picks) {
     output += `${emoji} - ${data.unit || 'N/A'}\n`;
   });
 
-  output += `═══════════════════════\n`;
-  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
-  output += `═══════════════════════\n`;
-  output += `═══════════════════════\n`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
-  output += `═══════════════════════\n`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `═══════════════════════\n######## THANK YOU FOR TRUSTING OGCB\n═══════════════════════\n\n`;
+  output += `═══════════════════════\n######## STRICT CONFIDENTIALITY NOTICE\n═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n\n`;
   output += `Created: ${longDateTimeStr}\n`;
 
   return output;
@@ -352,7 +341,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh';
+    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -365,7 +354,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh';
+    textarea.style.minHeight = '70vh'; // Fill most of modal height
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -427,84 +416,6 @@ async function showStatsAsText(day) {
   } catch (error) {
     console.error('Failed to show stats as text:', error);
     alert('Error loading stats as text.');
-  }
-}
-
-/**
- * Clean dynamic image generator starting at date label,
- * including all picks below, watermark background,
- * opens image in new tab with proper styling.
- */
-async function generateImageFromStatsContainer() {
-  try {
-    const statsContainer = document.getElementById('statsContainer');
-    if (!statsContainer) {
-      alert('Stats container not found.');
-      return;
-    }
-
-    const children = [...statsContainer.children];
-
-    const dateLabel = children.find(el =>
-      el.style && el.style.textAlign === 'center' &&
-      el.style.fontSize === '12px' &&
-      el.style.color === 'rgb(102, 102, 102)'
-    );
-
-    if (!dateLabel) {
-      alert('Date label element not found.');
-      return;
-    }
-
-    const startIndex = children.indexOf(dateLabel);
-    if (startIndex === -1) {
-      alert('Date label not found among children.');
-      return;
-    }
-
-    const wrapper = document.createElement('div');
-
-    wrapper.style.position = 'absolute';
-    wrapper.style.left = '0';
-    wrapper.style.top = '0';
-    wrapper.style.opacity = '0';
-    wrapper.style.pointerEvents = 'none';
-    wrapper.style.zIndex = '-1000';
-    wrapper.style.width = `${statsContainer.offsetWidth}px`;
-    wrapper.style.paddingTop = '96px';
-    wrapper.style.backgroundImage = 'url("https://capper.ogcapperbets.com/admin/images/blankWatermark.png")';
-    wrapper.style.backgroundRepeat = 'no-repeat';
-    wrapper.style.backgroundPosition = 'center top';
-    wrapper.style.backgroundSize = 'contain';
-    wrapper.style.fontFamily = 'Arial, sans-serif';
-    wrapper.style.fontSize = '14px';
-    wrapper.style.lineHeight = '1.4';
-    wrapper.style.color = '#222';
-
-    for (let i = startIndex; i < children.length; i++) {
-      wrapper.appendChild(children[i].cloneNode(true));
-    }
-
-    document.body.appendChild(wrapper);
-
-    const dataUrl = await domtoimage.toPng(wrapper, { pixelRatio: 3, cacheBust: true });
-
-    document.body.removeChild(wrapper);
-
-    const newWindow = window.open();
-    newWindow.document.write(`
-      <html>
-        <head><title>Stats Image</title></head>
-        <body style="margin:0; background:#fff; display:flex; justify-content:center; align-items:center; height:100vh;">
-          <img src="${dataUrl}" style="max-width:100vw; height:auto; display:block;" alt="Stats Image" />
-        </body>
-      </html>
-    `);
-    newWindow.document.close();
-
-  } catch (error) {
-    console.error('Failed to generate image:', error);
-    alert('Failed to generate image.');
   }
 }
 
