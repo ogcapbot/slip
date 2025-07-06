@@ -1,7 +1,5 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-// Import html-to-image from CDN (make sure this script is loaded in your HTML or adapt as needed)
-// Example CDN: https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
@@ -294,36 +292,36 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════\n`;
-  output += `######## OFFICIAL STATS\n`;
-  output += `═══════════════════════\n`;
-  output += `Date: ${longDateStr}\n`;
-  output += `∑ - Official Picks Total: ${counts.Total}\n`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
+  output += `═══════════════════════`;
+  output += `######## OFFICIAL STATS`;
+  output += `═══════════════════════`;
+  output += `Date: ${longDateStr}`;
+  output += `∑ - Official Picks Total: ${counts.Total}`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
 
-  output += `═══════════════════════\n`;
-  output += `######## OFFICIAL PICKS\n`;
-  output += `═══════════════════════\n\n`;
+  output += `═══════════════════════`;
+  output += `######## OFFICIAL PICKS`;
+  output += `═══════════════════════`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════\n`;
-    output += `${data.teamSelected || 'N/A'}\n`;
-    output += `${data.wagerType || 'N/A'}\n`;
-    output += `${emoji} - ${data.unit || 'N/A'}\n\n`;
+    output += `═══════════════════════`;
+    output += `${data.teamSelected || 'N/A'}`;
+    output += `${data.wagerType || 'N/A'}`;
+    output += `${emoji} - ${data.unit || 'N/A'}`;
   });
 
-  output += `═══════════════════════\n`;
-  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
-  output += `═══════════════════════\n`;
-  output += `═══════════════════════\n`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
-  output += `═══════════════════════\n`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
-  output += `Created: ${longDateTimeStr}\n`;
+  output += `═══════════════════════`;
+  output += `######## THANK YOU FOR TRUSTING OGCB`;
+  output += `═══════════════════════`;
+  output += `═══════════════════════`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE`;
+  output += `═══════════════════════`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
+  output += `Created: ${longDateTimeStr}`;
 
   return output;
 }
@@ -351,7 +349,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -364,7 +362,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; // Fill most of modal height
+    textarea.style.minHeight = '70vh';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -430,10 +428,7 @@ async function showStatsAsText(day) {
 }
 
 /**
- * NEW FUNCTION
- * Generates an image starting from the date label and everything below,
- * adds 1 inch top offset, crops 150px off the bottom,
- * then opens the image in a new browser tab/window (no download).
+ * NEW FUNCTION: Generates image with background and opens in new tab.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -443,73 +438,57 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find the date label element inside statsContainer
-    const childrenArray = Array.from(statsContainer.children);
-    const dateLabelIndex = childrenArray.findIndex(child => {
-      return child.textContent && child.textContent.match(/\w+, \w+ \d{1,2}, \d{4}/);
-    });
-    if (dateLabelIndex === -1) {
-      alert('Date label not found.');
-      return;
-    }
+    // Backup old font family and temporarily use safe font to avoid CORS font errors
+    const oldFontFamily = statsContainer.style.fontFamily;
+    statsContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Create a temporary container with date label + all siblings below
-    const imageContentContainer = document.createElement('div');
-    imageContentContainer.style.backgroundColor = 'transparent';
-    imageContentContainer.style.position = 'relative';
-    imageContentContainer.style.paddingTop = '96px'; // 1 inch offset
-    imageContentContainer.style.width = statsContainer.offsetWidth + 'px';
+    // Clone the statsContainer to avoid messing with UI
+    const clone = statsContainer.cloneNode(true);
+    clone.style.position = 'relative';
+    clone.style.backgroundImage = 'url("/admin/images/blankWatermark.png")';
+    clone.style.backgroundRepeat = 'no-repeat';
+    clone.style.backgroundPosition = 'center top';
+    clone.style.backgroundSize = 'contain';
+    clone.style.paddingTop = '80px';  // ~1 inch from top
+    clone.style.width = statsContainer.offsetWidth + 'px';
 
-    for (let i = dateLabelIndex; i < childrenArray.length; i++) {
-      imageContentContainer.appendChild(childrenArray[i].cloneNode(true));
-    }
+    // Append clone offscreen for rendering
+    clone.style.position = 'fixed';
+    clone.style.left = '-9999px';
+    clone.style.top = '0px';
+    document.body.appendChild(clone);
 
-    // Generate image of this container
-    const originalDataUrl = await htmlToImage.toPng(imageContentContainer, {
+    // Calculate cropping height: height of clone + 150px, then crop bottom 150px
+    const cloneHeight = clone.offsetHeight;
+    const cropHeight = cloneHeight + 150;
+
+    // Import html-to-image dynamically (use working CDN link)
+    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.min.js');
+
+    // Generate PNG with cropping from top 0 to cropHeight (width is clone width)
+    const dataUrl = await htmlToImage.toPng(clone, {
       pixelRatio: 2,
-      cacheBust: true
+      cacheBust: true,
+      clip: {
+        x: 0,
+        y: 0,
+        width: clone.offsetWidth,
+        height: cropHeight
+      }
     });
 
-    const img = new Image();
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = originalDataUrl;
-    });
+    // Cleanup clone and restore font family
+    document.body.removeChild(clone);
+    statsContainer.style.fontFamily = oldFontFamily;
 
-    // Create canvas with extra 150px height for cropping
-    const cropExtraPx = 150;
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height + cropExtraPx;
-    const ctx = canvas.getContext('2d');
-
-    // Fill canvas white (or transparent if you want)
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw image (cropping off 150px bottom visually)
-    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
-
-    // Get final image data url
-    const finalDataUrl = canvas.toDataURL('image/png');
-
-    // Open image in new tab/window
-    const newTab = window.open();
-    if (newTab) {
-      const imgElement = newTab.document.createElement('img');
-      imgElement.src = finalDataUrl;
-      imgElement.style.maxWidth = '100vw';
-      imgElement.style.height = 'auto';
-      newTab.document.body.style.margin = '0';
-      newTab.document.body.style.display = 'flex';
-      newTab.document.body.style.justifyContent = 'center';
-      newTab.document.body.style.alignItems = 'center';
-      newTab.document.body.style.backgroundColor = '#fff';
-      newTab.document.body.appendChild(imgElement);
+    // Open generated image in a new tab
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<html><head><title>Stats Image</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#fff;"><img src="${dataUrl}" style="max-width:100%;height:auto;"></body></html>`);
     } else {
-      alert('Popup blocked! Please allow popups for this site.');
+      alert('Please allow popups for this website to view the generated image.');
     }
+
   } catch (error) {
     console.error('Failed to generate image:', error);
     alert('Failed to generate image.');
