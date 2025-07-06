@@ -1,7 +1,7 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Removed incorrect top-level await here — will be handled inside functions now
+// Remove the original erroneous line with htmlToImage.toPng(statsContainer, ...) from the top
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
@@ -302,7 +302,7 @@ function generateTextStatsOutput(day, picks) {
   output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
   output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
   output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
 
   output += `═══════════════════════\n`;
   output += `######## OFFICIAL PICKS\n`;
@@ -351,7 +351,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -364,7 +364,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; // Fill most of modal height
+    textarea.style.minHeight = '70vh';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -420,7 +420,7 @@ async function showStatsAsText(day) {
     } else {
       picks = await fetchPicksByDate(day);
     }
-
+    
     const textOutput = generateTextStatsOutput(day, picks);
     showTextOutputModal(textOutput);
   } catch (error) {
@@ -430,8 +430,10 @@ async function showStatsAsText(day) {
 }
 
 /**
- * NEW FUNCTION: Generates and downloads an image of the entire statsContainer content
- * overlayed on the watermark background, with proper aspect ratio scaling to fit.
+ * NEW FUNCTION
+ * Generates and downloads an image of the entire statsContainer content below the date label,
+ * including all picks no matter how long (no clipping, full content),
+ * with watermark background fitted behind the stats image.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -447,7 +449,6 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find picks list div inside statsContainer (overflow container)
     const picksDiv = [...statsContainer.children].find(child => {
       return child.style && child.style.overflowY === 'auto';
     });
@@ -457,83 +458,73 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Save old styles to restore later
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
 
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
-    // Create a wrapper div to hold background watermark + stats
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
-    wrapper.style.display = 'inline-block';
-    wrapper.style.backgroundImage = "url('https://capper.ogcapperbets.com/admin/images/blankWatermark.png')";
-    wrapper.style.backgroundRepeat = 'no-repeat';
-    wrapper.style.backgroundPosition = 'center top';
-    wrapper.style.backgroundSize = 'contain';
+    // Correct dynamic import URL for html-to-image
+    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/lib/html-to-image.js');
 
-    // Set wrapper size to watermark image's natural dimensions (adjust if you know real size)
-    const backgroundWidth = 800;  // approx width in px
-    const backgroundHeight = 1200; // approx height in px
+    const statsImageDataUrl = await toPng(statsContainer, {
+      pixelRatio: 2,
+      cacheBust: true
+    });
 
-    wrapper.style.width = `${backgroundWidth}px`;
-    wrapper.style.height = `${backgroundHeight}px`;
-
-    // Clone stats container to not modify original
-    const statsClone = statsContainer.cloneNode(true);
-    statsClone.style.margin = '0';
-    statsClone.style.position = 'absolute';
-    statsClone.style.top = '0';
-    statsClone.style.left = '50%';
-    statsClone.style.transformOrigin = 'top center';
-
-    wrapper.appendChild(statsClone);
-
-    // Temporarily append wrapper offscreen to measure
-    wrapper.style.position = 'fixed';
-    wrapper.style.left = '-9999px';
-    wrapper.style.top = '0';
-    document.body.appendChild(wrapper);
-
-    // Measure stats size
-    const statsRect = statsClone.getBoundingClientRect();
-
-    // Calculate scale to fit inside watermark container
-    const scaleX = backgroundWidth / statsRect.width;
-    const scaleY = backgroundHeight / statsRect.height;
-    const scale = Math.min(scaleX, scaleY, 1); // never upscale, only downscale
-
-    // Apply scale and horizontal centering transform
-    statsClone.style.transform = `translateX(-50%) scale(${scale})`;
-
-    // Force height for the scaled stats content for proper rendering
-    statsClone.style.height = `${statsRect.height * scale}px`;
-
-    // Wait a tick for styles to apply
-    await new Promise(resolve => requestAnimationFrame(resolve));
-
-    // Import html-to-image here dynamically to avoid loading errors outside browser environment
-    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.esm.js');
-
-    // Generate PNG of the wrapper with background + scaled stats
-    const dataUrl = await toPng(wrapper, { pixelRatio: 2, cacheBust: true });
-
-    // Cleanup appended wrapper
-    document.body.removeChild(wrapper);
-
-    // Restore old picksDiv styles
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Download the generated image
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `official_stats_${new Date().toISOString().slice(0, 10)}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const backgroundImg = new Image();
+    backgroundImg.crossOrigin = 'anonymous';
+    backgroundImg.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
+    backgroundImg.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = backgroundImg.width;
+      canvas.height = backgroundImg.height;
+
+      ctx.drawImage(backgroundImg, 0, 0);
+
+      const statsImg = new Image();
+      statsImg.crossOrigin = 'anonymous';
+      statsImg.src = statsImageDataUrl;
+
+      statsImg.onload = () => {
+        const maxWidth = canvas.width * 0.85;
+        const maxHeight = canvas.height * 0.75;
+
+        let scale = Math.min(maxWidth / statsImg.width, maxHeight / statsImg.height, 1);
+
+        const drawWidth = statsImg.width * scale;
+        const drawHeight = statsImg.height * scale;
+
+        const topOffsetPx = 192;
+        const x = (canvas.width - drawWidth) / 2;
+        const y = topOffsetPx;
+
+        ctx.drawImage(statsImg, x, y, drawWidth, drawHeight);
+
+        const combinedDataUrl = canvas.toDataURL('image/png');
+
+        const link = document.createElement('a');
+        link.href = combinedDataUrl;
+        link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      statsImg.onerror = () => {
+        alert('Failed to load stats image for composition.');
+      };
+    };
+
+    backgroundImg.onerror = () => {
+      alert('Failed to load background watermark image.');
+    };
   } catch (error) {
     console.error('Failed to generate image:', error);
     alert('Failed to generate image.');
