@@ -304,14 +304,14 @@ function generateTextStatsOutput(day, picks) {
 
   output += `═══════════════════════\n`;
   output += `######## OFFICIAL PICKS\n`;
-  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
     output += `═══════════════════════\n`;
     output += `${data.teamSelected || 'N/A'}\n`;
     output += `${data.wagerType || 'N/A'}\n`;
-    output += `${emoji} - ${data.unit || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n\n`;
   });
 
   output += `═══════════════════════\n`;
@@ -429,19 +429,14 @@ async function showStatsAsText(day) {
 
 /**
  * NEW FUNCTION
- * Generates and shows an image of the entire statsContainer content below the date label,
- * including all picks no matter how long (no clipping, full content),
- * composited over a background watermark,
- * scaled down to fit the watermark background without distortion.
+ * Generates an image of the entire statsContainer content overlayed on a watermark background,
+ * keeping aspect ratio and fitting within the background.
+ * Instead of auto-download, it displays in a modal for user to save manually.
  */
 async function generateImageFromStatsContainer() {
   try {
-    // Dynamically import html-to-image module
-    const module = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js');
-    const htmlToImage = module.default || module;
-    
-    if (typeof htmlToImage.toPng !== 'function') {
-      throw new Error('toPng function not found on html-to-image module');
+    if (typeof htmlToImage === 'undefined' || typeof htmlToImage.toPng !== 'function') {
+      throw new Error('htmlToImage or toPng function not found globally');
     }
 
     const statsContainer = document.getElementById('statsContainer');
@@ -450,7 +445,7 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find picks listing div to expand full height temporarily
+    // Find picks listing div to temporarily expand height
     const picksDiv = [...statsContainer.children].find(child => child.style && child.style.overflowY === 'auto');
     if (!picksDiv) {
       alert('Picks list container not found.');
@@ -461,7 +456,7 @@ async function generateImageFromStatsContainer() {
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
 
-    // Temporarily disable scroll and maxHeight to capture full content
+    // Temporarily expand picks div to full height for image generation
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
@@ -471,11 +466,11 @@ async function generateImageFromStatsContainer() {
       cacheBust: true
     });
 
-    // Restore original styles
+    // Restore picks div styles
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Create watermark background image
+    // Load watermark image
     const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
     const watermarkImage = new Image();
     watermarkImage.crossOrigin = 'anonymous';
@@ -486,7 +481,7 @@ async function generateImageFromStatsContainer() {
       watermarkImage.src = watermarkSrc;
     });
 
-    // Create stats image
+    // Load stats image from dataUrl
     const statsImage = new Image();
     statsImage.crossOrigin = 'anonymous';
 
@@ -496,7 +491,7 @@ async function generateImageFromStatsContainer() {
       statsImage.src = statsDataUrl;
     });
 
-    // Create canvas sized to watermark image
+    // Create canvas sized to watermark
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -506,33 +501,40 @@ async function generateImageFromStatsContainer() {
     // Draw watermark background
     ctx.drawImage(watermarkImage, 0, 0, canvas.width, canvas.height);
 
-    // Calculate scale to fit stats image within watermark (keep aspect ratio)
-    const maxStatsWidth = canvas.width * 0.85; // 85% of watermark width
-    const maxStatsHeight = canvas.height * 0.7; // 70% of watermark height
+    // Calculate scale to fit stats image inside watermark (keep aspect ratio)
+    const maxWidth = canvas.width;
+    const maxHeight = canvas.height * 0.8; // leave 20% top space approx 2 inches down
 
-    let scale = Math.min(maxStatsWidth / statsImage.width, maxStatsHeight / statsImage.height);
+    let targetWidth = statsImage.width;
+    let targetHeight = statsImage.height;
 
-    // Compute final dimensions of stats image on canvas
-    const finalStatsWidth = statsImage.width * scale;
-    const finalStatsHeight = statsImage.height * scale;
+    const widthRatio = maxWidth / targetWidth;
+    const heightRatio = maxHeight / targetHeight;
+    const scale = Math.min(widthRatio, heightRatio, 1); // never upscale
 
-    // Position stats image centered horizontally and 2 inches down from top
-    // Assuming 96 DPI, 2 inches = 192px
-    const posX = (canvas.width - finalStatsWidth) / 2;
-    const posY = 192;
+    targetWidth = targetWidth * scale;
+    targetHeight = targetHeight * scale;
 
-    ctx.drawImage(statsImage, posX, posY, finalStatsWidth, finalStatsHeight);
+    // Draw stats image centered horizontally, with vertical offset ~2 inches (20% height)
+    const offsetX = (canvas.width - targetWidth) / 2;
+    const offsetY = canvas.height * 0.2;
 
-    // Show the composited image in a modal for user to save manually
-    showImageOutputModal(canvas.toDataURL('image/png'));
-    
+    ctx.drawImage(statsImage, offsetX, offsetY, targetWidth, targetHeight);
+
+    // Generate final combined image data URL
+    const finalDataUrl = canvas.toDataURL('image/png');
+
+    // Show image in modal for user to save manually
+    showImageModal(finalDataUrl);
+
   } catch (error) {
     console.error('Failed to generate image:', error);
     alert('Failed to generate image.');
   }
 }
 
-function showImageOutputModal(dataUrl) {
+// Modal to show generated image with Save button
+function showImageModal(imageDataUrl) {
   let modal = document.getElementById('imageOutputModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -542,15 +544,16 @@ function showImageOutputModal(dataUrl) {
     modal.style.left = '0';
     modal.style.width = '100vw';
     modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.85)';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
     modal.style.zIndex = '100000';
+    modal.style.flexDirection = 'column';
 
     const content = document.createElement('div');
     content.style.backgroundColor = '#222';
-    content.style.padding = '20px';
+    content.style.padding = '15px';
     content.style.borderRadius = '10px';
     content.style.maxWidth = '90vw';
     content.style.maxHeight = '90vh';
@@ -559,36 +562,46 @@ function showImageOutputModal(dataUrl) {
     content.style.alignItems = 'center';
 
     const img = document.createElement('img');
-    img.id = 'imageOutputImg';
     img.style.maxWidth = '100%';
     img.style.maxHeight = '80vh';
-    img.style.marginBottom = '16px';
+    img.style.border = '2px solid #444';
+    img.style.borderRadius = '6px';
 
     const btnContainer = document.createElement('div');
-    btnContainer.style.textAlign = 'right';
-    btnContainer.style.width = '100%';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.style.marginRight = '12px';
+    btnContainer.style.marginTop = '10px';
+    btnContainer.style.textAlign = 'center';
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save Image';
+    saveBtn.style.marginRight = '15px';
+    saveBtn.style.padding = '8px 16px';
+    saveBtn.style.cursor = 'pointer';
 
-    btnContainer.appendChild(closeBtn);
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.padding = '8px 16px';
+    closeBtn.style.cursor = 'pointer';
+
     btnContainer.appendChild(saveBtn);
+    btnContainer.appendChild(closeBtn);
 
     content.appendChild(img);
     content.appendChild(btnContainer);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
+    saveBtn.addEventListener('click', () => {
+      // Create temporary link to download image
+      const link = document.createElement('a');
+      link.href = imageDataUrl;
+      link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     });
 
-    saveBtn.addEventListener('click', () => {
-      saveImageFromDataUrl(img.src);
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
     });
 
     modal.addEventListener('click', e => {
@@ -596,18 +609,9 @@ function showImageOutputModal(dataUrl) {
     });
   }
 
-  const img = document.getElementById('imageOutputImg');
-  img.src = dataUrl;
+  const img = modal.querySelector('img');
+  img.src = imageDataUrl;
   modal.style.display = 'flex';
-}
-
-function saveImageFromDataUrl(dataUrl) {
-  const link = document.createElement('a');
-  link.href = dataUrl;
-  link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 export async function loadStatsForDay(day) {
