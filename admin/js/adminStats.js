@@ -349,7 +349,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +362,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; // Fill most of modal height
+    textarea.style.minHeight = '70vh';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -431,12 +431,17 @@ async function showStatsAsText(day) {
  * NEW FUNCTION
  * Generates and downloads an image of the entire statsContainer content below the date label,
  * including all picks no matter how long (no clipping, full content).
- * Adds watermark background image, scales content to fit without stretching,
- * and positions content approx 2 inches (192px) down from top.
+ * Includes your watermark background and resizes overlay image to fit.
  */
 async function generateImageFromStatsContainer() {
   try {
-    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.min.js');
+    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/+esm');
+
+    const mainContent = document.getElementById('adminMainContent');
+    if (!mainContent) {
+      alert('Content container not found.');
+      return;
+    }
 
     const statsContainer = document.getElementById('statsContainer');
     if (!statsContainer) {
@@ -444,71 +449,83 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Capture the statsContainer as PNG data URL
-    const statsImageDataUrl = await toPng(statsContainer, {
+    // Find picks listing div inside statsContainer (overflowY = auto)
+    const picksDiv = [...statsContainer.children].find(child => {
+      return child.style && child.style.overflowY === 'auto';
+    });
+    if (!picksDiv) {
+      alert('Picks list container not found.');
+      return;
+    }
+
+    // Save current styles and disable scroll to reveal full content for capture
+    const oldOverflow = picksDiv.style.overflowY;
+    const oldMaxHeight = picksDiv.style.maxHeight;
+    picksDiv.style.overflowY = 'visible';
+    picksDiv.style.maxHeight = 'none';
+
+    // Generate PNG data url of statsContainer
+    const statsImageUrl = await toPng(statsContainer, {
       pixelRatio: 2,
       cacheBust: true
     });
 
-    // Load the watermark background image
-    const backgroundImg = new Image();
-    backgroundImg.crossOrigin = 'anonymous';
-    backgroundImg.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
+    // Restore picksDiv styles
+    picksDiv.style.overflowY = oldOverflow;
+    picksDiv.style.maxHeight = oldMaxHeight;
 
-    backgroundImg.onload = () => {
-      // Create canvas matching the background image size
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+    // Create Image elements for watermark background and overlay stats image
+    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
-      canvas.width = backgroundImg.width;
-      canvas.height = backgroundImg.height;
+    const watermarkImg = new Image();
+    const statsImg = new Image();
 
-      // Draw the background image first
-      ctx.drawImage(backgroundImg, 0, 0);
+    await new Promise((resolve, reject) => {
+      let loadedCount = 0;
+      function checkLoaded() {
+        loadedCount++;
+        if (loadedCount === 2) resolve();
+      }
+      watermarkImg.onload = checkLoaded;
+      watermarkImg.onerror = reject;
+      statsImg.onload = checkLoaded;
+      statsImg.onerror = reject;
+      watermarkImg.src = watermarkUrl;
+      statsImg.src = statsImageUrl;
+    });
 
-      // Load stats image
-      const statsImg = new Image();
-      statsImg.crossOrigin = 'anonymous';
-      statsImg.src = statsImageDataUrl;
+    // Create canvas sized to watermark image
+    const canvas = document.createElement('canvas');
+    canvas.width = watermarkImg.width;
+    canvas.height = watermarkImg.height;
+    const ctx = canvas.getContext('2d');
 
-      statsImg.onload = () => {
-        // Calculate max width and height inside background to fit the stats image
-        const maxWidth = canvas.width * 0.85;
-        const maxHeight = canvas.height * 0.75;
+    // Draw watermark background filling canvas (no stretch, fill maintaining aspect)
+    ctx.drawImage(watermarkImg, 0, 0, canvas.width, canvas.height);
 
-        // Calculate scale to fit inside max dimensions without stretching
-        let scale = Math.min(maxWidth / statsImg.width, maxHeight / statsImg.height, 1);
+    // Calculate scaling to fit statsImg inside canvas without stretching watermark
+    const scale = Math.min(canvas.width / statsImg.width, canvas.height / statsImg.height);
 
-        const drawWidth = statsImg.width * scale;
-        const drawHeight = statsImg.height * scale;
+    const scaledWidth = statsImg.width * scale;
+    const scaledHeight = statsImg.height * scale;
 
-        // Position 2 inches down = approx 192px top margin
-        const topOffsetPx = 192;
-        const x = (canvas.width - drawWidth) / 2;
-        const y = topOffsetPx;
+    // Center statsImg in canvas, but start about 2 inches (~192px) from top
+    const topOffsetPx = 192;
+    const leftOffset = (canvas.width - scaledWidth) / 2;
+    const topPosition = topOffsetPx;
 
-        ctx.drawImage(statsImg, x, y, drawWidth, drawHeight);
+    ctx.drawImage(statsImg, leftOffset, topPosition, scaledWidth, scaledHeight);
 
-        // Create final image URL
-        const combinedDataUrl = canvas.toDataURL('image/png');
+    // Create downloadable link for final image
+    const finalDataUrl = canvas.toDataURL('image/png');
 
-        // Trigger download
-        const link = document.createElement('a');
-        link.href = combinedDataUrl;
-        link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
+    const link = document.createElement('a');
+    link.href = finalDataUrl;
+    link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-      statsImg.onerror = () => {
-        alert('Failed to load stats image for composition.');
-      };
-    };
-
-    backgroundImg.onerror = () => {
-      alert('Failed to load background watermark image.');
-    };
   } catch (error) {
     console.error('Failed to generate image:', error);
     alert('Failed to generate image.');
