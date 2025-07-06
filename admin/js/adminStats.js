@@ -1,8 +1,8 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Add html-to-image library for image export feature
-import * as htmlToImage from 'https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/lib/index.min.js';
+// Fixed import: Use ES module version of html-to-image for browser compatibility
+import * as htmlToImage from 'https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/esm/index.js';
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
@@ -296,27 +296,33 @@ function generateTextStatsOutput(day, picks) {
 
   let output = '';
   output += `═══════════════════════\n######## OFFICIAL STATS\n═══════════════════════\n`;
-  output += `Date: ${longDateStr}\n`;
-  output += `∑ - Official Picks Total: ${counts.Total}\n`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}%\n`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%\n`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%\n`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n\n`;
+  output += `Date: ${longDateStr}`;
+  output += `∑ - Official Picks Total: ${counts.Total}`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
 
-  output += `═══════════════════════\n######## OFFICIAL PICKS\n═══════════════════════\n`;
+  output += `═══════════════════════';
+  output += '######## OFFICIAL PICKS';
+  output += '═══════════════════════`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════\n`;
-    output += `${data.teamSelected || 'N/A'}\n`;
-    output += `${data.wagerType || 'N/A'}\n`;
-    output += `${emoji} - ${data.unit || 'N/A'}\n`;
+    output += `═══════════════════════`;
+    output += `${data.teamSelected || 'N/A'}`;
+    output += `${data.wagerType || 'N/A'}`;
+    output += `${emoji} - ${data.unit || 'N/A'}`;
   });
 
-  output += `═══════════════════════\n######## THANK YOU FOR TRUSTING OGCB\n═══════════════════════\n\n`;
-  output += `═══════════════════════\n######## STRICT CONFIDENTIALITY NOTICE\n═══════════════════════\n`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n\n`;
-  output += `Created: ${longDateTimeStr}\n`;
+  output += `═══════════════════════';
+  output += `######## THANK YOU FOR TRUSTING OGCB';
+  output += `═══════════════════════`;
+  output += `═══════════════════════';
+  output += `######## STRICT CONFIDENTIALITY NOTICE';
+  output += `═══════════════════════`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
+  output += `Created: ${longDateTimeStr}`;
 
   return output;
 }
