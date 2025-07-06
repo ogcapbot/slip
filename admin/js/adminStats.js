@@ -563,8 +563,6 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
-// === ADDITION: Load html2canvas dynamically & generate combined image with header/footer at 384px wide & high quality ===
-
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
     callback();
@@ -586,9 +584,11 @@ function generateImageFromStatsContainer() {
     const tabsDiv = container.firstElementChild;
     const cropTop = tabsDiv ? (tabsDiv.offsetTop + tabsDiv.offsetHeight) : 0;
 
-    // We want a higher quality capture, so use scale=3
     const captureScale = 3;
-    const finalWidth = 384; // fixed width for header/footer and final image
+    const finalWidth = 384;
+    const footerPadding = 10; // 10px white space above footer
+    const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
+    const watermarkSize = 50;
 
     html2canvas(container, {
       scrollY: -window.scrollY,
@@ -597,90 +597,125 @@ function generateImageFromStatsContainer() {
       windowHeight: document.documentElement.scrollHeight,
       scale: captureScale
     }).then(fullCanvas => {
-      // Crop canvas from cropTop downward (cropTop scaled)
       const scaledCropTop = cropTop * captureScale;
       const croppedHeight = fullCanvas.height - scaledCropTop;
 
-      // Crop out top part
+      // Crop top part
       const croppedCanvas = document.createElement('canvas');
       croppedCanvas.width = fullCanvas.width;
       croppedCanvas.height = croppedHeight;
       const ctxCropped = croppedCanvas.getContext('2d');
       ctxCropped.drawImage(fullCanvas, 0, scaledCropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
 
-      // Calculate scaled width to 384px for header/footer & main content
+      // Scale cropped canvas to final width
       const scaleFactor = finalWidth / fullCanvas.width;
-
-      // Scale cropped canvas to final width 384px with proportional height
       const scaledCroppedCanvas = document.createElement('canvas');
       scaledCroppedCanvas.width = finalWidth;
       scaledCroppedCanvas.height = croppedCanvas.height * scaleFactor;
       const ctxScaled = scaledCroppedCanvas.getContext('2d');
       ctxScaled.imageSmoothingEnabled = true;
       ctxScaled.imageSmoothingQuality = 'high';
-      ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
+      ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
 
-      // Load header and footer images
+      // Load header, footer, watermark
       const headerSrc = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
       const footerSrc = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
 
       const headerImg = new Image();
       const footerImg = new Image();
+      const watermarkImg = new Image();
 
       headerImg.crossOrigin = 'anonymous';
       footerImg.crossOrigin = 'anonymous';
+      watermarkImg.crossOrigin = 'anonymous';
 
       let imagesLoaded = 0;
       function tryCombine() {
         imagesLoaded++;
-        if (imagesLoaded < 2) return;
+        if (imagesLoaded < 3) return;
 
-        // Calculate combined canvas height = header + content + footer
-        const totalHeight = headerImg.height + scaledCroppedCanvas.height + footerImg.height;
-
+        // Combined canvas height: header + content + padding + footer
+        const totalHeight = headerImg.height + scaledCroppedCanvas.height + footerPadding + footerImg.height;
         const combinedCanvas = document.createElement('canvas');
         combinedCanvas.width = finalWidth;
         combinedCanvas.height = totalHeight;
 
         const ctx = combinedCanvas.getContext('2d');
 
-        // Draw header at top (stretch to finalWidth width)
+        // Draw header (stretch width)
         ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
 
-        // Draw scaled cropped stats content below header
-        ctx.drawImage(scaledCroppedCanvas, 0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height, 0, headerImg.height, finalWidth, scaledCroppedCanvas.height);
+        // Draw watermark tiled behind content area
+        const contentYStart = headerImg.height;
+        const contentHeight = scaledCroppedCanvas.height;
 
-        // Draw footer at bottom (stretch to finalWidth width)
-        ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, headerImg.height + scaledCroppedCanvas.height, finalWidth, footerImg.height);
+        // Fill content area with white background first
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
-        // Export combined canvas to data URL
+        // Draw watermarks randomly scattered behind content
+        const watermarkCount = 20; // number of watermarks
+        for (let i = 0; i < watermarkCount; i++) {
+          const x = Math.random() * (finalWidth - watermarkSize);
+          const y = contentYStart + Math.random() * (contentHeight - watermarkSize);
+          ctx.globalAlpha = 0.15; // faint watermark
+          ctx.drawImage(watermarkImg, x, y, watermarkSize, watermarkSize);
+        }
+        ctx.globalAlpha = 1.0; // reset alpha
+
+        // Draw the content on top
+        ctx.drawImage(scaledCroppedCanvas, 0, contentYStart, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
+
+        // Draw 10px white padding before footer
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, contentYStart + contentHeight, finalWidth, footerPadding);
+
+        // Draw footer
+        ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, contentYStart + contentHeight + footerPadding, finalWidth, footerImg.height);
+
+        // Export final image
         const imgData = combinedCanvas.toDataURL('image/png');
 
-        // Open in new tab
+        // Open new tab with viewport meta + image fullscreen on phones
         const imgWindow = window.open('');
         if (!imgWindow) {
           alert('Popup blocked! Please allow popups to view the image.');
           return;
         }
         imgWindow.document.write(`
-          <title>Stats Image with Header & Footer</title>
-          <style>body{margin:0;display:flex;justify-content:center;align-items:flex-start; background:#fff;}</style>
-          <img src="${imgData}" style="max-width:${finalWidth}px; width:100%; height:auto; margin-top:10px;" alt="Stats Image"/>
+          <html>
+            <head>
+              <title>Stats Image with Header & Footer</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+              <style>
+                body {
+                  margin: 0; display: flex; justify-content: center; align-items: flex-start; background: #fff; height: 100vh;
+                  overflow: hidden;
+                }
+                img {
+                  max-width: 100vw; width: 384px; height: auto; margin-top: 10px;
+                  display: block;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${imgData}" alt="Stats Image" />
+            </body>
+          </html>
         `);
       }
 
       headerImg.onload = tryCombine;
       footerImg.onload = tryCombine;
+      watermarkImg.onload = tryCombine;
 
-      headerImg.onerror = () => {
-        alert('Failed to load header image.');
-      };
-      footerImg.onerror = () => {
-        alert('Failed to load footer image.');
-      };
+      headerImg.onerror = () => alert('Failed to load header image.');
+      footerImg.onerror = () => alert('Failed to load footer image.');
+      watermarkImg.onerror = () => alert('Failed to load watermark image.');
 
       headerImg.src = headerSrc;
       footerImg.src = footerSrc;
+      watermarkImg.src = watermarkSrc;
     }).catch(err => {
       console.error('Failed to generate image:', err);
       alert('Failed to generate image.');
