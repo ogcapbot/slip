@@ -464,19 +464,15 @@ function showImageModal(dataUrl) {
       modal.style.display = 'none';
     });
 
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-
     content.appendChild(img);
     content.appendChild(saveBtn);
     content.appendChild(closeBtn);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
-  } else {
-    modal.querySelector('img').src = dataUrl;
-    modal.style.display = 'flex';
   }
+
+  modal.style.display = 'flex';
 }
 
 /**
@@ -487,8 +483,8 @@ function showImageModal(dataUrl) {
  */
 async function generateImageFromStatsContainer() {
   try {
-    // Correct dynamic import for html-to-image UMD version
-    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/dist/html-to-image.umd.js');
+    // Correct dynamic import for html-to-image UMD version on jsDelivr
+    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/lib/html-to-image.js');
 
     const mainContent = document.getElementById('adminMainContent');
     if (!mainContent) {
@@ -575,6 +571,7 @@ async function generateImageFromStatsContainer() {
     if (isMobile()) {
       showImageModal(finalDataUrl);
     } else {
+      // Desktop: trigger download
       const link = document.createElement('a');
       link.href = finalDataUrl;
       link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
