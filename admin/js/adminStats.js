@@ -2,7 +2,7 @@ import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Import dom-to-image-more as ES module
-import domtoimage from 'https://cdn.jsdelivr.net/npm/dom-to-image-more@2.9.0/src/dom-to-image-more.js';
+import domtoimage from 'https://esm.sh/dom-to-image-more';
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
