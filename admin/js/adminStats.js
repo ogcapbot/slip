@@ -1,6 +1,8 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Import html-to-image dynamically inside generateImageFromStatsContainer()
+
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -292,36 +294,36 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL STATS`;
-  output += `═══════════════════════`;
-  output += `Date: ${longDateStr}`;
-  output += `∑ - Official Picks Total: ${counts.Total}`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL STATS\n`;
+  output += `═══════════════════════\n`;
+  output += `Date: ${longDateStr}\n`;
+  output += `∑ - Official Picks Total: ${counts.Total}\n`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
 
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL PICKS`;
-  output += `═══════════════════════`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL PICKS\n`;
+  output += `═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════`;
-    output += `${data.teamSelected || 'N/A'}`;
-    output += `${data.wagerType || 'N/A'}`;
-    output += `${emoji} - ${data.unit || 'N/A'}`;
+    output += `═══════════════════════\n`;
+    output += `${data.teamSelected || 'N/A'}\n`;
+    output += `${data.wagerType || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n`;
   });
 
-  output += `═══════════════════════`;
-  output += `######## THANK YOU FOR TRUSTING OGCB`;
-  output += `═══════════════════════`;
-  output += `═══════════════════════`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE`;
-  output += `═══════════════════════`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-  output += `Created: ${longDateTimeStr}`;
+  output += `═══════════════════════\n`;
+  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
+  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
+  output += `═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `Created: ${longDateTimeStr}\n`;
 
   return output;
 }
@@ -349,7 +351,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh';
+    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +364,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh';
+    textarea.style.minHeight = '70vh'; // Fill most of modal height
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -427,15 +429,91 @@ async function showStatsAsText(day) {
   }
 }
 
+// Helper to detect mobile devices
+function isMobile() {
+  return /Mobi|Android/i.test(navigator.userAgent);
+}
+
+// Modal to show generated image on mobile for manual saving
+function showImageModal(dataUrl) {
+  let modal = document.getElementById('imageSaveModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imageSaveModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '100001';
+
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#222';
+    content.style.borderRadius = '10px';
+    content.style.padding = '20px';
+    content.style.maxWidth = '90vw';
+    content.style.maxHeight = '80vh';
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+    content.style.alignItems = 'center';
+
+    const img = document.createElement('img');
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '70vh';
+    img.src = dataUrl;
+
+    const saveBtn = document.createElement('a');
+    saveBtn.textContent = 'Download Image';
+    saveBtn.href = dataUrl;
+    saveBtn.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+    saveBtn.style.marginTop = '15px';
+    saveBtn.style.padding = '10px 20px';
+    saveBtn.style.backgroundColor = '#4CAF50';
+    saveBtn.style.color = '#fff';
+    saveBtn.style.textDecoration = 'none';
+    saveBtn.style.borderRadius = '6px';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.marginTop = '10px';
+    closeBtn.style.padding = '8px 16px';
+    closeBtn.style.border = 'none';
+    closeBtn.style.borderRadius = '6px';
+    closeBtn.style.cursor = 'pointer';
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+
+    content.appendChild(img);
+    content.appendChild(saveBtn);
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+  } else {
+    modal.querySelector('img').src = dataUrl;
+    modal.style.display = 'flex';
+  }
+}
+
 /**
  * NEW FUNCTION
- * Generates and downloads an image of the entire statsContainer content below the date label,
+ * Generates and downloads (or shows modal on mobile) an image of the entire statsContainer content below the date label,
  * including all picks no matter how long (no clipping, full content).
- * Includes your watermark background and resizes overlay image to fit.
+ * It also overlays a background image and fits the stats image on top of it.
  */
 async function generateImageFromStatsContainer() {
   try {
-    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/+esm');
+    // Dynamically import html-to-image here
+    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.6/lib/html-to-image.js');
 
     const mainContent = document.getElementById('adminMainContent');
     if (!mainContent) {
@@ -449,82 +527,91 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find picks listing div inside statsContainer (overflowY = auto)
-    const picksDiv = [...statsContainer.children].find(child => {
-      return child.style && child.style.overflowY === 'auto';
-    });
+    // Find picks listing div inside statsContainer with overflowY auto
+    const picksDiv = [...statsContainer.children].find(child => child.style && child.style.overflowY === 'auto');
+
     if (!picksDiv) {
       alert('Picks list container not found.');
       return;
     }
 
-    // Save current styles and disable scroll to reveal full content for capture
+    // Save current styles to restore later
     const oldOverflow = picksDiv.style.overflowY;
     const oldMaxHeight = picksDiv.style.maxHeight;
+
+    // Disable scrolling and max height to show full picks for capture
     picksDiv.style.overflowY = 'visible';
     picksDiv.style.maxHeight = 'none';
 
-    // Generate PNG data url of statsContainer
-    const statsImageUrl = await toPng(statsContainer, {
+    // Generate PNG of statsContainer
+    const statsDataUrl = await htmlToImage.toPng(statsContainer, {
       pixelRatio: 2,
       cacheBust: true
     });
 
-    // Restore picksDiv styles
+    // Restore styles
     picksDiv.style.overflowY = oldOverflow;
     picksDiv.style.maxHeight = oldMaxHeight;
 
-    // Create Image elements for watermark background and overlay stats image
-    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
-
-    const watermarkImg = new Image();
-    const statsImg = new Image();
+    // Create image elements to compose final canvas
+    const backgroundImg = new Image();
+    backgroundImg.crossOrigin = 'anonymous';
+    backgroundImg.src = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
     await new Promise((resolve, reject) => {
-      let loadedCount = 0;
-      function checkLoaded() {
-        loadedCount++;
-        if (loadedCount === 2) resolve();
-      }
-      watermarkImg.onload = checkLoaded;
-      watermarkImg.onerror = reject;
-      statsImg.onload = checkLoaded;
-      statsImg.onerror = reject;
-      watermarkImg.src = watermarkUrl;
-      statsImg.src = statsImageUrl;
+      backgroundImg.onload = resolve;
+      backgroundImg.onerror = () => reject(new Error('Background image failed to load'));
     });
 
-    // Create canvas sized to watermark image
+    const statsImg = new Image();
+    statsImg.src = statsDataUrl;
+
+    await new Promise((resolve, reject) => {
+      statsImg.onload = resolve;
+      statsImg.onerror = () => reject(new Error('Stats image failed to load'));
+    });
+
+    // Create canvas sized to background image
     const canvas = document.createElement('canvas');
-    canvas.width = watermarkImg.width;
-    canvas.height = watermarkImg.height;
+    canvas.width = backgroundImg.width;
+    canvas.height = backgroundImg.height;
     const ctx = canvas.getContext('2d');
 
-    // Draw watermark background filling canvas (no stretch, fill maintaining aspect)
-    ctx.drawImage(watermarkImg, 0, 0, canvas.width, canvas.height);
+    // Draw background image filling canvas fully (no stretch)
+    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
 
-    // Calculate scaling to fit statsImg inside canvas without stretching watermark
-    const scale = Math.min(canvas.width / statsImg.width, canvas.height / statsImg.height);
+    // Calculate scaling to fit stats image on background with aspect ratio preserved
+    const paddingTopPx = 100; // approx 2 inches depending on DPI, adjust as needed
+    const maxWidth = canvas.width * 0.9; // leave some horizontal margin
+    const maxHeight = canvas.height - paddingTopPx - 50; // leave bottom margin
 
-    const scaledWidth = statsImg.width * scale;
-    const scaledHeight = statsImg.height * scale;
+    // Calculate scale to fit
+    let scale = Math.min(maxWidth / statsImg.width, maxHeight / statsImg.height);
+    if (scale > 1) scale = 1; // Do not upscale, only shrink
 
-    // Center statsImg in canvas, but start about 2 inches (~192px) from top
-    const topOffsetPx = 192;
-    const leftOffset = (canvas.width - scaledWidth) / 2;
-    const topPosition = topOffsetPx;
+    const drawWidth = statsImg.width * scale;
+    const drawHeight = statsImg.height * scale;
 
-    ctx.drawImage(statsImg, leftOffset, topPosition, scaledWidth, scaledHeight);
+    // Center horizontally, start about 2 inches down from top (paddingTopPx)
+    const dx = (canvas.width - drawWidth) / 2;
+    const dy = paddingTopPx;
 
-    // Create downloadable link for final image
+    ctx.drawImage(statsImg, dx, dy, drawWidth, drawHeight);
+
+    // Final composed image
     const finalDataUrl = canvas.toDataURL('image/png');
 
-    const link = document.createElement('a');
-    link.href = finalDataUrl;
-    link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Show modal on mobile, or trigger download on desktop
+    if (isMobile()) {
+      showImageModal(finalDataUrl);
+    } else {
+      const link = document.createElement('a');
+      link.href = finalDataUrl;
+      link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
   } catch (error) {
     console.error('Failed to generate image:', error);
