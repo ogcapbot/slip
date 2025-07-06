@@ -396,6 +396,29 @@ function showTextOutputModal(textOutput) {
   modal.style.display = 'flex';
 }
 
+async function showStatsAsText(day) {
+  try {
+    let picks = [];
+    if (day === 'all') {
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
+    
+    const textOutput = generateTextStatsOutput(day, picks);
+    showTextOutputModal(textOutput);
+  } catch (error) {
+    console.error('Failed to show stats as text:', error);
+    alert('Error loading stats as text.');
+  }
+}
+
 export async function loadStatsForDay(day) {
   const mainContent = document.getElementById('adminMainContent');
   if (!mainContent) {
