@@ -1,5 +1,8 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+// Import html-to-image from CDN (make sure this script is loaded in your HTML or adapt as needed)
+// Example CDN: https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js
+import * as htmlToImage from 'https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.js';
 
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
@@ -429,189 +432,89 @@ async function showStatsAsText(day) {
 
 /**
  * NEW FUNCTION
- * Generates an image of the entire statsContainer content overlayed on a watermark background,
- * keeping aspect ratio and fitting within the background.
- * Instead of auto-download, it displays in a modal for user to save manually.
+ * Generates an image starting from the date label and everything below,
+ * adds 1 inch top offset, crops 150px off the bottom,
+ * then opens the image in a new browser tab/window (no download).
  */
 async function generateImageFromStatsContainer() {
   try {
-    if (typeof htmlToImage === 'undefined' || typeof htmlToImage.toPng !== 'function') {
-      throw new Error('htmlToImage or toPng function not found globally');
-    }
-
     const statsContainer = document.getElementById('statsContainer');
     if (!statsContainer) {
       alert('Stats container not found.');
       return;
     }
 
-    // Find picks listing div to temporarily expand height
-    const picksDiv = [...statsContainer.children].find(child => child.style && child.style.overflowY === 'auto');
-    if (!picksDiv) {
-      alert('Picks list container not found.');
+    // Find the date label element inside statsContainer
+    const childrenArray = Array.from(statsContainer.children);
+    const dateLabelIndex = childrenArray.findIndex(child => {
+      return child.textContent && child.textContent.match(/\w+, \w+ \d{1,2}, \d{4}/);
+    });
+    if (dateLabelIndex === -1) {
+      alert('Date label not found.');
       return;
     }
 
-    // Save original styles
-    const oldOverflow = picksDiv.style.overflowY;
-    const oldMaxHeight = picksDiv.style.maxHeight;
+    // Create a temporary container with date label + all siblings below
+    const imageContentContainer = document.createElement('div');
+    imageContentContainer.style.backgroundColor = 'transparent';
+    imageContentContainer.style.position = 'relative';
+    imageContentContainer.style.paddingTop = '96px'; // 1 inch offset
+    imageContentContainer.style.width = statsContainer.offsetWidth + 'px';
 
-    // Temporarily expand picks div to full height for image generation
-    picksDiv.style.overflowY = 'visible';
-    picksDiv.style.maxHeight = 'none';
+    for (let i = dateLabelIndex; i < childrenArray.length; i++) {
+      imageContentContainer.appendChild(childrenArray[i].cloneNode(true));
+    }
 
-    // Generate PNG data URL of statsContainer
-    const statsDataUrl = await htmlToImage.toPng(statsContainer, {
+    // Generate image of this container
+    const originalDataUrl = await htmlToImage.toPng(imageContentContainer, {
       pixelRatio: 2,
       cacheBust: true
     });
 
-    // Restore picks div styles
-    picksDiv.style.overflowY = oldOverflow;
-    picksDiv.style.maxHeight = oldMaxHeight;
-
-    // Load watermark image
-    const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
-    const watermarkImage = new Image();
-    watermarkImage.crossOrigin = 'anonymous';
-
+    const img = new Image();
     await new Promise((resolve, reject) => {
-      watermarkImage.onload = () => resolve();
-      watermarkImage.onerror = e => reject(e);
-      watermarkImage.src = watermarkSrc;
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = originalDataUrl;
     });
 
-    // Load stats image from dataUrl
-    const statsImage = new Image();
-    statsImage.crossOrigin = 'anonymous';
-
-    await new Promise((resolve, reject) => {
-      statsImage.onload = () => resolve();
-      statsImage.onerror = e => reject(e);
-      statsImage.src = statsDataUrl;
-    });
-
-    // Create canvas sized to watermark
+    // Create canvas with extra 150px height for cropping
+    const cropExtraPx = 150;
     const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height + cropExtraPx;
     const ctx = canvas.getContext('2d');
 
-    canvas.width = watermarkImage.width;
-    canvas.height = watermarkImage.height;
+    // Fill canvas white (or transparent if you want)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw watermark background
-    ctx.drawImage(watermarkImage, 0, 0, canvas.width, canvas.height);
+    // Draw image (cropping off 150px bottom visually)
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
 
-    // Calculate scale to fit stats image inside watermark (keep aspect ratio)
-    const maxWidth = canvas.width;
-    const maxHeight = canvas.height * 0.8; // leave 20% top space approx 2 inches down
-
-    let targetWidth = statsImage.width;
-    let targetHeight = statsImage.height;
-
-    const widthRatio = maxWidth / targetWidth;
-    const heightRatio = maxHeight / targetHeight;
-    const scale = Math.min(widthRatio, heightRatio, 1); // never upscale
-
-    targetWidth = targetWidth * scale;
-    targetHeight = targetHeight * scale;
-
-    // Draw stats image centered horizontally, with vertical offset ~2 inches (20% height)
-    const offsetX = (canvas.width - targetWidth) / 2;
-    const offsetY = canvas.height * 0.2;
-
-    ctx.drawImage(statsImage, offsetX, offsetY, targetWidth, targetHeight);
-
-    // Generate final combined image data URL
+    // Get final image data url
     const finalDataUrl = canvas.toDataURL('image/png');
 
-    // Show image in modal for user to save manually
-    showImageModal(finalDataUrl);
-
+    // Open image in new tab/window
+    const newTab = window.open();
+    if (newTab) {
+      const imgElement = newTab.document.createElement('img');
+      imgElement.src = finalDataUrl;
+      imgElement.style.maxWidth = '100vw';
+      imgElement.style.height = 'auto';
+      newTab.document.body.style.margin = '0';
+      newTab.document.body.style.display = 'flex';
+      newTab.document.body.style.justifyContent = 'center';
+      newTab.document.body.style.alignItems = 'center';
+      newTab.document.body.style.backgroundColor = '#fff';
+      newTab.document.body.appendChild(imgElement);
+    } else {
+      alert('Popup blocked! Please allow popups for this site.');
+    }
   } catch (error) {
     console.error('Failed to generate image:', error);
     alert('Failed to generate image.');
   }
-}
-
-// Modal to show generated image with Save button
-function showImageModal(imageDataUrl) {
-  let modal = document.getElementById('imageOutputModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'imageOutputModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100000';
-    modal.style.flexDirection = 'column';
-
-    const content = document.createElement('div');
-    content.style.backgroundColor = '#222';
-    content.style.padding = '15px';
-    content.style.borderRadius = '10px';
-    content.style.maxWidth = '90vw';
-    content.style.maxHeight = '90vh';
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-    content.style.alignItems = 'center';
-
-    const img = document.createElement('img');
-    img.style.maxWidth = '100%';
-    img.style.maxHeight = '80vh';
-    img.style.border = '2px solid #444';
-    img.style.borderRadius = '6px';
-
-    const btnContainer = document.createElement('div');
-    btnContainer.style.marginTop = '10px';
-    btnContainer.style.textAlign = 'center';
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Save Image';
-    saveBtn.style.marginRight = '15px';
-    saveBtn.style.padding = '8px 16px';
-    saveBtn.style.cursor = 'pointer';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.style.padding = '8px 16px';
-    closeBtn.style.cursor = 'pointer';
-
-    btnContainer.appendChild(saveBtn);
-    btnContainer.appendChild(closeBtn);
-
-    content.appendChild(img);
-    content.appendChild(btnContainer);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    saveBtn.addEventListener('click', () => {
-      // Create temporary link to download image
-      const link = document.createElement('a');
-      link.href = imageDataUrl;
-      link.download = `official_stats_${new Date().toISOString().slice(0,10)}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-  }
-
-  const img = modal.querySelector('img');
-  img.src = imageDataUrl;
-  modal.style.display = 'flex';
 }
 
 export async function loadStatsForDay(day) {
