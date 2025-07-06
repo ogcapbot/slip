@@ -56,6 +56,16 @@ async function fetchPicksByDate(day) {
   }));
 }
 
+async function fetchAllPicks() {
+  const officialPicksRef = collection(db, 'OfficialPicks');
+  const q = query(officialPicksRef);
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    data: doc.data()
+  }));
+}
+
 function computeStats(picks) {
   const counts = {
     Win: 0,
@@ -396,29 +406,6 @@ function showTextOutputModal(textOutput) {
   modal.style.display = 'flex';
 }
 
-async function showStatsAsText(day) {
-  try {
-    let picks = [];
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.slice(0, 25).map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-    
-    const textOutput = generateTextStatsOutput(day, picks);
-    showTextOutputModal(textOutput);
-  } catch (error) {
-    console.error('Failed to show stats as text:', error);
-    alert('Error loading stats as text.');
-  }
-}
-
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
     callback();
@@ -442,14 +429,13 @@ export async function loadStatsForDay(day) {
   if (!statsContainer) {
     statsContainer = document.createElement('div');
     statsContainer.id = 'statsContainer';
-    // DISABLE internal scrolling here:
+    // Disable internal scroll so entire content shows on page scroll
     statsContainer.style.maxHeight = 'none';
     statsContainer.style.height = 'auto';
     statsContainer.style.overflowY = 'visible';
     mainContent.appendChild(statsContainer);
   } else {
     statsContainer.innerHTML = '';
-    // Make sure to keep scroll disabled on reload:
     statsContainer.style.maxHeight = 'none';
     statsContainer.style.height = 'auto';
     statsContainer.style.overflowY = 'visible';
@@ -500,7 +486,7 @@ export async function loadStatsForDay(day) {
           alert("Image generation disabled on 'All' filter.");
           return;
         }
-        generateImageFromStatsContainer();
+        generateImageFromStatsContainer(currentDay);
         return;
       }
 
@@ -529,42 +515,18 @@ export async function loadStatsForDay(day) {
 
   statsContainer.appendChild(tabsDiv);
 
-  const longDateStr = formatLongDateEST(day);
-  if (longDateStr) {
-    const dateLabel = document.createElement('div');
-    dateLabel.textContent = longDateStr;
-    dateLabel.style.color = '#666';
-    dateLabel.style.fontSize = '12px';
-    dateLabel.style.marginBottom = '8px';
-    dateLabel.style.textAlign = 'center';
-    statsContainer.appendChild(dateLabel);
-  }
-
-  const loadingMsg = document.createElement('div');
-  loadingMsg.textContent = 'Loading stats...';
-  loadingMsg.style.marginBottom = '10px';
-  statsContainer.appendChild(loadingMsg);
-
   let picks = [];
   try {
     if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
+      picks = await fetchAllPicks();
     } else {
       picks = await fetchPicksByDate(day);
     }
   } catch (error) {
-    loadingMsg.textContent = 'Failed to load picks.';
-    console.error('Error fetching picks:', error);
+    console.error('Failed to fetch picks:', error);
+    statsContainer.textContent = 'Failed to load picks.';
     return;
   }
-
-  statsContainer.removeChild(loadingMsg);
 
   const counts = computeStats(picks);
   const summaryDiv = document.createElement('div');
@@ -574,32 +536,34 @@ export async function loadStatsForDay(day) {
   const picksDiv = document.createElement('div');
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
-  picksDiv.style.padding = '5px'; // added 5px spacing around picks container
-  picksDiv.style.marginTop = '10px'; // add white space between header and picks container
+  picksDiv.style.padding = '5px';
+  picksDiv.style.marginTop = '10px';
+  picksDiv.style.backgroundColor = 'transparent'; // watermark visible behind
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
 }
 
-// Watermark image url
-const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
-
-// Generate image modal & canvas
-function generateImageFromStatsContainer() {
+// Generate the image and replace page content with image + Back button
+function generateImageFromStatsContainer(day) {
   loadHtml2Canvas(async () => {
-    const finalWidth = 384; // match header/footer width
-    const finalHeight = 720; // estimated, will adjust below
+    // Fetch picks for the requested day
+    let picks = [];
+    try {
+      if (day === 'all') {
+        picks = await fetchAllPicks();
+      } else {
+        picks = await fetchPicksByDate(day);
+      }
+    } catch (error) {
+      alert('Failed to fetch picks for image generation.');
+      return;
+    }
 
-    // Grab fresh data for all picks (no screen snapshot limitation)
-    const officialPicksRef = collection(db, 'OfficialPicks');
-    const q = query(officialPicksRef);
-    const snapshot = await getDocs(q);
-    const picks = snapshot.docs.map(doc => ({
-      id: doc.id,
-      data: doc.data()
-    }));
+    const finalWidth = 384;
+    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
-    // Create offscreen container for full content render
+    // Create offscreen container to render full content for html2canvas
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
     offscreen.style.backgroundColor = '#fff';
@@ -609,7 +573,7 @@ function generateImageFromStatsContainer() {
     offscreen.style.position = 'relative';
     offscreen.style.boxSizing = 'border-box';
 
-    // Add Header image (natural size, 60px height)
+    // Header image natural size (~60px height)
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
     headerImg.style.width = 'auto';
@@ -618,16 +582,16 @@ function generateImageFromStatsContainer() {
     headerImg.style.margin = '0 auto 10px';
     offscreen.appendChild(headerImg);
 
-    // Add top buttons container (but hidden, we just want to crop its height)
+    // Hidden div to simulate top buttons height (65px) for cropping
     const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '65px'; // to crop this height from content below
+    topButtonsDiv.style.height = '65px';
     topButtonsDiv.style.overflow = 'hidden';
     topButtonsDiv.style.visibility = 'hidden';
     topButtonsDiv.style.marginBottom = '-65px';
     offscreen.appendChild(topButtonsDiv);
 
-    // Add date text
-    const longDateStr = formatLongDateEST('today');
+    // Date label below top buttons area
+    const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
       const dateLabel = document.createElement('div');
       dateLabel.textContent = longDateStr;
@@ -638,29 +602,29 @@ function generateImageFromStatsContainer() {
       offscreen.appendChild(dateLabel);
     }
 
-    // Compute stats and render summary
+    // Compute stats summary and render
     const counts = computeStats(picks);
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
     renderStatsSummary(counts, summaryDiv);
 
-    // Picks container with border and padding + margin top
+    // Picks container with border and padding
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
     picksDiv.style.borderRadius = '6px';
     picksDiv.style.padding = '5px';
     picksDiv.style.marginTop = '10px';
-    picksDiv.style.backgroundColor = 'transparent'; // transparent for watermark to show behind
+    picksDiv.style.backgroundColor = 'transparent';
     offscreen.appendChild(picksDiv);
 
     renderPickListing(picks, picksDiv);
 
-    // Add white spacing below picks container, above footer
+    // White spacing before footer
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
     offscreen.appendChild(bottomSpacing);
 
-    // Add footer image (natural width, scale with container width)
+    // Footer image stretched width 100%
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.width = '100%';
@@ -669,7 +633,7 @@ function generateImageFromStatsContainer() {
     footerImg.style.marginTop = '10px';
     offscreen.appendChild(footerImg);
 
-    // Append watermark images randomly behind picksDiv content
+    // Add watermarks randomly behind picks container
     const watermarkCount = Math.floor((picksDiv.offsetHeight / 50) * (finalWidth / 50));
     for (let i = 0; i < watermarkCount; i++) {
       const watermark = document.createElement('img');
@@ -682,21 +646,19 @@ function generateImageFromStatsContainer() {
       watermark.style.userSelect = 'none';
       watermark.style.zIndex = '0';
 
-      // Random positions within picksDiv area (but picksDiv background is transparent, so watermarks behind content)
       watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
       watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksDiv.offsetHeight - 50)}px`;
 
-      // Insert watermark into offscreen container but behind picksDiv content
       offscreen.appendChild(watermark);
     }
 
-    // Append offscreen container to body hidden to allow html2canvas to render
+    // Add offscreen container hidden for rendering
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
     document.body.appendChild(offscreen);
 
-    // Use html2canvas to render offscreen container with header/footer and watermark
+    // Render with html2canvas
     html2canvas(offscreen, {
       scale: 2,
       scrollX: -window.scrollX,
@@ -706,96 +668,53 @@ function generateImageFromStatsContainer() {
       width: finalWidth,
       windowWidth: finalWidth
     }).then(canvas => {
-      // Crop top 60px of main content area (below header and buttons area)
+      // Crop top 60px from the rendered canvas (below buttons area)
       const croppedCanvas = document.createElement('canvas');
       const ctx = croppedCanvas.getContext('2d');
       croppedCanvas.width = finalWidth;
-      croppedCanvas.height = canvas.height - 60; // crop 60px from top
+      croppedCanvas.height = canvas.height - 60;
 
       ctx.drawImage(canvas, 0, 60, finalWidth, canvas.height - 60, 0, 0, finalWidth, canvas.height - 60);
 
-      // Remove offscreen container after capture
       document.body.removeChild(offscreen);
 
-      // Convert cropped canvas to image data URL
       const dataURL = croppedCanvas.toDataURL('image/png');
 
-      // Show modal with final image
-      showImageModal(dataURL, finalWidth);
+      // Clear current page and display Back button + image
+      document.body.innerHTML = '';
+
+      // Back button
+      const backBtn = document.createElement('button');
+      backBtn.textContent = 'Back to Stats';
+      backBtn.style.display = 'block';
+      backBtn.style.margin = '20px auto';
+      backBtn.style.padding = '10px 20px';
+      backBtn.style.fontSize = '16px';
+      backBtn.style.cursor = 'pointer';
+      backBtn.style.borderRadius = '6px';
+      backBtn.style.border = 'none';
+      backBtn.style.backgroundColor = '#4CAF50';
+      backBtn.style.color = 'white';
+      backBtn.style.fontWeight = '700';
+      backBtn.onclick = () => {
+        location.reload(); // reload page or you can replace with your UI initialization
+      };
+      document.body.appendChild(backBtn);
+
+      // Image element
+      const img = document.createElement('img');
+      img.src = dataURL;
+      img.style.display = 'block';
+      img.style.margin = '20px auto';
+      img.style.maxWidth = '90vw';
+      img.style.height = 'auto';
+      img.style.borderRadius = '12px';
+      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+      document.body.appendChild(img);
     }).catch(err => {
-      console.error('html2canvas error:', err);
       document.body.removeChild(offscreen);
+      console.error('Failed to generate image:', err);
       alert('Failed to generate image.');
     });
   });
-}
-
-function showImageModal(dataUrl, width) {
-  let modal = document.getElementById('imageModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'imageModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100000';
-
-    const content = document.createElement('div');
-    content.style.position = 'relative';
-    content.style.backgroundColor = '#fff';
-    content.style.borderRadius = '10px';
-    content.style.padding = '10px';
-    content.style.maxWidth = `${width}px`;
-    content.style.maxHeight = '90vh';
-    content.style.overflowY = 'auto';
-
-    const img = document.createElement('img');
-    img.id = 'modalImage';
-    img.alt = 'Stats Image';
-    img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.display = 'block';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.style.position = 'absolute';
-    closeBtn.style.top = '10px';
-    closeBtn.style.right = '10px';
-    closeBtn.style.padding = '6px 12px';
-    closeBtn.style.cursor = 'pointer';
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-
-    content.appendChild(img);
-    content.appendChild(closeBtn);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-  }
-
-  const modalImg = document.getElementById('modalImage');
-  modalImg.src = dataUrl;
-  modal.style.display = 'flex';
-}
-
-function loadHtml2Canvas(callback) {
-  if (window.html2canvas) {
-    callback();
-    return;
-  }
-  const script = document.createElement('script');
-  script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
-  script.onload = callback;
-  document.head.appendChild(script);
 }
