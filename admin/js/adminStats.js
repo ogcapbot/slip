@@ -581,40 +581,27 @@ function generateImageFromStatsContainer() {
       alert('Stats container not found!');
       return;
     }
-    // Skip tabs div (buttons) + 8px buffer, keep date/stats visible
-    const tabsDiv = container.querySelector('div');
-    const cropTop = tabsDiv ? (tabsDiv.offsetTop + tabsDiv.offsetHeight + 8) : 0;
 
     const captureScale = 3;
     const finalWidth = 384;
-    const footerPadding = 10; // white space above footer
-    const headerPadding = 10; // white space below header
-    const listingsPadding = 5; // padding around listings container box
+    const footerPadding = 10;
+    const headerPadding = 10;
+    const listingsPadding = 5;
     const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
     const watermarkSize = 50;
 
     html2canvas(container, {
-  scrollY: -window.scrollY,
-  scrollX: -window.scrollX,
-  windowWidth: document.documentElement.scrollWidth,
-  windowHeight: document.documentElement.scrollHeight,
-  scale: captureScale
-}).then(fullCanvas => {
-  // Fixed crop top of 65px (scaled)
-  const cropTop = 65 * captureScale;
-  const croppedHeight = fullCanvas.height - cropTop;
+      scrollY: -window.scrollY,
+      scrollX: -window.scrollX,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      scale: captureScale
+    }).then(fullCanvas => {
+      // No crop
+      const croppedCanvas = fullCanvas;
 
-  // Crop top part from full canvas
-  const croppedCanvas = document.createElement('canvas');
-  croppedCanvas.width = fullCanvas.width;
-  croppedCanvas.height = croppedHeight;
-  const ctxCropped = croppedCanvas.getContext('2d');
-  ctxCropped.drawImage(fullCanvas, 0, cropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
-
-  // ... rest stays the same
-
-      // Scale cropped canvas to final width (384px)
-      const scaleFactor = finalWidth / fullCanvas.width;
+      // Scale to finalWidth
+      const scaleFactor = finalWidth / croppedCanvas.width;
       const scaledCroppedCanvas = document.createElement('canvas');
       scaledCroppedCanvas.width = finalWidth;
       scaledCroppedCanvas.height = croppedCanvas.height * scaleFactor;
@@ -623,7 +610,7 @@ function generateImageFromStatsContainer() {
       ctxScaled.imageSmoothingQuality = 'high';
       ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
 
-      // Create padded canvas (width + 2*padding, height + 2*padding)
+      // Padded canvas with transparent bg (no white fill)
       const paddedWidth = scaledCroppedCanvas.width + listingsPadding * 2;
       const paddedHeight = scaledCroppedCanvas.height + listingsPadding * 2;
       const paddedCanvas = document.createElement('canvas');
@@ -631,10 +618,9 @@ function generateImageFromStatsContainer() {
       paddedCanvas.height = paddedHeight;
       const ctxPadded = paddedCanvas.getContext('2d');
       ctxPadded.clearRect(0, 0, paddedWidth, paddedHeight); // transparent background
-      // Draw scaled canvas at offset (padding, padding)
       ctxPadded.drawImage(scaledCroppedCanvas, listingsPadding, listingsPadding);
 
-      // Load header, footer, watermark
+      // Load header, footer, watermark images
       const headerSrc = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
       const footerSrc = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
 
@@ -651,9 +637,8 @@ function generateImageFromStatsContainer() {
         imagesLoaded++;
         if (imagesLoaded < 3) return;
 
-        const contentCanvas = paddedCanvas;
-        const contentWidth = contentCanvas.width;
-        const contentHeight = contentCanvas.height;
+        const contentWidth = paddedCanvas.width;
+        const contentHeight = paddedCanvas.height;
 
         const totalHeight = headerImg.height + headerPadding + contentHeight + footerPadding + footerImg.height;
         const combinedCanvas = document.createElement('canvas');
@@ -662,10 +647,10 @@ function generateImageFromStatsContainer() {
 
         const ctx = combinedCanvas.getContext('2d');
 
-        // Draw header stretched to finalWidth
+        // Draw header
         ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
 
-        // White padding below header
+        // Padding below header
         ctx.fillStyle = 'white';
         ctx.fillRect(0, headerImg.height, finalWidth, headerPadding);
 
@@ -676,8 +661,7 @@ function generateImageFromStatsContainer() {
         ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
         // Draw watermarks behind content
-        const inchesVert = contentHeight / 96;
-        const watermarkCount = Math.max(5, Math.round(inchesVert));
+        const watermarkCount = Math.max(5, Math.round(contentHeight / 96));
         for (let i = 0; i < watermarkCount; i++) {
           const segmentHeight = contentHeight / watermarkCount;
           let y = contentYStart + i * segmentHeight + (Math.random() * 40 - 20);
@@ -688,19 +672,19 @@ function generateImageFromStatsContainer() {
         }
         ctx.globalAlpha = 1.0;
 
-        // Draw content canvas on top (with padding)
-        ctx.drawImage(contentCanvas, 0, contentYStart);
+        // Draw main content ON TOP of watermark
+        ctx.drawImage(paddedCanvas, 0, contentYStart);
 
-        // 10px white padding before footer
+        // Padding before footer
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart + contentHeight, finalWidth, footerPadding);
 
-        // Draw footer stretched
+        // Draw footer
         ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, contentYStart + contentHeight + footerPadding, finalWidth, footerImg.height);
 
+        // Show modal with image
         const imgData = combinedCanvas.toDataURL('image/png');
 
-        // Show in modal
         let modal = document.getElementById('statsImageModal');
         if (!modal) {
           modal = document.createElement('div');
