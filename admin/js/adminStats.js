@@ -1,9 +1,6 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Fixed import: Use ES module version of html-to-image for browser compatibility
-const dataUrl = await htmlToImage.toPng(statsContainer, { pixelRatio: 2, cacheBust: true });
-
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
