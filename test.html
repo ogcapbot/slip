@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Stats PNG Generator</title>
+<title>Stats PNG Generator with Aspect Ratio Fix</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; background: #eee; }
   #generateBtn { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-bottom: 20px; }
@@ -11,15 +11,12 @@
 </head>
 <body>
 
-<h1>Stats PNG Generator Test</h1>
+<h1>Stats PNG Generator Test (Aspect Ratio Fixed)</h1>
 <button id="generateBtn">Generate PNG</button>
 <br />
 <img id="outputImage" alt="Generated Stats PNG" />
 
 <script>
-const canvasWidth = 800;
-const canvasHeight = 1000;
-
 const templateUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
 const statusColors = {
@@ -36,7 +33,7 @@ const statusEmojis = {
   Pending: '⚙️'
 };
 
-// Sample picks data to draw — replace this with your real data as needed
+// Sample picks data — replace with your real data source
 const picks = [
   { teamSelected: 'Team A', wagerType: 'Spread', gameWinLossDraw: 'Win', unit: '+3' },
   { teamSelected: 'Team B', wagerType: 'Moneyline', gameWinLossDraw: 'Lost', unit: '-5' },
@@ -50,8 +47,6 @@ const outputImage = document.getElementById('outputImage');
 
 generateBtn.addEventListener('click', () => {
   const canvas = document.createElement('canvas');
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
   const ctx = canvas.getContext('2d');
 
   const background = new Image();
@@ -59,60 +54,68 @@ generateBtn.addEventListener('click', () => {
   background.src = templateUrl;
 
   background.onload = () => {
-    // Draw watermark background
-    ctx.drawImage(background, 0, 0, canvasWidth, canvasHeight);
+    // Resize canvas to match the natural size of the watermark image (preserves aspect ratio)
+    canvas.width = background.naturalWidth;
+    canvas.height = background.naturalHeight;
 
-    // Draw header
+    // Draw the watermark background at natural size (no stretch)
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+    // Header text styling
     ctx.fillStyle = '#222';
-    ctx.font = 'bold 28px Arial';
+    ctx.font = 'bold 36px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Official Picks Stats Report', canvasWidth / 2, 60);
+    ctx.fillText('Official Picks Stats Report', canvas.width / 2, 140);
 
-    // Draw generation date/time
-    ctx.font = '16px Arial';
+    // Generation datetime
+    ctx.font = '18px Arial';
     ctx.fillStyle = '#555';
     const nowStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-    ctx.fillText(`Generated: ${nowStr}`, canvasWidth / 2, 90);
+    ctx.fillText(`Generated: ${nowStr}`, canvas.width / 2, 180);
 
-    // Draw picks list
+    // Draw picks list starting below header
     ctx.textAlign = 'left';
-    ctx.font = '16px Arial';
+    ctx.font = '20px Arial';
 
-    let y = 140;
+    let y = 230;
+    const leftMargin = 100;
+
     picks.forEach(pick => {
-      // Draw status emoji with colored circle
+      // Draw colored circle for status with emoji
       const color = statusColors[pick.gameWinLossDraw] || '#000';
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(40, y - 8, 12, 0, 2 * Math.PI);
+      ctx.arc(leftMargin - 40, y - 12, 16, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 16px Arial';
+      ctx.font = 'bold 18px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(statusEmojis[pick.gameWinLossDraw] || '❓', 40, y + 4);
+      ctx.fillText(statusEmojis[pick.gameWinLossDraw] || '❓', leftMargin - 40, y + 6);
 
-      ctx.font = '16px Arial';
+      ctx.font = '20px Arial';
       ctx.fillStyle = '#222';
       ctx.textAlign = 'left';
 
-      ctx.fillText(`Team: ${pick.teamSelected}`, 70, y);
-      ctx.fillText(`Wager: ${pick.wagerType}`, 70, y + 22);
-      ctx.fillText(`Unit: ${pick.unit}`, 70, y + 44);
-      ctx.fillText(`Status: ${pick.gameWinLossDraw}`, 70, y + 66);
+      ctx.fillText(`Team: ${pick.teamSelected}`, leftMargin, y);
+      ctx.fillText(`Wager: ${pick.wagerType}`, leftMargin, y + 28);
+      ctx.fillText(`Unit: ${pick.unit}`, leftMargin, y + 56);
+      ctx.fillText(`Status: ${pick.gameWinLossDraw}`, leftMargin, y + 84);
 
-      y += 100;
+      y += 120; // spacing between picks
     });
 
-    // Export canvas to dataURL
+    // Export canvas to PNG data URL and show in image element
     const dataURL = canvas.toDataURL('image/png');
     outputImage.src = dataURL;
 
-    // Optional: trigger download automatically
-    // const a = document.createElement('a');
-    // a.href = dataURL;
-    // a.download = 'official_picks_stats.png';
-    // a.click();
+    // Optional: automatically download the PNG
+    /*
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = 'official_picks_stats.png';
+    a.click();
+    */
   };
 });
 </script>
