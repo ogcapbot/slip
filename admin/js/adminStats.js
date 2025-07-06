@@ -292,36 +292,36 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL STATS`;
-  output += `═══════════════════════`;
-  output += `Date: ${longDateStr}`;
-  output += `∑ - Official Picks Total: ${counts.Total}`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL STATS\n`;
+  output += `═══════════════════════\n`;
+  output += `Date: ${longDateStr}\n`;
+  output += `∑ - Official Picks Total: ${counts.Total}\n`;
+  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}\n`;
+  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}\n`;
+  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
 
-  output += `═══════════════════════`;
-  output += `######## OFFICIAL PICKS`;
-  output += `═══════════════════════`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL PICKS\n`;
+  output += `═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════`;
-    output += `${data.teamSelected || 'N/A'}`;
-    output += `${data.wagerType || 'N/A'}`;
-    output += `${emoji} - ${data.unit || 'N/A'}`;
+    output += `═══════════════════════\n`;
+    output += `${data.teamSelected || 'N/A'}\n`;
+    output += `${data.wagerType || 'N/A'}\n`;
+    output += `${emoji} - ${data.unit || 'N/A'}\n`;
   });
 
-  output += `═══════════════════════`;
-  output += `######## THANK YOU FOR TRUSTING OGCB`;
-  output += `═══════════════════════`;
-  output += `═══════════════════════`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE`;
-  output += `═══════════════════════`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-  output += `Created: ${longDateTimeStr}`;
+  output += `═══════════════════════\n`;
+  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
+  output += `═══════════════════════\n`;
+  output += `═══════════════════════\n`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
+  output += `═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `Created: ${longDateTimeStr}\n`;
 
   return output;
 }
@@ -428,7 +428,8 @@ async function showStatsAsText(day) {
 }
 
 /**
- * NEW FUNCTION: Generates image with background and opens in new tab.
+ * Generates and opens an image of the statsContainer with background watermark
+ * starting about 1 inch from the top, including the date label, cropping extra 150px bottom.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -438,56 +439,66 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Backup old font family and temporarily use safe font to avoid CORS font errors
+    // Save original font family, set safe fallback for rendering
     const oldFontFamily = statsContainer.style.fontFamily;
     statsContainer.style.fontFamily = 'Arial, sans-serif';
 
-    // Clone the statsContainer to avoid messing with UI
+    // Clone the stats container for off-screen rendering
     const clone = statsContainer.cloneNode(true);
-    clone.style.position = 'relative';
+    clone.style.position = 'fixed';
+    clone.style.left = '-9999px';
+    clone.style.top = '0px';
     clone.style.backgroundImage = 'url("/admin/images/blankWatermark.png")';
     clone.style.backgroundRepeat = 'no-repeat';
     clone.style.backgroundPosition = 'center top';
     clone.style.backgroundSize = 'contain';
-    clone.style.paddingTop = '80px';  // ~1 inch from top
+    clone.style.paddingTop = '96px'; // ~1 inch from top (96px approx)
     clone.style.width = statsContainer.offsetWidth + 'px';
+    clone.style.boxSizing = 'border-box';
 
-    // Append clone offscreen for rendering
-    clone.style.position = 'fixed';
-    clone.style.left = '-9999px';
-    clone.style.top = '0px';
+    // Add to body temporarily
     document.body.appendChild(clone);
 
-    // Calculate cropping height: height of clone + 150px, then crop bottom 150px
-    const cloneHeight = clone.offsetHeight;
-    const cropHeight = cloneHeight + 150;
+    // Wait a bit to ensure layout completes
+    await new Promise(r => setTimeout(r, 100));
 
-    // Import html-to-image dynamically (use working CDN link)
-    const htmlToImage = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.min.js');
+    // Use dynamic import of html-to-image module (latest version, ESM)
+    const htmlToImageModule = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.esm.js');
 
-    // Generate PNG with cropping from top 0 to cropHeight (width is clone width)
-    const dataUrl = await htmlToImage.toPng(clone, {
+    // Calculate height to crop: total height + 150px to cut off bottom
+    const cropHeight = clone.offsetHeight - 150;
+
+    // Generate PNG with clip to crop bottom
+    const dataUrl = await htmlToImageModule.toPng(clone, {
       pixelRatio: 2,
       cacheBust: true,
       clip: {
         x: 0,
         y: 0,
         width: clone.offsetWidth,
-        height: cropHeight
+        height: cropHeight > 0 ? cropHeight : clone.offsetHeight
+      },
+      style: {
+        // Ensure no background color override
+        backgroundColor: 'transparent'
       }
     });
 
-    // Cleanup clone and restore font family
+    // Remove clone from DOM
     document.body.removeChild(clone);
+
+    // Restore original font family
     statsContainer.style.fontFamily = oldFontFamily;
 
-    // Open generated image in a new tab
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`<html><head><title>Stats Image</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#fff;"><img src="${dataUrl}" style="max-width:100%;height:auto;"></body></html>`);
-    } else {
-      alert('Please allow popups for this website to view the generated image.');
+    // Open generated image in new tab/window
+    const imageWindow = window.open('');
+    if (!imageWindow) {
+      alert('Popup blocked! Please allow popups for this site to view the image.');
+      return;
     }
+    imageWindow.document.write(`<title>Official Stats Image</title>`);
+    imageWindow.document.write(`<img src="${dataUrl}" style="max-width:100%; height:auto; display:block; margin: 0 auto;" alt="Official Stats Image" />`);
+    imageWindow.document.close();
 
   } catch (error) {
     console.error('Failed to generate image:', error);
