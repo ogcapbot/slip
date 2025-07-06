@@ -352,7 +352,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh';
+    content.style.maxHeight = '80vh'; 
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -365,7 +365,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh';
+    textarea.style.minHeight = '70vh'; 
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -431,8 +431,10 @@ async function showStatsAsText(day) {
 }
 
 /**
- * Updated function to generate image from stats container, crop bottom 150px,
- * and open in new tab with image displayed.
+ * Fully fixed generateImageFromStatsContainer:
+ * - Clones all children starting at date label
+ * - Re-enables background image
+ * - Opens cropped image in new tab with <img>
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -442,8 +444,10 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Find the date label element (center aligned, fontSize 12px, color #666 rgb(102,102,102))
-    const dateLabel = [...statsContainer.children].find(el => {
+    const children = [...statsContainer.children];
+
+    // Find date label element by style matching
+    const dateLabel = children.find(el => {
       return el.style && el.style.textAlign === 'center' && el.style.fontSize === '12px' && el.style.color === 'rgb(102, 102, 102)';
     });
 
@@ -452,14 +456,17 @@ async function generateImageFromStatsContainer() {
       return;
     }
 
-    // Create a wrapper div for the image content
+    const startIndex = children.indexOf(dateLabel);
+    if (startIndex === -1) {
+      alert('Date label not found among children.');
+      return;
+    }
+
     const wrapper = document.createElement('div');
     wrapper.style.position = 'relative';
 
-    // You can enable background if your watermark supports CORS,
-    // else keep it disabled to avoid canvas tainting.
-    // wrapper.style.backgroundImage = 'url("https://capper.ogcapperbets.com/admin/images/blankWatermark.png")';
-    wrapper.style.backgroundImage = 'none';
+    // Re-enable background image (make sure CORS is allowed on your server)
+    wrapper.style.backgroundImage = 'url("https://capper.ogcapperbets.com/admin/images/blankWatermark.png")';
     wrapper.style.backgroundRepeat = 'no-repeat';
     wrapper.style.backgroundPosition = 'center top';
     wrapper.style.backgroundSize = 'contain';
@@ -467,25 +474,19 @@ async function generateImageFromStatsContainer() {
     wrapper.style.paddingTop = '96px'; // ~1 inch top padding
     wrapper.style.width = `${statsContainer.offsetWidth}px`;
 
-    // Clone dateLabel and all following siblings into wrapper
-    let sibling = dateLabel;
-    while (sibling) {
-      wrapper.appendChild(sibling.cloneNode(true));
-      sibling = sibling.nextElementSibling;
+    for (let i = startIndex; i < children.length; i++) {
+      wrapper.appendChild(children[i].cloneNode(true));
     }
 
-    // Append wrapper offscreen so styles apply
+    // Append offscreen so styles apply
     wrapper.style.position = 'absolute';
     wrapper.style.top = '-9999px';
     document.body.appendChild(wrapper);
 
-    // Generate PNG with domtoimage
     const dataUrl = await domtoimage.toPng(wrapper, { pixelRatio: 2, cacheBust: true });
 
-    // Remove offscreen wrapper
     document.body.removeChild(wrapper);
 
-    // Create an image to crop
     const img = new Image();
     img.src = dataUrl;
 
@@ -497,14 +498,13 @@ async function generateImageFromStatsContainer() {
 
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
-      canvas.height = img.height - 150; // crop bottom 150px
+      canvas.height = img.height - 150;
 
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, img.width, img.height - 150, 0, 0, canvas.width, canvas.height);
 
       const croppedDataUrl = canvas.toDataURL('image/png');
 
-      // Open new window and write the image tag with the cropped image data URL
       const newWindow = window.open();
       newWindow.document.write(`<html><body style="margin:0"><img src="${croppedDataUrl}" style="width:100vw; height:auto;"></body></html>`);
       newWindow.document.close();
