@@ -352,7 +352,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '90vw';
     content.style.maxWidth = '600px';
-    content.style.maxHeight = '80vh'; 
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -365,7 +365,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; 
+    textarea.style.minHeight = '70vh';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -431,10 +431,9 @@ async function showStatsAsText(day) {
 }
 
 /**
- * Fully fixed generateImageFromStatsContainer:
- * - Clones all children starting at date label
- * - Re-enables background image
- * - Opens cropped image in new tab with <img>
+ * Clean dynamic image generator starting at date label,
+ * including all picks below, watermark background,
+ * opens image in new tab with proper styling.
  */
 async function generateImageFromStatsContainer() {
   try {
@@ -446,10 +445,11 @@ async function generateImageFromStatsContainer() {
 
     const children = [...statsContainer.children];
 
-    // Find date label element by style matching
-    const dateLabel = children.find(el => {
-      return el.style && el.style.textAlign === 'center' && el.style.fontSize === '12px' && el.style.color === 'rgb(102, 102, 102)';
-    });
+    const dateLabel = children.find(el =>
+      el.style && el.style.textAlign === 'center' &&
+      el.style.fontSize === '12px' &&
+      el.style.color === 'rgb(102, 102, 102)'
+    );
 
     if (!dateLabel) {
       alert('Date label element not found.');
@@ -463,56 +463,44 @@ async function generateImageFromStatsContainer() {
     }
 
     const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
 
-    // Re-enable background image (make sure CORS is allowed on your server)
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '0';
+    wrapper.style.top = '0';
+    wrapper.style.opacity = '0';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.style.zIndex = '-1000';
+    wrapper.style.width = `${statsContainer.offsetWidth}px`;
+    wrapper.style.paddingTop = '96px';
     wrapper.style.backgroundImage = 'url("https://capper.ogcapperbets.com/admin/images/blankWatermark.png")';
     wrapper.style.backgroundRepeat = 'no-repeat';
     wrapper.style.backgroundPosition = 'center top';
     wrapper.style.backgroundSize = 'contain';
-
-    wrapper.style.paddingTop = '96px'; // ~1 inch top padding
-    wrapper.style.width = `${statsContainer.offsetWidth}px`;
+    wrapper.style.fontFamily = 'Arial, sans-serif';
+    wrapper.style.fontSize = '14px';
+    wrapper.style.lineHeight = '1.4';
+    wrapper.style.color = '#222';
 
     for (let i = startIndex; i < children.length; i++) {
       wrapper.appendChild(children[i].cloneNode(true));
     }
 
-    // Append offscreen so styles apply
-    wrapper.style.position = 'absolute';
-    wrapper.style.top = '-9999px';
     document.body.appendChild(wrapper);
 
-    const dataUrl = await domtoimage.toPng(wrapper, { pixelRatio: 2, cacheBust: true });
+    const dataUrl = await domtoimage.toPng(wrapper, { pixelRatio: 3, cacheBust: true });
 
     document.body.removeChild(wrapper);
 
-    const img = new Image();
-    img.src = dataUrl;
-
-    img.onload = () => {
-      if (img.height <= 150) {
-        alert('Generated image height too small to crop.');
-        return;
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height - 150;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, img.width, img.height - 150, 0, 0, canvas.width, canvas.height);
-
-      const croppedDataUrl = canvas.toDataURL('image/png');
-
-      const newWindow = window.open();
-      newWindow.document.write(`<html><body style="margin:0"><img src="${croppedDataUrl}" style="width:100vw; height:auto;"></body></html>`);
-      newWindow.document.close();
-    };
-
-    img.onerror = () => {
-      alert('Failed to load generated image for cropping.');
-    };
+    const newWindow = window.open();
+    newWindow.document.write(`
+      <html>
+        <head><title>Stats Image</title></head>
+        <body style="margin:0; background:#fff; display:flex; justify-content:center; align-items:center; height:100vh;">
+          <img src="${dataUrl}" style="max-width:100vw; height:auto; display:block;" alt="Stats Image" />
+        </body>
+      </html>
+    `);
+    newWindow.document.close();
 
   } catch (error) {
     console.error('Failed to generate image:', error);
