@@ -594,21 +594,24 @@ function generateImageFromStatsContainer() {
     const watermarkSize = 50;
 
     html2canvas(container, {
-      scrollY: -window.scrollY,
-      scrollX: -window.scrollX,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
-      scale: captureScale
-    }).then(fullCanvas => {
-      const scaledCropTop = cropTop * captureScale;
-      const croppedHeight = fullCanvas.height - scaledCropTop;
+  scrollY: -window.scrollY,
+  scrollX: -window.scrollX,
+  windowWidth: document.documentElement.scrollWidth,
+  windowHeight: document.documentElement.scrollHeight,
+  scale: captureScale
+}).then(fullCanvas => {
+  // Fixed crop top of 65px (scaled)
+  const cropTop = 65 * captureScale;
+  const croppedHeight = fullCanvas.height - cropTop;
 
-      // Crop top part from full canvas
-      const croppedCanvas = document.createElement('canvas');
-      croppedCanvas.width = fullCanvas.width;
-      croppedCanvas.height = croppedHeight;
-      const ctxCropped = croppedCanvas.getContext('2d');
-      ctxCropped.drawImage(fullCanvas, 0, scaledCropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
+  // Crop top part from full canvas
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = fullCanvas.width;
+  croppedCanvas.height = croppedHeight;
+  const ctxCropped = croppedCanvas.getContext('2d');
+  ctxCropped.drawImage(fullCanvas, 0, cropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
+
+  // ... rest stays the same
 
       // Scale cropped canvas to final width (384px)
       const scaleFactor = finalWidth / fullCanvas.width;
