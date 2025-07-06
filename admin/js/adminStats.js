@@ -602,14 +602,14 @@ function generateImageFromStatsContainer() {
       const scaledCropTop = cropTop * captureScale;
       const croppedHeight = fullCanvas.height - scaledCropTop;
 
-      // Crop top part
+      // Crop top part from full canvas
       const croppedCanvas = document.createElement('canvas');
       croppedCanvas.width = fullCanvas.width;
       croppedCanvas.height = croppedHeight;
       const ctxCropped = croppedCanvas.getContext('2d');
       ctxCropped.drawImage(fullCanvas, 0, scaledCropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
 
-      // Scale cropped canvas to final width
+      // Scale cropped canvas to final width (384px)
       const scaleFactor = finalWidth / fullCanvas.width;
       const scaledCroppedCanvas = document.createElement('canvas');
       scaledCroppedCanvas.width = finalWidth;
@@ -617,23 +617,19 @@ function generateImageFromStatsContainer() {
       const ctxScaled = scaledCroppedCanvas.getContext('2d');
       ctxScaled.imageSmoothingEnabled = true;
       ctxScaled.imageSmoothingQuality = 'high';
+      ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
 
-      // Add 2*listingsPadding to width and height so we can draw padding around listings box
+      // Create padded canvas (width + 2*padding, height + 2*padding)
       const paddedWidth = scaledCroppedCanvas.width + listingsPadding * 2;
       const paddedHeight = scaledCroppedCanvas.height + listingsPadding * 2;
-
-      // Create canvas with padding included
       const paddedCanvas = document.createElement('canvas');
       paddedCanvas.width = paddedWidth;
       paddedCanvas.height = paddedHeight;
       const ctxPadded = paddedCanvas.getContext('2d');
       ctxPadded.fillStyle = 'white';
       ctxPadded.fillRect(0, 0, paddedWidth, paddedHeight);
+      // Draw scaled canvas at offset (padding, padding)
       ctxPadded.drawImage(scaledCroppedCanvas, listingsPadding, listingsPadding);
-
-      // Use paddedCanvas as content canvas now
-      ctxScaled.clearRect(0, 0, scaledCroppedCanvas.width, scaledCroppedCanvas.height);
-      ctxScaled.drawImage(paddedCanvas, 0, 0);
 
       // Load header, footer, watermark
       const headerSrc = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
@@ -652,12 +648,10 @@ function generateImageFromStatsContainer() {
         imagesLoaded++;
         if (imagesLoaded < 3) return;
 
-        // Use paddedCanvas here for content layer
         const contentCanvas = paddedCanvas;
         const contentWidth = contentCanvas.width;
         const contentHeight = contentCanvas.height;
 
-        // Combined canvas height: header + headerPadding + content + footerPadding + footer
         const totalHeight = headerImg.height + headerPadding + contentHeight + footerPadding + footerImg.height;
         const combinedCanvas = document.createElement('canvas');
         combinedCanvas.width = finalWidth;
@@ -665,51 +659,45 @@ function generateImageFromStatsContainer() {
 
         const ctx = combinedCanvas.getContext('2d');
 
-        // Draw header (stretch width)
+        // Draw header stretched to finalWidth
         ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
 
-        // Draw 10px white padding below header
+        // White padding below header
         ctx.fillStyle = 'white';
         ctx.fillRect(0, headerImg.height, finalWidth, headerPadding);
 
         const contentYStart = headerImg.height + headerPadding;
 
-        // Fill content area with white background first
+        // White background for content area
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
-        // Calculate approx number of watermarks based on 1 per inch vertically (approx 96px per inch scaled)
+        // Draw watermarks behind content
         const inchesVert = contentHeight / 96;
-        const watermarkCount = Math.max(5, Math.round(inchesVert)); // at least 5 watermarks
-
+        const watermarkCount = Math.max(5, Math.round(inchesVert));
         for (let i = 0; i < watermarkCount; i++) {
-          // Y positions evenly spaced vertically but with random offset ± 20px
           const segmentHeight = contentHeight / watermarkCount;
-          let y = contentYStart + i * segmentHeight + (Math.random() * 40 - 20); // ±20 px jitter
-          y = Math.min(Math.max(y, contentYStart), contentYStart + contentHeight - watermarkSize); // clamp inside content
-
-          // X random anywhere horizontal
+          let y = contentYStart + i * segmentHeight + (Math.random() * 40 - 20);
+          y = Math.min(Math.max(y, contentYStart), contentYStart + contentHeight - watermarkSize);
           const x = Math.random() * (finalWidth - watermarkSize);
-
-          ctx.globalAlpha = 0.15; // faint watermark
+          ctx.globalAlpha = 0.15;
           ctx.drawImage(watermarkImg, x, y, watermarkSize, watermarkSize);
         }
-        ctx.globalAlpha = 1.0; // reset alpha
+        ctx.globalAlpha = 1.0;
 
-        // Draw the content on top (with padding)
-        ctx.drawImage(contentCanvas, 0, contentYStart, contentWidth, contentHeight);
+        // Draw content canvas on top (with padding)
+        ctx.drawImage(contentCanvas, 0, contentYStart);
 
-        // Draw 10px white padding before footer
+        // 10px white padding before footer
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart + contentHeight, finalWidth, footerPadding);
 
-        // Draw footer
+        // Draw footer stretched
         ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, contentYStart + contentHeight + footerPadding, finalWidth, footerImg.height);
 
-        // Export final image
         const imgData = combinedCanvas.toDataURL('image/png');
 
-        // Open in modal overlay on current page instead of new window
+        // Show in modal
         let modal = document.getElementById('statsImageModal');
         if (!modal) {
           modal = document.createElement('div');
@@ -736,14 +724,10 @@ function generateImageFromStatsContainer() {
           img.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
           modal.appendChild(img);
 
-          // Close modal on click outside image
           modal.addEventListener('click', e => {
-            if (e.target === modal) {
-              modal.style.display = 'none';
-            }
+            if (e.target === modal) modal.style.display = 'none';
           });
 
-          // Append modal to body
           document.body.appendChild(modal);
         } else {
           const img = document.getElementById('statsImageModalImg');
