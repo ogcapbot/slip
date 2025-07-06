@@ -1,191 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Watermark + Stats Overlay with Transparent Background & Adjusted Position</title>
-  <style>
-    body {
-      background: #222;
-      color: #eee;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #statsContainer {
-      background: transparent; /* transparent background */
-      /* Optional slight translucency for readability: */
-      /* background: rgba(51, 51, 51, 0.6); */
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 600px;
-      width: 100%;
-      margin-bottom: 20px;
-      color: white;
-      user-select: none;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #4caf50;
-      color: white;
-      transition: background 0.3s ease;
-      margin-bottom: 20px;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    #resultImg {
-      margin-top: 20px;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      max-width: 90vw;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Stats PNG Generator</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #eee; }
+  #generateBtn { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-bottom: 20px; }
+  #outputImage { border: 1px solid #ccc; max-width: 100%; }
+</style>
 </head>
 <body>
-  <h1>Watermark + Stats Overlay with Transparent Background & Adjusted Position</h1>
 
-  <div id="statsContainer">
-    <h2>Official Stats</h2>
-    <p>Total Picks: 25</p>
-    <p>Wins: 15 ✅</p>
-    <p>Losses: 5 ❌</p>
-    <p>Push: 3 🟦</p>
-    <p>Pending: 2 ⚙️</p>
-  </div>
+<h1>Stats PNG Generator Test</h1>
+<button id="generateBtn">Generate PNG</button>
+<br />
+<img id="outputImage" alt="Generated Stats PNG" />
 
-  <button id="generateBtn">Generate Composite Image</button>
+<script>
+const canvasWidth = 800;
+const canvasHeight = 1000;
 
-  <canvas id="canvas" style="display:none;"></canvas>
-  <img id="resultImg" alt="Composite Image" />
+const templateUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script>
-    async function loadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('Image load error: ' + src));
-        img.src = src;
-      });
-    }
+const statusColors = {
+  Win: '#28a745',
+  Lost: '#dc3545',
+  Push: '#007bff',
+  Pending: '#6c757d'
+};
 
-    function cropCanvasBottom(canvas) {
-      const ctx = canvas.getContext('2d');
-      const width = canvas.width;
-      const height = canvas.height;
-      const imageData = ctx.getImageData(0, 0, width, height);
-      const data = imageData.data;
+const statusEmojis = {
+  Win: '✅',
+  Lost: '❌',
+  Push: '🟦',
+  Pending: '⚙️'
+};
 
-      let lastVisibleRow = height;
+// Sample picks data to draw — replace this with your real data as needed
+const picks = [
+  { teamSelected: 'Team A', wagerType: 'Spread', gameWinLossDraw: 'Win', unit: '+3' },
+  { teamSelected: 'Team B', wagerType: 'Moneyline', gameWinLossDraw: 'Lost', unit: '-5' },
+  { teamSelected: 'Team C', wagerType: 'Totals', gameWinLossDraw: 'Push', unit: 'o42.5' },
+  { teamSelected: 'Team D', wagerType: 'Spread', gameWinLossDraw: 'Pending', unit: '+7' },
+  // Add more picks to test scrolling or multi-page later
+];
 
-      outer: for (let y = height - 1; y >= 0; y--) {
-        for (let x = 0; x < width; x++) {
-          const alpha = data[(y * width + x) * 4 + 3];
-          if (alpha > 10) {
-            lastVisibleRow = y + 1;
-            break outer;
-          }
-        }
-      }
+const generateBtn = document.getElementById('generateBtn');
+const outputImage = document.getElementById('outputImage');
 
-      if (lastVisibleRow < height) {
-        const croppedCanvas = document.createElement('canvas');
-        croppedCanvas.width = width;
-        croppedCanvas.height = lastVisibleRow;
-        const croppedCtx = croppedCanvas.getContext('2d');
-        croppedCtx.drawImage(canvas, 0, 0, width, lastVisibleRow, 0, 0, width, lastVisibleRow);
-        return croppedCanvas;
-      }
-      return canvas;
-    }
+generateBtn.addEventListener('click', () => {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  const ctx = canvas.getContext('2d');
 
-    function cropImageBottom(image) {
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = image.width;
-      tempCanvas.height = image.height;
-      tempCtx.drawImage(image, 0, 0);
+  const background = new Image();
+  background.crossOrigin = 'anonymous';
+  background.src = templateUrl;
 
-      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imageData.data;
+  background.onload = () => {
+    // Draw watermark background
+    ctx.drawImage(background, 0, 0, canvasWidth, canvasHeight);
 
-      let lastVisibleRow = tempCanvas.height;
+    // Draw header
+    ctx.fillStyle = '#222';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Official Picks Stats Report', canvasWidth / 2, 60);
 
-      outer: for (let y = tempCanvas.height - 1; y >= 0; y--) {
-        for (let x = 0; x < tempCanvas.width; x++) {
-          const alpha = data[(y * tempCanvas.width + x) * 4 + 3];
-          if (alpha > 10) {
-            lastVisibleRow = y + 1;
-            break outer;
-          }
-        }
-      }
+    // Draw generation date/time
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#555';
+    const nowStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+    ctx.fillText(`Generated: ${nowStr}`, canvasWidth / 2, 90);
 
-      if (lastVisibleRow < tempCanvas.height) {
-        const croppedCanvas = document.createElement('canvas');
-        croppedCanvas.width = tempCanvas.width;
-        croppedCanvas.height = lastVisibleRow;
-        const croppedCtx = croppedCanvas.getContext('2d');
-        croppedCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, lastVisibleRow, 0, 0, tempCanvas.width, lastVisibleRow);
-        return croppedCanvas;
-      }
-      return tempCanvas;
-    }
+    // Draw picks list
+    ctx.textAlign = 'left';
+    ctx.font = '16px Arial';
 
-    async function createComposite() {
-      const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/blankWatermark.png';
-      const statsContainer = document.getElementById('statsContainer');
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
+    let y = 140;
+    picks.forEach(pick => {
+      // Draw status emoji with colored circle
+      const color = statusColors[pick.gameWinLossDraw] || '#000';
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(40, y - 8, 12, 0, 2 * Math.PI);
+      ctx.fill();
 
-      try {
-        const watermarkImg = await loadImage(watermarkUrl);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(statusEmojis[pick.gameWinLossDraw] || '❓', 40, y + 4);
 
-        const croppedWatermarkCanvas = cropImageBottom(watermarkImg);
+      ctx.font = '16px Arial';
+      ctx.fillStyle = '#222';
+      ctx.textAlign = 'left';
 
-        let statsCanvas = await html2canvas(statsContainer);
-        statsCanvas = cropCanvasBottom(statsCanvas);
+      ctx.fillText(`Team: ${pick.teamSelected}`, 70, y);
+      ctx.fillText(`Wager: ${pick.wagerType}`, 70, y + 22);
+      ctx.fillText(`Unit: ${pick.unit}`, 70, y + 44);
+      ctx.fillText(`Status: ${pick.gameWinLossDraw}`, 70, y + 66);
 
-        const desiredWidth = 600;
-        const dpi = 96;
+      y += 100;
+    });
 
-        const watermarkScale = desiredWidth / croppedWatermarkCanvas.width;
-        const watermarkHeight = croppedWatermarkCanvas.height * watermarkScale;
+    // Export canvas to dataURL
+    const dataURL = canvas.toDataURL('image/png');
+    outputImage.src = dataURL;
 
-        const statsScale = desiredWidth / statsCanvas.width;
-        const statsWidth = desiredWidth;
-        const statsHeight = statsCanvas.height * statsScale;
+    // Optional: trigger download automatically
+    // const a = document.createElement('a');
+    // a.href = dataURL;
+    // a.download = 'official_picks_stats.png';
+    // a.click();
+  };
+});
+</script>
 
-        canvas.width = desiredWidth;
-        canvas.height = watermarkHeight;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.drawImage(croppedWatermarkCanvas, 0, 0, desiredWidth, watermarkHeight);
-
-        // Move stats down 2 inches (1.5 + 0.5)
-        const statsX = 0.5 * dpi;
-        const statsY = 2.0 * dpi;
-
-        ctx.drawImage(statsCanvas, 0, 0, statsCanvas.width, statsCanvas.height, statsX, statsY, statsWidth, statsHeight);
-
-        const resultImg = document.getElementById('resultImg');
-        resultImg.src = canvas.toDataURL('image/png');
-      } catch (err) {
-        alert('Failed to create composite image: ' + err.message);
-        console.error(err);
-      }
-    }
-
-    document.getElementById('generateBtn').addEventListener('click', createComposite);
-  </script>
 </body>
 </html>
