@@ -597,10 +597,17 @@ function generateImageFromStatsContainer() {
       windowHeight: document.documentElement.scrollHeight,
       scale: captureScale
     }).then(fullCanvas => {
-      // No crop
-      const croppedCanvas = fullCanvas;
+      // Crop top 60px * scale to remove top buttons
+      const cropTop = 60 * captureScale;
+      const croppedHeight = fullCanvas.height - cropTop;
 
-      // Scale to finalWidth
+      const croppedCanvas = document.createElement('canvas');
+      croppedCanvas.width = fullCanvas.width;
+      croppedCanvas.height = croppedHeight;
+      const ctxCropped = croppedCanvas.getContext('2d');
+      ctxCropped.drawImage(fullCanvas, 0, cropTop, fullCanvas.width, croppedHeight, 0, 0, fullCanvas.width, croppedHeight);
+
+      // Scale cropped canvas to finalWidth
       const scaleFactor = finalWidth / croppedCanvas.width;
       const scaledCroppedCanvas = document.createElement('canvas');
       scaledCroppedCanvas.width = finalWidth;
@@ -610,14 +617,14 @@ function generateImageFromStatsContainer() {
       ctxScaled.imageSmoothingQuality = 'high';
       ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
 
-      // Padded canvas with transparent bg (no white fill)
+      // Padded canvas with transparent background
       const paddedWidth = scaledCroppedCanvas.width + listingsPadding * 2;
       const paddedHeight = scaledCroppedCanvas.height + listingsPadding * 2;
       const paddedCanvas = document.createElement('canvas');
       paddedCanvas.width = paddedWidth;
       paddedCanvas.height = paddedHeight;
       const ctxPadded = paddedCanvas.getContext('2d');
-      ctxPadded.clearRect(0, 0, paddedWidth, paddedHeight); // transparent background
+      ctxPadded.clearRect(0, 0, paddedWidth, paddedHeight);
       ctxPadded.drawImage(scaledCroppedCanvas, listingsPadding, listingsPadding);
 
       // Load header, footer, watermark images
@@ -647,10 +654,10 @@ function generateImageFromStatsContainer() {
 
         const ctx = combinedCanvas.getContext('2d');
 
-        // Draw header
-        ctx.drawImage(headerImg, 0, 0, headerImg.width, headerImg.height, 0, 0, finalWidth, headerImg.height);
+        // Draw header at natural size (top-left, no stretching)
+        ctx.drawImage(headerImg, 0, 0);
 
-        // Padding below header
+        // White padding below header
         ctx.fillStyle = 'white';
         ctx.fillRect(0, headerImg.height, finalWidth, headerPadding);
 
@@ -672,19 +679,20 @@ function generateImageFromStatsContainer() {
         }
         ctx.globalAlpha = 1.0;
 
-        // Draw main content ON TOP of watermark
+        // Draw main content on top of watermark
         ctx.drawImage(paddedCanvas, 0, contentYStart);
 
-        // Padding before footer
+        // White padding before footer
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart + contentHeight, finalWidth, footerPadding);
 
-        // Draw footer
+        // Draw footer stretched to finalWidth and natural height
         ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, contentYStart + contentHeight + footerPadding, finalWidth, footerImg.height);
 
-        // Show modal with image
+        // Convert combined canvas to image data URL
         const imgData = combinedCanvas.toDataURL('image/png');
 
+        // Show modal with final image
         let modal = document.getElementById('statsImageModal');
         if (!modal) {
           modal = document.createElement('div');
