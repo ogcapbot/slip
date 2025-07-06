@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stats Image Generation Test</title>
+  <title>Stats Image Copy Test</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -32,14 +32,30 @@
       background: #4caf50;
       color: white;
       transition: background 0.3s ease;
+      margin-bottom: 20px;
     }
     button:hover {
       background: #45a049;
     }
+    #generatedImageContainer {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #generatedImageContainer img {
+      max-width: 90vw;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      user-select: none;
+    }
+    #instructions {
+      margin-top: 10px;
+      color: #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h1>Stats Image Generation Test</h1>
+  <h1>Stats Image Copy Test</h1>
   <div id="statsContainer">
     <h2>Official Stats</h2>
     <p>Total Picks: 25</p>
@@ -48,7 +64,12 @@
     <p>Push: 3 🟦</p>
     <p>Pending: 2 ⚙️</p>
   </div>
-  <button id="generateImageBtn">Generate Image & Open in New Tab</button>
+  <button id="generateImageBtn">Generate Image to Copy</button>
+
+  <div id="generatedImageContainer" style="display:none;">
+    <!-- Image will appear here -->
+    <div id="instructions">Long press the image above and select "Copy" to paste inline in Patreon.</div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="index.js"></script>
