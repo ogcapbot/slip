@@ -591,13 +591,13 @@ function generateImageFromStatsContainer() {
     const watermarkSize = 50;
 
     html2canvas(container, {
-      scrollY: -window.scrollY,
-      scrollX: -window.scrollX,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
+      scrollY: -container.scrollTop,       // Capture full scroll content, shift up by scrollTop
+      scrollX: -container.scrollLeft,
+      width: container.scrollWidth,        // Full scrollable width
+      height: container.scrollHeight,      // Full scrollable height
       scale: captureScale
     }).then(fullCanvas => {
-      // Crop top 60px * scale to remove top buttons
+      // Crop top 60px * scale to remove buttons area
       const cropTop = 60 * captureScale;
       const croppedHeight = fullCanvas.height - cropTop;
 
@@ -617,7 +617,7 @@ function generateImageFromStatsContainer() {
       ctxScaled.imageSmoothingQuality = 'high';
       ctxScaled.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, 0, 0, finalWidth, scaledCroppedCanvas.height);
 
-      // Padded canvas with transparent background
+      // Padded canvas for content (transparent background)
       const paddedWidth = scaledCroppedCanvas.width + listingsPadding * 2;
       const paddedHeight = scaledCroppedCanvas.height + listingsPadding * 2;
       const paddedCanvas = document.createElement('canvas');
@@ -654,7 +654,7 @@ function generateImageFromStatsContainer() {
 
         const ctx = combinedCanvas.getContext('2d');
 
-        // Draw header at natural size (top-left, no stretching)
+        // Draw header at natural size, aligned top-left
         ctx.drawImage(headerImg, 0, 0);
 
         // White padding below header
@@ -663,7 +663,7 @@ function generateImageFromStatsContainer() {
 
         const contentYStart = headerImg.height + headerPadding;
 
-        // White background behind content for watermark visibility
+        // White background behind content (for watermark visibility)
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
@@ -679,20 +679,20 @@ function generateImageFromStatsContainer() {
         }
         ctx.globalAlpha = 1.0;
 
-        // Draw main content on top of watermark
+        // Draw main content on top of watermarks
         ctx.drawImage(paddedCanvas, 0, contentYStart);
 
         // White padding before footer
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart + contentHeight, finalWidth, footerPadding);
 
-        // Draw footer stretched to finalWidth and natural height
+        // Draw footer stretched to finalWidth, natural height
         ctx.drawImage(footerImg, 0, 0, footerImg.width, footerImg.height, 0, contentYStart + contentHeight + footerPadding, finalWidth, footerImg.height);
 
-        // Convert combined canvas to image data URL
+        // Create image data URL
         const imgData = combinedCanvas.toDataURL('image/png');
 
-        // Show modal with final image
+        // Show modal with image
         let modal = document.getElementById('statsImageModal');
         if (!modal) {
           modal = document.createElement('div');
@@ -712,7 +712,7 @@ function generateImageFromStatsContainer() {
           img.src = imgData;
           img.alt = 'Stats Image';
           img.style.maxWidth = '384px';
-          img.style.width = '100%';
+          img.style.width = 'auto';
           img.style.height = 'auto';
           img.style.borderRadius = '8px';
           img.style.backgroundColor = 'white';
