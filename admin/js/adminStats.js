@@ -581,14 +581,15 @@ function generateImageFromStatsContainer() {
       alert('Stats container not found!');
       return;
     }
-    const tabsDiv = container.firstElementChild;
-    const cropTop = tabsDiv ? (tabsDiv.offsetTop + tabsDiv.offsetHeight) : 0;
+    // Skip tabs div (buttons) + 8px buffer, keep date/stats visible
+    const tabsDiv = container.querySelector('div');
+    const cropTop = tabsDiv ? (tabsDiv.offsetTop + tabsDiv.offsetHeight + 8) : 0;
 
     const captureScale = 3;
     const finalWidth = 384;
-    const footerPadding = 10; // 10px white space above footer
-    const headerPadding = 10; // 10px white space below header
-    const listingsPadding = 5; // 5px padding around listings container box
+    const footerPadding = 10; // white space above footer
+    const headerPadding = 10; // white space below header
+    const listingsPadding = 5; // padding around listings container box
     const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
     const watermarkSize = 50;
 
@@ -626,8 +627,7 @@ function generateImageFromStatsContainer() {
       paddedCanvas.width = paddedWidth;
       paddedCanvas.height = paddedHeight;
       const ctxPadded = paddedCanvas.getContext('2d');
-      ctxPadded.fillStyle = 'white';
-      ctxPadded.fillRect(0, 0, paddedWidth, paddedHeight);
+      ctxPadded.clearRect(0, 0, paddedWidth, paddedHeight); // transparent background
       // Draw scaled canvas at offset (padding, padding)
       ctxPadded.drawImage(scaledCroppedCanvas, listingsPadding, listingsPadding);
 
@@ -668,7 +668,7 @@ function generateImageFromStatsContainer() {
 
         const contentYStart = headerImg.height + headerPadding;
 
-        // White background for content area
+        // White background behind content for watermark visibility
         ctx.fillStyle = 'white';
         ctx.fillRect(0, contentYStart, finalWidth, contentHeight);
 
