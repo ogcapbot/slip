@@ -465,7 +465,7 @@ async function generateImageFromStatsContainer() {
     picksDiv.style.maxHeight = 'none';
 
     // Correct dynamic import URL for html-to-image
-    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/lib/html-to-image.js');
+    const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.10.7/dist/html-to-image.esm.js');
 
     const statsImageDataUrl = await toPng(statsContainer, {
       pixelRatio: 2,
