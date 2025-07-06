@@ -1,6 +1,9 @@
 import { db } from '../firebaseInit.js';
 import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Fixed import: Use ES module version of html-to-image for browser compatibility
+const dataUrl = await htmlToImage.toPng(statsContainer, { pixelRatio: 2, cacheBust: true });
+
 const statusIcons = {
   Win: '/admin/images/greenWinner.png',
   Lost: '/admin/images/redLost.png',
@@ -512,6 +515,13 @@ export async function loadStatsForDay(day) {
   } else {
     statsContainer.innerHTML = '';
   }
+
+  // Add background image and top padding for the container
+  statsContainer.style.backgroundImage = "url('https://capper.ogcapperbets.com/admin/images/blankWatermark.png')";
+  statsContainer.style.backgroundRepeat = "no-repeat";
+  statsContainer.style.backgroundPosition = "center top";
+  statsContainer.style.backgroundSize = "contain";
+  statsContainer.style.paddingTop = "2in";
 
   const tabsDiv = document.createElement('div');
   tabsDiv.style.marginBottom = '12px';
