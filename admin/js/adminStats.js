@@ -308,11 +308,11 @@ function generateTextStatsOutput(day, picks) {
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `═══════════════════════`;
-    output += `\n${data.teamSelected}`;
-    output += `\t\t\t${emoji} - ${data.unit}`;
+    output += `\n═══════════════════════`;
+    output += `\n${data.teamSelected}\t\t${emoji}`;
+ //   output += `\t\t${emoji}`;
     output += `\n${data.wagerType}`;
-//    output += `${emoji} - ${data.unit}`;
+    output += `\n${data.unit}`;
   });
 
   output += `\n═══════════════════════`;
@@ -347,9 +347,9 @@ function showTextOutputModal(textOutput) {
     content.style.color = '#eee';
     content.style.padding = '20px';
     content.style.borderRadius = '10px';
-    content.style.width = '80vw';
-    content.style.maxWidth = '400px';
-    content.style.maxHeight = '65vh'; // Tweak here for 80% viewport height
+    content.style.width = '85vw';
+    content.style.maxWidth = '500px';
+    content.style.maxHeight = '70vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
