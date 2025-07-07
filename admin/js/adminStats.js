@@ -547,7 +547,6 @@ export async function loadStatsForDay(day) {
 // Generate the image and replace page content with image + Back button
 function generateImageFromStatsContainer(day) {
   loadHtml2Canvas(async () => {
-    // Fetch picks for the requested day
     let picks = [];
     try {
       if (day === 'all') {
@@ -563,7 +562,6 @@ function generateImageFromStatsContainer(day) {
     const finalWidth = 384;
     const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
-    // Create offscreen container to render full content for html2canvas
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
     offscreen.style.backgroundColor = '#fff';
@@ -573,7 +571,6 @@ function generateImageFromStatsContainer(day) {
     offscreen.style.position = 'relative';
     offscreen.style.boxSizing = 'border-box';
 
-    // Header image natural size (~60px height)
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
     headerImg.style.width = 'auto';
@@ -582,7 +579,6 @@ function generateImageFromStatsContainer(day) {
     headerImg.style.margin = '0 auto 10px';
     offscreen.appendChild(headerImg);
 
-    // Hidden div to simulate top buttons height (65px) for cropping
     const topButtonsDiv = document.createElement('div');
     topButtonsDiv.style.height = '65px';
     topButtonsDiv.style.overflow = 'hidden';
@@ -590,7 +586,6 @@ function generateImageFromStatsContainer(day) {
     topButtonsDiv.style.marginBottom = '-65px';
     offscreen.appendChild(topButtonsDiv);
 
-    // Date label below top buttons area
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
       const dateLabel = document.createElement('div');
@@ -602,13 +597,11 @@ function generateImageFromStatsContainer(day) {
       offscreen.appendChild(dateLabel);
     }
 
-    // Compute stats summary and render
     const counts = computeStats(picks);
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
     renderStatsSummary(counts, summaryDiv);
 
-    // Picks container with border and padding
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
     picksDiv.style.borderRadius = '6px';
@@ -619,12 +612,10 @@ function generateImageFromStatsContainer(day) {
 
     renderPickListing(picks, picksDiv);
 
-    // White spacing before footer
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
     offscreen.appendChild(bottomSpacing);
 
-    // Footer image stretched width 100%
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.width = '100%';
@@ -633,7 +624,6 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.marginTop = '10px';
     offscreen.appendChild(footerImg);
 
-    // Add watermarks randomly behind picks container
     const watermarkCount = Math.floor((picksDiv.offsetHeight / 50) * (finalWidth / 50));
     for (let i = 0; i < watermarkCount; i++) {
       const watermark = document.createElement('img');
@@ -652,13 +642,11 @@ function generateImageFromStatsContainer(day) {
       offscreen.appendChild(watermark);
     }
 
-    // Add offscreen container hidden for rendering
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
     document.body.appendChild(offscreen);
 
-    // Render with html2canvas
     html2canvas(offscreen, {
       scale: 2,
       scrollX: -window.scrollX,
@@ -668,7 +656,6 @@ function generateImageFromStatsContainer(day) {
       width: finalWidth,
       windowWidth: finalWidth
     }).then(canvas => {
-      // Crop top 60px from the rendered canvas (below buttons area)
       const croppedCanvas = document.createElement('canvas');
       const ctx = croppedCanvas.getContext('2d');
       croppedCanvas.width = finalWidth;
@@ -680,36 +667,25 @@ function generateImageFromStatsContainer(day) {
 
       const dataURL = croppedCanvas.toDataURL('image/png');
 
-      // Clear current page and display Back button + image
+      // Clear the entire page and show only the image fullscreen, auto scaled
       document.body.innerHTML = '';
+      document.body.style.margin = '0';
+      document.body.style.backgroundColor = '#fff';
+      document.body.style.display = 'flex';
+      document.body.style.justifyContent = 'center';
+      document.body.style.alignItems = 'center';
+      document.body.style.height = '100vh';
+      document.body.style.overflow = 'hidden';
 
-      // Back button
-      const backBtn = document.createElement('button');
-      backBtn.textContent = 'Back to Stats';
-      backBtn.style.display = 'block';
-      backBtn.style.margin = '20px auto';
-      backBtn.style.padding = '10px 20px';
-      backBtn.style.fontSize = '16px';
-      backBtn.style.cursor = 'pointer';
-      backBtn.style.borderRadius = '6px';
-      backBtn.style.border = 'none';
-      backBtn.style.backgroundColor = '#4CAF50';
-      backBtn.style.color = 'white';
-      backBtn.style.fontWeight = '700';
-      backBtn.onclick = () => {
-        location.reload(); // reload page or you can replace with your UI initialization
-      };
-      document.body.appendChild(backBtn);
-
-      // Image element
       const img = document.createElement('img');
       img.src = dataURL;
-      img.style.display = 'block';
-      img.style.margin = '20px auto';
-      img.style.maxWidth = '90vw';
+      img.style.maxWidth = '100vw';
+      img.style.maxHeight = '100vh';
+      img.style.width = 'auto';
       img.style.height = 'auto';
       img.style.borderRadius = '12px';
       img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+      img.style.userSelect = 'none';
       document.body.appendChild(img);
     }).catch(err => {
       document.body.removeChild(offscreen);
