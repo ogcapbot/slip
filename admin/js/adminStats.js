@@ -109,34 +109,7 @@ function formatLongDateEST(day) {
   });
 }
 
-function createStatusSummaryIcon(status, count) {
-  const container = document.createElement('div');
-  container.style.display = 'flex';
-  container.style.flexDirection = 'column';
-  container.style.alignItems = 'center';
-  container.style.margin = '0 20px';
-  container.style.cursor = 'default';
-
-  const img = document.createElement('img');
-  img.src = statusIcons[status];
-  img.alt = status;
-  img.title = `${status}: ${count}`;
-  img.style.width = '50px';
-  img.style.height = '50px';
-  img.style.marginBottom = '6px';
-
-  const text = document.createElement('span');
-  text.textContent = count;
-  text.style.fontWeight = '700';
-  text.style.fontSize = '16px';
-
-  container.appendChild(img);
-  container.appendChild(text);
-
-  return container;
-}
-
-function renderStatsSummary(counts, container) {
+function renderStatsSummary(counts, container, isForImage = false) {
   container.innerHTML = '';
 
   const completed = counts.Win + counts.Lost + counts.Push;
@@ -173,39 +146,69 @@ function renderStatsSummary(counts, container) {
   line2.style.fontSize = '20px';
   line2.style.marginBottom = '16px';
 
-  const unitsSignImg = document.createElement('img');
-  unitsSignImg.style.width = '20px';
-  unitsSignImg.style.height = '20px';
-  unitsSignImg.style.verticalAlign = 'middle';
-  unitsSignImg.style.marginRight = '6px';
+  if (!isForImage) {
+    const unitsSignImg = document.createElement('img');
+    unitsSignImg.style.width = '20px';
+    unitsSignImg.style.height = '20px';
+    unitsSignImg.style.verticalAlign = 'middle';
+    unitsSignImg.style.marginRight = '6px';
 
-  if(counts.TotalUnits > 0) {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
-  } else if(counts.TotalUnits < 0) {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
-  } else {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
+    if(counts.TotalUnits > 0) {
+      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
+    } else if(counts.TotalUnits < 0) {
+      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
+    } else {
+      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
+    }
+    line2.appendChild(unitsSignImg);
   }
 
   const unitsText = document.createElement('span');
   unitsText.textContent = `${counts.TotalUnits.toFixed(2)} Unit(s)`;
   unitsText.style.verticalAlign = 'middle';
 
-  line2.appendChild(unitsSignImg);
   line2.appendChild(unitsText);
   container.appendChild(line2);
 
-  // Container for bottom status summary icons (without label text)
-  const totalsRow = document.createElement('div');
-  totalsRow.style.display = 'flex';
-  totalsRow.style.justifyContent = 'center';
-  totalsRow.style.marginBottom = '20px';
+  if (!isForImage) {
+    const totalsRow = document.createElement('div');
+    totalsRow.style.display = 'flex';
+    totalsRow.style.justifyContent = 'center';
+    totalsRow.style.marginBottom = '20px';
 
-  STATUS_VALUES.forEach(status => {
-    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
-  });
+    STATUS_VALUES.forEach(status => {
+      totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
+    });
 
-  container.appendChild(totalsRow);
+    container.appendChild(totalsRow);
+  }
+}
+
+function createStatusSummaryIcon(status, count) {
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.alignItems = 'center';
+  container.style.margin = '0 20px';
+  container.style.cursor = 'default';
+
+  const img = document.createElement('img');
+  img.src = statusIcons[status];
+  img.alt = status;
+  img.title = `${status}: ${count}`;
+  img.style.width = '50px';
+  img.style.height = '50px';
+  img.style.marginBottom = '6px';
+
+  const text = document.createElement('span');
+  text.textContent = count;
+  text.style.fontWeight = '700';
+  text.style.fontSize = '16px';
+
+  container.appendChild(img);
+  container.appendChild(text);
+
+  return container;
 }
 
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
@@ -370,16 +373,11 @@ Created: ${formatLongDateTimeEST()}
 `.trim();
 }
 
-// New clean text function to fix spacing issues on paste
 function cleanOutputText(text) {
   return text
-    // Normalize line Endings to \n
     .replace(/\r\n?/g, '\n')
-    // Remove zero-width and other invisible Unicode chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    // Collapse multiple blank lines to a single blank line
     .replace(/\n{3,}/g, '\n\n')
-    // Trim trailing spaces on each line
     .split('\n')
     .map(line => line.trimEnd())
     .join('\n');
@@ -422,7 +420,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
     textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre'; // preserve formatting exactly
+    textarea.style.whiteSpace = 'pre';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -449,7 +447,6 @@ function showTextOutputModal(textOutput) {
       if (!textarea) return;
       const rawText = textarea.value;
 
-      // Convert line breaks to <br> for HTML clipboard
       const htmlText = rawText.replace(/\n/g, '<br>');
 
       try {
@@ -637,7 +634,7 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = 'none'; // allow to grow indefinitely, no scroll
+  picksDiv.style.maxHeight = 'none';
   picksDiv.style.overflowY = 'visible';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
@@ -677,7 +674,7 @@ function showImageModal(dataURL) {
       zIndex: '100000',
       padding: '20px',
       boxSizing: 'border-box',
-      overflow: 'hidden', // no scrolling, force scale down
+      overflow: 'hidden',
     });
 
     const content = document.createElement('div');
@@ -691,28 +688,15 @@ function showImageModal(dataURL) {
       padding: '10px',
       boxSizing: 'border-box',
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
       alignItems: 'center',
     });
 
-    const img = document.createElement('img');
-    img.id = 'modalGeneratedImage';
-    img.src = dataURL;
-    Object.assign(img.style, {
-      maxWidth: '90vw',
-      maxHeight: '90vh',
-      width: 'auto',
-      height: 'auto',
-      display: 'block',
-      borderRadius: '8px',
-    });
-
+    // Close button above header and image
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
     Object.assign(closeBtn.style, {
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
       padding: '6px 12px',
       backgroundColor: '#4CAF50',
       color: '#fff',
@@ -720,15 +704,33 @@ function showImageModal(dataURL) {
       borderRadius: '6px',
       cursor: 'pointer',
       fontWeight: '600',
-      zIndex: '10'
+      marginBottom: '12px',
+      width: 'auto',
+      minWidth: '80px',
+      alignSelf: 'flex-end',
     });
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
     });
 
-    content.appendChild(img);
+    const img = document.createElement('img');
+    img.id = 'modalGeneratedImage';
+    img.src = dataURL;
+    Object.assign(img.style, {
+      maxWidth: '90vw',
+      maxHeight: '80vh',
+      width: 'auto',
+      height: 'auto',
+      display: 'block',
+      borderRadius: '8px',
+      transformOrigin: 'center center',
+      transition: 'transform 0.3s ease',
+      userSelect: 'none',
+    });
+
     content.appendChild(closeBtn);
+    content.appendChild(img);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -740,6 +742,28 @@ function showImageModal(dataURL) {
     img.src = dataURL;
     modal.style.display = 'flex';
   }
+
+  // Adjust zoom based on canvas and viewport size to fit entire image
+  const img = document.getElementById('modalGeneratedImage');
+  if (!img) return;
+
+  // Wait for image to load before scaling
+  img.onload = () => {
+    const modalContent = img.parentElement;
+    const maxW = modalContent.clientWidth;
+    const maxH = modalContent.clientHeight - (img.previousSibling ? img.previousSibling.offsetHeight : 0); // subtract close btn height
+
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
+
+    const scaleW = maxW / naturalW;
+    const scaleH = maxH / naturalH;
+
+    // Use the smaller scale to fit inside both width and height
+    const scale = Math.min(scaleW, scaleH, 1);
+
+    img.style.transform = `scale(${scale})`;
+  };
 }
 
 function generateImageFromStatsContainer(day) {
@@ -760,7 +784,6 @@ function generateImageFromStatsContainer(day) {
     }
 
     const finalWidth = 384;
-    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
@@ -773,7 +796,9 @@ function generateImageFromStatsContainer(day) {
 
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
-    headerImg.style.height = '60px';
+    headerImg.style.width = '100%';
+    headerImg.style.maxHeight = '60px';
+    headerImg.style.objectFit = 'contain';
     headerImg.style.display = 'block';
     headerImg.style.margin = '0 auto 10px';
     offscreen.appendChild(headerImg);
@@ -797,7 +822,7 @@ function generateImageFromStatsContainer(day) {
     const counts = computeStats(picks);
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
-    renderStatsSummary(counts, summaryDiv);
+    renderStatsSummary(counts, summaryDiv, true);
 
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
@@ -820,25 +845,6 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.marginTop = '10px';
     offscreen.appendChild(footerImg);
 
-    const picksHeight = picksDiv.offsetHeight || 300;
-    const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
-    for (let i = 0; i < watermarkCount; i++) {
-      const watermark = document.createElement('img');
-      watermark.src = watermarkUrl;
-      watermark.style.width = '50px';
-      watermark.style.height = '50px';
-      watermark.style.position = 'absolute';
-      watermark.style.opacity = '0.1';
-      watermark.style.pointerEvents = 'none';
-      watermark.style.userSelect = 'none';
-      watermark.style.zIndex = '0';
-
-      watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 50)}px`;
-
-      offscreen.appendChild(watermark);
-    }
-
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
@@ -852,7 +858,6 @@ function generateImageFromStatsContainer(day) {
       windowWidth: finalWidth
     }).then(canvas => {
       document.body.removeChild(offscreen);
-
       showImageModal(canvas.toDataURL('image/png'));
     }).catch(err => {
       document.body.removeChild(offscreen);
