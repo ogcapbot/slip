@@ -679,75 +679,67 @@ function generateImageFromStatsContainer(day) {
     const finalWidth = 384;
     const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
-    // Create offscreen container for rendering
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
     offscreen.style.backgroundColor = '#fff';
     offscreen.style.fontFamily = 'Arial, sans-serif';
     offscreen.style.fontSize = '14px';
-    offscreen.style.padding = '10px';
+    offscreen.style.padding = '0 10px 10px';
     offscreen.style.position = 'relative';
     offscreen.style.boxSizing = 'border-box';
 
-    // Header image with fixed height and margin bottom reduced
+    // Header image with natural height and max width 100%
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
-    headerImg.style.height = '40px'; // reduced height for better fit
     headerImg.style.display = 'block';
-    headerImg.style.margin = '0 auto 6px'; // smaller bottom margin
+    headerImg.style.margin = '0 auto 8px';
+    headerImg.style.maxWidth = '100%';  // scale to container width max
+    headerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(headerImg);
 
-    // Hidden top buttons div placeholder (optional)
     const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '0'; // Hide completely, no vertical space
+    topButtonsDiv.style.height = '65px';
     topButtonsDiv.style.visibility = 'hidden';
     offscreen.appendChild(topButtonsDiv);
 
-    // Date label with tighter margin top and bottom
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
       const dateLabel = document.createElement('div');
       dateLabel.textContent = longDateStr;
       dateLabel.style.color = '#666';
-      dateLabel.style.fontSize = '11px';
+      dateLabel.style.fontSize = '12px';
       dateLabel.style.textAlign = 'center';
-      dateLabel.style.margin = '0 0 8px 0'; // reduce vertical spacing
+      dateLabel.style.marginBottom = '8px';
       offscreen.appendChild(dateLabel);
     }
 
-    // Compute stats
     const counts = computeStats(picks);
-
-    // Create summary container with all summary lines including icons
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
     renderStatsSummary(counts, summaryDiv);
 
-    // Picks list container with some margin and padding
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
     picksDiv.style.borderRadius = '6px';
-    picksDiv.style.padding = '6px 8px';
-    picksDiv.style.marginTop = '6px';
+    picksDiv.style.padding = '5px';
+    picksDiv.style.marginTop = '10px';
     picksDiv.style.backgroundColor = 'transparent';
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    // Bottom spacing for footer
     const bottomSpacing = document.createElement('div');
-    bottomSpacing.style.height = '12px';
+    bottomSpacing.style.height = '10px';
     offscreen.appendChild(bottomSpacing);
 
-    // Footer image with fixed width, maintain aspect ratio
+    // Footer image with natural height and max width 100%
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
-    footerImg.style.width = '100%';
-    footerImg.style.height = 'auto';
     footerImg.style.display = 'block';
     footerImg.style.marginTop = '10px';
+    footerImg.style.maxWidth = '100%';  // scale to container width max
+    footerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(footerImg);
 
-    // Add watermark images for background pattern
     const picksHeight = picksDiv.offsetHeight || 300;
     const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
     for (let i = 0; i < watermarkCount; i++) {
@@ -762,12 +754,11 @@ function generateImageFromStatsContainer(day) {
       watermark.style.zIndex = '0';
 
       watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 20 + Math.random() * (picksHeight - 50)}px`;
+      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 50)}px`;
 
       offscreen.appendChild(watermark);
     }
 
-    // Position offscreen container out of viewport for rendering
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
@@ -782,13 +773,18 @@ function generateImageFromStatsContainer(day) {
     }).then(canvas => {
       document.body.removeChild(offscreen);
 
-      const dataURL = canvas.toDataURL('image/png');
+      // Calculate scale factor to fit image inside viewport with margin
+      const margin = 40;
+      const maxWidth = window.innerWidth - margin * 2;
+      const maxHeight = window.innerHeight - margin * 2 - 50; // leave space for close button
+      let scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+      if (scale > 1) scale = 1; // don't upscale beyond actual size
 
       // Create modal container
-      let modal = document.getElementById('imageModal');
+      let modal = document.getElementById('imageOutputModal');
       if (!modal) {
         modal = document.createElement('div');
-        modal.id = 'imageModal';
+        modal.id = 'imageOutputModal';
         modal.style.position = 'fixed';
         modal.style.top = '0';
         modal.style.left = '0';
@@ -799,47 +795,61 @@ function generateImageFromStatsContainer(day) {
         modal.style.alignItems = 'center';
         modal.style.justifyContent = 'center';
         modal.style.zIndex = '100000';
-        modal.style.overflow = 'auto';
-        document.body.appendChild(modal);
+        modal.style.padding = `${margin}px`;
 
-        // Close button (dynamic sizing)
+        // Content container for image and close button
+        const content = document.createElement('div');
+        content.style.position = 'relative';
+        content.style.backgroundColor = '#fff';
+        content.style.borderRadius = '12px';
+        content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+        content.style.overflow = 'auto';
+        content.style.maxHeight = '100%';
+        content.style.display = 'flex';
+        content.style.flexDirection = 'column';
+        content.style.alignItems = 'center';
+
+        // Close button
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
-        closeBtn.style.position = 'fixed';
-        closeBtn.style.top = '15px';
-        closeBtn.style.left = '50%';
-        closeBtn.style.transform = 'translateX(-50%)';
         closeBtn.style.backgroundColor = '#4CAF50';
         closeBtn.style.color = '#fff';
         closeBtn.style.border = 'none';
-        closeBtn.style.borderRadius = '10px';
-        closeBtn.style.padding = '10px 40px';
-        closeBtn.style.fontSize = '16px';
+        closeBtn.style.borderRadius = '6px';
+        closeBtn.style.padding = '8px 16px';
+        closeBtn.style.fontWeight = '700';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.zIndex = '100001';
+        closeBtn.style.marginBottom = '10px';
+        closeBtn.style.alignSelf = 'stretch'; // full width above image
 
         closeBtn.addEventListener('click', () => {
           modal.style.display = 'none';
-          modal.innerHTML = '';
         });
 
-        modal.appendChild(closeBtn);
-      } else {
-        modal.innerHTML = '';
+        content.appendChild(closeBtn);
+
+        // Image element
+        const img = document.createElement('img');
+        img.id = 'modalGeneratedImage';
+        content.appendChild(img);
+
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        // Close modal when clicking outside content
+        modal.addEventListener('click', e => {
+          if (e.target === modal) modal.style.display = 'none';
+        });
       }
 
-      // Image element
-      const img = document.createElement('img');
-      img.src = dataURL;
-      img.style.maxWidth = '90vw';
-      img.style.maxHeight = '80vh';
-      img.style.objectFit = 'contain';
+      const img = document.getElementById('modalGeneratedImage');
+      img.src = canvas.toDataURL('image/png');
+      img.style.width = canvas.width * scale + 'px';
+      img.style.height = 'auto';
       img.style.borderRadius = '12px';
-      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
       img.style.userSelect = 'none';
-      img.style.marginTop = '60px'; // space for close button
+      img.style.display = 'block';
 
-      modal.appendChild(img);
       modal.style.display = 'flex';
     }).catch(err => {
       document.body.removeChild(offscreen);
