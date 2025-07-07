@@ -181,35 +181,39 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  // Create line for Total Picks and Total Units, side by side
-  const topLine = document.createElement('div');
-  topLine.style.display = 'flex';
-  topLine.style.justifyContent = 'space-between';
-  topLine.style.alignItems = 'center';
-  topLine.style.marginBottom = '10px';
-  topLine.style.fontWeight = '700';
-  topLine.style.fontSize = '16px';
-
-  const totalPicksEl = document.createElement('div');
-  totalPicksEl.textContent = `Total Picks: ${counts.Total}`;
-  topLine.appendChild(totalPicksEl);
-
   const totalUnits = counts.units.Win - counts.units.Lost;
   let totalUnitsIcon = totalUnits > 0 ? totalUnitsImages.plus
                       : totalUnits < 0 ? totalUnitsImages.minus
                       : totalUnitsImages.pending;
 
+  const topLine = document.createElement('div');
+  topLine.style.display = 'flex';
+  topLine.style.justifyContent = 'space-between';
+  topLine.style.alignItems = 'center';
+  topLine.style.marginBottom = '10px';
+
+  // Left: Win Percentage (smaller font)
+  const winPercentEl = document.createElement('div');
+  winPercentEl.style.fontWeight = '600';
+  winPercentEl.style.fontSize = '14px';
+  winPercentEl.textContent = `Win Percentage: ${winPercent}%`;
+  winPercentEl.style.flex = '1';
+  winPercentEl.style.textAlign = 'left';
+
+  // Center: Total Units (larger font)
   const totalUnitsEl = document.createElement('div');
   totalUnitsEl.style.display = 'flex';
   totalUnitsEl.style.alignItems = 'center';
-  totalUnitsEl.style.gap = '6px';
+  totalUnitsEl.style.gap = '4px'; // tighter gap so icon closer to number
   totalUnitsEl.style.fontWeight = '700';
-  totalUnitsEl.style.fontSize = '14px';
+  totalUnitsEl.style.fontSize = '20px';
+  totalUnitsEl.style.flex = '1';
+  totalUnitsEl.style.justifyContent = 'center';
 
   const unitsImg = document.createElement('img');
   unitsImg.src = totalUnitsIcon;
   unitsImg.alt = totalUnits > 0 ? 'Plus' : totalUnits < 0 ? 'Minus' : 'Pending';
-  unitsImg.style.height = '16px';
+  unitsImg.style.height = '20px';
   unitsImg.style.width = 'auto';
   totalUnitsEl.appendChild(unitsImg);
 
@@ -217,19 +221,21 @@ function renderStatsSummary(counts, container) {
   unitsText.textContent = `Total Units: ${totalUnits.toFixed(2)}`;
   totalUnitsEl.appendChild(unitsText);
 
+  // Right: Total Picks (normal font)
+  const totalPicksEl = document.createElement('div');
+  totalPicksEl.style.fontWeight = '600';
+  totalPicksEl.style.fontSize = '16px';
+  totalPicksEl.textContent = `Total Picks: ${counts.Total}`;
+  totalPicksEl.style.flex = '1';
+  totalPicksEl.style.textAlign = 'right';
+
+  topLine.appendChild(winPercentEl);
   topLine.appendChild(totalUnitsEl);
+  topLine.appendChild(totalPicksEl);
 
   container.appendChild(topLine);
 
-  // Win percentage line
-  const winPercentDiv = document.createElement('div');
-  winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
-  winPercentDiv.style.fontWeight = '800';
-  winPercentDiv.style.fontSize = '18px';
-  winPercentDiv.style.marginBottom = '15px';
-  winPercentDiv.style.textAlign = 'center';
-  container.appendChild(winPercentDiv);
-
+  // The bottom row with icons & counts remains the same
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
@@ -479,27 +485,26 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', async () => {
-  const textarea = document.getElementById('textOutputArea');
-  if (!textarea) return;
-  const rawText = textarea.value;
+      const textarea = document.getElementById('textOutputArea');
+      if (!textarea) return;
+      const rawText = textarea.value;
 
-  // Convert line breaks to <br> for HTML clipboard
-  const htmlText = rawText.replace(/\n/g, '<br>');
+      // Convert line breaks to <br> for HTML clipboard
+      const htmlText = rawText.replace(/\n/g, '<br>');
 
-  try {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': new Blob([htmlText], { type: 'text/html' }),
-        'text/plain': new Blob([rawText], { type: 'text/plain' }),
-      })
-    ]);
-    alert('Copied text with HTML line breaks to clipboard!');
-  } catch (err) {
-    console.error('Clipboard write failed:', err);
-    alert('Failed to copy.');
-  }
-});
-
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([htmlText], { type: 'text/html' }),
+            'text/plain': new Blob([rawText], { type: 'text/plain' }),
+          })
+        ]);
+        alert('Copied text with HTML line breaks to clipboard!');
+      } catch (err) {
+        console.error('Clipboard write failed:', err);
+        alert('Failed to copy.');
+      }
+    });
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
