@@ -345,11 +345,11 @@ function showTextOutputModal(textOutput) {
     const content = document.createElement('div');
     content.style.backgroundColor = '#222';
     content.style.color = '#eee';
-    content.style.padding = '20px';             // reduced from 100px to 20px
+    content.style.padding = '20px';
     content.style.borderRadius = '10px';
     content.style.width = '85vw';
     content.style.maxWidth = '500px';
-    content.style.maxHeight = '80vh';            // increased from 60vh to 80vh
+    content.style.maxHeight = '80vh';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,8 +362,8 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '50vh';            // reduced from 70vh to 50vh
-    textarea.style.whiteSpace = 'pre-wrap';       // to preserve formatting better
+    textarea.style.minHeight = '50vh';
+    textarea.style.whiteSpace = 'pre-wrap';
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -388,11 +388,20 @@ function showTextOutputModal(textOutput) {
     copyBtn.addEventListener('click', () => {
       let textToCopy = textarea.value;
 
-      // Remove all carriage returns \r
+      // Remove carriage returns
       textToCopy = textToCopy.replace(/\r/g, '');
 
-      // Replace 2 or more newlines with a single newline
+      // Remove zero-width and special invisible characters
+      textToCopy = textToCopy.replace(/[\u200B\u200C\u200D\u200E\u200F\u00A0]/g, '');
+
+      // Collapse multiple newlines into one
       textToCopy = textToCopy.replace(/\n{2,}/g, '\n');
+
+      // Trim trailing spaces on each line
+      textToCopy = textToCopy
+        .split('\n')
+        .map(line => line.trimEnd())
+        .join('\n');
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textToCopy).then(() => {
