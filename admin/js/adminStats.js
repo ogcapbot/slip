@@ -677,14 +677,14 @@ function showImageModal(dataURL) {
       zIndex: '100000',
       padding: '20px',
       boxSizing: 'border-box',
-      overflow: 'hidden', // prevent modal scroll, image will scale instead
+      overflow: 'hidden', // no scrolling, force scale down
     });
 
     const content = document.createElement('div');
     Object.assign(content.style, {
       position: 'relative',
-      maxWidth: '90vw',  // allow image to scale max 90% viewport width
-      maxHeight: '90vh', // allow image to scale max 90% viewport height
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       backgroundColor: '#fff',
       borderRadius: '10px',
       boxShadow: '0 0 15px rgba(0,0,0,0.5)',
@@ -699,8 +699,8 @@ function showImageModal(dataURL) {
     img.id = 'modalGeneratedImage';
     img.src = dataURL;
     Object.assign(img.style, {
-      maxWidth: '100%',
-      maxHeight: '100%',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
       width: 'auto',
       height: 'auto',
       display: 'block',
