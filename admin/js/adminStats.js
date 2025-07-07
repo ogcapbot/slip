@@ -618,50 +618,64 @@ function showImageModal(dataURL) {
   if (!modal) {
     modal = document.createElement('div');
     modal.id = 'imageOutputModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100000';
+    Object.assign(modal.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '100000',
+      padding: '20px',
+      boxSizing: 'border-box',
+      overflow: 'hidden', // prevent modal scroll, image will scale instead
+    });
 
-    // container for image and close btn
     const content = document.createElement('div');
-    content.style.position = 'relative';
-    content.style.maxWidth = '95vw';
-    content.style.maxHeight = '95vh';
-    content.style.overflow = 'auto';
-    content.style.backgroundColor = '#fff';
-    content.style.borderRadius = '10px';
-    content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
-    content.style.padding = '10px';
+    Object.assign(content.style, {
+      position: 'relative',
+      maxWidth: '90vw',  // allow image to scale max 90% viewport width
+      maxHeight: '90vh', // allow image to scale max 90% viewport height
+      backgroundColor: '#fff',
+      borderRadius: '10px',
+      boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+      padding: '10px',
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    });
 
-    // image element
     const img = document.createElement('img');
     img.id = 'modalGeneratedImage';
     img.src = dataURL;
-    img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.display = 'block';
-    img.style.borderRadius = '8px';
+    Object.assign(img.style, {
+      maxWidth: '100%',
+      maxHeight: '100%',
+      width: 'auto',
+      height: 'auto',
+      display: 'block',
+      borderRadius: '8px',
+    });
 
-    // close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
-    closeBtn.style.position = 'absolute';
-    closeBtn.style.top = '10px';
-    closeBtn.style.right = '10px';
-    closeBtn.style.padding = '6px 12px';
-    closeBtn.style.backgroundColor = '#4CAF50';
-    closeBtn.style.color = '#fff';
-    closeBtn.style.border = 'none';
-    closeBtn.style.borderRadius = '6px';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.fontWeight = '600';
+    Object.assign(closeBtn.style, {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      padding: '6px 12px',
+      backgroundColor: '#4CAF50',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontWeight: '600',
+      zIndex: '10'
+    });
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
@@ -672,7 +686,6 @@ function showImageModal(dataURL) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // Clicking outside content closes modal
     modal.addEventListener('click', e => {
       if (e.target === modal) modal.style.display = 'none';
     });
@@ -700,7 +713,8 @@ function generateImageFromStatsContainer(day) {
       return;
     }
 
-    const finalWidth = 384;
+    const finalWidth = 384;  // This should be smaller than modal maxWidth (90vw) for clarity
+
     const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
     const offscreen = document.createElement('div');
