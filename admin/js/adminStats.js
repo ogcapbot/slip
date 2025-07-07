@@ -10,13 +10,6 @@ const statusIcons = {
 
 const STATUS_VALUES = ['Win', 'Lost', 'Push', 'Pending'];
 
-// Images for total units summary
-const totalUnitsImages = {
-  plus: 'https://capper.ogcapperbets.com/admin/images/plus.png',
-  minus: 'https://capper.ogcapperbets.com/admin/images/minus.png',
-  pending: statusIcons.Pending
-};
-
 function getESTDate(d) {
   const estOffsetMs = 5 * 60 * 60 * 1000;
   return new Date(d.getTime() - estOffsetMs);
@@ -63,7 +56,6 @@ async function fetchPicksByDate(day) {
   }));
 }
 
-// Updated computeStats to also sum units by status
 function computeStats(picks) {
   const counts = {
     Win: 0,
@@ -75,20 +67,20 @@ function computeStats(picks) {
       Win: 0,
       Lost: 0,
       Push: 0,
-      Pending: 0
+      Pending: 0,
     }
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
-    const units = parseFloat(data.unit) || 0;
+    const unitVal = parseFloat(data.unit) || 0;
 
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
-      counts.units.Pending += units;
+      counts.units.Pending += unitVal;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
-      counts.units[val] += units;
+      counts.units[val] += unitVal;
     }
   });
 
@@ -126,10 +118,11 @@ function createStatusSummaryIcon(status, count, units) {
 
   // Units display above icon
   const unitsEl = document.createElement('div');
-  unitsEl.textContent = `## Unit(s): ${units.toFixed(2)}`;
+  unitsEl.textContent = `${units.toFixed(2)} Unit(s)`;
   unitsEl.style.fontWeight = '600';
-  unitsEl.style.fontSize = '12px';
-  unitsEl.style.marginBottom = '4px';
+  unitsEl.style.fontSize = '13px';
+  unitsEl.style.marginBottom = '6px';
+  unitsEl.style.whiteSpace = 'nowrap'; // prevent wrapping
   container.appendChild(unitsEl);
 
   const img = document.createElement('img');
@@ -139,17 +132,48 @@ function createStatusSummaryIcon(status, count, units) {
   img.style.width = '50px';
   img.style.height = '50px';
   img.style.marginBottom = '6px';
-
-  const text = document.createElement('span');
-  text.textContent = count;
-  text.style.fontWeight = '700';
-  text.style.fontSize = '16px';
-
   container.appendChild(img);
-  container.appendChild(text);
+
+  const countText = document.createElement('span');
+  countText.textContent = count;
+  countText.style.fontWeight = '700';
+  countText.style.fontSize = '16px';
+  container.appendChild(countText);
+
+  // Label below count
+  const labelText = document.createElement('span');
+  labelText.style.fontWeight = '600';
+  labelText.style.fontSize = '12px';
+  labelText.style.color = '#333';
+  labelText.style.marginTop = '2px';
+
+  switch (status) {
+    case 'Win':
+      labelText.textContent = 'Wins';
+      break;
+    case 'Lost':
+      labelText.textContent = 'Lost';
+      break;
+    case 'Push':
+      labelText.textContent = 'Pushes';
+      break;
+    case 'Pending':
+      labelText.textContent = 'Pending';
+      break;
+    default:
+      labelText.textContent = '';
+  }
+
+  container.appendChild(labelText);
 
   return container;
 }
+
+const totalUnitsImages = {
+  plus: 'https://capper.ogcapperbets.com/admin/images/plus.png',
+  minus: 'https://capper.ogcapperbets.com/admin/images/minus.png',
+  pending: 'https://capper.ogcapperbets.com/admin/images/grayPending.png',
+};
 
 function renderStatsSummary(counts, container) {
   container.innerHTML = '';
@@ -157,36 +181,47 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  // Calculate total units won - lost
+  // Create line for Total Picks and Total Units, side by side
+  const topLine = document.createElement('div');
+  topLine.style.display = 'flex';
+  topLine.style.justifyContent = 'space-between';
+  topLine.style.alignItems = 'center';
+  topLine.style.marginBottom = '10px';
+  topLine.style.fontWeight = '700';
+  topLine.style.fontSize = '16px';
+
+  const totalPicksEl = document.createElement('div');
+  totalPicksEl.textContent = `Total Picks: ${counts.Total}`;
+  topLine.appendChild(totalPicksEl);
+
   const totalUnits = counts.units.Win - counts.units.Lost;
   let totalUnitsIcon = totalUnits > 0 ? totalUnitsImages.plus
                       : totalUnits < 0 ? totalUnitsImages.minus
                       : totalUnitsImages.pending;
 
-  // Add total units display line above win percentage, smaller font size
-  const totalUnitsDiv = document.createElement('div');
-  totalUnitsDiv.style.fontWeight = '700';
-  totalUnitsDiv.style.fontSize = '16px';
-  totalUnitsDiv.style.marginBottom = '10px';
-  totalUnitsDiv.style.textAlign = 'center';
-  totalUnitsDiv.style.display = 'flex';
-  totalUnitsDiv.style.justifyContent = 'center';
-  totalUnitsDiv.style.alignItems = 'center';
-  totalUnitsDiv.style.gap = '6px';
+  const totalUnitsEl = document.createElement('div');
+  totalUnitsEl.style.display = 'flex';
+  totalUnitsEl.style.alignItems = 'center';
+  totalUnitsEl.style.gap = '6px';
+  totalUnitsEl.style.fontWeight = '700';
+  totalUnitsEl.style.fontSize = '14px';
 
   const unitsImg = document.createElement('img');
   unitsImg.src = totalUnitsIcon;
   unitsImg.alt = totalUnits > 0 ? 'Plus' : totalUnits < 0 ? 'Minus' : 'Pending';
   unitsImg.style.height = '16px';
   unitsImg.style.width = 'auto';
+  totalUnitsEl.appendChild(unitsImg);
 
   const unitsText = document.createElement('span');
   unitsText.textContent = `Total Units: ${totalUnits.toFixed(2)}`;
+  totalUnitsEl.appendChild(unitsText);
 
-  totalUnitsDiv.appendChild(unitsImg);
-  totalUnitsDiv.appendChild(unitsText);
-  container.appendChild(totalUnitsDiv);
+  topLine.appendChild(totalUnitsEl);
 
+  container.appendChild(topLine);
+
+  // Win percentage line
   const winPercentDiv = document.createElement('div');
   winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
   winPercentDiv.style.fontWeight = '800';
@@ -194,14 +229,6 @@ function renderStatsSummary(counts, container) {
   winPercentDiv.style.marginBottom = '15px';
   winPercentDiv.style.textAlign = 'center';
   container.appendChild(winPercentDiv);
-
-  const totalText = document.createElement('div');
-  totalText.textContent = `Total Picks: ${counts.Total}`;
-  totalText.style.fontWeight = '700';
-  totalText.style.fontSize = '16px';
-  totalText.style.marginBottom = '10px';
-  totalText.style.textAlign = 'center';
-  container.appendChild(totalText);
 
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
@@ -214,8 +241,6 @@ function renderStatsSummary(counts, container) {
 
   container.appendChild(totalsRow);
 }
-
-// ... rest of your file unchanged from here on ...
 
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
   const img = document.createElement('img');
@@ -346,14 +371,11 @@ function generateTextStatsOutput(day, picks) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  const longDateStr = formatLongDateEST(day);
-  const longDateTimeStr = formatLongDateTimeEST();
-
   return `
 ═══════════════════════
 ######## OFFICIAL STATS
 ═══════════════════════
-Date: ${longDateStr}
+Date: ${formatLongDateEST(day)}
 
 🟧 - Official Picks Total:   ${counts.Total}
 ✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%
@@ -378,14 +400,14 @@ Status: ${getStatusEmoji(data.gameWinLossDraw)}
 ######## STRICT CONFIDENTIALITY NOTICE
 ═══════════════════════
 All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
-Created: ${longDateTimeStr}
+Created: ${formatLongDateTimeEST()}
 `.trim();
 }
 
 // New clean text function to fix spacing issues on paste
 function cleanOutputText(text) {
   return text
-    // Normalize line Endings to \n
+    // Normalize line endings to \n
     .replace(/\r\n?/g, '\n')
     // Remove zero-width and other invisible Unicode chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
@@ -457,26 +479,27 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', async () => {
-      const textarea = document.getElementById('textOutputArea');
-      if (!textarea) return;
-      const rawText = textarea.value;
+  const textarea = document.getElementById('textOutputArea');
+  if (!textarea) return;
+  const rawText = textarea.value;
 
-      // Convert line breaks to <br> for HTML clipboard
-      const htmlText = rawText.replace(/\n/g, '<br>');
+  // Convert line breaks to <br> for HTML clipboard
+  const htmlText = rawText.replace(/\n/g, '<br>');
 
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/html': new Blob([htmlText], { type: 'text/html' }),
-            'text/plain': new Blob([rawText], { type: 'text/plain' }),
-          })
-        ]);
-        alert('Copied text with HTML line breaks to clipboard!');
-      } catch (err) {
-        console.error('Clipboard write failed:', err);
-        alert('Failed to copy.');
-      }
-    });
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([htmlText], { type: 'text/html' }),
+        'text/plain': new Blob([rawText], { type: 'text/plain' }),
+      })
+    ]);
+    alert('Copied text with HTML line breaks to clipboard!');
+  } catch (err) {
+    console.error('Clipboard write failed:', err);
+    alert('Failed to copy.');
+  }
+});
+
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
@@ -649,9 +672,8 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  // REMOVED SCROLLING RESTRICTION HERE TO ALLOW FULL PAGE SCROLLING
-  // picksDiv.style.maxHeight = '400px';
-  // picksDiv.style.overflowY = 'auto';
+  picksDiv.style.maxHeight = 'none'; // Allow height to grow with content (no scroll bar)
+  picksDiv.style.overflowY = 'visible'; // Show all picks without internal scroll
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
