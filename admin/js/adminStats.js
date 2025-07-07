@@ -10,6 +10,13 @@ const statusIcons = {
 
 const STATUS_VALUES = ['Win', 'Lost', 'Push', 'Pending'];
 
+// Images for total units summary
+const totalUnitsImages = {
+  plus: 'https://capper.ogcapperbets.com/admin/images/plus.png',
+  minus: 'https://capper.ogcapperbets.com/admin/images/minus.png',
+  pending: statusIcons.Pending
+};
+
 function getESTDate(d) {
   const estOffsetMs = 5 * 60 * 60 * 1000;
   return new Date(d.getTime() - estOffsetMs);
@@ -56,21 +63,32 @@ async function fetchPicksByDate(day) {
   }));
 }
 
+// Updated computeStats to also sum units by status
 function computeStats(picks) {
   const counts = {
     Win: 0,
     Lost: 0,
     Push: 0,
     Pending: 0,
-    Total: picks.length
+    Total: picks.length,
+    units: {
+      Win: 0,
+      Lost: 0,
+      Push: 0,
+      Pending: 0
+    }
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
+    const units = parseFloat(data.unit) || 0;
+
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
+      counts.units.Pending += units;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
+      counts.units[val] += units;
     }
   });
 
@@ -98,13 +116,21 @@ function formatLongDateEST(day) {
   });
 }
 
-function createStatusSummaryIcon(status, count) {
+function createStatusSummaryIcon(status, count, units) {
   const container = document.createElement('div');
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.alignItems = 'center';
   container.style.margin = '0 20px';
   container.style.cursor = 'default';
+
+  // Units display above icon
+  const unitsEl = document.createElement('div');
+  unitsEl.textContent = `## Unit(s): ${units.toFixed(2)}`;
+  unitsEl.style.fontWeight = '600';
+  unitsEl.style.fontSize = '12px';
+  unitsEl.style.marginBottom = '4px';
+  container.appendChild(unitsEl);
 
   const img = document.createElement('img');
   img.src = statusIcons[status];
@@ -131,6 +157,36 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
+  // Calculate total units won - lost
+  const totalUnits = counts.units.Win - counts.units.Lost;
+  let totalUnitsIcon = totalUnits > 0 ? totalUnitsImages.plus
+                      : totalUnits < 0 ? totalUnitsImages.minus
+                      : totalUnitsImages.pending;
+
+  // Add total units display line above win percentage, smaller font size
+  const totalUnitsDiv = document.createElement('div');
+  totalUnitsDiv.style.fontWeight = '700';
+  totalUnitsDiv.style.fontSize = '16px';
+  totalUnitsDiv.style.marginBottom = '10px';
+  totalUnitsDiv.style.textAlign = 'center';
+  totalUnitsDiv.style.display = 'flex';
+  totalUnitsDiv.style.justifyContent = 'center';
+  totalUnitsDiv.style.alignItems = 'center';
+  totalUnitsDiv.style.gap = '6px';
+
+  const unitsImg = document.createElement('img');
+  unitsImg.src = totalUnitsIcon;
+  unitsImg.alt = totalUnits > 0 ? 'Plus' : totalUnits < 0 ? 'Minus' : 'Pending';
+  unitsImg.style.height = '16px';
+  unitsImg.style.width = 'auto';
+
+  const unitsText = document.createElement('span');
+  unitsText.textContent = `Total Units: ${totalUnits.toFixed(2)}`;
+
+  totalUnitsDiv.appendChild(unitsImg);
+  totalUnitsDiv.appendChild(unitsText);
+  container.appendChild(totalUnitsDiv);
+
   const winPercentDiv = document.createElement('div');
   winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
   winPercentDiv.style.fontWeight = '800';
@@ -153,11 +209,13 @@ function renderStatsSummary(counts, container) {
   totalsRow.style.marginBottom = '20px';
 
   STATUS_VALUES.forEach(status => {
-    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
+    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0, counts.units[status] || 0));
   });
 
   container.appendChild(totalsRow);
 }
+
+// ... rest of your file unchanged from here on ...
 
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
   const img = document.createElement('img');
