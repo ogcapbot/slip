@@ -388,11 +388,9 @@ function showTextOutputModal(textOutput) {
     copyBtn.addEventListener('click', () => {
       let textToCopy = textarea.value;
 
-      // Remove carriage returns
-      textToCopy = textToCopy.replace(/\r/g, '');
-
-      // Remove zero-width and special invisible characters
-      textToCopy = textToCopy.replace(/[\u200B\u200C\u200D\u200E\u200F\u00A0]/g, '');
+      // Remove carriage returns and zero-width and special invisible characters
+      textToCopy = textToCopy.replace(/\r/g, '')
+                             .replace(/[\u200B\u200C\u200D\u200E\u200F\u00A0]/g, '');
 
       // Collapse multiple newlines into one
       textToCopy = textToCopy.replace(/\n{2,}/g, '\n');
@@ -403,22 +401,25 @@ function showTextOutputModal(textOutput) {
         .map(line => line.trimEnd())
         .join('\n');
 
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          alert('Text copied to clipboard!');
-        }).catch(err => {
-          console.error('Clipboard copy failed, falling back...', err);
-          textarea.value = textToCopy;
-          textarea.select();
-          document.execCommand('copy');
-          alert('Text copied to clipboard!');
-        });
-      } else {
-        textarea.value = textToCopy;
-        textarea.select();
-        document.execCommand('copy');
-        alert('Text copied to clipboard!');
-      }
+      // Add markdown hard line break (two trailing spaces) to each line and double newline after each line
+      // This forces Patreon to respect single line breaks with minimal spacing
+      textToCopy = textToCopy
+        .split('\n')
+        .map(line => line + '  ')  // two spaces at end for markdown line break
+        .join('\n\n');             // double newline between lines
+
+      // Use hidden input to copy clean text (avoid textarea clipboard quirks)
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'text';
+      hiddenInput.style.position = 'fixed';
+      hiddenInput.style.left = '-9999px';
+      hiddenInput.value = textToCopy;
+      document.body.appendChild(hiddenInput);
+      hiddenInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(hiddenInput);
+
+      alert('Text copied to clipboard!');
     });
 
     closeBtn.addEventListener('click', () => {
