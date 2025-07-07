@@ -323,9 +323,9 @@ function generateTextStatsOutput(day, picks) {
   output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
   output += `Created: ${longDateTimeStr}\n`;
 
-  return output;
+  // Wrap entire output in triple backticks for markdown code block
+  return '```\n' + output + '\n```';
 }
-
 
 function showTextOutputModal(textOutput) {
   let modal = document.getElementById('textOutputModal');
@@ -387,17 +387,23 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', () => {
-      // Use modern clipboard API if available to avoid extra line breaks issues
+      let textToCopy = textarea.value;
+
+      // Normalize all newlines to CRLF for better compatibility
+      textToCopy = textToCopy.replace(/\r?\n/g, '\r\n');
+
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
+        navigator.clipboard.writeText(textToCopy).then(() => {
           alert('Text copied to clipboard!');
         }).catch(err => {
           console.error('Clipboard copy failed, falling back...', err);
+          textarea.value = textToCopy;
           textarea.select();
           document.execCommand('copy');
           alert('Text copied to clipboard!');
         });
       } else {
+        textarea.value = textToCopy;
         textarea.select();
         document.execCommand('copy');
         alert('Text copied to clipboard!');
