@@ -56,16 +56,6 @@ async function fetchPicksByDate(day) {
   }));
 }
 
-async function fetchAllPicks() {
-  const officialPicksRef = collection(db, 'OfficialPicks');
-  const q = query(officialPicksRef);
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    data: doc.data()
-  }));
-}
-
 function computeStats(picks) {
   const counts = {
     Win: 0,
@@ -406,15 +396,27 @@ function showTextOutputModal(textOutput) {
   modal.style.display = 'flex';
 }
 
-function loadHtml2Canvas(callback) {
-  if (window.html2canvas) {
-    callback();
-    return;
+async function showStatsAsText(day) {
+  try {
+    let picks = [];
+    if (day === 'all') {
+      const officialPicksRef = collection(db, 'OfficialPicks');
+      const q = query(officialPicksRef);
+      const snapshot = await getDocs(q);
+      picks = snapshot.docs.slice(0, 25).map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
+    } else {
+      picks = await fetchPicksByDate(day);
+    }
+    
+    const textOutput = generateTextStatsOutput(day, picks);
+    showTextOutputModal(textOutput);
+  } catch (error) {
+    console.error('Failed to show stats as text:', error);
+    alert('Error loading stats as text.');
   }
-  const script = document.createElement('script');
-  script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
-  script.onload = callback;
-  document.head.appendChild(script);
 }
 
 export async function loadStatsForDay(day) {
@@ -429,16 +431,9 @@ export async function loadStatsForDay(day) {
   if (!statsContainer) {
     statsContainer = document.createElement('div');
     statsContainer.id = 'statsContainer';
-    // Disable internal scroll so entire content shows on page scroll
-    statsContainer.style.maxHeight = 'none';
-    statsContainer.style.height = 'auto';
-    statsContainer.style.overflowY = 'visible';
     mainContent.appendChild(statsContainer);
   } else {
     statsContainer.innerHTML = '';
-    statsContainer.style.maxHeight = 'none';
-    statsContainer.style.height = 'auto';
-    statsContainer.style.overflowY = 'visible';
   }
 
   const tabsDiv = document.createElement('div');
@@ -486,7 +481,7 @@ export async function loadStatsForDay(day) {
           alert("Image generation disabled on 'All' filter.");
           return;
         }
-        generateImageFromStatsContainer(currentDay);
+        generateImageFromStatsContainer();
         return;
       }
 
@@ -515,182 +510,117 @@ export async function loadStatsForDay(day) {
 
   statsContainer.appendChild(tabsDiv);
 
-  let picks = [];
-  try {
-    if (day === 'all') {
-      picks = await fetchAllPicks();
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-  } catch (error) {
-    console.error('Failed to fetch picks:', error);
-    statsContainer.textContent = 'Failed to load picks.';
+  const longDateStr = formatLongDateEST(day);
+  if (longDateStr) {
+    const dateEl = document.createElement('div');
+    dateEl.textContent = longDateStr;
+    dateEl.style.fontWeight = '600';
+    dateEl.style.textAlign = 'center';
+    dateEl.style.marginBottom = '10px';
+    statsContainer.appendChild(dateEl);
+  }
+
+  const picks = day === 'all' ? await fetchPicksByDate('today') : await fetchPicksByDate(day);
+  const counts = computeStats(picks);
+
+  renderStatsSummary(counts, statsContainer);
+
+  const picksContainer = document.createElement('div');
+  picksContainer.id = 'picksContainer';
+  picksContainer.style.margin = '10px 5px 20px 5px';
+  picksContainer.style.padding = '10px';
+  picksContainer.style.border = '1px solid #ccc';
+  picksContainer.style.borderRadius = '8px';
+  picksContainer.style.backgroundColor = 'rgba(255,255,255,0.95)';
+  picksContainer.style.maxHeight = '600px';
+  picksContainer.style.overflowY = 'auto';
+
+  renderPickListing(picks, picksContainer);
+  statsContainer.appendChild(picksContainer);
+}
+
+// Image generation and display
+
+async function generateImageFromStatsContainer() {
+  const container = document.getElementById('statsContainer');
+  if (!container) {
+    alert('Stats container not found');
     return;
   }
 
-  const counts = computeStats(picks);
-  const summaryDiv = document.createElement('div');
-  statsContainer.appendChild(summaryDiv);
-  renderStatsSummary(counts, summaryDiv);
+  try {
+    // Remove scroll on container for full height capture
+    const originalOverflow = container.style.overflowY;
+    container.style.overflowY = 'visible';
 
-  const picksDiv = document.createElement('div');
-  picksDiv.style.border = '1px solid #ddd';
-  picksDiv.style.borderRadius = '6px';
-  picksDiv.style.padding = '5px';
-  picksDiv.style.marginTop = '10px';
-  picksDiv.style.backgroundColor = 'transparent'; // watermark visible behind
-  statsContainer.appendChild(picksDiv);
+    // Create canvas from container
+    const canvas = await html2canvas(container, { backgroundColor: '#fff', scale: 2 });
 
-  renderPickListing(picks, picksDiv);
-}
+    // Restore overflow
+    container.style.overflowY = originalOverflow;
 
-// Generate the image and replace page content with image + Back button
-function generateImageFromStatsContainer(day) {
-  loadHtml2Canvas(async () => {
-    let picks = [];
-    try {
-      if (day === 'all') {
-        picks = await fetchAllPicks();
-      } else {
-        picks = await fetchPicksByDate(day);
-      }
-    } catch (error) {
-      alert('Failed to fetch picks for image generation.');
-      return;
-    }
-
-    const finalWidth = 384;
-    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
-
-    const offscreen = document.createElement('div');
-    offscreen.style.width = `${finalWidth}px`;
-    offscreen.style.backgroundColor = '#fff';
-    offscreen.style.fontFamily = 'Arial, sans-serif';
-    offscreen.style.fontSize = '14px';
-    offscreen.style.padding = '0 10px 10px';
-    offscreen.style.position = 'relative';
-    offscreen.style.boxSizing = 'border-box';
-
-    const headerImg = document.createElement('img');
+    // Add header and footer images to canvas
+    const headerImg = new Image();
+    headerImg.crossOrigin = "anonymous";
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
-    headerImg.style.width = 'auto';
-    headerImg.style.height = '60px';
-    headerImg.style.display = 'block';
-    headerImg.style.margin = '0 auto 10px';
-    offscreen.appendChild(headerImg);
 
-    const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '65px';
-    topButtonsDiv.style.overflow = 'hidden';
-    topButtonsDiv.style.visibility = 'hidden';
-    topButtonsDiv.style.marginBottom = '-65px';
-    offscreen.appendChild(topButtonsDiv);
-
-    const longDateStr = formatLongDateEST(day);
-    if (longDateStr) {
-      const dateLabel = document.createElement('div');
-      dateLabel.textContent = longDateStr;
-      dateLabel.style.color = '#666';
-      dateLabel.style.fontSize = '12px';
-      dateLabel.style.textAlign = 'center';
-      dateLabel.style.marginBottom = '8px';
-      offscreen.appendChild(dateLabel);
-    }
-
-    const counts = computeStats(picks);
-    const summaryDiv = document.createElement('div');
-    offscreen.appendChild(summaryDiv);
-    renderStatsSummary(counts, summaryDiv);
-
-    const picksDiv = document.createElement('div');
-    picksDiv.style.border = '1px solid #ddd';
-    picksDiv.style.borderRadius = '6px';
-    picksDiv.style.padding = '5px';
-    picksDiv.style.marginTop = '10px';
-    picksDiv.style.backgroundColor = 'transparent';
-    offscreen.appendChild(picksDiv);
-
-    renderPickListing(picks, picksDiv);
-
-    const bottomSpacing = document.createElement('div');
-    bottomSpacing.style.height = '10px';
-    offscreen.appendChild(bottomSpacing);
-
-    const footerImg = document.createElement('img');
+    const footerImg = new Image();
+    footerImg.crossOrigin = "anonymous";
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
-    footerImg.style.width = '100%';
-    footerImg.style.height = 'auto';
-    footerImg.style.display = 'block';
-    footerImg.style.marginTop = '10px';
-    offscreen.appendChild(footerImg);
 
-    const watermarkCount = Math.floor((picksDiv.offsetHeight / 50) * (finalWidth / 50));
+    await Promise.all([
+      new Promise((res) => { headerImg.onload = res; }),
+      new Promise((res) => { footerImg.onload = res; })
+    ]);
+
+    // Create final canvas with space for header and footer
+    const finalWidth = canvas.width;
+    const headerHeight = 60; // fixed header height
+    const footerHeight = 70; // fixed footer height
+    const finalHeight = headerHeight + canvas.height + footerHeight;
+
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = finalWidth;
+    finalCanvas.height = finalHeight;
+
+    const ctx = finalCanvas.getContext('2d');
+
+    // Draw header (at natural size, not stretched)
+    ctx.drawImage(headerImg, 0, 0, headerImg.naturalWidth, headerHeight);
+
+    // Draw main stats content below header
+    ctx.drawImage(canvas, 0, headerHeight, canvas.width, canvas.height);
+
+    // Draw footer at bottom
+    ctx.drawImage(footerImg, 0, headerHeight + canvas.height, footerImg.naturalWidth, footerHeight);
+
+    // Add watermark images randomly under main content
+    const watermarkSrc = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
+    const watermarkSize = 50;
+    const watermarkCount = Math.floor(finalHeight / watermarkSize); 
+
+    const watermarkImg = new Image();
+    watermarkImg.crossOrigin = "anonymous";
+    watermarkImg.src = watermarkSrc;
+
+    await new Promise(res => { watermarkImg.onload = res; });
+
     for (let i = 0; i < watermarkCount; i++) {
-      const watermark = document.createElement('img');
-      watermark.src = watermarkUrl;
-      watermark.style.width = '50px';
-      watermark.style.height = '50px';
-      watermark.style.position = 'absolute';
-      watermark.style.opacity = '0.1';
-      watermark.style.pointerEvents = 'none';
-      watermark.style.userSelect = 'none';
-      watermark.style.zIndex = '0';
-
-      watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksDiv.offsetHeight - 50)}px`;
-
-      offscreen.appendChild(watermark);
+      const yPos = headerHeight + i * watermarkSize + Math.random() * (watermarkSize / 2);
+      const xPos = Math.random() * (finalWidth - watermarkSize);
+      ctx.globalAlpha = 0.1;
+      ctx.drawImage(watermarkImg, xPos, yPos, watermarkSize, watermarkSize);
+      ctx.globalAlpha = 1;
     }
 
-    offscreen.style.position = 'fixed';
-    offscreen.style.left = '-9999px';
-    offscreen.style.top = '-9999px';
-    document.body.appendChild(offscreen);
+    // Open image in same tab, scaled to natural width with responsive height
+    const imgDataUrl = finalCanvas.toDataURL('image/png');
+    document.body.innerHTML = `<img src="${imgDataUrl}" style="width:${finalWidth}px; max-width: 100vw; height: auto; display: block; margin: 0 auto;">`;
 
-    html2canvas(offscreen, {
-      scale: 2,
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
-      useCORS: true,
-      backgroundColor: null,
-      width: finalWidth,
-      windowWidth: finalWidth
-    }).then(canvas => {
-      const croppedCanvas = document.createElement('canvas');
-      const ctx = croppedCanvas.getContext('2d');
-      croppedCanvas.width = finalWidth;
-      croppedCanvas.height = canvas.height - 60;
-
-      ctx.drawImage(canvas, 0, 60, finalWidth, canvas.height - 60, 0, 0, finalWidth, canvas.height - 60);
-
-      document.body.removeChild(offscreen);
-
-      const dataURL = croppedCanvas.toDataURL('image/png');
-
-      // Clear the entire page and show only the image fullscreen, auto scaled
-      document.body.innerHTML = '';
-      document.body.style.margin = '0';
-      document.body.style.backgroundColor = '#fff';
-      document.body.style.display = 'flex';
-      document.body.style.justifyContent = 'center';
-      document.body.style.alignItems = 'center';
-      document.body.style.height = '100vh';
-      document.body.style.overflow = 'hidden';
-
-      const img = document.createElement('img');
-      img.src = dataURL;
-      img.style.maxWidth = '100vw';
-      img.style.maxHeight = '100vh';
-      img.style.width = 'auto';
-      img.style.height = 'auto';
-      img.style.borderRadius = '12px';
-      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
-      img.style.userSelect = 'none';
-      document.body.appendChild(img);
-    }).catch(err => {
-      document.body.removeChild(offscreen);
-      console.error('Failed to generate image:', err);
-      alert('Failed to generate image.');
-    });
-  });
+  } catch (error) {
+    console.error('Error generating image:', error);
+    alert('Failed to generate image.');
+  }
 }
+
+window.loadStatsForDay = loadStatsForDay;
