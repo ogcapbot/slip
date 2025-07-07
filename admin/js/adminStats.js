@@ -109,7 +109,34 @@ function formatLongDateEST(day) {
   });
 }
 
-function renderStatsSummary(counts, container, isForImage = false) {
+function createStatusSummaryIcon(status, count) {
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.alignItems = 'center';
+  container.style.margin = '0 20px';
+  container.style.cursor = 'default';
+
+  const img = document.createElement('img');
+  img.src = statusIcons[status];
+  img.alt = status;
+  img.title = `${status}: ${count}`;
+  img.style.width = '50px';
+  img.style.height = '50px';
+  img.style.marginBottom = '6px';
+
+  const text = document.createElement('span');
+  text.textContent = count;
+  text.style.fontWeight = '700';
+  text.style.fontSize = '16px';
+
+  container.appendChild(img);
+  container.appendChild(text);
+
+  return container;
+}
+
+function renderStatsSummary(counts, container) {
   container.innerHTML = '';
 
   const completed = counts.Win + counts.Lost + counts.Push;
@@ -146,69 +173,39 @@ function renderStatsSummary(counts, container, isForImage = false) {
   line2.style.fontSize = '20px';
   line2.style.marginBottom = '16px';
 
-  if (!isForImage) {
-    const unitsSignImg = document.createElement('img');
-    unitsSignImg.style.width = '20px';
-    unitsSignImg.style.height = '20px';
-    unitsSignImg.style.verticalAlign = 'middle';
-    unitsSignImg.style.marginRight = '6px';
+  const unitsSignImg = document.createElement('img');
+  unitsSignImg.style.width = '20px';
+  unitsSignImg.style.height = '20px';
+  unitsSignImg.style.verticalAlign = 'middle';
+  unitsSignImg.style.marginRight = '6px';
 
-    if(counts.TotalUnits > 0) {
-      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
-    } else if(counts.TotalUnits < 0) {
-      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
-    } else {
-      unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
-    }
-    line2.appendChild(unitsSignImg);
+  if(counts.TotalUnits > 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
+  } else if(counts.TotalUnits < 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
+  } else {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
   }
 
   const unitsText = document.createElement('span');
   unitsText.textContent = `${counts.TotalUnits.toFixed(2)} Unit(s)`;
   unitsText.style.verticalAlign = 'middle';
 
+  line2.appendChild(unitsSignImg);
   line2.appendChild(unitsText);
   container.appendChild(line2);
 
-  if (!isForImage) {
-    const totalsRow = document.createElement('div');
-    totalsRow.style.display = 'flex';
-    totalsRow.style.justifyContent = 'center';
-    totalsRow.style.marginBottom = '20px';
+  // Container for bottom status summary icons (without label text)
+  const totalsRow = document.createElement('div');
+  totalsRow.style.display = 'flex';
+  totalsRow.style.justifyContent = 'center';
+  totalsRow.style.marginBottom = '20px';
 
-    STATUS_VALUES.forEach(status => {
-      totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
-    });
+  STATUS_VALUES.forEach(status => {
+    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
+  });
 
-    container.appendChild(totalsRow);
-  }
-}
-
-function createStatusSummaryIcon(status, count) {
-  const container = document.createElement('div');
-  container.style.display = 'flex';
-  container.style.flexDirection = 'column';
-  container.style.alignItems = 'center';
-  container.style.margin = '0 20px';
-  container.style.cursor = 'default';
-
-  const img = document.createElement('img');
-  img.src = statusIcons[status];
-  img.alt = status;
-  img.title = `${status}: ${count}`;
-  img.style.width = '50px';
-  img.style.height = '50px';
-  img.style.marginBottom = '6px';
-
-  const text = document.createElement('span');
-  text.textContent = count;
-  text.style.fontWeight = '700';
-  text.style.fontSize = '16px';
-
-  container.appendChild(img);
-  container.appendChild(text);
-
-  return container;
+  container.appendChild(totalsRow);
 }
 
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
@@ -373,11 +370,16 @@ Created: ${formatLongDateTimeEST()}
 `.trim();
 }
 
+// New clean text function to fix spacing issues on paste
 function cleanOutputText(text) {
   return text
+    // Normalize line Endings to \n
     .replace(/\r\n?/g, '\n')
+    // Remove zero-width and other invisible Unicode chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Collapse multiple blank lines to a single blank line
     .replace(/\n{3,}/g, '\n\n')
+    // Trim trailing spaces on each line
     .split('\n')
     .map(line => line.trimEnd())
     .join('\n');
@@ -420,7 +422,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
     textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre';
+    textarea.style.whiteSpace = 'pre'; // preserve formatting exactly
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -447,6 +449,7 @@ function showTextOutputModal(textOutput) {
       if (!textarea) return;
       const rawText = textarea.value;
 
+      // Convert line breaks to <br> for HTML clipboard
       const htmlText = rawText.replace(/\n/g, '<br>');
 
       try {
@@ -634,7 +637,7 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = 'none';
+  picksDiv.style.maxHeight = 'none'; // allow to grow indefinitely, no scroll
   picksDiv.style.overflowY = 'visible';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
@@ -644,6 +647,7 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
+// FULLY IMPLEMENTED, FIXED IMAGE GENERATION FUNCTION:
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
     callback();
@@ -653,132 +657,6 @@ function loadHtml2Canvas(callback) {
   script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
   script.onload = callback;
   document.head.appendChild(script);
-}
-
-function showImageModal(dataURL) {
-  let modal = document.getElementById('imageOutputModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'imageOutputModal';
-    Object.assign(modal.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: '100000',
-      padding: '20px',
-      boxSizing: 'border-box',
-      overflow: 'auto',
-    });
-
-    const content = document.createElement('div');
-    Object.assign(content.style, {
-      position: 'relative',
-      backgroundColor: '#fff',
-      borderRadius: '10px',
-      boxShadow: '0 0 15px rgba(0,0,0,0.5)',
-      padding: '10px',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      alignItems: 'center',
-      maxWidth: '95vw',
-      maxHeight: '95vh',
-      overflow: 'auto',
-      width: 'auto',
-      height: 'auto',
-      minWidth: '400px',   // Minimum modal width to prevent tiny images
-      minHeight: '400px',  // Minimum modal height for aesthetics
-    });
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    Object.assign(closeBtn.style, {
-      padding: '6px 12px',
-      backgroundColor: '#4CAF50',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      fontWeight: '600',
-      marginBottom: '12px',
-      alignSelf: 'flex-end',
-      minWidth: '80px',
-    });
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    const img = document.createElement('img');
-    img.id = 'modalGeneratedImage';
-    img.src = dataURL;
-    Object.assign(img.style, {
-      maxWidth: '90vw',
-      maxHeight: '80vh',
-      width: 'auto',
-      height: 'auto',
-      display: 'block',
-      borderRadius: '8px',
-      transformOrigin: 'center center',
-      transition: 'transform 0.3s ease',
-      userSelect: 'none',
-    });
-
-    content.appendChild(closeBtn);
-    content.appendChild(img);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-  } else {
-    const img = document.getElementById('modalGeneratedImage');
-    img.src = dataURL;
-    modal.style.display = 'flex';
-  }
-
-  const img = document.getElementById('modalGeneratedImage');
-  if (!img) return;
-
-  img.onload = () => {
-    const modalContent = img.parentElement;
-    const maxW = modalContent.clientWidth;
-    const maxH = modalContent.clientHeight - (img.previousSibling ? img.previousSibling.offsetHeight : 0);
-
-    const naturalW = img.naturalWidth;
-    const naturalH = img.naturalHeight;
-
-    const scaleW = maxW / naturalW;
-    const scaleH = maxH / naturalH;
-
-    const MAX_SCALE = 1;
-    const MIN_SCALE = 0.6;  // Higher minimum scale for better visibility
-
-    let scaleUncapped = Math.min(scaleW, scaleH);
-
-    // Ensure scale is never less than MIN_SCALE
-    let scale = Math.min(MAX_SCALE, Math.max(scaleUncapped, MIN_SCALE));
-
-    img.style.transform = `scale(${scale})`;
-
-    // Adjust modal content size to fit scaled image + padding + close btn
-    modalContent.style.width = `${naturalW * scale + 40}px`;
-    modalContent.style.height = `${naturalH * scale + 70}px`;
-
-    // Clamp modal content size to viewport max (95vw, 95vh)
-    const vw = window.innerWidth * 0.95;
-    const vh = window.innerHeight * 0.95;
-    if (modalContent.offsetWidth > vw) modalContent.style.width = `${vw}px`;
-    if (modalContent.offsetHeight > vh) modalContent.style.height = `${vh}px`;
-  };
 }
 
 function generateImageFromStatsContainer(day) {
@@ -799,59 +677,68 @@ function generateImageFromStatsContainer(day) {
     }
 
     const finalWidth = 384;
+    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
+    // Create offscreen container for rendering
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
     offscreen.style.backgroundColor = '#fff';
     offscreen.style.fontFamily = 'Arial, sans-serif';
     offscreen.style.fontSize = '14px';
-    offscreen.style.padding = '0 10px 10px';
+    offscreen.style.padding = '10px';
     offscreen.style.position = 'relative';
     offscreen.style.boxSizing = 'border-box';
 
+    // Header image with fixed height and margin bottom reduced
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
-    headerImg.style.width = '100%';
-    headerImg.style.maxHeight = '60px';
-    headerImg.style.objectFit = 'contain';
+    headerImg.style.height = '40px'; // reduced height for better fit
     headerImg.style.display = 'block';
-    headerImg.style.margin = '0 auto 10px';
+    headerImg.style.margin = '0 auto 6px'; // smaller bottom margin
     offscreen.appendChild(headerImg);
 
+    // Hidden top buttons div placeholder (optional)
     const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '65px';
+    topButtonsDiv.style.height = '0'; // Hide completely, no vertical space
     topButtonsDiv.style.visibility = 'hidden';
     offscreen.appendChild(topButtonsDiv);
 
+    // Date label with tighter margin top and bottom
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
       const dateLabel = document.createElement('div');
       dateLabel.textContent = longDateStr;
       dateLabel.style.color = '#666';
-      dateLabel.style.fontSize = '12px';
+      dateLabel.style.fontSize = '11px';
       dateLabel.style.textAlign = 'center';
-      dateLabel.style.marginBottom = '8px';
+      dateLabel.style.margin = '0 0 8px 0'; // reduce vertical spacing
       offscreen.appendChild(dateLabel);
     }
 
+    // Compute stats
     const counts = computeStats(picks);
+
+    // Create summary container with all summary lines including icons
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
-    renderStatsSummary(counts, summaryDiv, true);
+    renderStatsSummary(counts, summaryDiv);
 
+    // Picks list container with some margin and padding
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
     picksDiv.style.borderRadius = '6px';
-    picksDiv.style.padding = '5px';
-    picksDiv.style.marginTop = '10px';
+    picksDiv.style.padding = '6px 8px';
+    picksDiv.style.marginTop = '6px';
     picksDiv.style.backgroundColor = 'transparent';
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
+    // Bottom spacing for footer
     const bottomSpacing = document.createElement('div');
-    bottomSpacing.style.height = '10px';
+    bottomSpacing.style.height = '12px';
     offscreen.appendChild(bottomSpacing);
 
+    // Footer image with fixed width, maintain aspect ratio
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.width = '100%';
@@ -860,6 +747,27 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.marginTop = '10px';
     offscreen.appendChild(footerImg);
 
+    // Add watermark images for background pattern
+    const picksHeight = picksDiv.offsetHeight || 300;
+    const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
+    for (let i = 0; i < watermarkCount; i++) {
+      const watermark = document.createElement('img');
+      watermark.src = watermarkUrl;
+      watermark.style.width = '50px';
+      watermark.style.height = '50px';
+      watermark.style.position = 'absolute';
+      watermark.style.opacity = '0.1';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.userSelect = 'none';
+      watermark.style.zIndex = '0';
+
+      watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
+      watermark.style.top = `${headerImg.offsetHeight + 20 + Math.random() * (picksHeight - 50)}px`;
+
+      offscreen.appendChild(watermark);
+    }
+
+    // Position offscreen container out of viewport for rendering
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
@@ -873,7 +781,66 @@ function generateImageFromStatsContainer(day) {
       windowWidth: finalWidth
     }).then(canvas => {
       document.body.removeChild(offscreen);
-      showImageModal(canvas.toDataURL('image/png'));
+
+      const dataURL = canvas.toDataURL('image/png');
+
+      // Create modal container
+      let modal = document.getElementById('imageModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'imageModal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '100000';
+        modal.style.overflow = 'auto';
+        document.body.appendChild(modal);
+
+        // Close button (dynamic sizing)
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.position = 'fixed';
+        closeBtn.style.top = '15px';
+        closeBtn.style.left = '50%';
+        closeBtn.style.transform = 'translateX(-50%)';
+        closeBtn.style.backgroundColor = '#4CAF50';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.border = 'none';
+        closeBtn.style.borderRadius = '10px';
+        closeBtn.style.padding = '10px 40px';
+        closeBtn.style.fontSize = '16px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.zIndex = '100001';
+
+        closeBtn.addEventListener('click', () => {
+          modal.style.display = 'none';
+          modal.innerHTML = '';
+        });
+
+        modal.appendChild(closeBtn);
+      } else {
+        modal.innerHTML = '';
+      }
+
+      // Image element
+      const img = document.createElement('img');
+      img.src = dataURL;
+      img.style.maxWidth = '90vw';
+      img.style.maxHeight = '80vh';
+      img.style.objectFit = 'contain';
+      img.style.borderRadius = '12px';
+      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+      img.style.userSelect = 'none';
+      img.style.marginTop = '60px'; // space for close button
+
+      modal.appendChild(img);
+      modal.style.display = 'flex';
     }).catch(err => {
       document.body.removeChild(offscreen);
       console.error('Failed to generate image:', err);
