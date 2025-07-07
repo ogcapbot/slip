@@ -130,15 +130,8 @@ function createStatusSummaryIcon(status, count) {
   text.style.fontWeight = '700';
   text.style.fontSize = '16px';
 
-  const label = document.createElement('span');
-  label.textContent = status === 'Win' ? 'Wins' : status === 'Lost' ? 'Lost' : status === 'Push' ? 'Pushes' : 'Pending';
-  label.style.fontSize = '12px';
-  label.style.color = '#444';
-  label.style.marginTop = '4px';
-
   container.appendChild(img);
   container.appendChild(text);
-  container.appendChild(label);
 
   return container;
 }
@@ -173,11 +166,11 @@ function renderStatsSummary(counts, container) {
   line1.appendChild(totalPicksDiv);
   container.appendChild(line1);
 
-  // Container for second line: total units center
+  // Container for second line: total units center (smaller font now)
   const line2 = document.createElement('div');
   line2.style.textAlign = 'center';
   line2.style.fontWeight = '900';
-  line2.style.fontSize = '28px';
+  line2.style.fontSize = '20px';
   line2.style.marginBottom = '16px';
 
   const unitsSignImg = document.createElement('img');
@@ -202,7 +195,7 @@ function renderStatsSummary(counts, container) {
   line2.appendChild(unitsText);
   container.appendChild(line2);
 
-  // Container for bottom status summary icons
+  // Container for bottom status summary icons (without label text)
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
