@@ -62,18 +62,29 @@ function computeStats(picks) {
     Lost: 0,
     Push: 0,
     Pending: 0,
-    Total: picks.length
+    Total: picks.length,
+    UnitsWin: 0,
+    UnitsLost: 0,
+    UnitsPush: 0,
+    UnitsPending: 0
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
+    const units = parseFloat(data.unit) || 0;
+
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
+      counts.UnitsPending += units;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
+      if(val === 'Win') counts.UnitsWin += units;
+      else if(val === 'Lost') counts.UnitsLost += units;
+      else if(val === 'Push') counts.UnitsPush += units;
     }
   });
 
+  counts.TotalUnits = counts.UnitsWin - counts.UnitsLost;
   return counts;
 }
 
@@ -131,22 +142,60 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
+  // Container for first line: win % left, total picks right
+  const line1 = document.createElement('div');
+  line1.style.display = 'flex';
+  line1.style.justifyContent = 'space-between';
+  line1.style.marginBottom = '4px';
+
   const winPercentDiv = document.createElement('div');
   winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
   winPercentDiv.style.fontWeight = '800';
-  winPercentDiv.style.fontSize = '18px';
-  winPercentDiv.style.marginBottom = '15px';
-  winPercentDiv.style.textAlign = 'center';
-  container.appendChild(winPercentDiv);
+  winPercentDiv.style.fontSize = '16px';
+  winPercentDiv.style.flex = '1';
+  winPercentDiv.style.textAlign = 'left';
 
-  const totalText = document.createElement('div');
-  totalText.textContent = `Total Picks: ${counts.Total}`;
-  totalText.style.fontWeight = '700';
-  totalText.style.fontSize = '16px';
-  totalText.style.marginBottom = '10px';
-  totalText.style.textAlign = 'center';
-  container.appendChild(totalText);
+  const totalPicksDiv = document.createElement('div');
+  totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
+  totalPicksDiv.style.fontWeight = '800';
+  totalPicksDiv.style.fontSize = '16px';
+  totalPicksDiv.style.flex = '1';
+  totalPicksDiv.style.textAlign = 'right';
 
+  line1.appendChild(winPercentDiv);
+  line1.appendChild(totalPicksDiv);
+  container.appendChild(line1);
+
+  // Container for second line: total units center (smaller font now)
+  const line2 = document.createElement('div');
+  line2.style.textAlign = 'center';
+  line2.style.fontWeight = '900';
+  line2.style.fontSize = '20px';
+  line2.style.marginBottom = '16px';
+
+  const unitsSignImg = document.createElement('img');
+  unitsSignImg.style.width = '20px';
+  unitsSignImg.style.height = '20px';
+  unitsSignImg.style.verticalAlign = 'middle';
+  unitsSignImg.style.marginRight = '6px';
+
+  if(counts.TotalUnits > 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
+  } else if(counts.TotalUnits < 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
+  } else {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
+  }
+
+  const unitsText = document.createElement('span');
+  unitsText.textContent = `${counts.TotalUnits.toFixed(2)} Unit(s)`;
+  unitsText.style.verticalAlign = 'middle';
+
+  line2.appendChild(unitsSignImg);
+  line2.appendChild(unitsText);
+  container.appendChild(line2);
+
+  // Container for bottom status summary icons (without label text)
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
@@ -288,14 +337,11 @@ function generateTextStatsOutput(day, picks) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  const longDateStr = formatLongDateEST(day);
-  const longDateTimeStr = formatLongDateTimeEST();
-
   return `
 ═══════════════════════
 ######## OFFICIAL STATS
 ═══════════════════════
-Date: ${longDateStr}
+Date: ${formatLongDateEST(day)}
 
 🟧 - Official Picks Total:   ${counts.Total}
 ✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%
@@ -320,7 +366,7 @@ Status: ${getStatusEmoji(data.gameWinLossDraw)}
 ######## STRICT CONFIDENTIALITY NOTICE
 ═══════════════════════
 All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
-Created: ${longDateTimeStr}
+Created: ${formatLongDateTimeEST()}
 `.trim();
 }
 
@@ -591,8 +637,8 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = '400px';
-  picksDiv.style.overflowY = 'auto';
+  picksDiv.style.maxHeight = 'none'; // allow to grow indefinitely, no scroll
+  picksDiv.style.overflowY = 'visible';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
@@ -613,89 +659,6 @@ function loadHtml2Canvas(callback) {
   document.head.appendChild(script);
 }
 
-function showImageModal(dataURL) {
-  let modal = document.getElementById('imageOutputModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'imageOutputModal';
-    Object.assign(modal.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: '100000',
-      padding: '20px',
-      boxSizing: 'border-box',
-      overflow: 'hidden', // prevent modal scroll, image will scale instead
-    });
-
-    const content = document.createElement('div');
-    Object.assign(content.style, {
-      position: 'relative',
-      maxWidth: '90vw',  // allow image to scale max 90% viewport width
-      maxHeight: '90vh', // allow image to scale max 90% viewport height
-      backgroundColor: '#fff',
-      borderRadius: '10px',
-      boxShadow: '0 0 15px rgba(0,0,0,0.5)',
-      padding: '10px',
-      boxSizing: 'border-box',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    });
-
-    const img = document.createElement('img');
-    img.id = 'modalGeneratedImage';
-    img.src = dataURL;
-    Object.assign(img.style, {
-      maxWidth: '100%',
-      maxHeight: '100%',
-      width: 'auto',
-      height: 'auto',
-      display: 'block',
-      borderRadius: '8px',
-    });
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    Object.assign(closeBtn.style, {
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
-      padding: '6px 12px',
-      backgroundColor: '#4CAF50',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      fontWeight: '600',
-      zIndex: '10'
-    });
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    content.appendChild(img);
-    content.appendChild(closeBtn);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-  } else {
-    const img = document.getElementById('modalGeneratedImage');
-    img.src = dataURL;
-    modal.style.display = 'flex';
-  }
-}
-
 function generateImageFromStatsContainer(day) {
   loadHtml2Canvas(async () => {
     let picks = [];
@@ -713,8 +676,7 @@ function generateImageFromStatsContainer(day) {
       return;
     }
 
-    const finalWidth = 384;  // This should be smaller than modal maxWidth (90vw) for clarity
-
+    const finalWidth = 384;
     const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
     const offscreen = document.createElement('div');
@@ -809,7 +771,26 @@ function generateImageFromStatsContainer(day) {
       document.body.removeChild(offscreen);
 
       const dataURL = canvas.toDataURL('image/png');
-      showImageModal(dataURL);
+
+      document.body.innerHTML = '';
+      document.body.style.margin = '0';
+      document.body.style.backgroundColor = '#fff';
+      document.body.style.display = 'flex';
+      document.body.style.justifyContent = 'center';
+      document.body.style.alignItems = 'center';
+      document.body.style.height = '100vh';
+      document.body.style.overflow = 'hidden';
+
+      const img = document.createElement('img');
+      img.src = dataURL;
+      img.style.width = canvas.width + 'px';
+      img.style.height = 'auto';
+      img.style.maxWidth = '100vw';
+      img.style.borderRadius = '12px';
+      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+      img.style.userSelect = 'none';
+
+      document.body.appendChild(img);
     }).catch(err => {
       document.body.removeChild(offscreen);
       console.error('Failed to generate image:', err);
