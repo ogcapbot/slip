@@ -62,32 +62,17 @@ function computeStats(picks) {
     Lost: 0,
     Push: 0,
     Pending: 0,
-    Total: picks.length,
-    UnitsWin: 0,
-    UnitsLost: 0,
-    UnitsPush: 0,
-    UnitsPending: 0,
+    Total: picks.length
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
-    const unitValue = parseFloat(data.unit) || 0;
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
-      counts.UnitsPending += unitValue;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
-      if (val === 'Win') counts.UnitsWin += unitValue;
-      else if (val === 'Lost') counts.UnitsLost += unitValue;
-      else if (val === 'Push') counts.UnitsPush += unitValue;
     }
   });
-
-  // Fix float precision (round to 2 decimals)
-  counts.UnitsWin = Math.round(counts.UnitsWin * 100) / 100;
-  counts.UnitsLost = Math.round(counts.UnitsLost * 100) / 100;
-  counts.UnitsPush = Math.round(counts.UnitsPush * 100) / 100;
-  counts.UnitsPending = Math.round(counts.UnitsPending * 100) / 100;
 
   return counts;
 }
@@ -146,111 +131,32 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  // Create container div to hold the top stats horizontally with spacing
-  const topStatsDiv = document.createElement('div');
-  topStatsDiv.style.display = 'flex';
-  topStatsDiv.style.justifyContent = 'space-between';
-  topStatsDiv.style.alignItems = 'center';
-  topStatsDiv.style.marginBottom = '10px';
-
-  // Win Percentage
   const winPercentDiv = document.createElement('div');
   winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
-  winPercentDiv.style.fontWeight = '700';
-  winPercentDiv.style.fontSize = '20px';
-  winPercentDiv.style.flex = '1';
-  winPercentDiv.style.textAlign = 'left';
-  topStatsDiv.appendChild(winPercentDiv);
+  winPercentDiv.style.fontWeight = '800';
+  winPercentDiv.style.fontSize = '18px';
+  winPercentDiv.style.marginBottom = '15px';
+  winPercentDiv.style.textAlign = 'center';
+  container.appendChild(winPercentDiv);
 
-  // Total Units with icon and text
-  const totalUnitsDiv = document.createElement('div');
-  totalUnitsDiv.style.display = 'flex';
-  totalUnitsDiv.style.alignItems = 'center';
-  totalUnitsDiv.style.justifyContent = 'center';
-  totalUnitsDiv.style.flex = '1';
-  totalUnitsDiv.style.fontWeight = '900';
-  totalUnitsDiv.style.fontSize = '20px';
+  const totalText = document.createElement('div');
+  totalText.textContent = `Total Picks: ${counts.Total}`;
+  totalText.style.fontWeight = '700';
+  totalText.style.fontSize = '16px';
+  totalText.style.marginBottom = '10px';
+  totalText.style.textAlign = 'center';
+  container.appendChild(totalText);
 
-  // Decide plus or minus or pending image
-  const netUnits = counts.UnitsWin - counts.UnitsLost;
-  const plusMinusImg = document.createElement('img');
-  plusMinusImg.style.width = '24px';
-  plusMinusImg.style.height = '24px';
-  plusMinusImg.style.marginRight = '6px';
-  plusMinusImg.style.userSelect = 'none';
-  if (netUnits > 0) {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
-    plusMinusImg.alt = 'Positive Units';
-  } else if (netUnits < 0) {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
-    plusMinusImg.alt = 'Negative Units';
-  } else {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
-    plusMinusImg.alt = 'Pending Units';
-  }
-  totalUnitsDiv.appendChild(plusMinusImg);
+  const totalsRow = document.createElement('div');
+  totalsRow.style.display = 'flex';
+  totalsRow.style.justifyContent = 'center';
+  totalsRow.style.marginBottom = '20px';
 
-  const unitsTextSpan = document.createElement('span');
-  unitsTextSpan.textContent = `${Math.abs(netUnits).toFixed(2)} Unit(s)`;
-  totalUnitsDiv.appendChild(unitsTextSpan);
-  topStatsDiv.appendChild(totalUnitsDiv);
+  STATUS_VALUES.forEach(status => {
+    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
+  });
 
-  // Total Picks
-  const totalPicksDiv = document.createElement('div');
-  totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
-  totalPicksDiv.style.fontWeight = '700';
-  totalPicksDiv.style.fontSize = '20px';
-  totalPicksDiv.style.flex = '1';
-  totalPicksDiv.style.textAlign = 'right';
-  topStatsDiv.appendChild(totalPicksDiv);
-
-  container.appendChild(topStatsDiv);
-
-  // Below that, the four status blocks with units and counts, aligned evenly:
-  const statusRow = document.createElement('div');
-  statusRow.style.display = 'flex';
-  statusRow.style.justifyContent = 'space-around';
-  statusRow.style.marginTop = '15px';
-  statusRow.style.fontFamily = 'Arial, sans-serif';
-
-  // Helper to create each block
-  function createStatusBlock(name, units, count, iconSrc, iconAlt) {
-    const block = document.createElement('div');
-    block.style.textAlign = 'center';
-
-    const unitsEl = document.createElement('div');
-    unitsEl.textContent = `${units.toFixed(2)} Unit(s)`;
-    unitsEl.style.fontWeight = '700';
-    unitsEl.style.fontSize = '16px';
-    unitsEl.style.marginBottom = '4px';
-    block.appendChild(unitsEl);
-
-    const iconImg = document.createElement('img');
-    iconImg.src = iconSrc;
-    iconImg.alt = iconAlt;
-    iconImg.style.width = '50px';
-    iconImg.style.height = '50px';
-    iconImg.style.userSelect = 'none';
-    block.appendChild(iconImg);
-
-    const countEl = document.createElement('div');
-    countEl.textContent = count;
-    countEl.style.fontWeight = '700';
-    countEl.style.fontSize = '18px';
-    countEl.style.marginTop = '6px';
-    block.appendChild(countEl);
-
-    // No label text as per latest request
-
-    return block;
-  }
-
-  statusRow.appendChild(createStatusBlock('Winner', counts.UnitsWin, counts.Win, statusIcons.Win, 'Winner'));
-  statusRow.appendChild(createStatusBlock('Lost', counts.UnitsLost, counts.Lost, statusIcons.Lost, 'Lost'));
-  statusRow.appendChild(createStatusBlock('Push', counts.UnitsPush, counts.Push, statusIcons.Push, 'Push'));
-  statusRow.appendChild(createStatusBlock('Pending', counts.UnitsPending, counts.Pending, statusIcons.Pending, 'Pending'));
-
-  container.appendChild(statusRow);
+  container.appendChild(totalsRow);
 }
 
 function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
@@ -613,7 +519,7 @@ export async function loadStatsForDay(day) {
           alert("Image generation disabled on 'All' filter.");
           return;
         }
-        generateImageModal(currentDay);
+        generateImageFromStatsContainer(currentDay);
         return;
       }
 
@@ -695,31 +601,23 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
-// Generate modal with rendered HTML for image output (instead of canvas snapshot)
-async function generateImageModal(day) {
-  let picks = [];
-  try {
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-  } catch (error) {
-    alert('Failed to fetch picks for image generation.');
+// FULLY IMPLEMENTED, FIXED IMAGE GENERATION FUNCTION:
+function loadHtml2Canvas(callback) {
+  if (window.html2canvas) {
+    callback();
     return;
   }
+  const script = document.createElement('script');
+  script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+  script.onload = callback;
+  document.head.appendChild(script);
+}
 
-  const counts = computeStats(picks);
-  const longDateStr = formatLongDateEST(day);
-
-  // Create modal
-  let modal = document.getElementById('imageModal');
+function showImageModal(dataURL) {
+  let modal = document.getElementById('imageOutputModal');
   if (!modal) {
     modal = document.createElement('div');
-    modal.id = 'imageModal';
+    modal.id = 'imageOutputModal';
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
@@ -731,205 +629,179 @@ async function generateImageModal(day) {
     modal.style.justifyContent = 'center';
     modal.style.zIndex = '100000';
 
+    // container for image and close btn
     const content = document.createElement('div');
+    content.style.position = 'relative';
+    content.style.maxWidth = '95vw';
+    content.style.maxHeight = '95vh';
+    content.style.overflow = 'auto';
     content.style.backgroundColor = '#fff';
-    content.style.color = '#000';
-    content.style.padding = '20px';
     content.style.borderRadius = '10px';
-    content.style.width = '90vw';
-    content.style.maxWidth = '600px';
-    content.style.maxHeight = '90vh';
-    content.style.overflowY = 'auto';
-    content.style.fontFamily = 'Arial, sans-serif';
+    content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+    content.style.padding = '10px';
 
+    // image element
+    const img = document.createElement('img');
+    img.id = 'modalGeneratedImage';
+    img.src = dataURL;
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.display = 'block';
+    img.style.borderRadius = '8px';
+
+    // close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
-    closeBtn.style.width = '100%';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '10px';
+    closeBtn.style.padding = '6px 12px';
     closeBtn.style.backgroundColor = '#4CAF50';
     closeBtn.style.color = '#fff';
-    closeBtn.style.fontWeight = '700';
-    closeBtn.style.fontSize = '18px';
-    closeBtn.style.padding = '12px';
     closeBtn.style.border = 'none';
     closeBtn.style.borderRadius = '6px';
     closeBtn.style.cursor = 'pointer';
-    closeBtn.style.marginBottom = '10px';
+    closeBtn.style.fontWeight = '600';
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
     });
 
-    modal.appendChild(closeBtn);
+    content.appendChild(img);
+    content.appendChild(closeBtn);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
+    // Clicking outside content closes modal
     modal.addEventListener('click', e => {
       if (e.target === modal) modal.style.display = 'none';
     });
-  }
-
-  const content = modal.querySelector('div:nth-child(2)');
-  content.innerHTML = '';
-
-  // Add content to modal similar to stats summary but as plain HTML:
-
-  // Date
-  if (longDateStr) {
-    const dateDiv = document.createElement('div');
-    dateDiv.textContent = longDateStr;
-    dateDiv.style.textAlign = 'center';
-    dateDiv.style.fontSize = '14px';
-    dateDiv.style.color = '#666';
-    dateDiv.style.marginBottom = '10px';
-    content.appendChild(dateDiv);
-  }
-
-  // Top stats row
-  const topStatsDiv = document.createElement('div');
-  topStatsDiv.style.display = 'flex';
-  topStatsDiv.style.justifyContent = 'space-between';
-  topStatsDiv.style.alignItems = 'center';
-  topStatsDiv.style.marginBottom = '10px';
-  topStatsDiv.style.fontWeight = '700';
-  topStatsDiv.style.fontSize = '18px';
-
-  const winPercentDiv = document.createElement('div');
-  winPercentDiv.textContent = `Win Percentage: ${((counts.Win + counts.Lost + counts.Push) ? ((counts.Win / (counts.Win + counts.Lost + counts.Push)) * 100).toFixed(1) : '0.0')}%`;
-  winPercentDiv.style.flex = '1';
-  winPercentDiv.style.textAlign = 'left';
-  topStatsDiv.appendChild(winPercentDiv);
-
-  const netUnits = counts.UnitsWin - counts.UnitsLost;
-  const totalUnitsDiv = document.createElement('div');
-  totalUnitsDiv.style.display = 'flex';
-  totalUnitsDiv.style.alignItems = 'center';
-  totalUnitsDiv.style.justifyContent = 'center';
-  totalUnitsDiv.style.flex = '1';
-
-  const plusMinusImg = document.createElement('img');
-  plusMinusImg.style.width = '20px';
-  plusMinusImg.style.height = '20px';
-  plusMinusImg.style.marginRight = '6px';
-  plusMinusImg.style.userSelect = 'none';
-
-  if (netUnits > 0) {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
-    plusMinusImg.alt = 'Positive Units';
-  } else if (netUnits < 0) {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
-    plusMinusImg.alt = 'Negative Units';
   } else {
-    plusMinusImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
-    plusMinusImg.alt = 'Pending Units';
+    const img = document.getElementById('modalGeneratedImage');
+    img.src = dataURL;
+    modal.style.display = 'flex';
   }
-  totalUnitsDiv.appendChild(plusMinusImg);
-
-  const unitsTextSpan = document.createElement('span');
-  unitsTextSpan.textContent = `${Math.abs(netUnits).toFixed(2)} Unit(s)`;
-  totalUnitsDiv.appendChild(unitsTextSpan);
-  topStatsDiv.appendChild(totalUnitsDiv);
-
-  const totalPicksDiv = document.createElement('div');
-  totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
-  totalPicksDiv.style.flex = '1';
-  totalPicksDiv.style.textAlign = 'right';
-  topStatsDiv.appendChild(totalPicksDiv);
-
-  content.appendChild(topStatsDiv);
-
-  // Status blocks
-  const statusRow = document.createElement('div');
-  statusRow.style.display = 'flex';
-  statusRow.style.justifyContent = 'space-around';
-  statusRow.style.marginTop = '15px';
-  statusRow.style.fontFamily = 'Arial, sans-serif';
-
-  function createStatusBlock(name, units, count, iconSrc, iconAlt) {
-    const block = document.createElement('div');
-    block.style.textAlign = 'center';
-
-    const unitsEl = document.createElement('div');
-    unitsEl.textContent = `${units.toFixed(2)} Unit(s)`;
-    unitsEl.style.fontWeight = '700';
-    unitsEl.style.fontSize = '16px';
-    unitsEl.style.marginBottom = '4px';
-    block.appendChild(unitsEl);
-
-    const iconImg = document.createElement('img');
-    iconImg.src = iconSrc;
-    iconImg.alt = iconAlt;
-    iconImg.style.width = '50px';
-    iconImg.style.height = '50px';
-    iconImg.style.userSelect = 'none';
-    block.appendChild(iconImg);
-
-    const countEl = document.createElement('div');
-    countEl.textContent = count;
-    countEl.style.fontWeight = '700';
-    countEl.style.fontSize = '18px';
-    countEl.style.marginTop = '6px';
-    block.appendChild(countEl);
-
-    return block;
-  }
-
-  statusRow.appendChild(createStatusBlock('Winner', counts.UnitsWin, counts.Win, statusIcons.Win, 'Winner'));
-  statusRow.appendChild(createStatusBlock('Lost', counts.UnitsLost, counts.Lost, statusIcons.Lost, 'Lost'));
-  statusRow.appendChild(createStatusBlock('Push', counts.UnitsPush, counts.Push, statusIcons.Push, 'Push'));
-  statusRow.appendChild(createStatusBlock('Pending', counts.UnitsPending, counts.Pending, statusIcons.Pending, 'Pending'));
-
-  content.appendChild(statusRow);
-
-  // Listing picks
-  const picksList = document.createElement('div');
-  picksList.style.marginTop = '15px';
-
-  picks.forEach(({ data }) => {
-    const pickDiv = document.createElement('div');
-    pickDiv.style.border = '1px solid #ddd';
-    pickDiv.style.borderRadius = '6px';
-    pickDiv.style.padding = '8px';
-    pickDiv.style.marginBottom = '8px';
-    pickDiv.style.fontFamily = 'Arial, sans-serif';
-    pickDiv.style.color = '#333';
-
-    const teamDiv = document.createElement('div');
-    teamDiv.textContent = data.teamSelected || 'N/A';
-    teamDiv.style.fontWeight = '700';
-    pickDiv.appendChild(teamDiv);
-
-    const wagerDiv = document.createElement('div');
-    wagerDiv.textContent = data.wagerType || 'N/A';
-    wagerDiv.style.fontSize = '14px';
-    wagerDiv.style.color = '#555';
-    pickDiv.appendChild(wagerDiv);
-
-    const unitDiv = document.createElement('div');
-    unitDiv.style.fontSize = '14px';
-    unitDiv.style.color = '#555';
-    unitDiv.innerHTML = `${data.unit || 'N/A'} <br>(${data.unitUnicode || ''})`;
-    pickDiv.appendChild(unitDiv);
-
-    // Status icon on the right
-    const statusImg = document.createElement('img');
-    let status = data.gameWinLossDraw;
-    if (status === null || status === undefined || status === '' || status === 'null') {
-      status = 'Pending';
-    }
-    statusImg.src = statusIcons[status] || statusIcons.Pending;
-    statusImg.alt = status;
-    statusImg.style.width = '40px';
-    statusImg.style.height = '40px';
-    statusImg.style.float = 'right';
-
-    pickDiv.appendChild(statusImg);
-
-    picksList.appendChild(pickDiv);
-  });
-
-  content.appendChild(picksList);
-
-  modal.style.display = 'flex';
 }
 
-export { generateImageModal };
+function generateImageFromStatsContainer(day) {
+  loadHtml2Canvas(async () => {
+    let picks = [];
+    try {
+      if (day === 'all') {
+        const officialPicksRef = collection(db, 'OfficialPicks');
+        const q = query(officialPicksRef);
+        const snapshot = await getDocs(q);
+        picks = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+      } else {
+        picks = await fetchPicksByDate(day);
+      }
+    } catch (error) {
+      alert('Failed to fetch picks for image generation.');
+      return;
+    }
+
+    const finalWidth = 384;
+    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
+
+    const offscreen = document.createElement('div');
+    offscreen.style.width = `${finalWidth}px`;
+    offscreen.style.backgroundColor = '#fff';
+    offscreen.style.fontFamily = 'Arial, sans-serif';
+    offscreen.style.fontSize = '14px';
+    offscreen.style.padding = '0 10px 10px';
+    offscreen.style.position = 'relative';
+    offscreen.style.boxSizing = 'border-box';
+
+    const headerImg = document.createElement('img');
+    headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
+    headerImg.style.height = '60px';
+    headerImg.style.display = 'block';
+    headerImg.style.margin = '0 auto 10px';
+    offscreen.appendChild(headerImg);
+
+    const topButtonsDiv = document.createElement('div');
+    topButtonsDiv.style.height = '65px';
+    topButtonsDiv.style.visibility = 'hidden';
+    offscreen.appendChild(topButtonsDiv);
+
+    const longDateStr = formatLongDateEST(day);
+    if (longDateStr) {
+      const dateLabel = document.createElement('div');
+      dateLabel.textContent = longDateStr;
+      dateLabel.style.color = '#666';
+      dateLabel.style.fontSize = '12px';
+      dateLabel.style.textAlign = 'center';
+      dateLabel.style.marginBottom = '8px';
+      offscreen.appendChild(dateLabel);
+    }
+
+    const counts = computeStats(picks);
+    const summaryDiv = document.createElement('div');
+    offscreen.appendChild(summaryDiv);
+    renderStatsSummary(counts, summaryDiv);
+
+    const picksDiv = document.createElement('div');
+    picksDiv.style.border = '1px solid #ddd';
+    picksDiv.style.borderRadius = '6px';
+    picksDiv.style.padding = '5px';
+    picksDiv.style.marginTop = '10px';
+    picksDiv.style.backgroundColor = 'transparent';
+    offscreen.appendChild(picksDiv);
+    renderPickListing(picks, picksDiv);
+
+    const bottomSpacing = document.createElement('div');
+    bottomSpacing.style.height = '10px';
+    offscreen.appendChild(bottomSpacing);
+
+    const footerImg = document.createElement('img');
+    footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
+    footerImg.style.width = '100%';
+    footerImg.style.height = 'auto';
+    footerImg.style.display = 'block';
+    footerImg.style.marginTop = '10px';
+    offscreen.appendChild(footerImg);
+
+    const picksHeight = picksDiv.offsetHeight || 300;
+    const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
+    for (let i = 0; i < watermarkCount; i++) {
+      const watermark = document.createElement('img');
+      watermark.src = watermarkUrl;
+      watermark.style.width = '50px';
+      watermark.style.height = '50px';
+      watermark.style.position = 'absolute';
+      watermark.style.opacity = '0.1';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.userSelect = 'none';
+      watermark.style.zIndex = '0';
+
+      watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
+      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 50)}px`;
+
+      offscreen.appendChild(watermark);
+    }
+
+    offscreen.style.position = 'fixed';
+    offscreen.style.left = '-9999px';
+    offscreen.style.top = '-9999px';
+    document.body.appendChild(offscreen);
+
+    html2canvas(offscreen, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: null,
+      width: finalWidth,
+      windowWidth: finalWidth
+    }).then(canvas => {
+      document.body.removeChild(offscreen);
+
+      const dataURL = canvas.toDataURL('image/png');
+      showImageModal(dataURL);
+    }).catch(err => {
+      document.body.removeChild(offscreen);
+      console.error('Failed to generate image:', err);
+      alert('Failed to generate image.');
+    });
+  });
+}
+
+export { generateImageFromStatsContainer };
