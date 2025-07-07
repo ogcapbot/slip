@@ -345,11 +345,11 @@ function showTextOutputModal(textOutput) {
     const content = document.createElement('div');
     content.style.backgroundColor = '#222';
     content.style.color = '#eee';
-    content.style.padding = '100px';
+    content.style.padding = '20px';             // reduced from 100px to 20px
     content.style.borderRadius = '10px';
     content.style.width = '85vw';
     content.style.maxWidth = '500px';
-    content.style.maxHeight = '60vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '80vh';            // increased from 60vh to 80vh
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +362,8 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '70vh'; // Fill most of modal height
+    textarea.style.minHeight = '50vh';            // reduced from 70vh to 50vh
+    textarea.style.whiteSpace = 'pre-wrap';       // to preserve formatting better
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -385,9 +386,21 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', () => {
-      textarea.select();
-      document.execCommand('copy');
-      alert('Text copied to clipboard!');
+      // Use modern clipboard API if available to avoid extra line breaks issues
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+          alert('Text copied to clipboard!');
+        }).catch(err => {
+          console.error('Clipboard copy failed, falling back...', err);
+          textarea.select();
+          document.execCommand('copy');
+          alert('Text copied to clipboard!');
+        });
+      } else {
+        textarea.select();
+        document.execCommand('copy');
+        alert('Text copied to clipboard!');
+      }
     });
 
     closeBtn.addEventListener('click', () => {
