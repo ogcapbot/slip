@@ -644,7 +644,6 @@ export async function loadStatsForDay(day) {
   renderPickListing(picks, picksDiv);
 }
 
-// FULLY IMPLEMENTED, FIXED IMAGE GENERATION FUNCTION:
 function loadHtml2Canvas(callback) {
   if (window.html2canvas) {
     callback();
@@ -693,7 +692,6 @@ function showImageModal(dataURL) {
       alignItems: 'center',
     });
 
-    // Close button above header and image
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
     Object.assign(closeBtn.style, {
@@ -743,15 +741,13 @@ function showImageModal(dataURL) {
     modal.style.display = 'flex';
   }
 
-  // Adjust zoom based on canvas and viewport size to fit entire image
   const img = document.getElementById('modalGeneratedImage');
   if (!img) return;
 
-  // Wait for image to load before scaling
   img.onload = () => {
     const modalContent = img.parentElement;
     const maxW = modalContent.clientWidth;
-    const maxH = modalContent.clientHeight - (img.previousSibling ? img.previousSibling.offsetHeight : 0); // subtract close btn height
+    const maxH = modalContent.clientHeight - (img.previousSibling ? img.previousSibling.offsetHeight : 0);
 
     const naturalW = img.naturalWidth;
     const naturalH = img.naturalHeight;
@@ -759,8 +755,11 @@ function showImageModal(dataURL) {
     const scaleW = maxW / naturalW;
     const scaleH = maxH / naturalH;
 
-    // Use the smaller scale to fit inside both width and height
-    const scale = Math.min(scaleW, scaleH, 1);
+    const MAX_SCALE = 1;
+    const MIN_SCALE = 0.4;
+
+    const scaleUncapped = Math.min(scaleW, scaleH);
+    const scale = Math.min(MAX_SCALE, Math.max(scaleUncapped, MIN_SCALE));
 
     img.style.transform = `scale(${scale})`;
   };
