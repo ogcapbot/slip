@@ -297,7 +297,7 @@ function generateTextStatsOutput(day, picks) {
 ═══════════════════════
 Date: ${longDateStr}
 
-⬜ - Official Picks Total:   ${counts.Total}
+🟧 - Official Picks Total:   ${counts.Total}
 ✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%
 ❌ - Official Picks Lost:    ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%
 🟦 - Official Picks Pushed:  ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%
@@ -322,6 +322,21 @@ Status: ${getStatusEmoji(data.gameWinLossDraw)}
 All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
 Created: ${longDateTimeStr}
 `.trim();
+}
+
+// New clean text function to fix spacing issues on paste
+function cleanOutputText(text) {
+  return text
+    // Normalize line endings to \n
+    .replace(/\r\n?/g, '\n')
+    // Remove zero-width and other invisible Unicode chars
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Collapse multiple blank lines to a single blank line
+    .replace(/\n{3,}/g, '\n\n')
+    // Trim trailing spaces on each line
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n');
 }
 
 function showTextOutputModal(textOutput) {
@@ -361,7 +376,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
     textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre'; // <-- preserves formatting exactly
+    textarea.style.whiteSpace = 'pre'; // preserve formatting exactly
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -383,19 +398,25 @@ function showTextOutputModal(textOutput) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // IMPORTANT: Wrap copied text in triple backticks for Patreon markdown code block
-    copyBtn.addEventListener('click', () => {
+    copyBtn.addEventListener('click', async () => {
       const textarea = document.getElementById('textOutputArea');
       if (!textarea) return;
-      const rawText = textarea.value;
-      const textToCopy = '```' + '\n' + rawText + '\n' + '```';
+      let rawText = textarea.value;
 
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        alert('Text copied to clipboard with markdown code block formatting!');
-      }).catch(err => {
-        alert('Failed to copy text.');
-        console.error(err);
-      });
+      // Clean text before copying to clipboard
+      rawText = cleanOutputText(rawText);
+
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': new Blob([rawText], { type: 'text/plain' })
+          })
+        ]);
+        alert('Clean plain text copied to clipboard!');
+      } catch (err) {
+        console.error('Clipboard write failed:', err);
+        alert('Failed to copy plain text.');
+      }
     });
 
     closeBtn.addEventListener('click', () => {
@@ -426,7 +447,7 @@ async function showStatsAsText(day) {
     } else {
       picks = await fetchPicksByDate(day);
     }
-    
+
     const textOutput = generateTextStatsOutput(day, picks);
     showTextOutputModal(textOutput);
   } catch (error) {
