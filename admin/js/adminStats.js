@@ -659,6 +659,89 @@ function loadHtml2Canvas(callback) {
   document.head.appendChild(script);
 }
 
+function showImageModal(dataURL) {
+  let modal = document.getElementById('imageOutputModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imageOutputModal';
+    Object.assign(modal.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '100000',
+      padding: '20px',
+      boxSizing: 'border-box',
+      overflow: 'hidden', // prevent modal scroll, image will scale instead
+    });
+
+    const content = document.createElement('div');
+    Object.assign(content.style, {
+      position: 'relative',
+      maxWidth: '90vw',  // allow image to scale max 90% viewport width
+      maxHeight: '90vh', // allow image to scale max 90% viewport height
+      backgroundColor: '#fff',
+      borderRadius: '10px',
+      boxShadow: '0 0 15px rgba(0,0,0,0.5)',
+      padding: '10px',
+      boxSizing: 'border-box',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    });
+
+    const img = document.createElement('img');
+    img.id = 'modalGeneratedImage';
+    img.src = dataURL;
+    Object.assign(img.style, {
+      maxWidth: '100%',
+      maxHeight: '100%',
+      width: 'auto',
+      height: 'auto',
+      display: 'block',
+      borderRadius: '8px',
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    Object.assign(closeBtn.style, {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      padding: '6px 12px',
+      backgroundColor: '#4CAF50',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontWeight: '600',
+      zIndex: '10'
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    content.appendChild(img);
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+  } else {
+    const img = document.getElementById('modalGeneratedImage');
+    img.src = dataURL;
+    modal.style.display = 'flex';
+  }
+}
+
 function generateImageFromStatsContainer(day) {
   loadHtml2Canvas(async () => {
     let picks = [];
@@ -770,27 +853,7 @@ function generateImageFromStatsContainer(day) {
     }).then(canvas => {
       document.body.removeChild(offscreen);
 
-      const dataURL = canvas.toDataURL('image/png');
-
-      document.body.innerHTML = '';
-      document.body.style.margin = '0';
-      document.body.style.backgroundColor = '#fff';
-      document.body.style.display = 'flex';
-      document.body.style.justifyContent = 'center';
-      document.body.style.alignItems = 'center';
-      document.body.style.height = '100vh';
-      document.body.style.overflow = 'hidden';
-
-      const img = document.createElement('img');
-      img.src = dataURL;
-      img.style.width = canvas.width + 'px';
-      img.style.height = 'auto';
-      img.style.maxWidth = '100vw';
-      img.style.borderRadius = '12px';
-      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
-      img.style.userSelect = 'none';
-
-      document.body.appendChild(img);
+      showImageModal(canvas.toDataURL('image/png'));
     }).catch(err => {
       document.body.removeChild(offscreen);
       console.error('Failed to generate image:', err);
