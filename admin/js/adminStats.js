@@ -385,41 +385,18 @@ function showTextOutputModal(textOutput) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
+    // UPDATED COPY BUTTON HANDLER: COPY RAW TEXT WITHOUT MODIFICATIONS
     copyBtn.addEventListener('click', () => {
-      let textToCopy = textarea.value;
+      const textarea = document.getElementById('textOutputArea');
+      if (!textarea) return;
+      const textToCopy = textarea.value;
 
-      // Remove carriage returns and zero-width and special invisible characters
-      textToCopy = textToCopy.replace(/\r/g, '')
-                             .replace(/[\u200B\u200C\u200D\u200E\u200F\u00A0]/g, '');
-
-      // Collapse multiple newlines into one
-      textToCopy = textToCopy.replace(/\n{2,}/g, '\n');
-
-      // Trim trailing spaces on each line
-      textToCopy = textToCopy
-        .split('\n')
-        .map(line => line.trimEnd())
-        .join('\n');
-
-      // Add markdown hard line break (two trailing spaces) to each line and double newline after each line
-      // This forces Patreon to respect single line breaks with minimal spacing
-      textToCopy = textToCopy
-        .split('\n')
-        .map(line => line + '  ')  // two spaces at end for markdown line break
-        .join('\n\n');             // double newline between lines
-
-      // Use hidden input to copy clean text (avoid textarea clipboard quirks)
-      const hiddenInput = document.createElement('input');
-      hiddenInput.type = 'text';
-      hiddenInput.style.position = 'fixed';
-      hiddenInput.style.left = '-9999px';
-      hiddenInput.value = textToCopy;
-      document.body.appendChild(hiddenInput);
-      hiddenInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(hiddenInput);
-
-      alert('Text copied to clipboard!');
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('Text copied to clipboard!');
+      }).catch(err => {
+        alert('Failed to copy text.');
+        console.error(err);
+      });
     });
 
     closeBtn.addEventListener('click', () => {
