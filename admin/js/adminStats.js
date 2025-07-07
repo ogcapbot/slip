@@ -62,29 +62,18 @@ function computeStats(picks) {
     Lost: 0,
     Push: 0,
     Pending: 0,
-    Total: picks.length,
-    UnitsWin: 0,
-    UnitsLost: 0,
-    UnitsPush: 0,
-    UnitsPending: 0
+    Total: picks.length
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
-    const units = parseFloat(data.unit) || 0;
-
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
-      counts.UnitsPending += units;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
-      if(val === 'Win') counts.UnitsWin += units;
-      else if(val === 'Lost') counts.UnitsLost += units;
-      else if(val === 'Push') counts.UnitsPush += units;
     }
   });
 
-  counts.TotalUnits = counts.UnitsWin - counts.UnitsLost;
   return counts;
 }
 
@@ -142,60 +131,22 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  // Container for first line: win % left, total picks right
-  const line1 = document.createElement('div');
-  line1.style.display = 'flex';
-  line1.style.justifyContent = 'space-between';
-  line1.style.marginBottom = '4px';
-
   const winPercentDiv = document.createElement('div');
   winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
   winPercentDiv.style.fontWeight = '800';
-  winPercentDiv.style.fontSize = '16px';
-  winPercentDiv.style.flex = '1';
-  winPercentDiv.style.textAlign = 'left';
+  winPercentDiv.style.fontSize = '18px';
+  winPercentDiv.style.marginBottom = '15px';
+  winPercentDiv.style.textAlign = 'center';
+  container.appendChild(winPercentDiv);
 
-  const totalPicksDiv = document.createElement('div');
-  totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
-  totalPicksDiv.style.fontWeight = '800';
-  totalPicksDiv.style.fontSize = '16px';
-  totalPicksDiv.style.flex = '1';
-  totalPicksDiv.style.textAlign = 'right';
+  const totalText = document.createElement('div');
+  totalText.textContent = `Total Picks: ${counts.Total}`;
+  totalText.style.fontWeight = '700';
+  totalText.style.fontSize = '16px';
+  totalText.style.marginBottom = '10px';
+  totalText.style.textAlign = 'center';
+  container.appendChild(totalText);
 
-  line1.appendChild(winPercentDiv);
-  line1.appendChild(totalPicksDiv);
-  container.appendChild(line1);
-
-  // Container for second line: total units center (smaller font now)
-  const line2 = document.createElement('div');
-  line2.style.textAlign = 'center';
-  line2.style.fontWeight = '900';
-  line2.style.fontSize = '20px';
-  line2.style.marginBottom = '16px';
-
-  const unitsSignImg = document.createElement('img');
-  unitsSignImg.style.width = '20px';
-  unitsSignImg.style.height = '20px';
-  unitsSignImg.style.verticalAlign = 'middle';
-  unitsSignImg.style.marginRight = '6px';
-
-  if(counts.TotalUnits > 0) {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
-  } else if(counts.TotalUnits < 0) {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
-  } else {
-    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
-  }
-
-  const unitsText = document.createElement('span');
-  unitsText.textContent = `${counts.TotalUnits.toFixed(2)} Unit(s)`;
-  unitsText.style.verticalAlign = 'middle';
-
-  line2.appendChild(unitsSignImg);
-  line2.appendChild(unitsText);
-  container.appendChild(line2);
-
-  // Container for bottom status summary icons (without label text)
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
@@ -337,11 +288,14 @@ function generateTextStatsOutput(day, picks) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
+  const longDateStr = formatLongDateEST(day);
+  const longDateTimeStr = formatLongDateTimeEST();
+
   return `
 ═══════════════════════
 ######## OFFICIAL STATS
 ═══════════════════════
-Date: ${formatLongDateEST(day)}
+Date: ${longDateStr}
 
 🟧 - Official Picks Total:   ${counts.Total}
 ✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%
@@ -366,7 +320,7 @@ Status: ${getStatusEmoji(data.gameWinLossDraw)}
 ######## STRICT CONFIDENTIALITY NOTICE
 ═══════════════════════
 All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
-Created: ${formatLongDateTimeEST()}
+Created: ${longDateTimeStr}
 `.trim();
 }
 
@@ -637,8 +591,8 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = 'none'; // allow to grow indefinitely, no scroll
-  picksDiv.style.overflowY = 'visible';
+  picksDiv.style.maxHeight = '400px';
+  picksDiv.style.overflowY = 'auto';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
@@ -657,6 +611,76 @@ function loadHtml2Canvas(callback) {
   script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
   script.onload = callback;
   document.head.appendChild(script);
+}
+
+function showImageModal(dataURL) {
+  let modal = document.getElementById('imageOutputModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imageOutputModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '100000';
+
+    // container for image and close btn
+    const content = document.createElement('div');
+    content.style.position = 'relative';
+    content.style.maxWidth = '95vw';
+    content.style.maxHeight = '95vh';
+    content.style.overflow = 'auto';
+    content.style.backgroundColor = '#fff';
+    content.style.borderRadius = '10px';
+    content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+    content.style.padding = '10px';
+
+    // image element
+    const img = document.createElement('img');
+    img.id = 'modalGeneratedImage';
+    img.src = dataURL;
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.display = 'block';
+    img.style.borderRadius = '8px';
+
+    // close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '10px';
+    closeBtn.style.right = '10px';
+    closeBtn.style.padding = '6px 12px';
+    closeBtn.style.backgroundColor = '#4CAF50';
+    closeBtn.style.color = '#fff';
+    closeBtn.style.border = 'none';
+    closeBtn.style.borderRadius = '6px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.fontWeight = '600';
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    content.appendChild(img);
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Clicking outside content closes modal
+    modal.addEventListener('click', e => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+  } else {
+    const img = document.getElementById('modalGeneratedImage');
+    img.src = dataURL;
+    modal.style.display = 'flex';
+  }
 }
 
 function generateImageFromStatsContainer(day) {
@@ -771,26 +795,7 @@ function generateImageFromStatsContainer(day) {
       document.body.removeChild(offscreen);
 
       const dataURL = canvas.toDataURL('image/png');
-
-      document.body.innerHTML = '';
-      document.body.style.margin = '0';
-      document.body.style.backgroundColor = '#fff';
-      document.body.style.display = 'flex';
-      document.body.style.justifyContent = 'center';
-      document.body.style.alignItems = 'center';
-      document.body.style.height = '100vh';
-      document.body.style.overflow = 'hidden';
-
-      const img = document.createElement('img');
-      img.src = dataURL;
-      img.style.width = canvas.width + 'px';
-      img.style.height = 'auto';
-      img.style.maxWidth = '100vw';
-      img.style.borderRadius = '12px';
-      img.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
-      img.style.userSelect = 'none';
-
-      document.body.appendChild(img);
+      showImageModal(dataURL);
     }).catch(err => {
       document.body.removeChild(offscreen);
       console.error('Failed to generate image:', err);
