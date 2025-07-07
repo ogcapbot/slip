@@ -363,7 +363,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
     textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre-wrap';
+    textarea.style.whiteSpace = 'pre'; // <-- changed here to pre to preserve exact formatting
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -385,7 +385,6 @@ function showTextOutputModal(textOutput) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    // UPDATED COPY BUTTON HANDLER: COPY RAW TEXT WITHOUT MODIFICATIONS
     copyBtn.addEventListener('click', () => {
       const textarea = document.getElementById('textOutputArea');
       if (!textarea) return;
