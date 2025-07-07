@@ -292,39 +292,40 @@ function generateTextStatsOutput(day, picks) {
   const longDateTimeStr = formatLongDateTimeEST();
 
   let output = '';
-  output += `═══════════════════════`;
-  output += `\n######## OFFICIAL STATS`;
-  output += `\n═══════════════════════`;
-  output += `\nDate: ${longDateStr}\n`;
-  output += `\n∑ - Official Picks Total:   ${counts.Total}`;
-  output += `\n✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%`;
-  output += `\n❌ - Official Picks Lost:    ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `\n🟦 - Official Picks Pushed:  ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `\n⚙️ - Official Picks Pending: ${counts.Pending}\n`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL STATS\n`;
+  output += `═══════════════════════\n`;
+  output += `Date: ${longDateStr}\n\n`;
+  output += `∑ - Official Picks Total:   ${counts.Total}\n`;
+  output += `✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%\n`;
+  output += `❌ - Official Picks Lost:    ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%\n`;
+  output += `🟦 - Official Picks Pushed:  ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%\n`;
+  output += `⚙️ - Official Picks Pending: ${counts.Pending}\n\n`;
 
-  output += `═══════════════════════`;
-  output += `\n######## OFFICIAL PICKS`;
-  output += `\n═══════════════════════`;
+  output += `═══════════════════════\n`;
+  output += `######## OFFICIAL PICKS\n`;
+  output += `═══════════════════════\n`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
-    output += `\n═══════════════════════`;
-    output += `\n${data.teamSelected}`;
-    output += `\n${data.wagerType}`;
-    output += `\n${data.unit}`;
-    output += `\nStatus: ${emoji}`;
+    output += `═══════════════════════\n`;
+    output += `${data.teamSelected}\n`;
+    output += `${data.wagerType}\n`;
+    output += `${data.unit}\n`;
+    output += `Status: ${emoji}\n`;
   });
 
-  output += `\n═══════════════════════`;
-  output += `\n######## THANK YOU FOR TRUSTING OGCB`;
-  output += `\n═══════════════════════`;
-  output += `\n######## STRICT CONFIDENTIALITY NOTICE`;
-  output += `\n═══════════════════════`;
-  output += `\nAll OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-  output += `\nCreated: ${longDateTimeStr}`;
+  output += `═══════════════════════\n`;
+  output += `######## THANK YOU FOR TRUSTING OGCB\n`;
+  output += `═══════════════════════\n`;
+  output += `######## STRICT CONFIDENTIALITY NOTICE\n`;
+  output += `═══════════════════════\n`;
+  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
+  output += `Created: ${longDateTimeStr}\n`;
 
   return output;
 }
+
 
 function showTextOutputModal(textOutput) {
   let modal = document.getElementById('textOutputModal');
