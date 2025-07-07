@@ -297,7 +297,7 @@ function generateTextStatsOutput(day, picks) {
 ═══════════════════════
 Date: ${longDateStr}
 
-∑ - Official Picks Total:   ${counts.Total}
+⬜ - Official Picks Total:   ${counts.Total}
 ✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%
 ❌ - Official Picks Lost:    ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%
 🟦 - Official Picks Pushed:  ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%
