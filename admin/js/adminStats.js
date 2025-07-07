@@ -363,7 +363,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
     textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre'; // <-- changed here to pre to preserve exact formatting
+    textarea.style.whiteSpace = 'pre'; // <-- preserves formatting exactly
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
@@ -385,13 +385,15 @@ function showTextOutputModal(textOutput) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
+    // IMPORTANT: Wrap copied text in triple backticks for Patreon markdown code block
     copyBtn.addEventListener('click', () => {
       const textarea = document.getElementById('textOutputArea');
       if (!textarea) return;
-      const textToCopy = textarea.value;
+      const rawText = textarea.value;
+      const textToCopy = '```' + '\n' + rawText + '\n' + '```';
 
       navigator.clipboard.writeText(textToCopy).then(() => {
-        alert('Text copied to clipboard!');
+        alert('Text copied to clipboard with markdown code block formatting!');
       }).catch(err => {
         alert('Failed to copy text.');
         console.error(err);
