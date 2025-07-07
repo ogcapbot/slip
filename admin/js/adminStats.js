@@ -399,25 +399,27 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', async () => {
-      const textarea = document.getElementById('textOutputArea');
-      if (!textarea) return;
-      let rawText = textarea.value;
+  const textarea = document.getElementById('textOutputArea');
+  if (!textarea) return;
+  const rawText = textarea.value;
 
-      // Clean text before copying to clipboard
-      rawText = cleanOutputText(rawText);
+  // Convert line breaks to <br> for HTML clipboard
+  const htmlText = rawText.replace(/\n/g, '<br>');
 
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/plain': new Blob([rawText], { type: 'text/plain' })
-          })
-        ]);
-        alert('Clean plain text copied to clipboard!');
-      } catch (err) {
-        console.error('Clipboard write failed:', err);
-        alert('Failed to copy plain text.');
-      }
-    });
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([htmlText], { type: 'text/html' }),
+        'text/plain': new Blob([rawText], { type: 'text/plain' }),
+      })
+    ]);
+    alert('Copied text with HTML line breaks to clipboard!');
+  } catch (err) {
+    console.error('Clipboard write failed:', err);
+    alert('Failed to copy.');
+  }
+});
+
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
