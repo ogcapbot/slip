@@ -293,34 +293,35 @@ function generateTextStatsOutput(day, picks) {
 
   let output = '';
   output += `═══════════════════════`;
-  output += `######## OFFICIAL STATS`;
-  output += `═══════════════════════`;
-  output += `Date: ${longDateStr}\n`;
-  output += `∑ - Official Picks Total: ${counts.Total}`;
-  output += `✅ - Official Pick Winners: ${counts.Win} - ${winPercent}%`;
-  output += `❌ - Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `🟦 - Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `⚙️ - Official Picks Pending : ${counts.Pending}\n`;
+  output += `\n######## OFFICIAL STATS`;
+  output += `\n═══════════════════════`;
+  output += `\nDate: ${longDateStr}\n`;
+  output += `\n∑\t\t- Official Picks Total: ${counts.Total}`;
+  output += `\n✅\t\t- Official Pick Winners: ${counts.Win} - ${winPercent}%`;
+  output += `\n❌\t\t- Official Picks Lost: ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%`;
+  output += `\n🟦\t\t- Official Picks Pushed: ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%`;
+  output += `\n⚙️\t\t- Official Picks Pending : ${counts.Pending}\n`;
 
   output += `═══════════════════════`;
-  output += `######## OFFICIAL PICKS`;
-  output += `═══════════════════════`;
+  output += `\n######## OFFICIAL PICKS`;
+  output += `\n═══════════════════════`;
 
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
     output += `═══════════════════════`;
-    output += `${data.teamSelected || 'N/A'}`;
-    output += `${data.wagerType || 'N/A'}`;
-    output += `${emoji} - ${data.unit || 'N/A'}`;
+    output += `\n${data.teamSelected}`;
+    output += `\t\t\t${emoji} - ${data.unit}`;
+    output += `\n${data.wagerType}`;
+//    output += `${emoji} - ${data.unit}`;
   });
 
-  output += `═══════════════════════`;
-  output += `######## THANK YOU FOR TRUSTING OGCB`;
-  output += `═══════════════════════`;
-  output += `######## STRICT CONFIDENTIALITY NOTICE`;
-  output += `═══════════════════════`;
-  output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
-  output += `\nCreated: ${longDateTimeStr}\n`;
+  output += `\n═══════════════════════`;
+  output += `\n######## THANK YOU FOR TRUSTING OGCB`;
+  output += `\n═══════════════════════`;
+  output += `\n######## STRICT CONFIDENTIALITY NOTICE`;
+  output += `\n═══════════════════════`;
+  output += `\nAll OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.`;
+  output += `\nCreated: ${longDateTimeStr}`;
 
   return output;
 }
@@ -333,8 +334,8 @@ function showTextOutputModal(textOutput) {
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
-    modal.style.width = '85vw';
-    modal.style.height = '85vh';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
     modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
@@ -346,9 +347,9 @@ function showTextOutputModal(textOutput) {
     content.style.color = '#eee';
     content.style.padding = '20px';
     content.style.borderRadius = '10px';
-    content.style.width = '90vw';
-    content.style.maxWidth = '600px';
-    content.style.maxHeight = '70vh'; // Tweak here for 80% viewport height
+    content.style.width = '80vw';
+    content.style.maxWidth = '400px';
+    content.style.maxHeight = '65vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
