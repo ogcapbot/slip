@@ -693,6 +693,8 @@ function showImageModal(dataURL) {
       overflow: 'auto',
       width: 'auto',
       height: 'auto',
+      minWidth: '400px',   // Minimum modal width to prevent tiny images
+      minHeight: '400px',  // Minimum modal height for aesthetics
     });
 
     const closeBtn = document.createElement('button');
@@ -758,16 +760,24 @@ function showImageModal(dataURL) {
     const scaleH = maxH / naturalH;
 
     const MAX_SCALE = 1;
-    const MIN_SCALE = 0.4;
+    const MIN_SCALE = 0.6;  // Higher minimum scale for better visibility
 
-    const scaleUncapped = Math.min(scaleW, scaleH);
-    const scale = Math.min(MAX_SCALE, Math.max(scaleUncapped, MIN_SCALE));
+    let scaleUncapped = Math.min(scaleW, scaleH);
+
+    // Ensure scale is never less than MIN_SCALE
+    let scale = Math.min(MAX_SCALE, Math.max(scaleUncapped, MIN_SCALE));
 
     img.style.transform = `scale(${scale})`;
 
-    // Adjust modal content size dynamically based on scaled image size
-    modalContent.style.width = `${naturalW * scale + 40}px`; // + padding approx
-    modalContent.style.height = `${naturalH * scale + 70}px`; // + close button + padding
+    // Adjust modal content size to fit scaled image + padding + close btn
+    modalContent.style.width = `${naturalW * scale + 40}px`;
+    modalContent.style.height = `${naturalH * scale + 70}px`;
+
+    // Clamp modal content size to viewport max (95vw, 95vh)
+    const vw = window.innerWidth * 0.95;
+    const vh = window.innerHeight * 0.95;
+    if (modalContent.offsetWidth > vw) modalContent.style.width = `${vw}px`;
+    if (modalContent.offsetHeight > vh) modalContent.style.height = `${vh}px`;
   };
 }
 
