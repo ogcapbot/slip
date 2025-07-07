@@ -323,8 +323,7 @@ function generateTextStatsOutput(day, picks) {
   output += `All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.\n`;
   output += `Created: ${longDateTimeStr}\n`;
 
-  // Wrap entire output in triple backticks for markdown code block
-  return '```\n' + output + '\n```';
+  return output;
 }
 
 function showTextOutputModal(textOutput) {
@@ -389,8 +388,11 @@ function showTextOutputModal(textOutput) {
     copyBtn.addEventListener('click', () => {
       let textToCopy = textarea.value;
 
-      // Normalize all newlines to CRLF for better compatibility
-      textToCopy = textToCopy.replace(/\r?\n/g, '\r\n');
+      // Remove all carriage returns \r
+      textToCopy = textToCopy.replace(/\r/g, '');
+
+      // Replace 2 or more newlines with a single newline
+      textToCopy = textToCopy.replace(/\n{2,}/g, '\n');
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textToCopy).then(() => {
