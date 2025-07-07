@@ -63,27 +63,28 @@ function computeStats(picks) {
     Push: 0,
     Pending: 0,
     Total: picks.length,
-    units: {
-      Win: 0,
-      Lost: 0,
-      Push: 0,
-      Pending: 0,
-    }
+    UnitsWin: 0,
+    UnitsLost: 0,
+    UnitsPush: 0,
+    UnitsPending: 0
   };
 
   picks.forEach(({ data }) => {
     const val = data.gameWinLossDraw;
-    const unitVal = parseFloat(data.unit) || 0;
+    const units = parseFloat(data.unit) || 0;
 
     if (val === null || val === undefined || val === '' || val === 'null') {
       counts.Pending++;
-      counts.units.Pending += unitVal;
+      counts.UnitsPending += units;
     } else if (STATUS_VALUES.includes(val)) {
       counts[val]++;
-      counts.units[val] += unitVal;
+      if(val === 'Win') counts.UnitsWin += units;
+      else if(val === 'Lost') counts.UnitsLost += units;
+      else if(val === 'Push') counts.UnitsPush += units;
     }
   });
 
+  counts.TotalUnits = counts.UnitsWin - counts.UnitsLost;
   return counts;
 }
 
@@ -108,22 +109,13 @@ function formatLongDateEST(day) {
   });
 }
 
-function createStatusSummaryIcon(status, count, units) {
+function createStatusSummaryIcon(status, count) {
   const container = document.createElement('div');
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.alignItems = 'center';
   container.style.margin = '0 20px';
   container.style.cursor = 'default';
-
-  // Units display above icon
-  const unitsEl = document.createElement('div');
-  unitsEl.textContent = `${units.toFixed(2)} Unit(s)`;
-  unitsEl.style.fontWeight = '600';
-  unitsEl.style.fontSize = '13px';
-  unitsEl.style.marginBottom = '6px';
-  unitsEl.style.whiteSpace = 'nowrap'; // prevent wrapping
-  container.appendChild(unitsEl);
 
   const img = document.createElement('img');
   img.src = statusIcons[status];
@@ -132,48 +124,24 @@ function createStatusSummaryIcon(status, count, units) {
   img.style.width = '50px';
   img.style.height = '50px';
   img.style.marginBottom = '6px';
+
+  const text = document.createElement('span');
+  text.textContent = count;
+  text.style.fontWeight = '700';
+  text.style.fontSize = '16px';
+
+  const label = document.createElement('span');
+  label.textContent = status === 'Win' ? 'Wins' : status === 'Lost' ? 'Lost' : status === 'Push' ? 'Pushes' : 'Pending';
+  label.style.fontSize = '12px';
+  label.style.color = '#444';
+  label.style.marginTop = '4px';
+
   container.appendChild(img);
-
-  const countText = document.createElement('span');
-  countText.textContent = count;
-  countText.style.fontWeight = '700';
-  countText.style.fontSize = '16px';
-  container.appendChild(countText);
-
-  // Label below count
-  const labelText = document.createElement('span');
-  labelText.style.fontWeight = '600';
-  labelText.style.fontSize = '12px';
-  labelText.style.color = '#333';
-  labelText.style.marginTop = '2px';
-
-  switch (status) {
-    case 'Win':
-      labelText.textContent = 'Wins';
-      break;
-    case 'Lost':
-      labelText.textContent = 'Lost';
-      break;
-    case 'Push':
-      labelText.textContent = 'Pushes';
-      break;
-    case 'Pending':
-      labelText.textContent = 'Pending';
-      break;
-    default:
-      labelText.textContent = '';
-  }
-
-  container.appendChild(labelText);
+  container.appendChild(text);
+  container.appendChild(label);
 
   return container;
 }
-
-const totalUnitsImages = {
-  plus: 'https://capper.ogcapperbets.com/admin/images/plus.png',
-  minus: 'https://capper.ogcapperbets.com/admin/images/minus.png',
-  pending: 'https://capper.ogcapperbets.com/admin/images/grayPending.png',
-};
 
 function renderStatsSummary(counts, container) {
   container.innerHTML = '';
@@ -181,68 +149,67 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  const totalUnits = counts.units.Win - counts.units.Lost;
-  let totalUnitsIcon = totalUnits > 0 ? totalUnitsImages.plus
-                      : totalUnits < 0 ? totalUnitsImages.minus
-                      : totalUnitsImages.pending;
+  // Container for first line: win % left, total picks right
+  const line1 = document.createElement('div');
+  line1.style.display = 'flex';
+  line1.style.justifyContent = 'space-between';
+  line1.style.marginBottom = '4px';
 
-  const topLine = document.createElement('div');
-  topLine.style.display = 'flex';
-  topLine.style.justifyContent = 'space-between';
-  topLine.style.alignItems = 'center';
-  topLine.style.marginBottom = '10px';
+  const winPercentDiv = document.createElement('div');
+  winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
+  winPercentDiv.style.fontWeight = '800';
+  winPercentDiv.style.fontSize = '16px';
+  winPercentDiv.style.flex = '1';
+  winPercentDiv.style.textAlign = 'left';
 
-  // Left: Win Percentage (smaller font)
-  const winPercentEl = document.createElement('div');
-  winPercentEl.style.fontWeight = '600';
-  winPercentEl.style.fontSize = '14px';
-  winPercentEl.textContent = `Win Percentage: ${winPercent}%`;
-  winPercentEl.style.flex = '1';
-  winPercentEl.style.textAlign = 'left';
+  const totalPicksDiv = document.createElement('div');
+  totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
+  totalPicksDiv.style.fontWeight = '800';
+  totalPicksDiv.style.fontSize = '16px';
+  totalPicksDiv.style.flex = '1';
+  totalPicksDiv.style.textAlign = 'right';
 
-  // Center: Total Units (larger font)
-  const totalUnitsEl = document.createElement('div');
-  totalUnitsEl.style.display = 'flex';
-  totalUnitsEl.style.alignItems = 'center';
-  totalUnitsEl.style.gap = '4px'; // tighter gap so icon closer to number
-  totalUnitsEl.style.fontWeight = '700';
-  totalUnitsEl.style.fontSize = '20px';
-  totalUnitsEl.style.flex = '1';
-  totalUnitsEl.style.justifyContent = 'center';
+  line1.appendChild(winPercentDiv);
+  line1.appendChild(totalPicksDiv);
+  container.appendChild(line1);
 
-  const unitsImg = document.createElement('img');
-  unitsImg.src = totalUnitsIcon;
-  unitsImg.alt = totalUnits > 0 ? 'Plus' : totalUnits < 0 ? 'Minus' : 'Pending';
-  unitsImg.style.height = '20px';
-  unitsImg.style.width = 'auto';
-  totalUnitsEl.appendChild(unitsImg);
+  // Container for second line: total units center
+  const line2 = document.createElement('div');
+  line2.style.textAlign = 'center';
+  line2.style.fontWeight = '900';
+  line2.style.fontSize = '28px';
+  line2.style.marginBottom = '16px';
+
+  const unitsSignImg = document.createElement('img');
+  unitsSignImg.style.width = '20px';
+  unitsSignImg.style.height = '20px';
+  unitsSignImg.style.verticalAlign = 'middle';
+  unitsSignImg.style.marginRight = '6px';
+
+  if(counts.TotalUnits > 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/plus.png';
+  } else if(counts.TotalUnits < 0) {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/minus.png';
+  } else {
+    unitsSignImg.src = 'https://capper.ogcapperbets.com/admin/images/grayPending.png';
+  }
 
   const unitsText = document.createElement('span');
-  unitsText.textContent = `Total Units: ${totalUnits.toFixed(2)}`;
-  totalUnitsEl.appendChild(unitsText);
+  unitsText.textContent = `${counts.TotalUnits.toFixed(2)} Unit(s)`;
+  unitsText.style.verticalAlign = 'middle';
 
-  // Right: Total Picks (normal font)
-  const totalPicksEl = document.createElement('div');
-  totalPicksEl.style.fontWeight = '600';
-  totalPicksEl.style.fontSize = '16px';
-  totalPicksEl.textContent = `Total Picks: ${counts.Total}`;
-  totalPicksEl.style.flex = '1';
-  totalPicksEl.style.textAlign = 'right';
+  line2.appendChild(unitsSignImg);
+  line2.appendChild(unitsText);
+  container.appendChild(line2);
 
-  topLine.appendChild(winPercentEl);
-  topLine.appendChild(totalUnitsEl);
-  topLine.appendChild(totalPicksEl);
-
-  container.appendChild(topLine);
-
-  // The bottom row with icons & counts remains the same
+  // Container for bottom status summary icons
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
   totalsRow.style.marginBottom = '20px';
 
   STATUS_VALUES.forEach(status => {
-    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0, counts.units[status] || 0));
+    totalsRow.appendChild(createStatusSummaryIcon(status, counts[status] || 0));
   });
 
   container.appendChild(totalsRow);
@@ -413,7 +380,7 @@ Created: ${formatLongDateTimeEST()}
 // New clean text function to fix spacing issues on paste
 function cleanOutputText(text) {
   return text
-    // Normalize line endings to \n
+    // Normalize line Endings to \n
     .replace(/\r\n?/g, '\n')
     // Remove zero-width and other invisible Unicode chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
@@ -677,8 +644,8 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = 'none'; // Allow height to grow with content (no scroll bar)
-  picksDiv.style.overflowY = 'visible'; // Show all picks without internal scroll
+  picksDiv.style.maxHeight = 'none'; // allow to grow indefinitely, no scroll
+  picksDiv.style.overflowY = 'visible';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
