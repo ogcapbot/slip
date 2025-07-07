@@ -276,10 +276,10 @@ function formatLongDateTimeEST() {
 
 function getStatusEmoji(status) {
   switch (status) {
-    case 'Win': return '✅';
-    case 'Lost': return '❌';
-    case 'Push': return '🟦';
-    default: return '⚙️';
+    case 'Win': return '✅ - Win';
+    case 'Lost': return '❌ - Lost';
+    case 'Push': return '🟦 - Push';
+    default: return '⚙️ - Pending';
   }
 }
 
@@ -296,11 +296,11 @@ function generateTextStatsOutput(day, picks) {
   output += `\n######## OFFICIAL STATS`;
   output += `\n═══════════════════════`;
   output += `\nDate: ${longDateStr}\n`;
-  output += `\n∑ - Official Picks Total: \t${counts.Total}`;
-  output += `\n✅ - Official Pick Winners: \t${counts.Win} - ${winPercent}%`;
-  output += `\n❌ - Official Picks Lost: \t${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `\n🟦 - Official Picks Pushed: \t${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%`;
-  output += `\n⚙️ - Official Picks Pending: \t${counts.Pending}\n`;
+  output += `\n∑ - Official Picks Total:   ${counts.Total}`;
+  output += `\n✅ - Official Pick Winners:  ${counts.Win} - ${winPercent}%`;
+  output += `\n❌ - Official Picks Lost:    ${counts.Lost} - ${counts.Lost && completed ? ((counts.Lost / completed) * 100).toFixed(1) : '0.0'}%`;
+  output += `\n🟦 - Official Picks Pushed:  ${counts.Push} - ${counts.Push && completed ? ((counts.Push / completed) * 100).toFixed(1) : '0.0'}%`;
+  output += `\n⚙️ - Official Picks Pending: ${counts.Pending}\n`;
 
   output += `═══════════════════════`;
   output += `\n######## OFFICIAL PICKS`;
@@ -309,10 +309,10 @@ function generateTextStatsOutput(day, picks) {
   picks.forEach(({ data }) => {
     const emoji = getStatusEmoji(data.gameWinLossDraw);
     output += `\n═══════════════════════`;
-    output += `\n${data.teamSelected} \t${emoji}`;
- //   output += `\t\t${emoji}`;
+    output += `\n${data.teamSelected}`;
     output += `\n${data.wagerType}`;
     output += `\n${data.unit}`;
+    output += `\nStatus: ${emoji}`;
   });
 
   output += `\n═══════════════════════`;
