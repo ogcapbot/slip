@@ -327,7 +327,7 @@ Created: ${longDateTimeStr}
 // New clean text function to fix spacing issues on paste
 function cleanOutputText(text) {
   return text
-    // Normalize line endings to \n
+    // Normalize line Endings to \n
     .replace(/\r\n?/g, '\n')
     // Remove zero-width and other invisible Unicode chars
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
@@ -399,27 +399,26 @@ function showTextOutputModal(textOutput) {
     document.body.appendChild(modal);
 
     copyBtn.addEventListener('click', async () => {
-  const textarea = document.getElementById('textOutputArea');
-  if (!textarea) return;
-  const rawText = textarea.value;
+      const textarea = document.getElementById('textOutputArea');
+      if (!textarea) return;
+      const rawText = textarea.value;
 
-  // Convert line breaks to <br> for HTML clipboard
-  const htmlText = rawText.replace(/\n/g, '<br>');
+      // Convert line breaks to <br> for HTML clipboard
+      const htmlText = rawText.replace(/\n/g, '<br>');
 
-  try {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': new Blob([htmlText], { type: 'text/html' }),
-        'text/plain': new Blob([rawText], { type: 'text/plain' }),
-      })
-    ]);
-    alert('Copied text with HTML line breaks to clipboard!');
-  } catch (err) {
-    console.error('Clipboard write failed:', err);
-    alert('Failed to copy.');
-  }
-});
-
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([htmlText], { type: 'text/html' }),
+            'text/plain': new Blob([rawText], { type: 'text/plain' }),
+          })
+        ]);
+        alert('Copied text with HTML line breaks to clipboard!');
+      } catch (err) {
+        console.error('Clipboard write failed:', err);
+        alert('Failed to copy.');
+      }
+    });
 
     closeBtn.addEventListener('click', () => {
       modal.style.display = 'none';
@@ -592,8 +591,9 @@ export async function loadStatsForDay(day) {
   renderStatsSummary(counts, summaryDiv);
 
   const picksDiv = document.createElement('div');
-  picksDiv.style.maxHeight = '400px';
-  picksDiv.style.overflowY = 'auto';
+  // REMOVED SCROLLING RESTRICTION HERE TO ALLOW FULL PAGE SCROLLING
+  // picksDiv.style.maxHeight = '400px';
+  // picksDiv.style.overflowY = 'auto';
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
