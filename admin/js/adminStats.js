@@ -673,14 +673,12 @@ function showImageModal(dataURL) {
       zIndex: '100000',
       padding: '20px',
       boxSizing: 'border-box',
-      overflow: 'hidden',
+      overflow: 'auto',
     });
 
     const content = document.createElement('div');
     Object.assign(content.style, {
       position: 'relative',
-      maxWidth: '90vw',
-      maxHeight: '90vh',
       backgroundColor: '#fff',
       borderRadius: '10px',
       boxShadow: '0 0 15px rgba(0,0,0,0.5)',
@@ -690,6 +688,11 @@ function showImageModal(dataURL) {
       flexDirection: 'column',
       justifyContent: 'flex-start',
       alignItems: 'center',
+      maxWidth: '95vw',
+      maxHeight: '95vh',
+      overflow: 'auto',
+      width: 'auto',
+      height: 'auto',
     });
 
     const closeBtn = document.createElement('button');
@@ -703,9 +706,8 @@ function showImageModal(dataURL) {
       cursor: 'pointer',
       fontWeight: '600',
       marginBottom: '12px',
-      width: 'auto',
-      minWidth: '80px',
       alignSelf: 'flex-end',
+      minWidth: '80px',
     });
 
     closeBtn.addEventListener('click', () => {
@@ -762,6 +764,10 @@ function showImageModal(dataURL) {
     const scale = Math.min(MAX_SCALE, Math.max(scaleUncapped, MIN_SCALE));
 
     img.style.transform = `scale(${scale})`;
+
+    // Adjust modal content size dynamically based on scaled image size
+    modalContent.style.width = `${naturalW * scale + 40}px`; // + padding approx
+    modalContent.style.height = `${naturalH * scale + 70}px`; // + close button + padding
   };
 }
 
