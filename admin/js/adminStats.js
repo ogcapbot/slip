@@ -692,16 +692,18 @@ function generateImageFromStatsContainer(day) {
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
     headerImg.style.display = 'block';
-    headerImg.style.margin = '0 auto 8px';
+    headerImg.style.margin = '0 auto 2px'; // reduced bottom margin to close gap
     headerImg.style.maxWidth = '100%';  // scale to container width max
     headerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(headerImg);
 
+    // Hidden spacer div to maintain vertical spacing as needed
     const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '65px';
+    topButtonsDiv.style.height = '30px'; // reduced from 65px to tighten gap
     topButtonsDiv.style.visibility = 'hidden';
     offscreen.appendChild(topButtonsDiv);
 
+    // Date label (centered, small font)
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
       const dateLabel = document.createElement('div');
@@ -713,11 +715,13 @@ function generateImageFromStatsContainer(day) {
       offscreen.appendChild(dateLabel);
     }
 
+    // Stats summary
     const counts = computeStats(picks);
     const summaryDiv = document.createElement('div');
     offscreen.appendChild(summaryDiv);
     renderStatsSummary(counts, summaryDiv);
 
+    // Picks listing container
     const picksDiv = document.createElement('div');
     picksDiv.style.border = '1px solid #ddd';
     picksDiv.style.borderRadius = '6px';
@@ -727,6 +731,7 @@ function generateImageFromStatsContainer(day) {
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
+    // Bottom spacing
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
     offscreen.appendChild(bottomSpacing);
@@ -740,8 +745,10 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(footerImg);
 
+    // Calculate picksDiv height and determine number of small watermarks
     const picksHeight = picksDiv.offsetHeight || 300;
     const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
+
     for (let i = 0; i < watermarkCount; i++) {
       const watermark = document.createElement('img');
       watermark.src = watermarkUrl;
@@ -753,12 +760,17 @@ function generateImageFromStatsContainer(day) {
       watermark.style.userSelect = 'none';
       watermark.style.zIndex = '0';
 
+      // Random horizontal position inside container with 10px side padding
       watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 50)}px`;
+
+      // Random vertical position between bottom of header + spacer and picksDiv bottom
+      const topLimit = headerImg.offsetHeight + 30; // adjusted spacer height (30px)
+      watermark.style.top = `${topLimit + Math.random() * (picksHeight - 50)}px`;
 
       offscreen.appendChild(watermark);
     }
 
+    // Offscreen container for html2canvas render
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
@@ -780,7 +792,7 @@ function generateImageFromStatsContainer(day) {
       let scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
       if (scale > 1) scale = 1; // don't upscale beyond actual size
 
-      // Create modal container
+      // Create modal container if not exists
       let modal = document.getElementById('imageOutputModal');
       if (!modal) {
         modal = document.createElement('div');
