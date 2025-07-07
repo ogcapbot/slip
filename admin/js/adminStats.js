@@ -349,7 +349,7 @@ function showTextOutputModal(textOutput) {
     content.style.borderRadius = '10px';
     content.style.width = '85vw';
     content.style.maxWidth = '500px';
-    content.style.maxHeight = '80vh'; // Tweak here for 80% viewport height
+    content.style.maxHeight = '60vh'; // Tweak here for 80% viewport height
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
 
@@ -362,7 +362,7 @@ function showTextOutputModal(textOutput) {
     textarea.style.fontFamily = 'monospace';
     textarea.style.fontSize = '14px';
     textarea.style.padding = '10px';
-    textarea.style.minHeight = '85vh'; // Fill most of modal height
+    textarea.style.minHeight = '70vh'; // Fill most of modal height
     textarea.id = 'textOutputArea';
 
     const btnContainer = document.createElement('div');
