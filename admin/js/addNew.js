@@ -12,6 +12,12 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
+// ############################################################
+// #################### Constants and Initialization
+// ############################################################
+// This section defines constants like page limits and imports needed Firebase functions.
+// It also sets up the AddNewWorkflow class constructor initializing state variables and UI.
+
 const PAGE_LIMIT = 15;
 const PAGE_LIMIT_SPORTS = 100;
 
@@ -20,16 +26,19 @@ export class AddNewWorkflow {
     this.container = container;
     this.userId = userId;
 
+    // Pagination controls
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
     this.phraseLastVisible = null;
 
+    // Data caches for buttons
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
 
+    // User selections
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
@@ -40,11 +49,16 @@ export class AddNewWorkflow {
     this.notes = '';
     this.wagerNumberValue = null;
 
+    // Current workflow step tracker
     this.step = 1;
 
     this.renderInitialUI();
     this.loadSports();
   }
+
+  // ############################################################
+  // #################### UI & Utility Methods
+  // ############################################################
 
   addSpaceBeforeKeywords(label) {
     return label.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
@@ -122,6 +136,10 @@ export class AddNewWorkflow {
     this.statusMsg.style.color = isError ? 'red' : 'inherit';
     console.log(`[Status] ${msg}`);
   }
+
+  // ############################################################
+  // #################### Data Loading Methods
+  // ############################################################
 
   async loadSports(loadMore = false) {
     console.log('[LoadSports] Loading sports...');
@@ -333,7 +351,10 @@ export class AddNewWorkflow {
 
       console.log(`[LoadGames] Total unique games loaded: ${this.gameButtonsData.length}`);
 
-      this.renderGameButtons(this.gameButtonsData);
+      this.renderButtons(
+        this.gameButtonsData.map((g) => g.display),
+        'game'
+      );
 
       if (snapshot.size === PAGE_LIMIT) {
         this.loadMoreBtn.style.display = 'inline-block';
@@ -346,35 +367,6 @@ export class AddNewWorkflow {
       console.error('[LoadGames] Error loading games:', error);
       this.setStatus('Failed to load games.', true);
     }
-  }
-
-  renderGameButtons(gameList) {
-    this.buttonsWrapper.innerHTML = '';
-
-    gameList.forEach((game) => {
-      const btn = document.createElement('button');
-      btn.classList.add('admin-button');
-      btn.style.whiteSpace = 'pre-line';
-      btn.innerHTML = game.display.replace(/\n/g, '<br>');
-      btn.setAttribute('data-game-id', game.id);
-
-      btn.addEventListener('click', () => {
-        console.log(`[ButtonClick] Type: game, Label: ${game.display}`);
-        this.selectedGame = this.gameButtonsData.find(g => g.id === btn.getAttribute('data-game-id'));
-        if (!this.selectedGame) {
-          console.error('Selected game not found for id:', btn.getAttribute('data-game-id'));
-          this.setStatus('Selected game not found.', true);
-          return;
-        }
-        console.log(`[Selection] Game selected: ${this.selectedGame.id}`);
-        this.step = 4;
-        this.loadMoreBtn.style.display = 'none';
-        this.submitBtn.style.display = 'none';
-        this.loadTeams();
-      });
-
-      this.buttonsWrapper.appendChild(btn);
-    });
   }
 
   formatGameDisplay(game) {
@@ -715,7 +707,14 @@ export class AddNewWorkflow {
             }
             break;
           case 'game':
-            // Should not reach here since game buttons handled by renderGameButtons
+            if (this.selectedGame !== label) {
+              this.selectedGame = this.gameButtonsData.find(g => g.display === label);
+              console.log(`[Selection] Game selected: ${this.selectedGame.id}`);
+              this.step = 4;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'none';
+              this.loadTeams();
+            }
             break;
           case 'team':
             if (this.selectedTeam !== label) {
@@ -779,6 +778,9 @@ export class AddNewWorkflow {
 
     this.setStatus('Submitting your selection...');
 
+    // Remove <br> tags from selectedUnit for storage and summary display
+    const cleanUnit = this.selectedUnit.replace(/<br\s*\/?>/gi, ' ');
+
     try {
       await addDoc(collection(db, 'OfficialPicks'), {
         userId: this.userId,
@@ -789,7 +791,7 @@ export class AddNewWorkflow {
         homeTeam: this.selectedGame.homeTeam,
         teamSelected: this.selectedTeam,
         wagerType: this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''),
-        unit: this.selectedUnit,
+        unit: cleanUnit,
         phrase: this.selectedPhrase,
         notes: this.notes,
         timestamp: Timestamp.now(),
@@ -797,7 +799,7 @@ export class AddNewWorkflow {
 
       console.log('[Submit] Submission successful');
 
-      this.showSubmissionSummary();
+      this.showSubmissionSummary(cleanUnit);
 
     } catch (error) {
       console.error('[Submit] Error submitting:', error);
@@ -805,12 +807,13 @@ export class AddNewWorkflow {
     }
   }
 
-  showSubmissionSummary() {
+  showSubmissionSummary(cleanUnit) {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
     const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
 
-    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
+    // Use cleaned unit without <br> in summary
+    const successMsg = `Your ${this.selectedTeam} ${cleanUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
     this.buttonsWrapper.innerHTML = '';
     this.notesContainer.style.display = 'none';
@@ -831,7 +834,7 @@ export class AddNewWorkflow {
       { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
       { label: 'Team', value: this.selectedTeam },
       { label: 'Wager Type', value: wagerTypeFixed },
-      { label: 'Unit', value: this.selectedUnit },
+      { label: 'Unit', value: cleanUnit },
       { label: 'Phrase', value: this.selectedPhrase },
       { label: 'Notes', value: this.notes || 'None' },
     ];
