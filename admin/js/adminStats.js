@@ -149,16 +149,16 @@ function renderStatsSummary(counts, container) {
   line1.style.marginBottom = '4px';
 
   const winPercentDiv = document.createElement('div');
-  winPercentDiv.textContent = `Win Percentage: ${winPercent}%`;
+  winPercentDiv.textContent = `Win %: ${winPercent}%`;
   winPercentDiv.style.fontWeight = '800';
-  winPercentDiv.style.fontSize = '16px';
+  winPercentDiv.style.fontSize = '14px';
   winPercentDiv.style.flex = '1';
   winPercentDiv.style.textAlign = 'left';
 
   const totalPicksDiv = document.createElement('div');
   totalPicksDiv.textContent = `Total Picks: ${counts.Total}`;
   totalPicksDiv.style.fontWeight = '800';
-  totalPicksDiv.style.fontSize = '16px';
+  totalPicksDiv.style.fontSize = '14px';
   totalPicksDiv.style.flex = '1';
   totalPicksDiv.style.textAlign = 'right';
 
@@ -169,8 +169,8 @@ function renderStatsSummary(counts, container) {
   // Container for second line: total units center (smaller font now)
   const line2 = document.createElement('div');
   line2.style.textAlign = 'center';
-  line2.style.fontWeight = '900';
-  line2.style.fontSize = '20px';
+  line2.style.fontWeight = '800';
+  line2.style.fontSize = '16px';
   line2.style.marginBottom = '16px';
 
   const unitsSignImg = document.createElement('img');
