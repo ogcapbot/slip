@@ -738,34 +738,27 @@ offscreen.appendChild(topButtonsDiv);
 renderPickListing(picks, picksDiv);
 
 setTimeout(() => {
-  const inchToPx = 96;
-  const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
-  const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
+ const inchToPx = 96;
+const picksHeight = picksDiv.scrollHeight || 300;
+const watermarkCount = Math.ceil(picksHeight / 60); // Using smaller fixed vertical spacing (60px)
 
-  const picksHeight = picksDiv.scrollHeight > 0 ? picksDiv.scrollHeight : picksDiv.offsetHeight;
-  const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
-
-  console.log('picksDiv.offsetHeight:', picksDiv.offsetHeight, 'scrollHeight:', picksDiv.scrollHeight, 'watermarkCount:', watermarkCount);
-
-  for (let i = 0; i < watermarkCount; i++) {
+for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
   watermark.textContent = '© ogcapperbets.com ©';
   watermark.style.position = 'absolute';
-  watermark.style.left = `${horizontalOffsetPx}px`;
-  watermark.style.top = `${i * verticalSpacingPx}px`;
-  watermark.style.opacity = '1';                // full opacity to see it
-  watermark.style.fontSize = '24px';            // big font size
-  watermark.style.color = 'red';                 // bright red color
-  watermark.style.backgroundColor = 'yellow';  // bright yellow bg
+  watermark.style.left = `${0.75 * inchToPx}px`;  // Fixed 0.75 inch from left
+  watermark.style.top = `${Math.floor(Math.random() * picksHeight)}px`;  // Random vertical placement within height
+  watermark.style.opacity = '0.1';
+  watermark.style.fontSize = '12px';
+  watermark.style.color = '#aaa';
   watermark.style.transform = 'rotate(315deg)';
   watermark.style.pointerEvents = 'none';
   watermark.style.userSelect = 'none';
   watermark.style.whiteSpace = 'nowrap';
-  watermark.style.zIndex = '9999';               // super high z-index
-  watermark.style.width = '100%';
+  watermark.style.zIndex = '0';
+
   picksDiv.appendChild(watermark);
 }
-
 
 }, 50);
 
