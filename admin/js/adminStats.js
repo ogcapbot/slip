@@ -737,26 +737,29 @@ offscreen.appendChild(topButtonsDiv);
 // Watermark settings
 renderPickListing(picks, picksDiv);
 
-
- // Watermark settings
 // Watermark settings
 const inchToPx = 96;
 const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing (~1.5 inches)
 const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left (~0.75 inches)
+const topOffsetPx = 40; // Shift down watermark start by 40px
+const footerBufferPx = 200; // Leave 200px from bottom as footer safe zone
 
-// Use the full offscreen container height, not just picksDiv height
 const totalHeight = offscreen.offsetHeight || 600;
-const watermarkCount = Math.ceil(totalHeight / verticalSpacingPx);
+const maxWatermarkHeight = totalHeight - footerBufferPx;
+const maxWatermarkCount = Math.floor((maxWatermarkHeight - topOffsetPx) / verticalSpacingPx);
 
-for (let i = 0; i < watermarkCount; i++) {
+for (let i = 0; i < maxWatermarkCount; i++) {
+  const watermarkTop = topOffsetPx + i * verticalSpacingPx;
+  if (watermarkTop > maxWatermarkHeight) break;
+
   const watermark = document.createElement('div');
   watermark.textContent = '© ogcapperbets.com ©';
   watermark.style.position = 'absolute';
   watermark.style.left = `${horizontalOffsetPx}px`;
-  watermark.style.top = `${i * verticalSpacingPx}px`;
+  watermark.style.top = `${watermarkTop}px`;
   watermark.style.color = '#000';
-  watermark.style.opacity = '0.15';  // increased opacity
-  watermark.style.fontSize = '20px';  // increased font size
+  watermark.style.opacity = '0.15';
+  watermark.style.fontSize = '20px';
   watermark.style.fontWeight = '700';
   watermark.style.userSelect = 'none';
   watermark.style.pointerEvents = 'none';
@@ -766,9 +769,6 @@ for (let i = 0; i < watermarkCount; i++) {
 
   offscreen.appendChild(watermark);
 }
-
-
-
 
     // bottom spacing
     const bottomSpacing = document.createElement('div');
