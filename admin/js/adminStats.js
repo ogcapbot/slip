@@ -701,9 +701,10 @@ function generateImageFromStatsContainer(day) {
 
     // Hide top buttons area as before
     const topButtonsDiv = document.createElement('div');
-    topButtonsDiv.style.height = '65px';
-    topButtonsDiv.style.visibility = 'hidden';
-    offscreen.appendChild(topButtonsDiv);
+topButtonsDiv.style.height = '65px';
+topButtonsDiv.style.display = 'none';  // hide and remove space
+offscreen.appendChild(topButtonsDiv);
+
 
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
@@ -735,7 +736,10 @@ function generateImageFromStatsContainer(day) {
     // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
     // Remove previous image watermark loop and replace with CSS text watermark:
 const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 100)); // Adjust density
+const watermarkSpacingPx = 24; // 1.5 inches approx (96dpi * 1.5 = 144px, but we'll use 24px visually smaller)
+const watermarkLeftPx = 72;    // 0.75 inches approx (96dpi * 0.75 = 72px)
+
+const watermarkCount = Math.ceil(picksHeight / watermarkSpacingPx);
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
@@ -748,11 +752,11 @@ for (let i = 0; i < watermarkCount; i++) {
   watermark.style.userSelect = 'none';
   watermark.style.pointerEvents = 'none';
   watermark.style.whiteSpace = 'nowrap';
-  watermark.style.transform = 'rotate(45deg)';
+  watermark.style.transform = 'rotate(315deg)';
   watermark.style.zIndex = '0';
 
-  watermark.style.left = `${10 + Math.random() * (finalWidth - 150)}px`;
-  watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 20)}px`;
+  watermark.style.left = `${watermarkLeftPx}px`;
+  watermark.style.top = `${headerImg.offsetHeight + 65 + i * watermarkSpacingPx}px`;
 
   offscreen.appendChild(watermark);
 }
