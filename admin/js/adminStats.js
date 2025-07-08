@@ -740,7 +740,7 @@ renderPickListing(picks, picksDiv);
 // Watermark settings
 // Remove previous image watermark loop and replace with CSS text watermark:
 const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkCount = Math.floor((picksHeight / 65) * (finalWidth / 125)); // Adjust density
+const watermarkCount = Math.floor((picksHeight / 100) * (finalWidth / 25)); // Adjust density
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
@@ -756,8 +756,8 @@ for (let i = 0; i < watermarkCount; i++) {
   watermark.style.transform = 'rotate(300deg)';
   watermark.style.zIndex = '0';
 
-  watermark.style.left = `${10 + Math.random() * (finalWidth - 150)}px`;
-  watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 20)}px`;
+  watermark.style.left = `${5 + Math.random() * (finalWidth - 150)}px`;
+  watermark.style.top = `${headerImg.offsetHeight + 75 + Math.random() * (picksHeight - 20)}px`;
 
   offscreen.appendChild(watermark);
 }
