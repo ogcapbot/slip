@@ -600,8 +600,8 @@ export async function loadStatsForDay(day) {
     dateLabel.textContent = longDateStr;
     dateLabel.style.color = '#666';
     dateLabel.style.fontSize = '12px';
-    dateLabel.style.marginBottom = '2px'; // reduced margin for smaller gap
     dateLabel.style.textAlign = 'center';
+    dateLabel.style.marginBottom = '4px';  // Reduced margin bottom to shrink gap
     statsContainer.appendChild(dateLabel);
   }
 
@@ -642,8 +642,7 @@ export async function loadStatsForDay(day) {
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
-  picksDiv.style.position = 'relative'; // to layer watermarks behind picks
-  picksDiv.style.zIndex = '10';
+  picksDiv.style.position = 'relative'; // needed for watermarks
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
@@ -711,7 +710,7 @@ function generateImageFromStatsContainer(day) {
       dateLabel.style.color = '#666';
       dateLabel.style.fontSize = '12px';
       dateLabel.style.textAlign = 'center';
-      dateLabel.style.marginBottom = '8px';
+      dateLabel.style.marginBottom = '4px';  // Reduced margin bottom here as well
       offscreen.appendChild(dateLabel);
     }
 
@@ -726,22 +725,11 @@ function generateImageFromStatsContainer(day) {
     picksDiv.style.padding = '5px';
     picksDiv.style.marginTop = '10px';
     picksDiv.style.backgroundColor = 'transparent';
+    picksDiv.style.position = 'relative'; // needed for watermark absolute positioning
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    const bottomSpacing = document.createElement('div');
-    bottomSpacing.style.height = '10px';
-    offscreen.appendChild(bottomSpacing);
-
-    // Footer image with natural height and max width 100%
-    const footerImg = document.createElement('img');
-    footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
-    footerImg.style.display = 'block';
-    footerImg.style.marginTop = '10px';
-    footerImg.style.maxWidth = '100%';  // scale to container width max
-    footerImg.style.height = 'auto';   // keep aspect ratio
-    offscreen.appendChild(footerImg);
-
+    // Add watermarks behind content
     const picksHeight = picksDiv.offsetHeight || 300;
     const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
     for (let i = 0; i < watermarkCount; i++) {
@@ -760,6 +748,19 @@ function generateImageFromStatsContainer(day) {
 
       offscreen.appendChild(watermark);
     }
+
+    const bottomSpacing = document.createElement('div');
+    bottomSpacing.style.height = '10px';
+    offscreen.appendChild(bottomSpacing);
+
+    // Footer image with natural height and max width 100%
+    const footerImg = document.createElement('img');
+    footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
+    footerImg.style.display = 'block';
+    footerImg.style.marginTop = '10px';
+    footerImg.style.maxWidth = '100%';  // scale to container width max
+    footerImg.style.height = 'auto';   // keep aspect ratio
+    offscreen.appendChild(footerImg);
 
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
