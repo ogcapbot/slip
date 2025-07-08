@@ -699,6 +699,7 @@ function generateImageFromStatsContainer(day) {
     headerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(headerImg);
 
+    // Hide top buttons area as before
     const topButtonsDiv = document.createElement('div');
     topButtonsDiv.style.height = '65px';
     topButtonsDiv.style.visibility = 'hidden';
@@ -711,7 +712,7 @@ function generateImageFromStatsContainer(day) {
       dateLabel.style.color = '#666';
       dateLabel.style.fontSize = '12px';
       dateLabel.style.textAlign = 'center';
-      dateLabel.style.marginBottom = '4px';  // Reduced margin bottom here as well
+      dateLabel.style.marginBottom = '4px';  // tight gap
       offscreen.appendChild(dateLabel);
     }
 
@@ -725,12 +726,13 @@ function generateImageFromStatsContainer(day) {
     picksDiv.style.borderRadius = '6px';
     picksDiv.style.padding = '5px';
     picksDiv.style.marginTop = '10px';
-    picksDiv.style.backgroundColor = 'transparent';
-    picksDiv.style.position = 'relative'; // needed for watermark absolute positioning
+    picksDiv.style.position = 'relative'; // for absolute watermarks
+    picksDiv.style.backgroundColor = 'transparent'; // transparent to show watermark
+    picksDiv.style.zIndex = '1'; // put picks on top
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    // Add watermarks behind content
+    // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
     const picksHeight = picksDiv.offsetHeight || 300;
     const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
     for (let i = 0; i < watermarkCount; i++) {
@@ -742,25 +744,26 @@ function generateImageFromStatsContainer(day) {
       watermark.style.opacity = '0.1';
       watermark.style.pointerEvents = 'none';
       watermark.style.userSelect = 'none';
-      watermark.style.zIndex = '0';
+      watermark.style.zIndex = '0'; // behind picks
 
       watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 50)}px`;
+      watermark.style.top = `${Math.random() * (picksHeight - 50)}px`;
 
-      offscreen.appendChild(watermark);
+      picksDiv.appendChild(watermark);
     }
 
+    // bottom spacing
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
     offscreen.appendChild(bottomSpacing);
 
-    // Footer image with natural height and max width 100%
+    // Footer image
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.display = 'block';
     footerImg.style.marginTop = '10px';
-    footerImg.style.maxWidth = '100%';  // scale to container width max
-    footerImg.style.height = 'auto';   // keep aspect ratio
+    footerImg.style.maxWidth = '100%';
+    footerImg.style.height = 'auto';
     offscreen.appendChild(footerImg);
 
     offscreen.style.position = 'fixed';
@@ -777,14 +780,12 @@ function generateImageFromStatsContainer(day) {
     }).then(canvas => {
       document.body.removeChild(offscreen);
 
-      // Calculate scale factor to fit image inside viewport with margin
       const margin = 40;
       const maxWidth = window.innerWidth - margin * 2;
-      const maxHeight = window.innerHeight - margin * 2 - 50; // leave space for close button
+      const maxHeight = window.innerHeight - margin * 2 - 50;
       let scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
-      if (scale > 1) scale = 1; // don't upscale beyond actual size
+      if (scale > 1) scale = 1;
 
-      // Create modal container
       let modal = document.getElementById('imageOutputModal');
       if (!modal) {
         modal = document.createElement('div');
@@ -796,24 +797,23 @@ function generateImageFromStatsContainer(day) {
         modal.style.height = '100vh';
         modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
         modal.style.display = 'flex';
-        modal.style.alignItems = 'center';    // CENTER VERTICALLY
-        modal.style.justifyContent = 'center'; // CENTER HORIZONTALLY
+        modal.style.alignItems = 'center';  // vertical center
+        modal.style.justifyContent = 'center'; // horizontal center
         modal.style.zIndex = '100000';
-        modal.style.padding = `${margin}px`;
+        modal.style.padding = '0'; // remove padding to avoid top gap
 
-        // Content container for image and close button
         const content = document.createElement('div');
         content.style.position = 'relative';
         content.style.backgroundColor = '#fff';
         content.style.borderRadius = '12px';
         content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
         content.style.overflow = 'auto';
-        content.style.maxHeight = '100%';
+        content.style.maxHeight = 'calc(100vh - 20px)'; // some vertical padding
         content.style.display = 'flex';
         content.style.flexDirection = 'column';
         content.style.alignItems = 'center';
+        content.style.padding = '0'; // remove padding
 
-        // Close button
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
         closeBtn.style.backgroundColor = '#4CAF50';
@@ -823,8 +823,8 @@ function generateImageFromStatsContainer(day) {
         closeBtn.style.padding = '8px 16px';
         closeBtn.style.fontWeight = '700';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.marginBottom = '10px';
-        closeBtn.style.alignSelf = 'stretch'; // full width above image
+        closeBtn.style.margin = '0'; // remove margin
+        closeBtn.style.alignSelf = 'stretch';
 
         closeBtn.addEventListener('click', () => {
           modal.style.display = 'none';
@@ -832,7 +832,6 @@ function generateImageFromStatsContainer(day) {
 
         content.appendChild(closeBtn);
 
-        // Image element
         const img = document.createElement('img');
         img.id = 'modalGeneratedImage';
         content.appendChild(img);
@@ -840,7 +839,6 @@ function generateImageFromStatsContainer(day) {
         modal.appendChild(content);
         document.body.appendChild(modal);
 
-        // Close modal when clicking outside content
         modal.addEventListener('click', e => {
           if (e.target === modal) modal.style.display = 'none';
         });
@@ -862,5 +860,6 @@ function generateImageFromStatsContainer(day) {
     });
   });
 }
+
 
 export { generateImageFromStatsContainer };
