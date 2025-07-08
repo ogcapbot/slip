@@ -735,12 +735,15 @@ offscreen.appendChild(topButtonsDiv);
 
     // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
     // Remove previous image watermark loop and replace with CSS text watermark:
+// Watermark settings
 const inchToPx = 96;
-const verticalSpacingPx = 1.5 * inchToPx; // 144px
-const horizontalOffsetPx = 0.75 * inchToPx; // 72px
+const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
+const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
 
-const picksHeight = picksDiv.offsetHeight || 300;
+const picksHeight = picksDiv.offsetHeight || 300; // fallback 300px if 0 or undefined
 const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
+
+console.log('picksHeight:', picksHeight, 'watermarkCount:', watermarkCount); // debugging
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
