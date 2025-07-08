@@ -753,17 +753,19 @@ setTimeout(() => {
   watermark.style.position = 'absolute';
   watermark.style.left = `${horizontalOffsetPx}px`;
   watermark.style.top = `${i * verticalSpacingPx}px`;
-  watermark.style.opacity = '0.1';
-  watermark.style.fontSize = '12px';
-  watermark.style.color = '#aaa';
+  watermark.style.opacity = '1';                // full opacity to see it
+  watermark.style.fontSize = '24px';            // big font size
+  watermark.style.color = 'red';                 // bright red color
+  watermark.style.backgroundColor = 'yellow';  // bright yellow bg
   watermark.style.transform = 'rotate(315deg)';
   watermark.style.pointerEvents = 'none';
   watermark.style.userSelect = 'none';
   watermark.style.whiteSpace = 'nowrap';
-  watermark.style.zIndex = '10';       // Make sure watermark is on top
-  watermark.style.width = '100%';      // Full width for watermark text
+  watermark.style.zIndex = '9999';               // super high z-index
+  watermark.style.width = '100%';
   picksDiv.appendChild(watermark);
 }
+
 
 }, 50);
 
