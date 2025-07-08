@@ -730,40 +730,41 @@ offscreen.appendChild(topButtonsDiv);
     picksDiv.style.position = 'relative'; // for absolute watermarks
     picksDiv.style.backgroundColor = 'transparent'; // transparent to show watermark
     picksDiv.style.zIndex = '1'; // put picks on top
+    picksDiv.style.overflow = 'visible'; // make sure watermarks show outside if needed
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
     // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
     // Remove previous image watermark loop and replace with CSS text watermark:
-// Watermark settings
-const inchToPx = 96;
-const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
-const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
+    // Watermark settings
+    const inchToPx = 96;
+    const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
+    const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
 
-const picksHeight = picksDiv.offsetHeight || 300; // fallback 300px if 0 or undefined
-const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
+    // Use picksDiv.scrollHeight for accurate height after content render
+    // fallback to offsetHeight if scrollHeight is zero
+    const picksHeight = picksDiv.scrollHeight > 0 ? picksDiv.scrollHeight : picksDiv.offsetHeight;
+    const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
 
-console.log('picksHeight:', picksHeight, 'watermarkCount:', watermarkCount); // debugging
+    console.log('picksDiv.offsetHeight:', picksDiv.offsetHeight, 'scrollHeight:', picksDiv.scrollHeight, 'watermarkCount:', watermarkCount);
 
-for (let i = 0; i < watermarkCount; i++) {
-  const watermark = document.createElement('div');
-  watermark.textContent = '© ogcapperbets.com ©';
-  watermark.style.position = 'absolute';
-  watermark.style.left = `${horizontalOffsetPx}px`;
-  watermark.style.top = `${i * verticalSpacingPx}px`;
-  watermark.style.opacity = '0.1';
-  watermark.style.fontSize = '12px';
-  watermark.style.color = '#aaa';
-  watermark.style.transform = 'rotate(315deg)';
-  watermark.style.pointerEvents = 'none';
-  watermark.style.userSelect = 'none';
-  watermark.style.whiteSpace = 'nowrap';
-  watermark.style.zIndex = '0';
+    for (let i = 0; i < watermarkCount; i++) {
+      const watermark = document.createElement('div');
+      watermark.textContent = '© ogcapperbets.com ©';
+      watermark.style.position = 'absolute';
+      watermark.style.left = `${horizontalOffsetPx}px`;
+      watermark.style.top = `${i * verticalSpacingPx}px`;
+      watermark.style.opacity = '0.1';
+      watermark.style.fontSize = '12px';
+      watermark.style.color = '#aaa';
+      watermark.style.transform = 'rotate(315deg)';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.userSelect = 'none';
+      watermark.style.whiteSpace = 'nowrap';
+      watermark.style.zIndex = '0';
 
-  picksDiv.appendChild(watermark);
-}
-
-
+      picksDiv.appendChild(watermark);
+    }
 
     // bottom spacing
     const bottomSpacing = document.createElement('div');
