@@ -735,34 +735,37 @@ offscreen.appendChild(topButtonsDiv);
     renderPickListing(picks, picksDiv);
 
 // Watermark settings
-const inchToPx = 96;
-const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
-const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
+renderPickListing(picks, picksDiv);
 
-// Use picksDiv.scrollHeight for accurate height after content render
-// fallback to offsetHeight if scrollHeight is zero
-const picksHeight = picksDiv.scrollHeight > 0 ? picksDiv.scrollHeight : picksDiv.offsetHeight;
-const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
+setTimeout(() => {
+  const inchToPx = 96;
+  const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing
+  const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left
 
-console.log('picksDiv.offsetHeight:', picksDiv.offsetHeight, 'scrollHeight:', picksDiv.scrollHeight, 'watermarkCount:', watermarkCount);
+  const picksHeight = picksDiv.scrollHeight > 0 ? picksDiv.scrollHeight : picksDiv.offsetHeight;
+  const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
 
-for (let i = 0; i < watermarkCount; i++) {
-  const watermark = document.createElement('div');
-  watermark.textContent = '© ogcapperbets.com ©';
-  watermark.style.position = 'absolute';
-  watermark.style.left = `${horizontalOffsetPx}px`;
-  watermark.style.top = `${i * verticalSpacingPx}px`;
-  watermark.style.opacity = '0.1';
-  watermark.style.fontSize = '12px';
-  watermark.style.color = '#aaa';
-  watermark.style.transform = 'rotate(315deg)';
-  watermark.style.pointerEvents = 'none';
-  watermark.style.userSelect = 'none';
-  watermark.style.whiteSpace = 'nowrap';
-  watermark.style.zIndex = '0';
+  console.log('picksDiv.offsetHeight:', picksDiv.offsetHeight, 'scrollHeight:', picksDiv.scrollHeight, 'watermarkCount:', watermarkCount);
 
-  picksDiv.appendChild(watermark);
-}
+  for (let i = 0; i < watermarkCount; i++) {
+    const watermark = document.createElement('div');
+    watermark.textContent = '© ogcapperbets.com ©';
+    watermark.style.position = 'absolute';
+    watermark.style.left = `${horizontalOffsetPx}px`;
+    watermark.style.top = `${i * verticalSpacingPx}px`;
+    watermark.style.opacity = '0.1';
+    watermark.style.fontSize = '12px';
+    watermark.style.color = '#aaa';
+    watermark.style.transform = 'rotate(315deg)';
+    watermark.style.pointerEvents = 'none';
+    watermark.style.userSelect = 'none';
+    watermark.style.whiteSpace = 'nowrap';
+    watermark.style.zIndex = '0';
+
+    picksDiv.appendChild(watermark);
+  }
+}, 50);
+
 
     // bottom spacing
     const bottomSpacing = document.createElement('div');
