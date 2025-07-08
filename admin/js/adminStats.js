@@ -733,24 +733,30 @@ function generateImageFromStatsContainer(day) {
     renderPickListing(picks, picksDiv);
 
     // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
-    const picksHeight = picksDiv.offsetHeight || 300;
-    const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 50));
-    for (let i = 0; i < watermarkCount; i++) {
-      const watermark = document.createElement('img');
-      watermark.src = watermarkUrl;
-      watermark.style.width = '50px';
-      watermark.style.height = '50px';
-      watermark.style.position = 'absolute';
-      watermark.style.opacity = '0.1';
-      watermark.style.pointerEvents = 'none';
-      watermark.style.userSelect = 'none';
-      watermark.style.zIndex = '0'; // behind picks
+    // Remove previous image watermark loop and replace with CSS text watermark:
+const picksHeight = picksDiv.offsetHeight || 300;
+const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 100)); // Adjust density
 
-      watermark.style.left = `${10 + Math.random() * (finalWidth - 70)}px`;
-      watermark.style.top = `${Math.random() * (picksHeight - 50)}px`;
+for (let i = 0; i < watermarkCount; i++) {
+  const watermark = document.createElement('div');
+  watermark.textContent = '© ogcapperbets.com ©';
+  watermark.style.position = 'absolute';
+  watermark.style.color = '#000';
+  watermark.style.opacity = '0.1';
+  watermark.style.fontSize = '16px';
+  watermark.style.fontWeight = '700';
+  watermark.style.userSelect = 'none';
+  watermark.style.pointerEvents = 'none';
+  watermark.style.whiteSpace = 'nowrap';
+  watermark.style.transform = 'rotate(45deg)';
+  watermark.style.zIndex = '0';
 
-      picksDiv.appendChild(watermark);
-    }
+  watermark.style.left = `${10 + Math.random() * (finalWidth - 150)}px`;
+  watermark.style.top = `${headerImg.offsetHeight + 65 + Math.random() * (picksHeight - 20)}px`;
+
+  offscreen.appendChild(watermark);
+}
+
 
     // bottom spacing
     const bottomSpacing = document.createElement('div');
