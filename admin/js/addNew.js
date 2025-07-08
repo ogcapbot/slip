@@ -36,6 +36,11 @@ export class AddNewWorkflow {
     this.sys_selectedGame = null;
     this.user_selectedTeam = null;
 
+    // League metadata sys fields
+    this.sys_LeagueLongName = '';
+    this.sys_LeagueShortName = '';
+    this.sys_LeagueKey = '';
+
     // Wager related
     this.user_selectedWagerType = null; // raw selected wager string (with [[NUM]] or [[TEAM]])
     this.user_wagerNumberValue = null;  // number input for [[NUM]]
@@ -268,6 +273,128 @@ export class AddNewWorkflow {
       console.error('[LoadLeagues] Error loading leagues:', error);
       this.setStatus('Failed to load leagues.', true);
     }
+  }
+
+  renderButtons(items, type) {
+    console.log(`[RenderButtons] Rendering ${items.length} buttons for type: ${type}`);
+    this.buttonsWrapper.innerHTML = '';
+
+    items.forEach((label) => {
+      const btn = document.createElement('button');
+      btn.classList.add('admin-button');
+
+      if (type === 'game' || type === 'unit') {
+        btn.style.whiteSpace = 'pre-line';
+        btn.innerHTML = label.replace(/\n/g, '<br>');
+      } else {
+        btn.textContent = label;
+      }
+
+      btn.addEventListener('click', async () => {
+        console.log(`[ButtonClick] Type: ${type}, Label: ${label}`);
+
+        switch (type) {
+          case 'sport':
+            if (this.user_selectedSport !== label) {
+              this.user_selectedSport = label;
+              this.user_selectedLeague = null;
+              this.sys_leagueButtonsData = [];
+              this.sys_leagueLastVisible = null;
+              this.step = 2;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'none';
+              this.loadLeagues();
+            }
+            break;
+          case 'league':
+            if (this.user_selectedLeague !== label) {
+              this.user_selectedLeague = label;
+              this.sys_selectedGame = null;
+              this.sys_gameButtonsData = [];
+              this.sys_gameLastVisible = null;
+
+              try {
+                const q = query(
+                  collection(db, 'SportsData'),
+                  where('group', '==', this.user_selectedSport),
+                  where('title', '==', label),
+                  limit(1)
+                );
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                  const docData = snapshot.docs[0].data();
+                  this.sys_LeagueLongName = docData.description || '';
+                  this.sys_LeagueShortName = docData.title || '';
+                  this.sys_LeagueKey = docData.key || '';
+                  console.log('[League] Fetched league metadata:', {
+                    sys_LeagueLongName: this.sys_LeagueLongName,
+                    sys_LeagueShortName: this.sys_LeagueShortName,
+                    sys_LeagueKey: this.sys_LeagueKey,
+                  });
+                } else {
+                  this.sys_LeagueLongName = '';
+                  this.sys_LeagueShortName = '';
+                  this.sys_LeagueKey = '';
+                  console.warn('[League] No league metadata found.');
+                }
+              } catch (error) {
+                console.error('[League] Error fetching league metadata:', error);
+                this.sys_LeagueLongName = '';
+                this.sys_LeagueShortName = '';
+                this.sys_LeagueKey = '';
+              }
+
+              this.step = 3;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'none';
+              this.loadGames();
+            }
+            break;
+          case 'game':
+            if (this.sys_selectedGame?.display !== label) {
+              this.sys_selectedGame = this.sys_gameButtonsData.find(g => g.display === label);
+              console.log(`[Selection] Game selected: ${this.sys_selectedGame.id}`);
+              this.step = 4;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'none';
+              this.loadTeams();
+            }
+            break;
+          case 'team':
+            if (this.user_selectedTeam !== label) {
+              console.log(`[Selection] Team selected: ${label}`);
+              this.user_selectedTeam = label;
+              this.step = 5;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'none';
+              this.loadWagerTypes();
+            }
+            break;
+          case 'unit':
+            if (this.user_selectedUnit !== label) {
+              console.log(`[Selection] Unit selected: ${label}`);
+              this.user_selectedUnit = label;
+              this.step = 7;
+              this.loadMoreBtn.style.display = 'inline-block';
+              this.submitBtn.style.display = 'none';
+              this.loadPhrases();
+            }
+            break;
+          case 'phrase':
+            if (this.user_selectedPhrase !== label) {
+              console.log(`[Selection] Phrase selected: ${label}`);
+              this.user_selectedPhrase = label;
+              this.step = 8;
+              this.loadMoreBtn.style.display = 'none';
+              this.submitBtn.style.display = 'inline-block';
+              this.showNotesSection();
+            }
+            break;
+        }
+      });
+
+      this.buttonsWrapper.appendChild(btn);
+    });
   }
 
   async loadGames(loadMore = false) {
@@ -673,98 +800,6 @@ export class AddNewWorkflow {
     }
   }
 
-  renderButtons(items, type) {
-    console.log(`[RenderButtons] Rendering ${items.length} buttons for type: ${type}`);
-    this.buttonsWrapper.innerHTML = '';
-
-    items.forEach((label) => {
-      const btn = document.createElement('button');
-      btn.classList.add('admin-button');
-
-      if (type === 'game' || type === 'unit') {
-        btn.style.whiteSpace = 'pre-line';
-        btn.innerHTML = label.replace(/\n/g, '<br>');
-      } else {
-        btn.textContent = label;
-      }
-
-      btn.addEventListener('click', () => {
-        console.log(`[ButtonClick] Type: ${type}, Label: ${label}`);
-
-        switch (type) {
-          case 'sport':
-            if (this.user_selectedSport !== label) {
-              console.log(`[Selection] Sport selected: ${label}`);
-              this.user_selectedSport = label;
-              this.user_selectedLeague = null;
-              this.sys_leagueButtonsData = [];
-              this.sys_leagueLastVisible = null;
-              this.step = 2;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-              this.loadLeagues();
-            }
-            break;
-          case 'league':
-            if (this.user_selectedLeague !== label) {
-              console.log(`[Selection] League selected: ${label}`);
-              this.user_selectedLeague = label;
-              this.sys_selectedGame = null;
-              this.sys_gameButtonsData = [];
-              this.sys_gameLastVisible = null;
-              this.step = 3;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-              this.loadGames();
-            }
-            break;
-          case 'game':
-            if (this.sys_selectedGame?.display !== label) {
-              this.sys_selectedGame = this.sys_gameButtonsData.find(g => g.display === label);
-              console.log(`[Selection] Game selected: ${this.sys_selectedGame.id}`);
-              this.step = 4;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-              this.loadTeams();
-            }
-            break;
-          case 'team':
-            if (this.user_selectedTeam !== label) {
-              console.log(`[Selection] Team selected: ${label}`);
-              this.user_selectedTeam = label;
-              this.step = 5;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'none';
-              this.loadWagerTypes();
-            }
-            break;
-          case 'unit':
-            if (this.user_selectedUnit !== label) {
-              console.log(`[Selection] Unit selected: ${label}`);
-              this.user_selectedUnit = label;
-              this.step = 7;
-              this.loadMoreBtn.style.display = 'inline-block';
-              this.submitBtn.style.display = 'none';
-              this.loadPhrases();
-            }
-            break;
-          case 'phrase':
-            if (this.user_selectedPhrase !== label) {
-              console.log(`[Selection] Phrase selected: ${label}`);
-              this.user_selectedPhrase = label;
-              this.step = 8;
-              this.loadMoreBtn.style.display = 'none';
-              this.submitBtn.style.display = 'inline-block';
-              this.showNotesSection();
-            }
-            break;
-        }
-      });
-
-      this.buttonsWrapper.appendChild(btn);
-    });
-  }
-
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
@@ -793,6 +828,9 @@ export class AddNewWorkflow {
         userId: this.userId,
         user_Sport: this.user_selectedSport,
         user_League: this.user_selectedLeague,
+        sys_LeagueLongName: this.sys_LeagueLongName || '',
+        sys_LeagueShortName: this.sys_LeagueShortName || '',
+        sys_LeagueKey: this.sys_LeagueKey || '',
         sys_GameId: this.sys_selectedGame?.id || null,
         sys_AwayTeam: this.sys_selectedGame?.awayTeam || '',
         sys_HomeTeam: this.sys_selectedGame?.homeTeam || '',
