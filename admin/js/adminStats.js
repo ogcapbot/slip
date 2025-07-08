@@ -643,6 +643,7 @@ export async function loadStatsForDay(day) {
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
   picksDiv.style.position = 'relative'; // needed for watermarks
+  picksDiv.style.backgroundColor = 'transparent'; // make transparent for watermark visibility
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
@@ -795,8 +796,8 @@ function generateImageFromStatsContainer(day) {
         modal.style.height = '100vh';
         modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
         modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';    // CENTER VERTICALLY
+        modal.style.justifyContent = 'center'; // CENTER HORIZONTALLY
         modal.style.zIndex = '100000';
         modal.style.padding = `${margin}px`;
 
