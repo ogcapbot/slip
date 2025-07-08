@@ -12,53 +12,66 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-// ############################################################
-// #################### Constants and Initialization
-// ############################################################
-// This section defines constants like page limits and imports needed Firebase functions.
-// It also sets up the AddNewWorkflow class constructor initializing state variables and UI.
-
 const PAGE_LIMIT = 15;
 const PAGE_LIMIT_SPORTS = 100;
 
 export class AddNewWorkflow {
-  constructor(container, userId) {
+  constructor(container, userId, userData = {}) {
     this.container = container;
     this.userId = userId;
 
-    // Pagination controls
+    // User info for sys_Username etc
+    this.sys_Username = userData.userName || 'unknown';
+    this.sys_UserDisplayName = userData.userDisplayname || '';
+    this.sys_AccessCode = userData.accessCode || '';
+    this.sys_AccessType = userData.accessType || '';
+    this.sys_LoginCount = userData.loginCount || 0;
+
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
     this.gameLastVisible = null;
     this.phraseLastVisible = null;
 
-    // Data caches for buttons
     this.sportButtonsData = [];
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
 
-    // User selections
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
     this.selectedTeam = null;
     this.selectedWagerType = null;
-    this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
     this.wagerNumberValue = null;
 
-    // Current workflow step tracker
+    // Unit-related system fields
+    this.sys_UnitRank = null;
+    this.sys_UnitDollarValue = '';
+    this.sys_UnitPercentage = '';
+    this.sys_UnitFraction = '';
+    this.sys_UnitsValue = null;
+    this.user_UnitDisplay = '';
+
+    this.phraseMetadata = null;
+
+    // Track start time in EST
+    this.sys_UserStartTime = this.getCurrentESTDate();
+
     this.step = 1;
 
     this.renderInitialUI();
     this.loadSports();
   }
 
-  // ############################################################
-  // #################### UI & Utility Methods
-  // ############################################################
+  // Helper: Get current date/time in EST timezone (returns JS Date object)
+  getCurrentESTDate() {
+    const now = new Date();
+    // Use Intl API to convert to EST time zone string then back to date
+    const estString = now.toLocaleString('en-US', { timeZone: 'America/New_York' });
+    return new Date(estString);
+  }
 
   addSpaceBeforeKeywords(label) {
     return label.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
@@ -136,10 +149,6 @@ export class AddNewWorkflow {
     this.statusMsg.style.color = isError ? 'red' : 'inherit';
     console.log(`[Status] ${msg}`);
   }
-
-  // ############################################################
-  // #################### Data Loading Methods
-  // ############################################################
 
   async loadSports(loadMore = false) {
     console.log('[LoadSports] Loading sports...');
@@ -507,10 +516,11 @@ export class AddNewWorkflow {
 
     Array.from(this.buttonsWrapper.children).forEach((btn) => {
       btn.addEventListener('click', () => {
-        const label = btn.textContent;
-        this.selectedWagerType = label;
-        if (label.includes('[[NUM]]')) {
-          this.showNumberInputModal(label).then((num) => {
+        const labelRaw = btn.textContent;
+        this.selectedWagerType = labelRaw;
+
+        if (labelRaw.includes('[[NUM]]')) {
+          this.showNumberInputModal(labelRaw).then((num) => {
             this.wagerNumberValue = num;
             this.loadUnits();
           });
@@ -552,6 +562,8 @@ export class AddNewWorkflow {
       const units = snapshot.docs.map((doc) => doc.data());
 
       console.log(`[LoadUnits] Loaded ${units.length} units`);
+
+      this.unitsData = units; // Save units data for later to parse user choice without <br>
 
       this.renderButtons(
         units.map((u) => this.formatUnitLabel(u.display_unit)),
@@ -609,6 +621,16 @@ export class AddNewWorkflow {
         this.phraseButtonsData = [];
       }
       this.phraseButtonsData.push(...phrasesToLoad.map(p => p.Phrase));
+
+      // Save phrase metadata for later sys_Phrase fields
+      this.phraseMetadataMap = this.phraseMetadataMap || new Map();
+      phrasesToLoad.forEach(p => {
+        this.phraseMetadataMap.set(p.Phrase, {
+          Energy: p.Energy || '',
+          Promo: p.Promo || '',
+          Type: p.Type || '',
+        });
+      });
 
       console.log(`[LoadPhrases] Loaded ${phrasesToLoad.length} phrases (total loaded: ${this.phraseButtonsData.length})`);
 
@@ -726,12 +748,32 @@ export class AddNewWorkflow {
               this.loadWagerTypes();
             }
             break;
-          case 'wagerType':
-            break;
           case 'unit':
             if (this.selectedUnit !== label) {
-              console.log(`[Selection] Unit selected: ${label}`);
-              this.selectedUnit = label;
+              // Strip <br> tags to save clean value (important)
+              const unitData = this.unitsData.find(
+                (u) => u.display_unit === label.replace(/<br>/g, '')
+              );
+
+              if (unitData) {
+                this.selectedUnit = unitData.display_unit; // clean text, no <br>
+                this.sys_UnitRank = unitData.Rank;
+                this.sys_UnitDollarValue = unitData['Unit $100 Ex'] || '';
+                this.sys_UnitPercentage = unitData['Unit %'] || '';
+                this.sys_UnitFraction = unitData['Unit Fractions'] || '';
+                this.sys_UnitsValue = unitData['Units'] || null;
+                this.user_UnitDisplay = unitData.display_unit;
+              } else {
+                this.selectedUnit = label.replace(/<br>/g, '');
+                this.sys_UnitRank = null;
+                this.sys_UnitDollarValue = '';
+                this.sys_UnitPercentage = '';
+                this.sys_UnitFraction = '';
+                this.sys_UnitsValue = null;
+                this.user_UnitDisplay = this.selectedUnit;
+              }
+
+              console.log(`[Selection] Unit selected: ${this.selectedUnit}`);
               this.step = 7;
               this.loadMoreBtn.style.display = 'inline-block';
               this.submitBtn.style.display = 'none';
@@ -742,6 +784,10 @@ export class AddNewWorkflow {
             if (this.selectedPhrase !== label) {
               console.log(`[Selection] Phrase selected: ${label}`);
               this.selectedPhrase = label;
+
+              // Save phrase metadata for sys fields
+              this.phraseMetadata = this.phraseMetadataMap.get(label) || {};
+
               this.step = 8;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'inline-block';
@@ -755,9 +801,28 @@ export class AddNewWorkflow {
     });
   }
 
+  // Format time as "h:mm AM/PM EST"
+  formatTimeEST(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const options = {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/New_York',
+    };
+    return date.toLocaleTimeString('en-US', options);
+  }
+
+  // Fix spacing in wager types for PLUS, MINUS, etc.
+  fixWagerTypeSpacing(str) {
+    return str.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
+  }
+
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
+    // Validate all required selections except notes (optional)
     if (
       !this.selectedSport ||
       !this.selectedLeague ||
@@ -771,35 +836,90 @@ export class AddNewWorkflow {
       return;
     }
 
-    if (this.selectedWagerType.includes('[[NUM]]') && (this.wagerNumberValue === null || this.wagerNumberValue === undefined)) {
+    // Validate wager number if needed
+    if (
+      this.selectedWagerType.includes('[[NUM]]') &&
+      (this.wagerNumberValue === null || this.wagerNumberValue === undefined)
+    ) {
       this.setStatus('Please enter a valid wager number.', true);
       return;
     }
 
     this.setStatus('Submitting your selection...');
 
-    // Remove <br> tags from selectedUnit for storage and summary display
-    const cleanUnit = this.selectedUnit.replace(/<br\s*\/?>/gi, ' ');
-
     try {
+      // Final wager with replaced number (if any)
+      let finalWagerType = this.selectedWagerType;
+      if (this.wagerNumberValue !== null && this.wagerNumberValue !== undefined) {
+        finalWagerType = finalWagerType.replace('[[NUM]]', this.wagerNumberValue);
+      }
+      finalWagerType = this.fixWagerTypeSpacing(finalWagerType);
+
+      // Format start time as EST "h:mm AM/PM"
+      const startTimeFormatted = this.formatTimeEST(this.selectedGame.startTimeET);
+
+      // Compose post titles and descriptions
+      const sys_PostTitle1 = `${this.user_UnitDisplay} - ${this.selectedPhrase} - ${this.selectedSport} - ${startTimeFormatted}`;
+      const sys_PostTitle2 = `${this.user_UnitDisplay} - ${this.selectedPhrase} - ${this.selectedTeam} - ${startTimeFormatted}`;
+
+      const phraseEnergy = this.phraseMetadata?.Energy || '';
+      const phrasePromo = this.phraseMetadata?.Promo || '';
+      const phraseType = this.phraseMetadata?.Type || '';
+
+      const sys_PostDesc1 = `${this.selectedPhrase} - ${phraseEnergy} - ${phrasePromo}`;
+      const sys_PostDesc2 = `${this.selectedPhrase} - ${this.selectedGame.awayTeam}\n@ ${this.selectedGame.homeTeam}\nToday @ ${startTimeFormatted} - ${phraseEnergy} - ${phrasePromo}`;
+
+      // Capture EST times for user start and end time
+      this.sys_UserEndTime = this.getCurrentESTDate();
+
       await addDoc(collection(db, 'OfficialPicks'), {
-        userId: this.userId,
-        sport: this.selectedSport,
-        league: this.selectedLeague,
-        gameId: this.selectedGame.id,
-        awayTeam: this.selectedGame.awayTeam,
-        homeTeam: this.selectedGame.homeTeam,
-        teamSelected: this.selectedTeam,
-        wagerType: this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''),
-        unit: cleanUnit,
-        phrase: this.selectedPhrase,
-        notes: this.notes,
+        user_UserId: this.userId,
+        user_Sport: this.selectedSport,
+        user_League: this.selectedLeague,
+        user_GameDisplay: this.selectedGame.display,
+        user_SelectedTeam: this.selectedTeam,
+        user_WagerType: this.selectedWagerType,
+        user_WagerNum: this.wagerNumberValue,
+        user_UnitDisplay: this.user_UnitDisplay,
+        user_Phrase: this.selectedPhrase,
+        user_Notes: this.notes,
+
+        sys_FinalWagerType: finalWagerType,
+        sys_GameAwayTeam: this.selectedGame.awayTeam,
+        sys_GameHomeTeam: this.selectedGame.homeTeam,
+        sys_GameId: this.selectedGame.id,
+        sys_GameStatus: 'Pending',
+        sys_PhraseEnergy: phraseEnergy,
+        sys_PhrasePromo: phrasePromo,
+        sys_PhraseType: phraseType,
+        sys_PostDesc1,
+        sys_PostDesc2,
+        sys_PostTitle1,
+        sys_PostTitle2,
+
+        sys_UnitRank: this.sys_UnitRank,
+        sys_Unit100Ex: this.sys_UnitDollarValue,
+        sys_UnitPercent: this.sys_UnitPercentage,
+        sys_UnitFractions: this.sys_UnitFraction,
+        sys_UnitNoZero: this.sys_UnitsValue,
+        sys_UnitsValue: this.sys_UnitsValue,
+
+        sys_UserStartTime: this.sys_UserStartTime,
+        sys_UserEndTime: this.sys_UserEndTime,
+
+        sys_Username: this.sys_Username,
+        sys_UserDisplayName: this.sys_UserDisplayName,
+        sys_AccessCode: this.sys_AccessCode,
+        sys_AccessType: this.sys_AccessType,
+        sys_LoginCount: this.sys_LoginCount,
+
         timestamp: Timestamp.now(),
+        sys_SubmissionSuccess: true,
       });
 
       console.log('[Submit] Submission successful');
 
-      this.showSubmissionSummary(cleanUnit);
+      this.showSubmissionSummary();
 
     } catch (error) {
       console.error('[Submit] Error submitting:', error);
@@ -807,13 +927,13 @@ export class AddNewWorkflow {
     }
   }
 
-  showSubmissionSummary(cleanUnit) {
+  showSubmissionSummary() {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
+    // Fix wager display spacing here too
     const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
 
-    // Use cleaned unit without <br> in summary
-    const successMsg = `Your ${this.selectedTeam} ${cleanUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
+    const successMsg = `Your ${this.selectedTeam} ${this.user_UnitDisplay} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
     this.buttonsWrapper.innerHTML = '';
     this.notesContainer.style.display = 'none';
@@ -834,7 +954,7 @@ export class AddNewWorkflow {
       { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
       { label: 'Team', value: this.selectedTeam },
       { label: 'Wager Type', value: wagerTypeFixed },
-      { label: 'Unit', value: cleanUnit },
+      { label: 'Unit', value: this.user_UnitDisplay },
       { label: 'Phrase', value: this.selectedPhrase },
       { label: 'Notes', value: this.notes || 'None' },
     ];
@@ -875,6 +995,19 @@ export class AddNewWorkflow {
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
+
+    this.sys_UnitRank = null;
+    this.sys_UnitDollarValue = '';
+    this.sys_UnitPercentage = '';
+    this.sys_UnitFraction = '';
+    this.sys_UnitsValue = null;
+    this.user_UnitDisplay = '';
+
+    this.phraseMetadata = null;
+
+    this.phraseMetadataMap = new Map();
+
+    this.sys_UserStartTime = this.getCurrentESTDate();
 
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.loadMoreBtn.style.display = 'none';
