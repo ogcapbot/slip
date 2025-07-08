@@ -16,9 +16,21 @@ const PAGE_LIMIT = 15;
 const PAGE_LIMIT_SPORTS = 100;
 
 export class AddNewWorkflow {
-  constructor(container, userId) {
+  constructor(container, userId, userInfo = {}) {
     this.container = container;
     this.userId = userId;
+
+    // User info fields for submission
+    this.sys_Username = userInfo.username || '';
+    this.sys_UserDisplayName = userInfo.displayName || '';
+    this.sys_AccessCode = userInfo.accessCode || '';
+    this.sys_AccessType = userInfo.accessType || '';
+    this.sys_LoginCount = userInfo.loginCount || 0;
+
+    // Track times
+    this.sys_UserStartTime = new Date();
+    this.sys_UserEndTime = null;
+    this.sys_SubmissionSuccess = false;
 
     this.sys_sportLastVisible = null;
     this.sys_leagueLastVisible = null;
@@ -65,6 +77,14 @@ export class AddNewWorkflow {
     this.sys_PhrasePromo = '';
 
     this.user_notes = '';
+
+    // New post title/desc fields
+    this.sys_PostTitle1 = '';
+    this.sys_PostTitle2 = '';
+    this.sys_PostDesc1 = '';
+    this.sys_PostDesc2 = '';
+
+    this.sys_GameStatus = '';
 
     this.step = 1;
 
@@ -124,6 +144,7 @@ export class AddNewWorkflow {
     this.notesTextarea.rows = 2;
     this.notesTextarea.cols = 50;
     this.notesTextarea.style.fontFamily = "'Oswald', sans-serif";
+    this.notesTextarea.spellcheck = true;
     this.notesTextarea.addEventListener('input', () => {
       const remaining = 100 - this.notesTextarea.value.length;
       this.charCount.textContent = `${remaining} characters remaining`;
@@ -700,6 +721,22 @@ export class AddNewWorkflow {
     }
   }
 
+  generatePostTitlesAndDescriptions() {
+    const fraction = this.sys_UnitFractions || '';
+    const phrase = this.user_selectedPhrase || '';
+    const sport = this.user_selectedSport || '';
+    const team = this.user_selectedTeam || '';
+    const startTime = this.sys_selectedGame?.startTimeET || '';
+    const energy = this.sys_PhraseEnergy || '';
+    const promo = this.sys_PhrasePromo || '';
+    const gameDisplay = this.user_selectedGameDisplay || '';
+
+    this.sys_PostTitle1 = `${fraction} - ${phrase} - ${sport} - ${startTime}`;
+    this.sys_PostTitle2 = `${fraction} - ${phrase} - ${team} - ${startTime}`;
+    this.sys_PostDesc1 = `${phrase} - ${energy} - ${promo}`;
+    this.sys_PostDesc2 = `${phrase} - ${gameDisplay} - ${energy} - ${promo}`;
+  }
+
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
@@ -723,9 +760,19 @@ export class AddNewWorkflow {
 
     this.setStatus('Submitting your selection...');
 
+    this.sys_UserEndTime = new Date();
+
+    this.generatePostTitlesAndDescriptions();
+
     try {
       await addDoc(collection(db, 'OfficialPicks'), {
         userId: this.userId,
+        sys_Username: this.sys_Username,
+        sys_UserDisplayName: this.sys_UserDisplayName,
+        sys_AccessCode: this.sys_AccessCode,
+        sys_AccessType: this.sys_AccessType,
+        sys_LoginCount: this.sys_LoginCount,
+
         user_Sport: this.user_selectedSport,
         user_League: this.user_selectedLeague,
         user_SelectedGame: this.user_selectedGameDisplay || '',
@@ -738,11 +785,14 @@ export class AddNewWorkflow {
         sys_StartTimeET: this.sys_selectedGame?.startTimeET || '',
         sys_StartTimeUTC: this.sys_selectedGame?.startTimeUTC || '',
         sys_ExpireAt: this.sys_selectedGame?.expireAt || null,
+        sys_GameStatus: this.sys_GameStatus,
+
         user_TeamSelected: this.user_selectedTeam,
         user_WagerType: this.user_WagerType || '',
         user_WagerNum: this.user_WagerNum || null,
         sys_WagerType: this.sys_WagerType || '',
         sys_WagerDesc: this.sys_WagerDesc || '',
+
         user_Unit: this.user_selectedUnit,
         sys_UnitRank: this.sys_UnitRank,
         sys_Unit100Ex: this.sys_Unit100Ex,
@@ -750,19 +800,33 @@ export class AddNewWorkflow {
         sys_UnitFractions: this.sys_UnitFractions,
         sys_UnitNoZero: this.sys_UnitNoZero,
         sys_UnitsValue: this.sys_UnitsValue,
+
         user_Phrase: this.user_selectedPhrase,
         sys_PhraseEnergy: this.sys_PhraseEnergy,
         sys_PhraseType: this.sys_PhraseType,
         sys_PhrasePromo: this.sys_PhrasePromo,
+
+        sys_PostTitle1: this.sys_PostTitle1,
+        sys_PostTitle2: this.sys_PostTitle2,
+        sys_PostDesc1: this.sys_PostDesc1,
+        sys_PostDesc2: this.sys_PostDesc2,
+
+        sys_UserStartTime: this.sys_UserStartTime,
+        sys_UserEndTime: this.sys_UserEndTime,
+        sys_SubmissionSuccess: true,
+
         user_Notes: this.user_notes,
         timestamp: Timestamp.now(),
       });
+
+      this.sys_SubmissionSuccess = true;
 
       console.log('[Submit] Submission successful');
 
       this.showSubmissionSummary();
 
     } catch (error) {
+      this.sys_SubmissionSuccess = false;
       console.error('[Submit] Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
     }
@@ -842,6 +906,17 @@ export class AddNewWorkflow {
     this.sys_PhrasePromo = '';
 
     this.user_notes = '';
+
+    this.sys_PostTitle1 = '';
+    this.sys_PostTitle2 = '';
+    this.sys_PostDesc1 = '';
+    this.sys_PostDesc2 = '';
+
+    this.sys_GameStatus = '';
+
+    this.sys_UserStartTime = new Date();
+    this.sys_UserEndTime = null;
+    this.sys_SubmissionSuccess = false;
 
     this.sys_sportLastVisible = null;
     this.sys_leagueLastVisible = null;
