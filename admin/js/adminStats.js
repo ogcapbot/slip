@@ -735,31 +735,31 @@ offscreen.appendChild(topButtonsDiv);
 
     // Add watermarks *before* picksDiv content, absolutely positioned inside picksDiv
     // Remove previous image watermark loop and replace with CSS text watermark:
-const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkSpacingPx = 24; // 1.5 inches approx (96dpi * 1.5 = 144px, but we'll use 24px visually smaller)
-const watermarkLeftPx = 72;    // 0.75 inches approx (96dpi * 0.75 = 72px)
+const inchToPx = 96;
+const verticalSpacingPx = 1.5 * inchToPx; // 144px
+const horizontalOffsetPx = 0.75 * inchToPx; // 72px
 
-const watermarkCount = Math.ceil(picksHeight / watermarkSpacingPx);
+const picksHeight = picksDiv.offsetHeight || 300;
+const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
   watermark.textContent = '© ogcapperbets.com ©';
   watermark.style.position = 'absolute';
-  watermark.style.color = '#000';
+  watermark.style.left = `${horizontalOffsetPx}px`;
+  watermark.style.top = `${i * verticalSpacingPx}px`;
   watermark.style.opacity = '0.1';
-  watermark.style.fontSize = '16px';
-  watermark.style.fontWeight = '700';
-  watermark.style.userSelect = 'none';
-  watermark.style.pointerEvents = 'none';
-  watermark.style.whiteSpace = 'nowrap';
+  watermark.style.fontSize = '12px';
+  watermark.style.color = '#aaa';
   watermark.style.transform = 'rotate(315deg)';
+  watermark.style.pointerEvents = 'none';
+  watermark.style.userSelect = 'none';
+  watermark.style.whiteSpace = 'nowrap';
   watermark.style.zIndex = '0';
 
-  watermark.style.left = `${watermarkLeftPx}px`;
-  watermark.style.top = `${headerImg.offsetHeight + 65 + i * watermarkSpacingPx}px`;
-
-  offscreen.appendChild(watermark);
+  picksDiv.appendChild(watermark);
 }
+
 
 
     // bottom spacing
