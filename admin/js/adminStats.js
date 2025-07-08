@@ -694,7 +694,7 @@ function generateImageFromStatsContainer(day) {
     const headerImg = document.createElement('img');
     headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
     headerImg.style.display = 'block';
-    headerImg.style.margin = '0 auto 1px';
+    headerImg.style.margin = '0 auto 8px';
     headerImg.style.maxWidth = '100%';  // scale to container width max
     headerImg.style.height = 'auto';   // keep aspect ratio
     offscreen.appendChild(headerImg);
@@ -713,7 +713,7 @@ offscreen.appendChild(topButtonsDiv);
       dateLabel.style.color = '#666';
       dateLabel.style.fontSize = '12px';
       dateLabel.style.textAlign = 'center';
-      dateLabel.style.marginBottom = '1px';  // tight gap
+      dateLabel.style.marginBottom = '4px';  // tight gap
       offscreen.appendChild(dateLabel);
     }
 
