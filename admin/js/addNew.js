@@ -20,25 +20,33 @@ export class AddNewWorkflow {
     this.container = container;
     this.userId = userId;
 
-    this.sportLastVisible = null;
-    this.leagueLastVisible = null;
-    this.gameLastVisible = null;
-    this.phraseLastVisible = null;
+    this.sys_sportLastVisible = null;
+    this.sys_leagueLastVisible = null;
+    this.sys_gameLastVisible = null;
+    this.sys_phraseLastVisible = null;
 
-    this.sportButtonsData = [];
-    this.leagueButtonsData = [];
-    this.gameButtonsData = [];
-    this.phraseButtonsData = [];
+    this.sys_sportButtonsData = [];
+    this.sys_leagueButtonsData = [];
+    this.sys_gameButtonsData = [];
+    this.sys_phraseButtonsData = [];
+    this.sys_wagerButtonsData = []; // store wager objects
 
-    this.selectedSport = null;
-    this.selectedLeague = null;
-    this.selectedGame = null;
-    this.selectedTeam = null;
-    this.selectedWagerType = null;
-    this.selectedUnit = null;
-    this.selectedPhrase = null;
-    this.notes = '';
-    this.wagerNumberValue = null;
+    this.user_selectedSport = null;
+    this.user_selectedLeague = null;
+    this.sys_selectedGame = null;
+    this.user_selectedTeam = null;
+
+    // Wager related
+    this.user_selectedWagerType = null; // raw selected wager string (with [[NUM]] or [[TEAM]])
+    this.user_wagerNumberValue = null;  // number input for [[NUM]]
+    this.user_WagerType = null;    // user raw wager type string
+    this.user_WagerNum = null;     // user entered number
+    this.sys_WagerType = null;     // generated wager string with replaced [[NUM]] and [[TEAM]]
+    this.sys_WagerDesc = null;     // description from DB pick_desc_template with replacements
+
+    this.user_selectedUnit = null;
+    this.user_selectedPhrase = null;
+    this.user_notes = '';
 
     this.step = 1;
 
@@ -101,8 +109,8 @@ export class AddNewWorkflow {
     this.notesTextarea.addEventListener('input', () => {
       const remaining = 100 - this.notesTextarea.value.length;
       this.charCount.textContent = `${remaining} characters remaining`;
-      this.notes = this.notesTextarea.value;
-      console.log(`[Notes] User typed notes: ${this.notes}`);
+      this.user_notes = this.notesTextarea.value;
+      console.log(`[Notes] User typed notes: ${this.user_notes}`);
     });
     this.notesContainer.appendChild(this.notesTextarea);
 
@@ -134,7 +142,7 @@ export class AddNewWorkflow {
 
     try {
       let q;
-      if (!loadMore || !this.sportLastVisible) {
+      if (!loadMore || !this.sys_sportLastVisible) {
         q = query(
           collection(db, 'SportsData'),
           where('active', '==', true),
@@ -146,7 +154,7 @@ export class AddNewWorkflow {
           collection(db, 'SportsData'),
           where('active', '==', true),
           orderBy('group'),
-          startAfter(this.sportLastVisible),
+          startAfter(this.sys_sportLastVisible),
           limit(PAGE_LIMIT_SPORTS)
         );
       }
@@ -161,22 +169,22 @@ export class AddNewWorkflow {
         return;
       }
 
-      this.sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
+      this.sys_sportLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
-        if (data.group && !this.sportButtonsData.includes(data.group)) {
-          this.sportButtonsData.push(data.group);
+        if (data.group && !this.sys_sportButtonsData.includes(data.group)) {
+          this.sys_sportButtonsData.push(data.group);
         }
       });
 
-      this.sportButtonsData.sort();
+      this.sys_sportButtonsData.sort();
 
-      console.log(`[LoadSports] Total unique sports loaded: ${this.sportButtonsData.length}`);
+      console.log(`[LoadSports] Total unique sports loaded: ${this.sys_sportButtonsData.length}`);
 
-      this.renderButtons(this.sportButtonsData, 'sport');
+      this.renderButtons(this.sys_sportButtonsData, 'sport');
 
-      if (snapshot.size === PAGE_LIMIT) {
+      if (snapshot.size === PAGE_LIMIT_SPORTS) {
         this.loadMoreBtn.style.display = 'inline-block';
       } else {
         this.loadMoreBtn.style.display = 'none';
@@ -190,26 +198,26 @@ export class AddNewWorkflow {
   }
 
   async loadLeagues(loadMore = false) {
-    if (!this.selectedSport) {
+    if (!this.user_selectedSport) {
       this.setStatus('Please select a sport first.', true);
       return;
     }
 
-    console.log(`[LoadLeagues] Loading leagues for sport: ${this.selectedSport}`);
+    console.log(`[LoadLeagues] Loading leagues for sport: ${this.user_selectedSport}`);
     this.step = 2;
-    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected Sport: ${this.selectedSport} — Select a League`);
-    this.setStatus(`Loading leagues for ${this.selectedSport}...`);
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected Sport: ${this.user_selectedSport} — Select a League`);
+    this.setStatus(`Loading leagues for ${this.user_selectedSport}...`);
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
     this.notesContainer.style.display = 'none';
 
     try {
       let q;
-      if (!loadMore || !this.leagueLastVisible) {
+      if (!loadMore || !this.sys_leagueLastVisible) {
         q = query(
           collection(db, 'SportsData'),
           where('active', '==', true),
-          where('group', '==', this.selectedSport),
+          where('group', '==', this.user_selectedSport),
           orderBy('title'),
           limit(PAGE_LIMIT)
         );
@@ -217,9 +225,9 @@ export class AddNewWorkflow {
         q = query(
           collection(db, 'SportsData'),
           where('active', '==', true),
-          where('group', '==', this.selectedSport),
+          where('group', '==', this.user_selectedSport),
           orderBy('title'),
-          startAfter(this.leagueLastVisible),
+          startAfter(this.sys_leagueLastVisible),
           limit(PAGE_LIMIT)
         );
       }
@@ -234,20 +242,20 @@ export class AddNewWorkflow {
         return;
       }
 
-      this.leagueLastVisible = snapshot.docs[snapshot.docs.length - 1];
+      this.sys_leagueLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
-        if (data.title && !this.leagueButtonsData.includes(data.title)) {
-          this.leagueButtonsData.push(data.title);
+        if (data.title && !this.sys_leagueButtonsData.includes(data.title)) {
+          this.sys_leagueButtonsData.push(data.title);
         }
       });
 
-      this.leagueButtonsData.sort();
+      this.sys_leagueButtonsData.sort();
 
-      console.log(`[LoadLeagues] Total unique leagues loaded: ${this.leagueButtonsData.length}`);
+      console.log(`[LoadLeagues] Total unique leagues loaded: ${this.sys_leagueButtonsData.length}`);
 
-      this.renderButtons(this.leagueButtonsData, 'league');
+      this.renderButtons(this.sys_leagueButtonsData, 'league');
 
       if (snapshot.size === PAGE_LIMIT) {
         this.loadMoreBtn.style.display = 'inline-block';
@@ -263,15 +271,15 @@ export class AddNewWorkflow {
   }
 
   async loadGames(loadMore = false) {
-    if (!this.selectedLeague) {
+    if (!this.user_selectedLeague) {
       this.setStatus('Please select a league first.', true);
       return;
     }
 
-    console.log(`[LoadGames] Loading games for league: ${this.selectedLeague}`);
+    console.log(`[LoadGames] Loading games for league: ${this.user_selectedLeague}`);
     this.step = 3;
-    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected League: ${this.selectedLeague} — Select a Game`);
-    this.setStatus(`Loading games for league ${this.selectedLeague}...`);
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Selected League: ${this.user_selectedLeague} — Select a Game`);
+    this.setStatus(`Loading games for league ${this.user_selectedLeague}...`);
     this.loadMoreBtn.style.display = 'none';
     this.submitBtn.style.display = 'none';
     this.notesContainer.style.display = 'none';
@@ -284,10 +292,10 @@ export class AddNewWorkflow {
 
     try {
       let q;
-      if (!loadMore || !this.gameLastVisible) {
+      if (!loadMore || !this.sys_gameLastVisible) {
         q = query(
           collection(db, 'GameEventsData'),
-          where('leagueShortname', '==', this.selectedLeague),
+          where('leagueShortname', '==', this.user_selectedLeague),
           where('startTimeET', '>=', cutoffString),
           orderBy('startTimeET'),
           limit(PAGE_LIMIT)
@@ -295,10 +303,10 @@ export class AddNewWorkflow {
       } else {
         q = query(
           collection(db, 'GameEventsData'),
-          where('leagueShortname', '==', this.selectedLeague),
+          where('leagueShortname', '==', this.user_selectedLeague),
           where('startTimeET', '>=', cutoffString),
           orderBy('startTimeET'),
-          startAfter(this.gameLastVisible),
+          startAfter(this.sys_gameLastVisible),
           limit(PAGE_LIMIT)
         );
       }
@@ -313,13 +321,13 @@ export class AddNewWorkflow {
         return;
       }
 
-      this.gameLastVisible = snapshot.docs[snapshot.docs.length - 1];
+      this.sys_gameLastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
         const gameId = doc.id;
-        if (!this.gameButtonsData.some((g) => g.id === gameId)) {
-          this.gameButtonsData.push({
+        if (!this.sys_gameButtonsData.some((g) => g.id === gameId)) {
+          this.sys_gameButtonsData.push({
             id: gameId,
             display: this.formatGameDisplay(data),
             awayTeam: data.awayTeam,
@@ -329,12 +337,12 @@ export class AddNewWorkflow {
         }
       });
 
-      this.gameButtonsData.sort((a, b) => a.startTimeET.localeCompare(b.startTimeET));
+      this.sys_gameButtonsData.sort((a, b) => a.startTimeET.localeCompare(b.startTimeET));
 
-      console.log(`[LoadGames] Total unique games loaded: ${this.gameButtonsData.length}`);
+      console.log(`[LoadGames] Total unique games loaded: ${this.sys_gameButtonsData.length}`);
 
       this.renderButtons(
-        this.gameButtonsData.map((g) => g.display),
+        this.sys_gameButtonsData.map((g) => g.display),
         'game'
       );
 
@@ -399,7 +407,7 @@ export class AddNewWorkflow {
   }
 
   async loadTeams() {
-    if (!this.selectedGame) {
+    if (!this.sys_selectedGame) {
       this.setStatus('Please select a game first.', true);
       return;
     }
@@ -413,22 +421,22 @@ export class AddNewWorkflow {
     this.submitBtn.style.display = 'none';
 
     const teams = [
-      this.selectedGame.awayTeam || 'Away Team',
-      this.selectedGame.homeTeam || 'Home Team',
+      this.sys_selectedGame.awayTeam || 'Away Team',
+      this.sys_selectedGame.homeTeam || 'Home Team',
     ];
 
     this.renderButtons(teams, 'team');
   }
 
   async loadWagerTypes() {
-    if (!this.selectedTeam) {
+    if (!this.user_selectedTeam) {
       this.setStatus('Please select a team first.', true);
       return;
     }
 
-    console.log(`[LoadWagerTypes] Loading wager types for selected team: ${this.selectedTeam}`);
+    console.log(`[LoadWagerTypes] Loading wager types for selected team: ${this.user_selectedTeam}`);
     this.step = 5;
-    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select a Wager Type for ${this.selectedTeam}`);
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select a Wager Type for ${this.user_selectedTeam}`);
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -445,13 +453,15 @@ export class AddNewWorkflow {
 
       const sportQuery = query(
         collection(db, 'WagerTypes'),
-        where('Sport', '==', this.selectedSport),
+        where('Sport', '==', this.user_selectedSport),
         limit(50)
       );
       const sportSnap = await getDocs(sportQuery);
       const sportWagers = sportSnap.docs.map((doc) => doc.data());
 
       console.log(`[LoadWagerTypes] Global wagers count: ${globalWagers.length}, Sport-specific wagers count: ${sportWagers.length}`);
+
+      this.sys_wagerButtonsData = [...globalWagers, ...sportWagers];
 
       this.renderWagerTypes(globalWagers, sportWagers);
     } catch (error) {
@@ -463,44 +473,29 @@ export class AddNewWorkflow {
   renderWagerTypes(globalWagers, sportWagers) {
     this.buttonsWrapper.innerHTML = '';
 
-    if (globalWagers.length) {
-      console.log(`[RenderWagerTypes] Rendering ${globalWagers.length} global wager buttons`);
-      globalWagers.forEach((wager) => {
-        const btn = document.createElement('button');
-        btn.classList.add('admin-button');
+    this.sys_wagerButtonsData.forEach((wager) => {
+      const btn = document.createElement('button');
+      btn.classList.add('admin-button');
 
-        btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
+      const label = wager.wager_label_template || wager.WagerType || 'Unnamed';
+      btn.innerHTML = this.formatWagerLabel(label);
 
-        this.buttonsWrapper.appendChild(btn);
-      });
-    }
-
-    if (sportWagers.length) {
-      console.log(`[RenderWagerTypes] Rendering ${sportWagers.length} sport-specific wager buttons`);
-      sportWagers.forEach((wager) => {
-        const btn = document.createElement('button');
-        btn.classList.add('admin-button');
-
-        btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
-
-        this.buttonsWrapper.appendChild(btn);
-      });
-    }
-
-    Array.from(this.buttonsWrapper.children).forEach((btn) => {
       btn.addEventListener('click', () => {
-        const label = btn.textContent;
-        this.selectedWagerType = label;
+        this.user_selectedWagerType = label;
+        this.user_wagerNumberValue = null;
         if (label.includes('[[NUM]]')) {
           this.showNumberInputModal(label).then((num) => {
-            this.wagerNumberValue = num;
+            this.user_wagerNumberValue = num;
+            this.generateWagerStrings();
             this.loadUnits();
           });
         } else {
-          this.wagerNumberValue = null;
+          this.generateWagerStrings();
           this.loadUnits();
         }
       });
+
+      this.buttonsWrapper.appendChild(btn);
     });
   }
 
@@ -510,15 +505,50 @@ export class AddNewWorkflow {
     return formatted;
   }
 
+  generateWagerStrings() {
+    const wagerRaw = this.user_selectedWagerType || '';
+    const wagerNum = this.user_wagerNumberValue;
+    const team = this.user_selectedTeam || '';
+
+    this.user_WagerType = wagerRaw;
+    this.user_WagerNum = wagerNum !== null ? wagerNum : null;
+
+    let replacedWager = wagerRaw;
+    if (wagerNum !== null) {
+      replacedWager = replacedWager.replace('[[NUM]]', wagerNum);
+    }
+    if (team) {
+      replacedWager = replacedWager.replace('[[TEAM]]', team);
+    }
+    this.sys_WagerType = replacedWager;
+
+    const wagerObj = this.sys_wagerButtonsData?.find(w =>
+      (w.wager_label_template || w.WagerType) === wagerRaw
+    );
+
+    if (wagerObj && wagerObj.pick_desc_template) {
+      let desc = wagerObj.pick_desc_template;
+      if (wagerNum !== null) {
+        desc = desc.replace('[[NUM]]', wagerNum);
+      }
+      if (team) {
+        desc = desc.replace('[[TEAM]]', team);
+      }
+      this.sys_WagerDesc = desc;
+    } else {
+      this.sys_WagerDesc = '';
+    }
+  }
+
   async loadUnits() {
-    if (!this.selectedWagerType) {
+    if (!this.user_selectedWagerType) {
       this.setStatus('Please select a wager type first.', true);
       return;
     }
 
-    console.log(`[LoadUnits] Loading units for wager type: ${this.selectedWagerType}`);
+    console.log(`[LoadUnits] Loading units for wager type: ${this.user_selectedWagerType}`);
     this.step = 6;
-    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select Units for ${this.selectedWagerType}`);
+    this.titleEl.textContent = this.addSpaceBeforeKeywords(`Select Units for ${this.user_selectedWagerType}`);
 
     this.notesContainer.style.display = 'none';
     this.loadMoreBtn.style.display = 'none';
@@ -550,7 +580,7 @@ export class AddNewWorkflow {
   }
 
   async loadPhrases(loadMore = false) {
-    if (!this.selectedUnit) {
+    if (!this.user_selectedUnit) {
       this.setStatus('Please select units first.', true);
       return;
     }
@@ -569,15 +599,15 @@ export class AddNewWorkflow {
       const phrasesSnap = await getDocs(phrasesQuery);
       const allPhrases = phrasesSnap.docs.map((doc) => doc.data());
 
-      const sportSpecific = allPhrases.filter(p => p.Sport === this.selectedSport);
-      const ogCapType = allPhrases.filter(p => p.Type === 'OG Cap' && p.Sport !== this.selectedSport);
-      const others = allPhrases.filter(p => p.Sport !== this.selectedSport && p.Type !== 'OG Cap');
+      const sportSpecific = allPhrases.filter(p => p.Sport === this.user_selectedSport);
+      const ogCapType = allPhrases.filter(p => p.Type === 'OG Cap' && p.Sport !== this.user_selectedSport);
+      const others = allPhrases.filter(p => p.Sport !== this.user_selectedSport && p.Type !== 'OG Cap');
 
       const shuffle = (array) => array.sort(() => Math.random() - 0.5);
 
       const combined = [...shuffle(sportSpecific), ...shuffle(ogCapType), ...shuffle(others)];
 
-      const startIndex = loadMore ? this.phraseButtonsData.length : 0;
+      const startIndex = loadMore ? this.sys_phraseButtonsData.length : 0;
       const phrasesToLoad = combined.slice(startIndex, startIndex + PAGE_LIMIT);
 
       if (phrasesToLoad.length === 0) {
@@ -588,13 +618,13 @@ export class AddNewWorkflow {
       }
 
       if (!loadMore) {
-        this.phraseButtonsData = [];
+        this.sys_phraseButtonsData = [];
       }
-      this.phraseButtonsData.push(...phrasesToLoad.map(p => p.Phrase));
+      this.sys_phraseButtonsData.push(...phrasesToLoad.map(p => p.Phrase));
 
-      console.log(`[LoadPhrases] Loaded ${phrasesToLoad.length} phrases (total loaded: ${this.phraseButtonsData.length})`);
+      console.log(`[LoadPhrases] Loaded ${phrasesToLoad.length} phrases (total loaded: ${this.sys_phraseButtonsData.length})`);
 
-      this.renderButtons(this.phraseButtonsData, 'phrase');
+      this.renderButtons(this.sys_phraseButtonsData, 'phrase');
 
       if (startIndex + PAGE_LIMIT < combined.length) {
         this.loadMoreBtn.style.display = 'inline-block';
@@ -612,7 +642,7 @@ export class AddNewWorkflow {
   showNotesSection() {
     console.log('[Notes] Showing Notes/Comments section (optional)');
     this.step = 8;
-    this.notesTextarea.value = this.notes || '';
+    this.notesTextarea.value = this.user_notes || '';
     const remaining = 100 - this.notesTextarea.value.length;
     this.charCount.textContent = `${remaining} characters remaining`;
     this.notesContainer.style.display = 'block';
@@ -663,12 +693,12 @@ export class AddNewWorkflow {
 
         switch (type) {
           case 'sport':
-            if (this.selectedSport !== label) {
+            if (this.user_selectedSport !== label) {
               console.log(`[Selection] Sport selected: ${label}`);
-              this.selectedSport = label;
-              this.selectedLeague = null;
-              this.leagueButtonsData = [];
-              this.leagueLastVisible = null;
+              this.user_selectedSport = label;
+              this.user_selectedLeague = null;
+              this.sys_leagueButtonsData = [];
+              this.sys_leagueLastVisible = null;
               this.step = 2;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
@@ -676,12 +706,12 @@ export class AddNewWorkflow {
             }
             break;
           case 'league':
-            if (this.selectedLeague !== label) {
+            if (this.user_selectedLeague !== label) {
               console.log(`[Selection] League selected: ${label}`);
-              this.selectedLeague = label;
-              this.selectedGame = null;
-              this.gameButtonsData = [];
-              this.gameLastVisible = null;
+              this.user_selectedLeague = label;
+              this.sys_selectedGame = null;
+              this.sys_gameButtonsData = [];
+              this.sys_gameLastVisible = null;
               this.step = 3;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
@@ -689,9 +719,9 @@ export class AddNewWorkflow {
             }
             break;
           case 'game':
-            if (this.selectedGame !== label) {
-              this.selectedGame = this.gameButtonsData.find(g => g.display === label);
-              console.log(`[Selection] Game selected: ${this.selectedGame.id}`);
+            if (this.sys_selectedGame?.display !== label) {
+              this.sys_selectedGame = this.sys_gameButtonsData.find(g => g.display === label);
+              console.log(`[Selection] Game selected: ${this.sys_selectedGame.id}`);
               this.step = 4;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
@@ -699,21 +729,19 @@ export class AddNewWorkflow {
             }
             break;
           case 'team':
-            if (this.selectedTeam !== label) {
+            if (this.user_selectedTeam !== label) {
               console.log(`[Selection] Team selected: ${label}`);
-              this.selectedTeam = label;
+              this.user_selectedTeam = label;
               this.step = 5;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
               this.loadWagerTypes();
             }
             break;
-          case 'wagerType':
-            break;
           case 'unit':
-            if (this.selectedUnit !== label) {
+            if (this.user_selectedUnit !== label) {
               console.log(`[Selection] Unit selected: ${label}`);
-              this.selectedUnit = label;
+              this.user_selectedUnit = label;
               this.step = 7;
               this.loadMoreBtn.style.display = 'inline-block';
               this.submitBtn.style.display = 'none';
@@ -721,9 +749,9 @@ export class AddNewWorkflow {
             }
             break;
           case 'phrase':
-            if (this.selectedPhrase !== label) {
+            if (this.user_selectedPhrase !== label) {
               console.log(`[Selection] Phrase selected: ${label}`);
-              this.selectedPhrase = label;
+              this.user_selectedPhrase = label;
               this.step = 8;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'inline-block';
@@ -741,19 +769,19 @@ export class AddNewWorkflow {
     console.log('[Submit] Submit button clicked');
 
     if (
-      !this.selectedSport ||
-      !this.selectedLeague ||
-      !this.selectedGame ||
-      !this.selectedTeam ||
-      !this.selectedWagerType ||
-      !this.selectedUnit ||
-      !this.selectedPhrase
+      !this.user_selectedSport ||
+      !this.user_selectedLeague ||
+      !this.sys_selectedGame ||
+      !this.user_selectedTeam ||
+      !this.user_selectedWagerType ||
+      !this.user_selectedUnit ||
+      !this.user_selectedPhrase
     ) {
       this.setStatus('Please complete all steps before submitting.', true);
       return;
     }
 
-    if (this.selectedWagerType.includes('[[NUM]]') && (this.wagerNumberValue === null || this.wagerNumberValue === undefined)) {
+    if (this.user_selectedWagerType.includes('[[NUM]]') && (this.user_wagerNumberValue === null || this.user_wagerNumberValue === undefined)) {
       this.setStatus('Please enter a valid wager number.', true);
       return;
     }
@@ -763,16 +791,19 @@ export class AddNewWorkflow {
     try {
       await addDoc(collection(db, 'OfficialPicks'), {
         userId: this.userId,
-        sport: this.selectedSport,
-        league: this.selectedLeague,
-        gameId: this.selectedGame.id,
-        awayTeam: this.selectedGame.awayTeam,
-        homeTeam: this.selectedGame.homeTeam,
-        teamSelected: this.selectedTeam,
-        wagerType: this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''),
-        unit: this.selectedUnit,
-        phrase: this.selectedPhrase,
-        notes: this.notes,
+        user_Sport: this.user_selectedSport,
+        user_League: this.user_selectedLeague,
+        sys_GameId: this.sys_selectedGame?.id || null,
+        sys_AwayTeam: this.sys_selectedGame?.awayTeam || '',
+        sys_HomeTeam: this.sys_selectedGame?.homeTeam || '',
+        user_TeamSelected: this.user_selectedTeam,
+        user_WagerType: this.user_WagerType || '',
+        user_WagerNum: this.user_WagerNum || null,
+        sys_WagerType: this.sys_WagerType || '',
+        sys_WagerDesc: this.sys_WagerDesc || '',
+        user_Unit: this.user_selectedUnit,
+        user_Phrase: this.user_selectedPhrase,
+        user_Notes: this.user_notes,
         timestamp: Timestamp.now(),
       });
 
@@ -789,9 +820,9 @@ export class AddNewWorkflow {
   showSubmissionSummary() {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
-    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
+    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.sys_WagerType || '');
 
-    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
+    const successMsg = `Your ${this.user_selectedTeam} ${this.user_selectedUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
     this.buttonsWrapper.innerHTML = '';
     this.notesContainer.style.display = 'none';
@@ -807,14 +838,14 @@ export class AddNewWorkflow {
     summaryDiv.style.textAlign = 'left'; // Left align summary
 
     const fields = [
-      { label: 'Sport', value: this.selectedSport },
-      { label: 'League', value: this.selectedLeague },
-      { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
-      { label: 'Team', value: this.selectedTeam },
+      { label: 'Sport', value: this.user_selectedSport },
+      { label: 'League', value: this.user_selectedLeague },
+      { label: 'Game', value: `${this.sys_selectedGame?.awayTeam} @ ${this.sys_selectedGame?.homeTeam}` },
+      { label: 'Team', value: this.user_selectedTeam },
       { label: 'Wager Type', value: wagerTypeFixed },
-      { label: 'Unit', value: this.selectedUnit },
-      { label: 'Phrase', value: this.selectedPhrase },
-      { label: 'Notes', value: this.notes || 'None' },
+      { label: 'Unit', value: this.user_selectedUnit },
+      { label: 'Phrase', value: this.user_selectedPhrase },
+      { label: 'Notes', value: this.user_notes || 'None' },
     ];
 
     fields.forEach(({ label, value }) => {
@@ -834,25 +865,30 @@ export class AddNewWorkflow {
   resetWorkflow() {
     console.log('[Reset] Resetting workflow for new submission');
     this.step = 1;
-    this.selectedSport = null;
-    this.selectedLeague = null;
-    this.selectedGame = null;
-    this.selectedTeam = null;
-    this.selectedWagerType = null;
-    this.selectedUnit = null;
-    this.selectedPhrase = null;
-    this.notes = '';
-    this.wagerNumberValue = null;
+    this.user_selectedSport = null;
+    this.user_selectedLeague = null;
+    this.sys_selectedGame = null;
+    this.user_selectedTeam = null;
+    this.user_selectedWagerType = null;
+    this.user_wagerNumberValue = null;
+    this.user_WagerType = null;
+    this.user_WagerNum = null;
+    this.sys_WagerType = null;
+    this.sys_WagerDesc = null;
+    this.user_selectedUnit = null;
+    this.user_selectedPhrase = null;
+    this.user_notes = '';
 
-    this.sportLastVisible = null;
-    this.leagueLastVisible = null;
-    this.gameLastVisible = null;
-    this.phraseLastVisible = null;
+    this.sys_sportLastVisible = null;
+    this.sys_leagueLastVisible = null;
+    this.sys_gameLastVisible = null;
+    this.sys_phraseLastVisible = null;
 
-    this.sportButtonsData = [];
-    this.leagueButtonsData = [];
-    this.gameButtonsData = [];
-    this.phraseButtonsData = [];
+    this.sys_sportButtonsData = [];
+    this.sys_leagueButtonsData = [];
+    this.sys_gameButtonsData = [];
+    this.sys_phraseButtonsData = [];
+    this.sys_wagerButtonsData = [];
 
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.loadMoreBtn.style.display = 'none';
