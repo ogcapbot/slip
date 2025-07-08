@@ -600,7 +600,7 @@ export async function loadStatsForDay(day) {
     dateLabel.textContent = longDateStr;
     dateLabel.style.color = '#666';
     dateLabel.style.fontSize = '12px';
-    dateLabel.style.marginBottom = '8px';
+    dateLabel.style.marginBottom = '2px'; // reduced margin for smaller gap
     dateLabel.style.textAlign = 'center';
     statsContainer.appendChild(dateLabel);
   }
@@ -642,6 +642,8 @@ export async function loadStatsForDay(day) {
   picksDiv.style.border = '1px solid #ddd';
   picksDiv.style.borderRadius = '6px';
   picksDiv.style.padding = '8px';
+  picksDiv.style.position = 'relative'; // to layer watermarks behind picks
+  picksDiv.style.zIndex = '10';
   statsContainer.appendChild(picksDiv);
 
   renderPickListing(picks, picksDiv);
@@ -724,7 +726,6 @@ function generateImageFromStatsContainer(day) {
     picksDiv.style.padding = '5px';
     picksDiv.style.marginTop = '10px';
     picksDiv.style.backgroundColor = 'transparent';
-    picksDiv.style.position = 'relative'; // ensure picks are above watermark
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
