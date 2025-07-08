@@ -740,7 +740,7 @@ renderPickListing(picks, picksDiv);
 // Watermark settings
 // Remove previous image watermark loop and replace with CSS text watermark:
 const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkCount = Math.floor((picksHeight / 35) * (finalWidth / 100)); // Adjust density
+const watermarkCount = Math.floor((picksHeight / 65) * (finalWidth / 125)); // Adjust density
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
