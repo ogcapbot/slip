@@ -29,28 +29,36 @@ export class AddNewWorkflow {
     this.sys_leagueButtonsData = [];
     this.sys_gameButtonsData = [];
     this.sys_phraseButtonsData = [];
-    this.sys_wagerButtonsData = []; // store wager objects
+    this.sys_wagerButtonsData = [];
+    this.sys_unitsData = [];
 
     this.user_selectedSport = null;
     this.user_selectedLeague = null;
     this.sys_selectedGame = null;
-    this.user_selectedGameDisplay = null; // exact clicked game display string
+    this.user_selectedGameDisplay = null;
     this.user_selectedTeam = null;
 
-    // League metadata sys fields (pulled from game on game selection)
     this.sys_LeagueLongName = '';
     this.sys_LeagueShortName = '';
     this.sys_LeagueKey = '';
 
-    // Wager related
-    this.user_selectedWagerType = null; // raw selected wager string (with [[NUM]] or [[TEAM]])
-    this.user_wagerNumberValue = null;  // number input for [[NUM]]
-    this.user_WagerType = null;    // raw wager type string user chose
-    this.user_WagerNum = null;     // user entered number
-    this.sys_WagerType = null;     // generated wager string with [[NUM]] and [[TEAM]] replaced
-    this.sys_WagerDesc = null;     // description from DB pick_desc_template with replacements
+    this.user_selectedWagerType = null;
+    this.user_wagerNumberValue = null;
+    this.user_WagerType = null;
+    this.user_WagerNum = null;
+    this.sys_WagerType = null;
+    this.sys_WagerDesc = null;
 
     this.user_selectedUnit = null;
+
+    // New sys unit metadata fields
+    this.sys_UnitRank = null;
+    this.sys_Unit100Ex = '';
+    this.sys_UnitPercent = '';
+    this.sys_UnitFractions = '';
+    this.sys_UnitNoZero = null;
+    this.sys_UnitsValue = null;
+
     this.user_selectedPhrase = null;
     this.user_notes = '';
 
@@ -350,6 +358,22 @@ export class AddNewWorkflow {
           case 'unit':
             if (this.user_selectedUnit !== label) {
               this.user_selectedUnit = label;
+              const selectedUnitObj = this.sys_unitsData.find(u => this.formatUnitLabel(u.display_unit) === label);
+              if (selectedUnitObj) {
+                this.sys_UnitRank = selectedUnitObj.Rank || null;
+                this.sys_Unit100Ex = selectedUnitObj["Unit $100 Ex"] || '';
+                this.sys_UnitPercent = selectedUnitObj["Unit %"] || '';
+                this.sys_UnitFractions = selectedUnitObj["Unit Fractions"] || '';
+                this.sys_UnitNoZero = selectedUnitObj["Unit No Zero"] || null;
+                this.sys_UnitsValue = selectedUnitObj["Units"] || null;
+              } else {
+                this.sys_UnitRank = null;
+                this.sys_Unit100Ex = '';
+                this.sys_UnitPercent = '';
+                this.sys_UnitFractions = '';
+                this.sys_UnitNoZero = null;
+                this.sys_UnitsValue = null;
+              }
               this.step = 7;
               this.loadMoreBtn.style.display = 'inline-block';
               this.submitBtn.style.display = 'none';
@@ -435,6 +459,8 @@ export class AddNewWorkflow {
             awayTeam: data.awayTeam,
             homeTeam: data.homeTeam,
             startTimeET: data.startTimeET,
+            startTimeUTC: data.startTimeUTC,
+            expireAt: data.expireAt,
             leagueLongname: data.leagueLongname,
             leagueShortname: data.leagueShortname,
             sportKey: data.sportKey,
@@ -671,6 +697,8 @@ export class AddNewWorkflow {
 
       console.log(`[LoadUnits] Loaded ${units.length} units`);
 
+      this.sys_unitsData = units;
+
       this.renderButtons(
         units.map((u) => this.formatUnitLabel(u.display_unit)),
         'unit'
@@ -814,12 +842,21 @@ export class AddNewWorkflow {
         sys_GameId: this.sys_selectedGame?.id || null,
         sys_AwayTeam: this.sys_selectedGame?.awayTeam || '',
         sys_HomeTeam: this.sys_selectedGame?.homeTeam || '',
+        sys_StartTimeET: this.sys_selectedGame?.startTimeET || '',
+        sys_StartTimeUTC: this.sys_selectedGame?.startTimeUTC || '',
+        sys_ExpireAt: this.sys_selectedGame?.expireAt || null,
         user_TeamSelected: this.user_selectedTeam,
         user_WagerType: this.user_WagerType || '',
         user_WagerNum: this.user_WagerNum || null,
         sys_WagerType: this.sys_WagerType || '',
         sys_WagerDesc: this.sys_WagerDesc || '',
         user_Unit: this.user_selectedUnit,
+        sys_UnitRank: this.sys_UnitRank,
+        sys_Unit100Ex: this.sys_Unit100Ex,
+        sys_UnitPercent: this.sys_UnitPercent,
+        sys_UnitFractions: this.sys_UnitFractions,
+        sys_UnitNoZero: this.sys_UnitNoZero,
+        sys_UnitsValue: this.sys_UnitsValue,
         user_Phrase: this.user_selectedPhrase,
         user_Notes: this.user_notes,
         timestamp: Timestamp.now(),
@@ -895,6 +932,14 @@ export class AddNewWorkflow {
     this.sys_WagerType = null;
     this.sys_WagerDesc = null;
     this.user_selectedUnit = null;
+
+    this.sys_UnitRank = null;
+    this.sys_Unit100Ex = '';
+    this.sys_UnitPercent = '';
+    this.sys_UnitFractions = '';
+    this.sys_UnitNoZero = null;
+    this.sys_UnitsValue = null;
+
     this.user_selectedPhrase = null;
     this.user_notes = '';
 
@@ -908,6 +953,7 @@ export class AddNewWorkflow {
     this.sys_gameButtonsData = [];
     this.sys_phraseButtonsData = [];
     this.sys_wagerButtonsData = [];
+    this.sys_unitsData = [];
 
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.loadMoreBtn.style.display = 'none';
