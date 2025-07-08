@@ -757,7 +757,7 @@ for (let i = 0; i < watermarkCount; i++) {
   watermark.style.zIndex = '0';
 
   watermark.style.left = `75px`;
-  watermark.style.top = `${headerImg.offsetHeight + 100`;
+  watermark.style.top = `${headerImg.offsetHeight} + 100`;
 
   offscreen.appendChild(watermark);
 }
