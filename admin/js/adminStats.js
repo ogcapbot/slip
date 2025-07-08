@@ -738,7 +738,7 @@ offscreen.appendChild(topButtonsDiv);
 renderPickListing(picks, picksDiv);
 
 // Watermark settings
-/ Remove previous image watermark loop and replace with CSS text watermark:
+// Remove previous image watermark loop and replace with CSS text watermark:
 const picksHeight = picksDiv.offsetHeight;
 const watermarkCount = picksHeight / 25; // Adjust density
 
