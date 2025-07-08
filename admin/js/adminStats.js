@@ -748,23 +748,23 @@ setTimeout(() => {
   console.log('picksDiv.offsetHeight:', picksDiv.offsetHeight, 'scrollHeight:', picksDiv.scrollHeight, 'watermarkCount:', watermarkCount);
 
   for (let i = 0; i < watermarkCount; i++) {
-    const watermark = document.createElement('div');
-    watermark.textContent = '© ogcapperbets.com ©';
-    watermark.style.position = 'absolute';
-    watermark.style.left = `${horizontalOffsetPx}px`;
-    watermark.style.top = `${i * verticalSpacingPx}px`;
-    watermark.style.opacity = '0.5';
-    watermark.style.backgroundColor = 'rgba(255, 0, 0, 0.1)'; // Light red translucent background for debugging
-    watermark.style.fontSize = '12px';
-    watermark.style.color = '#aaa';
-    watermark.style.transform = 'rotate(315deg)';
-    watermark.style.pointerEvents = 'none';
-    watermark.style.userSelect = 'none';
-    watermark.style.whiteSpace = 'nowrap';
-    watermark.style.zIndex = '0';
+  const watermark = document.createElement('div');
+  watermark.textContent = '© ogcapperbets.com ©';
+  watermark.style.position = 'absolute';
+  watermark.style.left = `${horizontalOffsetPx}px`;
+  watermark.style.top = `${i * verticalSpacingPx}px`;
+  watermark.style.opacity = '0.1';
+  watermark.style.fontSize = '12px';
+  watermark.style.color = '#aaa';
+  watermark.style.transform = 'rotate(315deg)';
+  watermark.style.pointerEvents = 'none';
+  watermark.style.userSelect = 'none';
+  watermark.style.whiteSpace = 'nowrap';
+  watermark.style.zIndex = '10';       // Make sure watermark is on top
+  watermark.style.width = '100%';      // Full width for watermark text
+  picksDiv.appendChild(watermark);
+}
 
-    picksDiv.appendChild(watermark);
-  }
 }, 50);
 
 
