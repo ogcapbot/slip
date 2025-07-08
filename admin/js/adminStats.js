@@ -738,43 +738,29 @@ offscreen.appendChild(topButtonsDiv);
 renderPickListing(picks, picksDiv);
 
 // Watermark settings
-offscreen.style.position = 'fixed';
-offscreen.style.left = '-9999px';
-offscreen.style.top = '-9999px';
-document.body.appendChild(offscreen);
-
-// Force reflow to get correct height
-const picksDivRect = picksDiv.getBoundingClientRect();
-const picksHeight = picksDivRect.height || 300;
-
-// Watermark settings
-const inchToPx = 96;
-const verticalSpacingPx = 2 * inchToPx; // 192px spacing
-const watermarkCount = Math.floor(picksHeight / verticalSpacingPx);
-
-console.log('picksDivRect.height:', picksHeight, 'watermarkCount:', watermarkCount);
+/ Remove previous image watermark loop and replace with CSS text watermark:
+const picksHeight = picksDiv.offsetHeight || 300;
+const watermarkCount = Math.floor((picksHeight / 50) * (finalWidth / 100)); // Adjust density
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
   watermark.textContent = '© ogcapperbets.com ©';
   watermark.style.position = 'absolute';
   watermark.style.color = '#000';
-  watermark.style.opacity = '0.15';
+  watermark.style.opacity = '0.2';
   watermark.style.fontSize = '20px';
-  watermark.style.fontWeight = '700';
+  watermark.style.fontWeight = '800';
   watermark.style.userSelect = 'none';
   watermark.style.pointerEvents = 'none';
   watermark.style.whiteSpace = 'nowrap';
-  watermark.style.transform = 'rotate(315deg)';
+  watermark.style.transform = 'rotate(300deg)';
   watermark.style.zIndex = '0';
 
   watermark.style.left = `${10 + Math.random() * (finalWidth - 150)}px`;
-  watermark.style.top = `${250 + i * verticalSpacingPx}px`; // start at 250px down
+  watermark.style.top = `${headerImg.offsetHeight + 85 + Math.random() * (picksHeight - 20)}px`;
 
   offscreen.appendChild(watermark);
 }
-
-
     // bottom spacing
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
