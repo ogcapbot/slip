@@ -738,25 +738,26 @@ offscreen.appendChild(topButtonsDiv);
 renderPickListing(picks, picksDiv);
 
 // Watermark settings
+offscreen.style.position = 'fixed';
+offscreen.style.left = '-9999px';
+offscreen.style.top = '-9999px';
+document.body.appendChild(offscreen);
+
+// Force reflow to get correct height
+const picksDivRect = picksDiv.getBoundingClientRect();
+const picksHeight = picksDivRect.height || 300;
+
+// Watermark settings
 const inchToPx = 96;
-const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing (~1.5 inches)
-const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left (~0.75 inches)
-const topOffsetPx = 40; // Shift down watermark start by 40px
-const footerBufferPx = 200; // Leave 200px from bottom as footer safe zone
+const verticalSpacingPx = 2 * inchToPx; // 192px spacing
+const watermarkCount = Math.floor(picksHeight / verticalSpacingPx);
 
-const totalHeight = offscreen.offsetHeight || 600;
-const maxWatermarkHeight = totalHeight - footerBufferPx;
-const maxWatermarkCount = Math.floor((maxWatermarkHeight - topOffsetPx) / verticalSpacingPx);
+console.log('picksDivRect.height:', picksHeight, 'watermarkCount:', watermarkCount);
 
-for (let i = 0; i < maxWatermarkCount; i++) {
-  const watermarkTop = topOffsetPx + i * verticalSpacingPx;
-  if (watermarkTop > maxWatermarkHeight) break;
-
+for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
   watermark.textContent = '© ogcapperbets.com ©';
   watermark.style.position = 'absolute';
-  watermark.style.left = `${horizontalOffsetPx}px`;
-  watermark.style.top = `${watermarkTop}px`;
   watermark.style.color = '#000';
   watermark.style.opacity = '0.15';
   watermark.style.fontSize = '20px';
@@ -767,8 +768,12 @@ for (let i = 0; i < maxWatermarkCount; i++) {
   watermark.style.transform = 'rotate(315deg)';
   watermark.style.zIndex = '0';
 
+  watermark.style.left = `${10 + Math.random() * (finalWidth - 150)}px`;
+  watermark.style.top = `${250 + i * verticalSpacingPx}px`; // start at 250px down
+
   offscreen.appendChild(watermark);
 }
+
 
     // bottom spacing
     const bottomSpacing = document.createElement('div');
