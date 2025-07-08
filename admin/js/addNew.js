@@ -34,9 +34,10 @@ export class AddNewWorkflow {
     this.user_selectedSport = null;
     this.user_selectedLeague = null;
     this.sys_selectedGame = null;
+    this.user_selectedGameDisplay = null; // exact clicked game display string
     this.user_selectedTeam = null;
 
-    // League metadata sys fields
+    // League metadata sys fields (pulled from game on game selection)
     this.sys_LeagueLongName = '';
     this.sys_LeagueShortName = '';
     this.sys_LeagueKey = '';
@@ -44,9 +45,9 @@ export class AddNewWorkflow {
     // Wager related
     this.user_selectedWagerType = null; // raw selected wager string (with [[NUM]] or [[TEAM]])
     this.user_wagerNumberValue = null;  // number input for [[NUM]]
-    this.user_WagerType = null;    // user raw wager type string
+    this.user_WagerType = null;    // raw wager type string user chose
     this.user_WagerNum = null;     // user entered number
-    this.sys_WagerType = null;     // generated wager string with replaced [[NUM]] and [[TEAM]]
+    this.sys_WagerType = null;     // generated wager string with [[NUM]] and [[TEAM]] replaced
     this.sys_WagerDesc = null;     // description from DB pick_desc_template with replacements
 
     this.user_selectedUnit = null;
@@ -313,37 +314,6 @@ export class AddNewWorkflow {
               this.sys_gameButtonsData = [];
               this.sys_gameLastVisible = null;
 
-              try {
-                const q = query(
-                  collection(db, 'SportsData'),
-                  where('group', '==', this.user_selectedSport),
-                  where('title', '==', label),
-                  limit(1)
-                );
-                const snapshot = await getDocs(q);
-                if (!snapshot.empty) {
-                  const docData = snapshot.docs[0].data();
-                  this.sys_LeagueLongName = docData.description || '';
-                  this.sys_LeagueShortName = docData.title || '';
-                  this.sys_LeagueKey = docData.key || '';
-                  console.log('[League] Fetched league metadata:', {
-                    sys_LeagueLongName: this.sys_LeagueLongName,
-                    sys_LeagueShortName: this.sys_LeagueShortName,
-                    sys_LeagueKey: this.sys_LeagueKey,
-                  });
-                } else {
-                  this.sys_LeagueLongName = '';
-                  this.sys_LeagueShortName = '';
-                  this.sys_LeagueKey = '';
-                  console.warn('[League] No league metadata found.');
-                }
-              } catch (error) {
-                console.error('[League] Error fetching league metadata:', error);
-                this.sys_LeagueLongName = '';
-                this.sys_LeagueShortName = '';
-                this.sys_LeagueKey = '';
-              }
-
               this.step = 3;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
@@ -353,7 +323,15 @@ export class AddNewWorkflow {
           case 'game':
             if (this.sys_selectedGame?.display !== label) {
               this.sys_selectedGame = this.sys_gameButtonsData.find(g => g.display === label);
+              this.user_selectedGameDisplay = label; // capture exact clicked string
               console.log(`[Selection] Game selected: ${this.sys_selectedGame.id}`);
+
+              // Pull league and sport info from game
+              this.sys_LeagueLongName = this.sys_selectedGame.leagueLongname || '';
+              this.sys_LeagueShortName = this.sys_selectedGame.leagueShortname || '';
+              this.sys_LeagueKey = this.sys_selectedGame.sportKey || '';
+              this.user_selectedSport = this.sys_selectedGame.sportName || '';
+
               this.step = 4;
               this.loadMoreBtn.style.display = 'none';
               this.submitBtn.style.display = 'none';
@@ -362,7 +340,6 @@ export class AddNewWorkflow {
             break;
           case 'team':
             if (this.user_selectedTeam !== label) {
-              console.log(`[Selection] Team selected: ${label}`);
               this.user_selectedTeam = label;
               this.step = 5;
               this.loadMoreBtn.style.display = 'none';
@@ -372,7 +349,6 @@ export class AddNewWorkflow {
             break;
           case 'unit':
             if (this.user_selectedUnit !== label) {
-              console.log(`[Selection] Unit selected: ${label}`);
               this.user_selectedUnit = label;
               this.step = 7;
               this.loadMoreBtn.style.display = 'inline-block';
@@ -382,7 +358,6 @@ export class AddNewWorkflow {
             break;
           case 'phrase':
             if (this.user_selectedPhrase !== label) {
-              console.log(`[Selection] Phrase selected: ${label}`);
               this.user_selectedPhrase = label;
               this.step = 8;
               this.loadMoreBtn.style.display = 'none';
@@ -460,6 +435,10 @@ export class AddNewWorkflow {
             awayTeam: data.awayTeam,
             homeTeam: data.homeTeam,
             startTimeET: data.startTimeET,
+            leagueLongname: data.leagueLongname,
+            leagueShortname: data.leagueShortname,
+            sportKey: data.sportKey,
+            sportName: data.sportName,
           });
         }
       });
@@ -828,9 +807,10 @@ export class AddNewWorkflow {
         userId: this.userId,
         user_Sport: this.user_selectedSport,
         user_League: this.user_selectedLeague,
-        sys_LeagueLongName: this.sys_LeagueLongName || '',
-        sys_LeagueShortName: this.sys_LeagueShortName || '',
-        sys_LeagueKey: this.sys_LeagueKey || '',
+        user_SelectedGame: this.user_selectedGameDisplay || '',
+        sys_LeagueLongName: this.sys_LeagueLongName,
+        sys_LeagueShortName: this.sys_LeagueShortName,
+        sys_LeagueKey: this.sys_LeagueKey,
         sys_GameId: this.sys_selectedGame?.id || null,
         sys_AwayTeam: this.sys_selectedGame?.awayTeam || '',
         sys_HomeTeam: this.sys_selectedGame?.homeTeam || '',
@@ -878,7 +858,7 @@ export class AddNewWorkflow {
     const fields = [
       { label: 'Sport', value: this.user_selectedSport },
       { label: 'League', value: this.user_selectedLeague },
-      { label: 'Game', value: `${this.sys_selectedGame?.awayTeam} @ ${this.sys_selectedGame?.homeTeam}` },
+      { label: 'Game', value: this.user_selectedGameDisplay },
       { label: 'Team', value: this.user_selectedTeam },
       { label: 'Wager Type', value: wagerTypeFixed },
       { label: 'Unit', value: this.user_selectedUnit },
@@ -906,6 +886,7 @@ export class AddNewWorkflow {
     this.user_selectedSport = null;
     this.user_selectedLeague = null;
     this.sys_selectedGame = null;
+    this.user_selectedGameDisplay = null;
     this.user_selectedTeam = null;
     this.user_selectedWagerType = null;
     this.user_wagerNumberValue = null;
