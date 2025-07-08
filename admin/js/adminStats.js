@@ -739,12 +739,14 @@ renderPickListing(picks, picksDiv);
 
 
  // Watermark settings
+// Watermark settings
 const inchToPx = 96;
 const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing (~1.5 inches)
 const horizontalOffsetPx = 0.75 * inchToPx; // 72px from left (~0.75 inches)
 
-const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkCount = Math.ceil(picksHeight / verticalSpacingPx);
+// Use the full offscreen container height, not just picksDiv height
+const totalHeight = offscreen.offsetHeight || 600;
+const watermarkCount = Math.ceil(totalHeight / verticalSpacingPx);
 
 for (let i = 0; i < watermarkCount; i++) {
   const watermark = document.createElement('div');
@@ -753,8 +755,8 @@ for (let i = 0; i < watermarkCount; i++) {
   watermark.style.left = `${horizontalOffsetPx}px`;
   watermark.style.top = `${i * verticalSpacingPx}px`;
   watermark.style.color = '#000';
-  watermark.style.opacity = '0.1';
-  watermark.style.fontSize = '16px';
+  watermark.style.opacity = '0.15';  // increased opacity
+  watermark.style.fontSize = '20px';  // increased font size
   watermark.style.fontWeight = '700';
   watermark.style.userSelect = 'none';
   watermark.style.pointerEvents = 'none';
@@ -764,6 +766,7 @@ for (let i = 0; i < watermarkCount; i++) {
 
   offscreen.appendChild(watermark);
 }
+
 
 
 
