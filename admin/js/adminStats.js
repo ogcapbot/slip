@@ -737,7 +737,7 @@ offscreen.appendChild(topButtonsDiv);
 // Watermark settings
 renderPickListing(picks, picksDiv);
 
-setTimeout(() => {
+
  // Watermark settings
 const inchToPx = 96;
 const verticalSpacingPx = 1.5 * inchToPx; // 144px vertical spacing (~1.5 inches)
@@ -765,7 +765,6 @@ for (let i = 0; i < watermarkCount; i++) {
   offscreen.appendChild(watermark);
 }
 
-}, 50);
 
 
     // bottom spacing
