@@ -30,13 +30,17 @@ export class AddNewWorkflow {
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
+    this.phraseObjectsData = []; // store phrase full objects for submission
     this.unitsData = []; // keep full units data for rank and other fields
+
+    this.wagerTypesData = []; // full wager objects for lookups
 
     this.selectedSport = null;
     this.selectedLeague = null;
     this.selectedGame = null;
     this.selectedTeam = null;
     this.selectedWagerType = null;
+    this.selectedWagerObj = null; // store full wager object for final use
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
@@ -246,7 +250,7 @@ export class AddNewWorkflow {
 
       this.renderButtons(this.sportButtonsData, 'sport');
 
-      if (snapshot.size === PAGE_LIMIT) {
+      if (snapshot.size === PAGE_LIMIT_SPORTS) {
         this.loadMoreBtn.style.display = 'inline-block';
       } else {
         this.loadMoreBtn.style.display = 'none';
@@ -482,7 +486,7 @@ export class AddNewWorkflow {
         limit(50)
       );
       const globalSnap = await getDocs(globalQuery);
-      const globalWagers = globalSnap.docs.map((doc) => doc.data());
+      const globalWagers = globalSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       const sportQuery = query(
         collection(db, 'WagerTypes'),
@@ -490,7 +494,9 @@ export class AddNewWorkflow {
         limit(50)
       );
       const sportSnap = await getDocs(sportQuery);
-      const sportWagers = sportSnap.docs.map((doc) => doc.data());
+      const sportWagers = sportSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+      this.wagerTypesData = [...globalWagers, ...sportWagers];
 
       console.log(`[LoadWagerTypes] Global wagers count: ${globalWagers.length}, Sport-specific wagers count: ${sportWagers.length}`);
 
@@ -528,10 +534,18 @@ export class AddNewWorkflow {
       });
     }
 
-    Array.from(this.buttonsWrapper.children).forEach((btn) => {
+    Array.from(this.buttonsWrapper.children).forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         const labelRaw = btn.textContent;
         this.selectedWagerType = labelRaw;
+
+        // Find the wager object matching this label (using wager_label_template or WagerType)
+        this.selectedWagerObj = this.wagerTypesData.find(wager => {
+          const wagerLabel = wager.wager_label_template || wager.WagerType || '';
+          // Compare ignoring spaces and line breaks for robustness
+          return wagerLabel.replace(/\s/g, '') === labelRaw.replace(/\s/g, '');
+        }) || null;
+
         if (labelRaw.includes('[[NUM]]')) {
           this.showNumberInputModal(labelRaw).then((num) => {
             this.wagerNumberValue = num;
@@ -626,8 +640,10 @@ export class AddNewWorkflow {
 
       if (!loadMore) {
         this.phraseButtonsData = [];
+        this.phraseObjectsData = [];
       }
       this.phraseButtonsData.push(...phrasesToLoad.map(p => p.Phrase));
+      this.phraseObjectsData.push(...phrasesToLoad);
 
       console.log(`[LoadPhrases] Loaded ${phrasesToLoad.length} phrases (total loaded: ${this.phraseButtonsData.length})`);
 
@@ -787,32 +803,30 @@ export class AddNewWorkflow {
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
-    // Remove old validations because user cannot bypass steps
-
     this.setStatus('Submitting your selection...');
 
     try {
-      // Prepare values with correct formatting and trimming <br> tags for saved data
-
-      // Remove <br> from units for saved value but keep display separate
+      // Find selected unit data by formatted label or raw
       let selectedUnitData = this.unitsData.find(
         (u) => this.formatUnitLabel(u.display_unit) === this.selectedUnit
       );
 
-      // Defensive fallback if not found
       if (!selectedUnitData) {
-        // Try direct match without formatting
         selectedUnitData = this.unitsData.find(
           (u) => u.display_unit === this.selectedUnit || u.display_unit.replace(/\n/g, '<br>') === this.selectedUnit
         ) || {};
       }
 
-      // Clean up wager type for storage (fix missing spaces)
+      // Clean wager type for storage (fix missing spaces after keywords)
       let cleanUserWagerType = this.selectedWagerType;
-      cleanUserWagerType = cleanUserWagerType.replace(/([a-z])([A-Z])/g, '$1 $2'); // insert space between words like SpreadPLUS -> Spread PLUS
-      cleanUserWagerType = cleanUserWagerType.replace(/ \[\[NUM\]\]/g, '[[NUM]]'); // remove space before [[NUM]] if any
 
-      // Final wager type string with number replaced if any
+      // Insert space between lowercase and uppercase letters (e.g., SpreadPLUS -> Spread PLUS)
+      cleanUserWagerType = cleanUserWagerType.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+      // Remove space before [[NUM]] if any
+      cleanUserWagerType = cleanUserWagerType.replace(/ \[\[NUM\]\]/g, '[[NUM]]');
+
+      // Replace [[NUM]] with actual number if provided
       let finalWagerType = cleanUserWagerType;
       if (this.wagerNumberValue !== null && this.wagerNumberValue !== undefined) {
         finalWagerType = finalWagerType.replace('[[NUM]]', this.wagerNumberValue);
@@ -820,34 +834,50 @@ export class AddNewWorkflow {
         finalWagerType = finalWagerType.replace('[[NUM]]', '');
       }
 
-      // Clean game display for saving (remove line breaks)
+      // Additionally ensure space after OVER, UNDER, PLUS, MINUS keywords
+      finalWagerType = finalWagerType.replace(/(OVER|UNDER|PLUS|MINUS)(\d)/g, '$1 $2');
+
+      // user_WagerType should keep the [[NUM]] placeholder and correct spacing
+      let userWagerType = cleanUserWagerType;
+      userWagerType = userWagerType.replace(/(OVER|UNDER|PLUS|MINUS)(\d)/g, '$1 $2');
+      
+      // Remove extra spaces before [[NUM]]
+      userWagerType = userWagerType.replace(/ \[\[NUM\]\]/g, ' [[NUM]]');
+
+      // Clean game display removing line breaks
       let cleanGameDisplay = this.selectedGame.display.replace(/\n/g, ' ');
 
-      // Compose sys_PostTitle1 and 2 with corrected unit fractions and time format (h:mm AM/PM EST)
+      // Format EST time for post titles
       const estStartDate = new Date(this.selectedGame.startTimeET + ' EST');
       const estTimeStr = estStartDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
 
       // Use sys_UnitFractions for unit display in post titles
       const unitFractionDisplay = selectedUnitData['Unit Fractions'] || '';
 
+      // Compose post titles
       const sys_PostTitle1 = `${unitFractionDisplay} - ${this.selectedPhrase} - ${this.selectedSport} - ${estTimeStr}`;
       const sys_PostTitle2 = `${unitFractionDisplay} - ${this.selectedPhrase} - ${this.selectedTeam} - ${estTimeStr}`;
 
-      // Clean phrase for saving and get other sys phrase fields
-      // Assuming phraseButtonsData is just strings; if phrase objects needed, refactor accordingly
-      // For now, we get phrase object by matching phrase string
-      // Since phrase data is not stored, minimal fields:
-      // Let’s hardcode or extend later if needed - for now we save phrase string only
+      // Find phrase object for additional fields
+      const phraseObj = this.phraseObjectsData.find(p => p.Phrase === this.selectedPhrase) || {};
 
-      const phraseEnergy = ''; // no data available currently
-      const phrasePromo = '';
-      const phraseType = '';
-
-      // Compose PostDesc1 and PostDesc2 without line breaks
+      // Compose PostDesc1 and PostDesc2 with phrase and game info, no line breaks
       const cleanPhrase = this.selectedPhrase.replace(/\n/g, ' ');
 
-      const sys_PostDesc1 = `${cleanPhrase} - ${phraseEnergy} - ${phrasePromo}`;
-      const sys_PostDesc2 = `${cleanPhrase} - ${cleanGameDisplay} - ${phraseEnergy} - ${phrasePromo}`;
+      const sys_PostDesc1 = `${cleanPhrase} - ${phraseObj.Energy || ''} - ${phraseObj.Promo || ''}`;
+      const sys_PostDesc2 = `${cleanPhrase} - ${cleanGameDisplay} - ${phraseObj.Energy || ''} - ${phraseObj.Promo || ''}`;
+
+      // Compose sys_WagerDesc from wager pick_desc_template, replacing placeholders [[TEAM]] and [[NUM]]
+      let sys_WagerDesc = '';
+      if (this.selectedWagerObj && this.selectedWagerObj.pick_desc_template) {
+        sys_WagerDesc = this.selectedWagerObj.pick_desc_template;
+        sys_WagerDesc = sys_WagerDesc.replace(/\[\[TEAM\]\]/g, this.selectedTeam);
+        if (this.wagerNumberValue !== null && this.wagerNumberValue !== undefined) {
+          sys_WagerDesc = sys_WagerDesc.replace(/\[\[NUM\]\]/g, this.wagerNumberValue);
+        } else {
+          sys_WagerDesc = sys_WagerDesc.replace(/\[\[NUM\]\]/g, '');
+        }
+      }
 
       // Build submission object with all required fields
       const submissionObj = {
@@ -856,7 +886,7 @@ export class AddNewWorkflow {
         user_League: this.selectedLeague,
         user_GameDisplay: cleanGameDisplay,
         user_SelectedTeam: this.selectedTeam,
-        user_WagerType: cleanUserWagerType,
+        user_WagerType: userWagerType,
         user_WagerNum: this.wagerNumberValue,
         user_UnitDisplay: this.selectedUnit.replace(/<br>/g, ' '),
         user_Phrase: this.selectedPhrase,
@@ -869,14 +899,20 @@ export class AddNewWorkflow {
         sys_LoginCount: this.userInfo.loginCount || 0,
 
         sys_FinalWagerType: finalWagerType,
+        sys_WagerDesc: sys_WagerDesc,
+
         sys_GameAwayTeam: this.selectedGame.awayTeam,
         sys_GameHomeTeam: this.selectedGame.homeTeam,
         sys_GameId: this.selectedGame.id,
         sys_GameStatus: "Pending",
 
-        sys_PhraseEnergy: phraseEnergy,
-        sys_PhrasePromo: phrasePromo,
-        sys_PhraseType: phraseType,
+        sys_leagueLongname: this.selectedGame.leagueLongname || '',
+        sys_leagueShortname: this.selectedGame.leagueShortname || '',
+        sys_sportKey: this.selectedGame.sportKey || '',
+
+        sys_PhraseEnergy: phraseObj.Energy || '',
+        sys_PhrasePromo: phraseObj.Promo || '',
+        sys_PhraseType: phraseObj.Type || '',
 
         sys_PostDesc1: sys_PostDesc1,
         sys_PostDesc2: sys_PostDesc2,
@@ -973,6 +1009,7 @@ export class AddNewWorkflow {
     this.selectedGame = null;
     this.selectedTeam = null;
     this.selectedWagerType = null;
+    this.selectedWagerObj = null;
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
@@ -987,7 +1024,9 @@ export class AddNewWorkflow {
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
+    this.phraseObjectsData = [];
     this.unitsData = [];
+    this.wagerTypesData = [];
 
     this.sys_UserStartTime = new Date();
 
