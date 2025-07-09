@@ -40,19 +40,7 @@ export class AddNewWorkflow {
     this.notes = '';
     this.wagerNumberValue = null;
 
-    this.userAccessCode = '';
-    this.userAccessType = '';
-    this.userLoginCount = 0;
-    this.userDisplayName = '';
-    this.userName = 'unknown';
-    this.userStartTime = new Date();
-
-    this.sys_Unit100Ex = '';
-    this.sys_UnitFractions = '';
-    this.sys_UnitNoZero = null;
-    this.sys_UnitPercent = '';
-    this.sys_UnitRank = null;
-    this.sys_UnitsValue = null;
+    this.sys_UserStartTime = new Date(); // Capture when workflow starts
 
     this.step = 1;
 
@@ -72,7 +60,7 @@ export class AddNewWorkflow {
     console.log('[Init] Rendering initial UI');
     this.clearContainer();
 
-    this.titleEl = document.createElement('h5');
+    this.titleEl = document.createElement('h5'); // Smaller header
     this.titleEl.id = 'workflowTitle';
     this.container.appendChild(this.titleEl);
 
@@ -547,22 +535,14 @@ export class AddNewWorkflow {
       const snapshot = await getDocs(unitsQuery);
       const units = snapshot.docs.map((doc) => doc.data());
 
-      // Store sys unit info for submission
-      if (units.length > 0) {
-        this.sys_Unit100Ex = units[0].Unit100Ex || '';
-        this.sys_UnitFractions = units[0].Fractions || '';
-        this.sys_UnitNoZero = units[0].NoZero || null;
-        this.sys_UnitPercent = units[0].Percent || '';
-        this.sys_UnitRank = units[0].Rank || null;
-        this.sys_UnitsValue = units[0].UnitsValue || null;
-      }
-
       console.log(`[LoadUnits] Loaded ${units.length} units`);
 
       this.renderButtons(
         units.map((u) => this.formatUnitLabel(u.display_unit)),
         'unit'
       );
+
+      this.loadedUnitsData = units; // Store for saving later
     } catch (error) {
       console.error('[LoadUnits] Error loading units:', error);
       this.setStatus('Failed to load units.', true);
@@ -733,6 +713,7 @@ export class AddNewWorkflow {
             }
             break;
           case 'wagerType':
+            // Not used here since wagers are rendered separately
             break;
           case 'unit':
             if (this.selectedUnit !== label) {
@@ -764,7 +745,6 @@ export class AddNewWorkflow {
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
-    // Notes can be empty but all other selections are mandatory
     if (
       !this.selectedSport ||
       !this.selectedLeague ||
@@ -786,94 +766,82 @@ export class AddNewWorkflow {
     this.setStatus('Submitting your selection...');
 
     try {
-      // Clean values for storage (strip HTML tags or line breaks where not wanted)
-      const cleanUnitDisplay = this.selectedUnit.replace(/<br>/g, '').trim();
-      const cleanGameDisplay = this.selectedGame.display.replace(/\n/g, ' ').trim();
+      // Find unit data object for the selected unit label (stripping <br>)
+      let unitData = null;
+      if (this.loadedUnitsData) {
+        const cleanedUnitLabel = this.selectedUnit.replace(/<br>/g, '').replace(/\(([^)]+)\)/g, '').trim();
+        unitData = this.loadedUnitsData.find(u => u.display_unit.replace(/<br>/g, '').replace(/\(([^)]+)\)/g, '').trim() === cleanedUnitLabel);
+      }
 
-      // Fix wager type spacing: Ensure a space before [[NUM]] and after keywords
-      let wagerTypeClean = this.selectedWagerType.replace(/\[\[NUM\]\]/, ' [[NUM]]');
-      wagerTypeClean = wagerTypeClean.replace(/(PLUS|MINUS|OVER|UNDER)(?=\S)/g, '$1 ');
+      // Format wager type exactly as selected, but replace [[NUM]] with space + number if exists
+      let wagerTypeForDB = this.selectedWagerType;
+      if (wagerTypeForDB.includes('[[NUM]]')) {
+        wagerTypeForDB = wagerTypeForDB.replace('[[NUM]]', ' ' + this.wagerNumberValue);
+      }
 
-      // Fix phrase: Use exact button text, no changes here
-      const phraseClean = this.selectedPhrase;
+      // Compose post titles and descriptions with correct formatting
+      const phraseData = this.phraseButtonsData.find(p => p === this.selectedPhrase) || {};
+      // Phrase details from original phrases collection could be used if you want energy/promo/type
+      // Here assuming no phrase object, so empty strings:
+      const phraseEnergy = '';
+      const phrasePromo = '';
+      const phraseType = '';
 
-      // Date/Time for sys_UserStartTime and EndTime in EST timezone (converted to ISO string)
-      const now = new Date();
-      const estOffset = 5 * 60 * 60 * 1000; // 5 hours
-      const estNow = new Date(now.getTime() - estOffset);
+      // Format time as h:mm AM/PM EST
+      const estTimeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' };
+      const startTimeDate = new Date(this.selectedGame.startTimeET);
+      const startTimeEST = startTimeDate.toLocaleTimeString('en-US', estTimeOptions);
 
-      // Format time for post titles as h:mm AM/PM EST
-      const formatPostTime = (date) =>
-        date.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'America/New_York',
-        });
+      const sys_UnitFractions = unitData ? unitData['Unit Fractions'] || unitData.UnitFractions || unitData.display_unit : this.selectedUnit.replace(/<br>/g, '').replace(/\(([^)]+)\)/g, '').trim();
 
-      // Prepare post title times
-      const postTimeStr = formatPostTime(estNow);
+      const postTitle1 = `${sys_UnitFractions} - ${this.selectedPhrase} - ${this.selectedSport} - ${startTimeEST}`;
+      const postTitle2 = `${sys_UnitFractions} - ${this.selectedPhrase} - ${this.selectedTeam} - ${startTimeEST}`;
 
-      // Compose post titles using sys_UnitFractions and proper formatting
-      const postTitle1 = `${this.sys_UnitFractions} - ${phraseClean} - ${this.selectedSport} - ${postTimeStr}`;
-      const postTitle2 = `${this.sys_UnitFractions} - ${phraseClean} - ${this.selectedTeam} - ${postTimeStr}`;
-
-      // Compose post descriptions - clean new lines in game display for saving
-      const cleanGameDisplayDesc = cleanGameDisplay.replace(/\\n/g, ' ');
-
-      const postDesc1 = `${phraseClean} - ${phraseClean} -`;
-      const postDesc2 = `${phraseClean} - ${cleanGameDisplayDesc} - ${phraseClean} -`;
+      const postDesc1 = `${this.selectedPhrase} - ${phraseEnergy} - ${phrasePromo}`;
+      const postDesc2 = `${this.selectedPhrase} - ${this.selectedGame.awayTeam} @ ${this.selectedGame.homeTeam} - ${phraseEnergy} - ${phrasePromo}`;
 
       await addDoc(collection(db, 'OfficialPicks'), {
-        user_UserId: this.userId || 'anonymous',
-        user_UserName: this.userName || 'unknown',
-        user_UserDisplayName: this.userDisplayName || '',
-        user_AccessCode: this.userAccessCode || '',
-        user_AccessType: this.userAccessType || '',
-        user_LoginCount: this.userLoginCount || 0,
+        user_UserId: this.userId,
         user_Sport: this.selectedSport,
         user_League: this.selectedLeague,
-        user_GameDisplay: cleanGameDisplay,
+        user_GameDisplay: this.selectedGame.display.replace(/\n/g, ' '),
         user_SelectedTeam: this.selectedTeam,
-        user_WagerType: wagerTypeClean,
+        user_WagerType: this.selectedWagerType,
         user_WagerNum: this.wagerNumberValue,
-        user_UnitDisplay: cleanUnitDisplay,
-        user_Phrase: phraseClean,
+        user_UnitDisplay: this.selectedUnit.replace(/<br>/g, ''),
+        user_Phrase: this.selectedPhrase,
         user_Notes: this.notes,
 
-        sys_FinalWagerType: wagerTypeClean.replace(' [[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''),
+        sys_FinalWagerType: wagerTypeForDB,
+        sys_GameId: this.selectedGame.id,
         sys_GameAwayTeam: this.selectedGame.awayTeam,
         sys_GameHomeTeam: this.selectedGame.homeTeam,
-        sys_GameId: this.selectedGame.id,
-        sys_GameStatus: 'Pending',
-        sys_PhraseEnergy: '',
-        sys_PhrasePromo: '',
-        sys_PhraseType: '',
-
-        sys_PostDesc1: postDesc1,
-        sys_PostDesc2: postDesc2,
+        sys_GameStatus: "Pending",
         sys_PostTitle1: postTitle1,
         sys_PostTitle2: postTitle2,
+        sys_PostDesc1: postDesc1,
+        sys_PostDesc2: postDesc2,
 
+        sys_Unit100Ex: unitData ? unitData['Unit $100 Ex'] || unitData.Unit100Ex : '',
+        sys_UnitFractions: sys_UnitFractions,
+        sys_UnitNoZero: unitData ? unitData['Unit No Zero'] || unitData.UnitNoZero : null,
+        sys_UnitPercent: unitData ? unitData['Unit %'] || unitData.UnitPercent : '',
+        sys_UnitRank: unitData ? unitData.Rank || unitData.UnitRank : null,
+        sys_UnitsValue: unitData ? unitData.Units : null,
+
+        sys_UserStartTime: Timestamp.fromDate(this.sys_UserStartTime),
+        sys_UserEndTime: Timestamp.now(),
         sys_SubmissionSuccess: true,
 
-        sys_Unit100Ex: this.sys_Unit100Ex,
-        sys_UnitFractions: this.sys_UnitFractions,
-        sys_UnitNoZero: this.sys_UnitNoZero,
-        sys_UnitPercent: this.sys_UnitPercent,
-        sys_UnitRank: this.sys_UnitRank,
-        sys_UnitsValue: this.sys_UnitsValue,
+        sys_Username: "unknown", // Adjust if you have user info
 
-        sys_UserDisplayName: this.userDisplayName || '',
-        sys_UserEndTime: Timestamp.fromDate(new Date()),
-        sys_UserStartTime: Timestamp.fromDate(this.userStartTime || new Date()),
-        sys_Username: this.userName || 'unknown',
-
-        timestamp: Timestamp.now(),
+        sys_AccessCode: "",
+        sys_AccessType: "",
+        sys_LoginCount: 0,
+        sys_UserDisplayName: "",
       });
 
       console.log('[Submit] Submission successful');
-
       this.showSubmissionSummary();
 
     } catch (error) {
@@ -885,7 +853,7 @@ export class AddNewWorkflow {
   showSubmissionSummary() {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
-    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
+    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? ' ' + this.wagerNumberValue : ''));
 
     const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit.replace(/<br>/g, '')} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
@@ -895,12 +863,12 @@ export class AddNewWorkflow {
 
     this.statusMsg.textContent = successMsg;
     this.statusMsg.style.color = 'inherit';
-    this.statusMsg.style.textAlign = 'left';
+    this.statusMsg.style.textAlign = 'left'; // Left align success message
 
     const summaryDiv = document.createElement('div');
     summaryDiv.style.marginTop = '12px';
     summaryDiv.style.fontWeight = 'bold';
-    summaryDiv.style.textAlign = 'left';
+    summaryDiv.style.textAlign = 'left'; // Left align summary
 
     const fields = [
       { label: 'Sport', value: this.selectedSport },
@@ -1015,46 +983,37 @@ export class AddNewWorkflow {
       submitBtn.style.color = 'white';
       submitBtn.style.border = 'none';
       submitBtn.style.padding = '10px 22px';
-      submitBtn.style.borderRadius = '6px';
+      submitBtn.style.borderRadius = '7px';
       submitBtn.style.cursor = 'pointer';
       submitBtn.style.fontFamily = "'Oswald', sans-serif";
       submitBtn.style.fontWeight = '700';
       submitBtn.style.fontSize = '1rem';
       content.appendChild(submitBtn);
 
-      const cancelBtn = document.createElement('button');
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.backgroundColor = '#eee';
-      cancelBtn.style.color = '#333';
-      cancelBtn.style.border = 'none';
-      cancelBtn.style.padding = '10px 22px';
-      cancelBtn.style.borderRadius = '6px';
-      cancelBtn.style.cursor = 'pointer';
-      cancelBtn.style.marginLeft = '10px';
-      cancelBtn.style.fontFamily = "'Oswald', sans-serif";
-      cancelBtn.style.fontWeight = '700';
-      cancelBtn.style.fontSize = '1rem';
-      content.appendChild(cancelBtn);
-
       modal.appendChild(content);
       document.body.appendChild(modal);
 
-      submitBtn.addEventListener('click', () => {
-        const val = parseFloat(input.value);
-        if (isNaN(val) || val <= 0) {
-          alert('Please enter a valid positive number.');
-          return;
-        }
-        document.body.removeChild(modal);
-        resolve(val);
-      });
+      input.focus();
 
-      cancelBtn.addEventListener('click', () => {
-        document.body.removeChild(modal);
-        resolve(null);
+      function isValidNumber(value) {
+        const num = parseFloat(value);
+        return (
+          !isNaN(num) &&
+          num >= 0 &&
+          Number.isInteger(num * 2)
+        );
+      }
+
+      submitBtn.addEventListener('click', () => {
+        if (isValidNumber(input.value.trim())) {
+          const numValue = parseFloat(input.value.trim());
+          document.body.removeChild(modal);
+          resolve(numValue);
+        } else {
+          alert('Please enter a valid positive whole or half number (e.g., 0.5, 1, 1.5)');
+          input.focus();
+        }
       });
     });
   }
 }
-
-export default AddNewWorkflow;
