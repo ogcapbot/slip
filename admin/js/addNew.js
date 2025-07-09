@@ -869,8 +869,8 @@ console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
 
       // Compose sys_WagerDesc from wager pick_desc_template, replacing placeholders [[TEAM]] and [[NUM]]
       let sys_WagerDesc = '';
-      if (this.selectedWagerObj && this.selectedWagerObj.pick_desc_template) {
-        sys_WagerDesc = this.selectedWagerObj.pick_desc_template;
+      if (this.selectedWagerTypeObj && this.selectedWagerTypeObj.pick_desc_template) {
+        sys_WagerDesc = this.selectedWagerTypeObj.pick_desc_template;
         sys_WagerDesc = sys_WagerDesc.replace(/\[\[TEAM\]\]/g, this.selectedTeam);
         if (this.wagerNumberValue !== null && this.wagerNumberValue !== undefined) {
           sys_WagerDesc = sys_WagerDesc.replace(/\[\[NUM\]\]/g, this.wagerNumberValue);
