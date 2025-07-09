@@ -66,13 +66,13 @@ export class AddNewWorkflow {
   }
 
   formatWagerLabel(label) {
-    let formatted = label.replace(/\(([^)]+)\)/g, '<br>($1)');
-    formatted = formatted.replace(/ (\bPLUS\b|\bMINUS\b|\bOVER\b|\bUNDER\b)/g, '<br>$1');
+    let formatted = label.replace(/\(([^)]+)\)/g, ' <br> ($1)');
+    formatted = formatted.replace(/ (\bPLUS\b|\bMINUS\b|\bOVER\b|\bUNDER\b)/g, ' <br> $1');
     return formatted;
   }
 
   formatUnitLabel(label) {
-    return label.replace(/\(([^)]+)\)/g, '<br> ($1)');
+    return label.replace(/\(([^)]+)\)/g, ' <br> ($1)');
   }
 
   formatGameDisplay(game) {
