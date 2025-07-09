@@ -18,11 +18,8 @@ export async function loadUpdateWinLoss(container) {
       data: doc.data()
     }));
 
-    // Filter: only picks with empty/null 'gameWinLossDraw'
-    docsData = docsData.filter(({ data }) => {
-      const val = data.gameWinLossDraw;
-      return val === null || val === undefined || val === '' || val === 'null';
-    });
+    // Filter: only picks with sys_GameStatus equal to 'Pending'
+    docsData = docsData.filter(({ data }) => data.sys_GameStatus === 'Pending');
 
     if (docsData.length === 0) {
       container.textContent = 'No picks needing update found.';
@@ -68,7 +65,7 @@ export async function loadUpdateWinLoss(container) {
       if (daysDiff === 0) calendarImgSrc = '/admin/images/today.png';
       else if (daysDiff === 1) calendarImgSrc = '/admin/images/yesterday.png';
 
-      const val = data.gameWinLossDraw;
+      const val = data.sys_GameStatus || 'Pending';
 
       const docDiv = document.createElement('div');
       docDiv.style.marginBottom = '8px';
@@ -122,7 +119,7 @@ export async function loadUpdateWinLoss(container) {
       rightCol.style.width = '60px';
       rightCol.style.flexShrink = '0';
 
-      function createStatusImage(statusText, imgSrc, rowIndex) {
+      function createStatusImage(statusText, imgSrc, rowIndex, currentStatus) {
         const img = document.createElement('img');
         img.src = imgSrc;
         img.alt = statusText;
@@ -134,26 +131,36 @@ export async function loadUpdateWinLoss(container) {
         img.style.objectFit = 'contain';
         img.style.userSelect = 'none';
         img.style.transition = 'opacity 0.3s ease';
-        img.style.opacity = '1';
+
+        // Highlight if current status matches
+        if (currentStatus === statusText) {
+          img.style.opacity = '1';
+          img.style.pointerEvents = 'auto';
+        } else {
+          img.style.opacity = '0.4';
+          img.style.pointerEvents = 'auto';
+        }
 
         img.addEventListener('click', async () => {
-          if (data.gameWinLossDraw === statusText) {
-            const pw = prompt('Password required to change existing status:');
-            if (pw !== 'super123') {
-              alert('Incorrect password. Status not changed.');
-              return;
-            }
+          if (data.sys_GameStatus === statusText) {
+            // Reset status to 'Pending' and reset change count
             try {
               const docRef = doc(db, 'OfficialPicks', id);
-              await updateDoc(docRef, { gameWinLossDraw: '' });
-              data.gameWinLossDraw = '';
+              await updateDoc(docRef, { 
+                sys_GameStatus: 'Pending',
+                sys_GameStatusChangeCount: 0
+              });
+              data.sys_GameStatus = 'Pending';
+              data.sys_GameStatusChangeCount = 0;
+
               rightCol.innerHTML = '';
-              rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', rowIndex));
-              rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', rowIndex));
-              rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', rowIndex));
+              rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', rowIndex, 'Pending'));
+              rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', rowIndex, 'Pending'));
+              rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', rowIndex, 'Pending'));
+
               docDiv.style.backgroundColor = (rowIndex % 2 === 1) ? '#f2f2f2' : '#fff';
             } catch (error) {
-              console.error('Error resetting win/loss:', error);
+              console.error('Error resetting status:', error);
               alert('Failed to reset status.');
             }
             return;
@@ -161,8 +168,17 @@ export async function loadUpdateWinLoss(container) {
 
           try {
             const docRef = doc(db, 'OfficialPicks', id);
-            await updateDoc(docRef, { gameWinLossDraw: statusText });
-            data.gameWinLossDraw = statusText;
+
+            // Increment sys_GameStatusChangeCount safely
+            const newCount = (data.sys_GameStatusChangeCount || 0) + 1;
+
+            await updateDoc(docRef, { 
+              sys_GameStatus: statusText,
+              sys_GameStatusChangeCount: newCount
+            });
+
+            data.sys_GameStatus = statusText;
+            data.sys_GameStatusChangeCount = newCount;
 
             Array.from(rightCol.children).forEach(image => {
               image.style.opacity = (image === img) ? '1' : '0.4';
@@ -171,7 +187,7 @@ export async function loadUpdateWinLoss(container) {
 
             docDiv.style.backgroundColor = (rowIndex % 2 === 1) ? '#f2f2f2' : '#fff';
           } catch (error) {
-            console.error('Error updating win/loss:', error);
+            console.error('Error updating status:', error);
             alert('Failed to update status.');
           }
         });
@@ -179,9 +195,9 @@ export async function loadUpdateWinLoss(container) {
         return img;
       }
 
-      rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', i));
-      rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', i));
-      rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', i));
+      rightCol.appendChild(createStatusImage('Win', '/admin/images/greenWinner.png', i, val));
+      rightCol.appendChild(createStatusImage('Push', '/admin/images/bluePush.png', i, val));
+      rightCol.appendChild(createStatusImage('Lost', '/admin/images/redLost.png', i, val));
 
       docDiv.appendChild(calendarCol);
       docDiv.appendChild(leftCol);
