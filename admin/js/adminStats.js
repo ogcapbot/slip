@@ -264,7 +264,10 @@ function renderPickListing(picks, container) {
     leftBlock.style.textAlign = 'left';
 
     const teamEl = document.createElement('div');
-    teamEl.textContent = data.user_SelectedTeam || 'N/A';
+    // Combine team and unitfraction separated by ' - '
+    const teamText = data.user_SelectedTeam || 'N/A';
+    const unitFrac = data.sys_UnitFractions || 'N/A';
+    teamEl.textContent = `${teamText} - ${unitFrac}`;
     teamEl.style.fontWeight = '600';
     leftBlock.appendChild(teamEl);
 
@@ -282,11 +285,14 @@ function renderPickListing(picks, container) {
     wagerDescEl.style.marginBottom = '4px';
     leftBlock.appendChild(wagerDescEl);
 
+    // Remove the separate unitsEl since now unit fraction is with team
+    /*
     const unitsEl = document.createElement('div');
     unitsEl.textContent = data.sys_UnitFractions || 'N/A';
     unitsEl.style.fontSize = '12px';
     unitsEl.style.color = '#555';
     leftBlock.appendChild(unitsEl);
+    */
 
     listingDiv.appendChild(leftBlock);
 
@@ -547,7 +553,6 @@ function generateImageFromStatsContainer(day) {
     }
 
     const finalWidth = 384;
-    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
@@ -601,29 +606,42 @@ function generateImageFromStatsContainer(day) {
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    // Watermark settings
-    const picksHeight = picksDiv.offsetHeight || 300;
-    const watermarkCount = Math.floor((picksHeight / 100) * (finalWidth / 25)); // Adjust density
+    // Watermark settings - improved fixed vertical repeat with set spacing
+    const watermarkText = '© ogcapperbets.com ©';
+    const watermarkFontSize = 20;
+    const watermarkOpacity = 0.15;
+    const watermarkRotation = 315; // degrees clockwise
+    const watermarkLeft = 75; // px from left
+    const verticalSpacing = 125; // px vertical spacing between watermarks
 
-    for (let i = 0; i < watermarkCount; i++) {
+    const startTop = headerImg.offsetHeight + 8 + 4; // header height + margin + dateLabel margin
+
+    // Calculate total height between header and footer to constrain watermark
+    // Footer image height unknown here, approximate or wait for load?
+    // We'll assume footer height ~ 40px + margin for safe margin
+    const footerHeightApprox = 60; 
+    const totalHeight = picksDiv.offsetTop + picksDiv.offsetHeight + footerHeightApprox;
+
+    // Place watermark divs repeatedly every verticalSpacing px starting at startTop until totalHeight
+    for(let top = startTop; top < totalHeight; top += verticalSpacing) {
       const watermark = document.createElement('div');
-      watermark.textContent = '© ogcapperbets.com ©';
+      watermark.textContent = watermarkText;
       watermark.style.position = 'absolute';
+      watermark.style.left = `${watermarkLeft}px`;
+      watermark.style.top = `${top}px`;
       watermark.style.color = '#000';
-      watermark.style.opacity = '0.15';
-      watermark.style.fontSize = '20px';
+      watermark.style.opacity = watermarkOpacity;
+      watermark.style.fontSize = `${watermarkFontSize}px`;
       watermark.style.fontWeight = '700';
       watermark.style.userSelect = 'none';
       watermark.style.pointerEvents = 'none';
       watermark.style.whiteSpace = 'nowrap';
-      watermark.style.transform = 'rotate(300deg)';
+      watermark.style.transform = `rotate(${watermarkRotation}deg)`;
       watermark.style.zIndex = '0';
-
-      watermark.style.left = `${5 + Math.random() * (finalWidth - 150)}px`;
-      watermark.style.top = `${headerImg.offsetHeight + 75 + Math.random() * (picksHeight - 20)}px`;
 
       offscreen.appendChild(watermark);
     }
+
     // bottom spacing
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
@@ -669,10 +687,10 @@ function generateImageFromStatsContainer(day) {
         modal.style.height = '100vh';
         modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
         modal.style.display = 'flex';
-        modal.style.alignItems = 'center';  // vertical center
-        modal.style.justifyContent = 'center'; // horizontal center
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
         modal.style.zIndex = '100000';
-        modal.style.padding = '0'; // remove padding to avoid top gap
+        modal.style.padding = '0';
 
         const content = document.createElement('div');
         content.style.position = 'relative';
@@ -680,11 +698,11 @@ function generateImageFromStatsContainer(day) {
         content.style.borderRadius = '12px';
         content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
         content.style.overflow = 'auto';
-        content.style.maxHeight = 'calc(100vh - 20px)'; // some vertical padding
+        content.style.maxHeight = 'calc(100vh - 20px)';
         content.style.display = 'flex';
         content.style.flexDirection = 'column';
         content.style.alignItems = 'center';
-        content.style.padding = '0'; // remove padding
+        content.style.padding = '0';
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
@@ -695,7 +713,7 @@ function generateImageFromStatsContainer(day) {
         closeBtn.style.padding = '8px 16px';
         closeBtn.style.fontWeight = '700';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.margin = '0'; // remove margin
+        closeBtn.style.margin = '0';
         closeBtn.style.alignSelf = 'stretch';
 
         closeBtn.addEventListener('click', () => {
@@ -732,6 +750,5 @@ function generateImageFromStatsContainer(day) {
     });
   });
 }
-
 
 export { generateImageFromStatsContainer };
