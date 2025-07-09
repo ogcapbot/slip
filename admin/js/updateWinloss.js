@@ -99,19 +99,19 @@ export async function loadUpdateWinLoss(container) {
       leftCol.style.textAlign = 'left';
 
       const teamSelected = document.createElement('div');
-      teamSelected.textContent = data.teamSelected || 'N/A';
+      teamSelected.textContent = data.user_SelectedTeam || 'N/A';
       teamSelected.style.fontWeight = 'bold';
       teamSelected.style.fontSize = '1.2em';
       teamSelected.style.marginBottom = '4px';
       leftCol.appendChild(teamSelected);
 
       const wagerType = document.createElement('div');
-      wagerType.textContent = data.wagerType || 'N/A';
+      wagerType.textContent = data.user_WagerType || 'N/A';
       wagerType.style.marginBottom = '2px';
       leftCol.appendChild(wagerType);
 
       const unitsSelected = document.createElement('div');
-      unitsSelected.textContent = data.unit || 'N/A';
+      unitsSelected.textContent = data.user_UnitDisplay || 'N/A';
       leftCol.appendChild(unitsSelected);
 
       // Right images column container
