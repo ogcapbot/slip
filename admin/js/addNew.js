@@ -858,7 +858,7 @@ export class AddNewWorkflow {
         user_SelectedTeam: this.selectedTeam,
         user_WagerType: cleanUserWagerType,
         user_WagerNum: this.wagerNumberValue,
-        user_UnitDisplay: this.selectedUnit,
+        user_UnitDisplay: this.selectedUnit.replace(/<br>/g, ' '),
         user_Phrase: this.selectedPhrase,
         user_Notes: this.notes || '',
 
