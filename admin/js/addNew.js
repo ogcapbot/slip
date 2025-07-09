@@ -540,11 +540,11 @@ export class AddNewWorkflow {
         this.selectedWagerType = labelRaw;
 
         // Find the wager object matching this label (using wager_label_template or WagerType)
-        this.selectedWagerObj = this.wagerTypesData.find(wager => {
-          const wagerLabel = wager.wager_label_template || wager.WagerType || '';
+    //    this.selectedWagerObj = this.wagerTypesData.find(wager => {
+    //      const wagerLabel = wager.wager_label_template || wager.WagerType || '';
           // Compare ignoring spaces and line breaks for robustness
-          return wagerLabel.replace(/\s/g, '') === labelRaw.replace(/\s/g, '');
-        }) || null;
+    //      return wagerLabel.replace(/\s/g, '') === labelRaw.replace(/\s/g, '');
+    //    }) || null;
 
         if (labelRaw.includes('[[NUM]]')) {
           this.showNumberInputModal(labelRaw).then((num) => {
