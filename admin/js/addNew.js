@@ -12,6 +12,9 @@ import {
   addDoc,
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
+// ADD THIS IMPORT AT THE TOP:
+import { generatePatreonImage } from './generatePatreonImage.js'; 
+
 const PAGE_LIMIT = 15;
 const PAGE_LIMIT_SPORTS = 100;
 
@@ -990,6 +993,29 @@ export class AddNewWorkflow {
       p.textContent = `${label}: ${value}`;
       summaryDiv.appendChild(p);
     });
+
+    // ADD THE NEW BUTTON FOR PATREON IMAGE
+    const patreonButton = document.createElement('button');
+    patreonButton.textContent = 'Create Patreon Image';
+    patreonButton.classList.add('admin-button');
+    patreonButton.style.marginTop = '12px';
+    patreonButton.addEventListener('click', () => {
+      // Call the function imported from generatePatreonImage.js
+      generatePatreonImage({
+        sport: this.selectedSport,
+        league: this.selectedLeague,
+        gameDisplay: this.selectedGame?.display.replace(/\n/g, ' ') || '',
+        team: this.selectedTeam,
+        wagerType: wagerTypeFixed,
+        unit: this.selectedUnit.replace(/<br>/g, ' '),
+        phrase: this.selectedPhrase,
+        notes: this.notes || '',
+        userInfo: this.userInfo,
+        selectedGameData: this.selectedGame,
+      });
+    });
+
+    summaryDiv.appendChild(patreonButton);
 
     if (this.statusMsg.nextSibling) {
       this.container.insertBefore(summaryDiv, this.statusMsg.nextSibling);
