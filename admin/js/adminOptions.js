@@ -72,7 +72,14 @@ export function showAdminOptions(userData) {
       if (btnConfig.label === 'Add New') {
         mainContent.innerHTML = '';
         const userId = userData.uid || 'anonymous';
-        const workflow = new AddNewWorkflow(mainContent, userId);
+        // Pass full userInfo object here
+        const workflow = new AddNewWorkflow(mainContent, userId, {
+          userName: userData.userName || 'unknown',
+          userDisplayName: userData.displayName || '',
+          accessCode: userData.accessCode || '',
+          accessType: userData.accessType || '',
+          loginCount: userData.loginCount || 0,
+        });
         return;
       }
 
