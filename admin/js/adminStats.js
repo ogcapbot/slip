@@ -266,18 +266,21 @@ function renderPickListing(picks, container) {
     const teamEl = document.createElement('div');
     teamEl.textContent = data.user_SelectedTeam || 'N/A';
     teamEl.style.fontWeight = '600';
-    leftBlock.appendChild(teamEl);
 
-    const wagerDescEl = document.createElement('div');
-    wagerDescEl.textContent = data.sys_UnitFractions
-      ? `- ${data.sys_UnitFractions}`
-      : '';
-    wagerDescEl.style.display = 'inline';
-    wagerDescEl.style.marginLeft = '4px';
-    wagerDescEl.style.fontWeight = 'normal';
-    wagerDescEl.style.fontSize = '13px';
-    wagerDescEl.style.color = '#444';
-    leftBlock.appendChild(wagerDescEl);
+    const unitEl = document.createElement('div');
+    unitEl.textContent = ' - ' + (data.sys_UnitFractions || 'N/A');
+    unitEl.style.fontWeight = '600';
+
+    const teamUnitWrapper = document.createElement('div');
+    teamUnitWrapper.style.display = 'flex';
+    teamUnitWrapper.style.flexWrap = 'wrap';
+    teamUnitWrapper.style.gap = '4px';
+    teamUnitWrapper.style.fontWeight = '600';
+
+    teamUnitWrapper.appendChild(teamEl);
+    teamUnitWrapper.appendChild(unitEl);
+
+    leftBlock.appendChild(teamUnitWrapper);
 
     const wagerEl = document.createElement('div');
     wagerEl.textContent = data.sys_FinalWagerType || 'N/A';
@@ -285,13 +288,13 @@ function renderPickListing(picks, container) {
     wagerEl.style.color = '#555';
     leftBlock.appendChild(wagerEl);
 
-    const wagerDescExtraEl = document.createElement('div');
-    wagerDescExtraEl.textContent = data.sys_WagerDesc || '';
-    wagerDescExtraEl.style.fontSize = '11px';
-    wagerDescExtraEl.style.color = '#777';
-    wagerDescExtraEl.style.fontStyle = 'italic';
-    wagerDescExtraEl.style.marginBottom = '4px';
-    leftBlock.appendChild(wagerDescExtraEl);
+    const wagerDescEl = document.createElement('div');
+    wagerDescEl.textContent = data.sys_WagerDesc || '';
+    wagerDescEl.style.fontSize = '11px';
+    wagerDescEl.style.color = '#777';
+    wagerDescEl.style.fontStyle = 'italic';
+    wagerDescEl.style.marginBottom = '4px';
+    leftBlock.appendChild(wagerDescEl);
 
     listingDiv.appendChild(leftBlock);
 
@@ -551,6 +554,7 @@ function generateImageFromStatsContainer(day) {
     }
 
     const finalWidth = 384;
+    const watermarkUrl = 'https://capper.ogcapperbets.com/admin/images/imageWaterSingle.png';
 
     const offscreen = document.createElement('div');
     offscreen.style.width = `${finalWidth}px`;
@@ -606,13 +610,7 @@ function generateImageFromStatsContainer(day) {
 
     // Watermark settings
     const picksHeight = picksDiv.offsetHeight || 300;
-
-    // Starting offset 100px down, spacing 200px
-    let watermarkTop = headerImg.offsetHeight + 100;
-    const watermarkSpacing = 200;
-
-    // Number of watermarks to add based on picks height and spacing
-    const watermarkCount = Math.ceil(picksHeight / watermarkSpacing);
+    const watermarkCount = 2;  // fixed watermark count as per request
 
     for (let i = 0; i < watermarkCount; i++) {
       const watermark = document.createElement('div');
@@ -628,11 +626,10 @@ function generateImageFromStatsContainer(day) {
       watermark.style.transform = 'rotate(315deg)';
       watermark.style.zIndex = '0';
 
-      watermark.style.left = '75px';
-      watermark.style.top = `${watermarkTop}px`;
+      watermark.style.left = `75px`;
+      watermark.style.top = `${250 + (i * 200)}px`;
 
       offscreen.appendChild(watermark);
-      watermarkTop += watermarkSpacing;
     }
 
     // bottom spacing
