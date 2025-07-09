@@ -521,24 +521,25 @@ export class AddNewWorkflow {
         this.buttonsWrapper.appendChild(btn);
       });
     }
-
+console.log(`[R0 Selected Wager Type: ${this.selectedWagerType}`);
     if (sportWagers.length) {
       console.log(`[RenderWagerTypes] Rendering ${sportWagers.length} sport-specific wager buttons`);
       sportWagers.forEach((wager) => {
         const btn = document.createElement('button');
         btn.classList.add('admin-button');
-
+console.log(`[R1 Selected Wager Type: ${this.selectedWagerType}`);
         btn.innerHTML = this.formatWagerLabel(wager.wager_label_template || wager.WagerType || 'Unnamed');
 
         this.buttonsWrapper.appendChild(btn);
       });
     }
+      console.log(`[R2 Selected Wager Type: ${this.selectedWagerType}`);
 
     Array.from(this.buttonsWrapper.children).forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         const labelRaw = btn.textContent;
         this.selectedWagerType = labelRaw;
-
+console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
         // Find the wager object matching this label (using wager_label_template or WagerType)
     //    this.selectedWagerObj = this.wagerTypesData.find(wager => {
     //      const wagerLabel = wager.wager_label_template || wager.WagerType || '';
