@@ -1,6 +1,15 @@
 // generatePatreonImage.js
-import { loadHtml2Canvas } from './utils.js'; 
-// utils.js just has the html2canvas loader, or you can inline it here if you want
+
+function loadHtml2Canvas(callback) {
+  if (window.html2canvas) {
+    callback();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+  script.onload = callback;
+  document.head.appendChild(script);
+}
 
 export async function generatePatreonImage(pickData) {
   return new Promise((resolve, reject) => {
