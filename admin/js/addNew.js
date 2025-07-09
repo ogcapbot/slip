@@ -842,7 +842,7 @@ console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
       userWagerType = userWagerType.replace(/(OVER|UNDER|PLUS|MINUS)(\d)/g, '$1 $2');
       
       // Remove extra spaces before [[NUM]]
-      userWagerType = userWagerType.replace(/ \[\[NUM\]\]/g, ' [[NUM]]');
+      userWagerType = userWagerType.replace(/\[\[NUM\]\]/g, ' [[NUM]]');
 
       // Clean game display removing line breaks
       let cleanGameDisplay = this.selectedGame.display.replace(/\n/g, ' ');
