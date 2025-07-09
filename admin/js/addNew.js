@@ -72,7 +72,7 @@ export class AddNewWorkflow {
   }
 
   formatUnitLabel(label) {
-    return label.replace(/\(([^)]+)\)/g, '<br>($1)');
+    return label.replace(/\(([^)]+)\)/g, '<br> ($1)');
   }
 
   formatGameDisplay(game) {
