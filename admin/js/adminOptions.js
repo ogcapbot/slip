@@ -75,7 +75,7 @@ export function showAdminOptions(userData) {
         // Pass full userInfo object here
         const workflow = new AddNewWorkflow(mainContent, userId, {
           userName: userData.userName || 'unknown',
-          userDisplayName: userData.displayName || '',
+          userDisplayname: userData.displayName || '',
           accessCode: userData.accessCode || '',
           accessType: userData.accessType || '',
           loginCount: userData.loginCount || 0,
