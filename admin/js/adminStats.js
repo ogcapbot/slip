@@ -263,13 +263,12 @@ function renderPickListing(picks, container) {
     leftBlock.style.flex = '1 1 auto';
     leftBlock.style.textAlign = 'left';
 
-    const teamEl = document.createElement('div');
-    // Combine team and unitfraction separated by ' - '
-    const teamText = data.user_SelectedTeam || 'N/A';
-    const unitFrac = data.sys_UnitFractions || 'N/A';
-    teamEl.textContent = `${teamText} - ${unitFrac}`;
-    teamEl.style.fontWeight = '600';
-    leftBlock.appendChild(teamEl);
+    // Show "Team - Units" combined line as requested
+    const teamUnitsDiv = document.createElement('div');
+    teamUnitsDiv.style.fontWeight = '600';
+    const unitsText = data.sys_UnitFractions ? ` - ${data.sys_UnitFractions}` : '';
+    teamUnitsDiv.textContent = (data.user_SelectedTeam || 'N/A') + unitsText;
+    leftBlock.appendChild(teamUnitsDiv);
 
     const wagerEl = document.createElement('div');
     wagerEl.textContent = data.sys_FinalWagerType || 'N/A';
@@ -284,15 +283,6 @@ function renderPickListing(picks, container) {
     wagerDescEl.style.fontStyle = 'italic';
     wagerDescEl.style.marginBottom = '4px';
     leftBlock.appendChild(wagerDescEl);
-
-    // Remove the separate unitsEl since now unit fraction is with team
-    /*
-    const unitsEl = document.createElement('div');
-    unitsEl.textContent = data.sys_UnitFractions || 'N/A';
-    unitsEl.style.fontSize = '12px';
-    unitsEl.style.color = '#555';
-    leftBlock.appendChild(unitsEl);
-    */
 
     listingDiv.appendChild(leftBlock);
 
@@ -606,149 +596,157 @@ function generateImageFromStatsContainer(day) {
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    // Watermark settings - improved fixed vertical repeat with set spacing
-    const watermarkText = '© ogcapperbets.com ©';
-    const watermarkFontSize = 20;
-    const watermarkOpacity = 0.15;
-    const watermarkRotation = 315; // degrees clockwise
-    const watermarkLeft = 75; // px from left
-    const verticalSpacing = 125; // px vertical spacing between watermarks
-
-    const startTop = headerImg.offsetHeight + 8 + 4; // header height + margin + dateLabel margin
-
-    // Calculate total height between header and footer to constrain watermark
-    // Footer image height unknown here, approximate or wait for load?
-    // We'll assume footer height ~ 40px + margin for safe margin
-    const footerHeightApprox = 60; 
-    const totalHeight = picksDiv.offsetTop + picksDiv.offsetHeight + footerHeightApprox;
-
-    // Place watermark divs repeatedly every verticalSpacing px starting at startTop until totalHeight
-    for(let top = startTop; top < totalHeight; top += verticalSpacing) {
-      const watermark = document.createElement('div');
-      watermark.textContent = watermarkText;
-      watermark.style.position = 'absolute';
-      watermark.style.left = `${watermarkLeft}px`;
-      watermark.style.top = `${top}px`;
-      watermark.style.color = '#000';
-      watermark.style.opacity = watermarkOpacity;
-      watermark.style.fontSize = `${watermarkFontSize}px`;
-      watermark.style.fontWeight = '700';
-      watermark.style.userSelect = 'none';
-      watermark.style.pointerEvents = 'none';
-      watermark.style.whiteSpace = 'nowrap';
-      watermark.style.transform = `rotate(${watermarkRotation}deg)`;
-      watermark.style.zIndex = '0';
-
-      offscreen.appendChild(watermark);
-    }
-
-    // bottom spacing
-    const bottomSpacing = document.createElement('div');
-    bottomSpacing.style.height = '10px';
-    offscreen.appendChild(bottomSpacing);
-
-    // Footer image
+    // Wait for footer image load to get exact footer height before watermark placement
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.display = 'block';
     footerImg.style.marginTop = '10px';
     footerImg.style.maxWidth = '100%';
     footerImg.style.height = 'auto';
-    offscreen.appendChild(footerImg);
 
-    offscreen.style.position = 'fixed';
-    offscreen.style.left = '-9999px';
-    offscreen.style.top = '-9999px';
-    document.body.appendChild(offscreen);
+    footerImg.onload = () => {
+      offscreen.appendChild(footerImg);
 
-    html2canvas(offscreen, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: null,
-      width: finalWidth,
-      windowWidth: finalWidth
-    }).then(canvas => {
-      document.body.removeChild(offscreen);
+      const headerHeight = headerImg.offsetHeight || 100;
+      const footerHeight = footerImg.offsetHeight || 100;
+      const offscreenHeight = offscreen.offsetHeight || 500;
 
-      const margin = 40;
-      const maxWidth = window.innerWidth - margin * 2;
-      const maxHeight = window.innerHeight - margin * 2 - 50;
-      let scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
-      if (scale > 1) scale = 1;
+      // Calculate watermark container height between header and footer
+      const watermarkAreaHeight = offscreenHeight - headerHeight - footerHeight;
 
-      let modal = document.getElementById('imageOutputModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'imageOutputModal';
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100vw';
-        modal.style.height = '100vh';
-        modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.zIndex = '100000';
-        modal.style.padding = '0';
+      // Fixed left position and vertical spacing per your specs
+      const watermarkLeft = 75;
+      const verticalSpacing = 125;
+      const watermarkCount = Math.floor(watermarkAreaHeight / verticalSpacing);
 
-        const content = document.createElement('div');
-        content.style.position = 'relative';
-        content.style.backgroundColor = '#fff';
-        content.style.borderRadius = '12px';
-        content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
-        content.style.overflow = 'auto';
-        content.style.maxHeight = 'calc(100vh - 20px)';
-        content.style.display = 'flex';
-        content.style.flexDirection = 'column';
-        content.style.alignItems = 'center';
-        content.style.padding = '0';
+      // Clear any existing watermarks just in case
+      const existingWatermarks = offscreen.querySelectorAll('.watermark-text');
+      existingWatermarks.forEach(wm => wm.remove());
 
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = 'Close';
-        closeBtn.style.backgroundColor = '#4CAF50';
-        closeBtn.style.color = '#fff';
-        closeBtn.style.border = 'none';
-        closeBtn.style.borderRadius = '6px';
-        closeBtn.style.padding = '8px 16px';
-        closeBtn.style.fontWeight = '700';
-        closeBtn.style.cursor = 'pointer';
-        closeBtn.style.margin = '0';
-        closeBtn.style.alignSelf = 'stretch';
+      for (let i = 0; i < watermarkCount; i++) {
+        const watermark = document.createElement('div');
+        watermark.classList.add('watermark-text');
+        watermark.textContent = '© ogcapperbets.com ©';
+        watermark.style.position = 'absolute';
+        watermark.style.color = '#000';
+        watermark.style.opacity = '0.15';
+        watermark.style.fontSize = '20px';
+        watermark.style.fontWeight = '700';
+        watermark.style.userSelect = 'none';
+        watermark.style.pointerEvents = 'none';
+        watermark.style.whiteSpace = 'nowrap';
+        watermark.style.transform = 'rotate(315deg)';
+        watermark.style.zIndex = '0';
 
-        closeBtn.addEventListener('click', () => {
-          modal.style.display = 'none';
-        });
+        watermark.style.left = `${watermarkLeft}px`;
+        watermark.style.top = `${headerHeight + i * verticalSpacing}px`;
 
-        content.appendChild(closeBtn);
-
-        const img = document.createElement('img');
-        img.id = 'modalGeneratedImage';
-        content.appendChild(img);
-
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-
-        modal.addEventListener('click', e => {
-          if (e.target === modal) modal.style.display = 'none';
-        });
+        offscreen.appendChild(watermark);
       }
 
-      const img = document.getElementById('modalGeneratedImage');
-      img.src = canvas.toDataURL('image/png');
-      img.style.width = canvas.width * scale + 'px';
-      img.style.height = 'auto';
-      img.style.borderRadius = '12px';
-      img.style.userSelect = 'none';
-      img.style.display = 'block';
+      // bottom spacing
+      const bottomSpacing = document.createElement('div');
+      bottomSpacing.style.height = '10px';
+      offscreen.appendChild(bottomSpacing);
 
-      modal.style.display = 'flex';
-    }).catch(err => {
-      document.body.removeChild(offscreen);
-      console.error('Failed to generate image:', err);
-      alert('Failed to generate image.');
-    });
+      offscreen.style.position = 'fixed';
+      offscreen.style.left = '-9999px';
+      offscreen.style.top = '-9999px';
+      document.body.appendChild(offscreen);
+
+      html2canvas(offscreen, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        width: finalWidth,
+        windowWidth: finalWidth
+      }).then(canvas => {
+        document.body.removeChild(offscreen);
+
+        const margin = 40;
+        const maxWidth = window.innerWidth - margin * 2;
+        const maxHeight = window.innerHeight - margin * 2 - 50;
+        let scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+        if (scale > 1) scale = 1;
+
+        let modal = document.getElementById('imageOutputModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'imageOutputModal';
+          modal.style.position = 'fixed';
+          modal.style.top = '0';
+          modal.style.left = '0';
+          modal.style.width = '100vw';
+          modal.style.height = '100vh';
+          modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          modal.style.zIndex = '100000';
+          modal.style.padding = '0';
+
+          const content = document.createElement('div');
+          content.style.position = 'relative';
+          content.style.backgroundColor = '#fff';
+          content.style.borderRadius = '12px';
+          content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+          content.style.overflow = 'auto';
+          content.style.maxHeight = 'calc(100vh - 20px)';
+          content.style.display = 'flex';
+          content.style.flexDirection = 'column';
+          content.style.alignItems = 'center';
+          content.style.padding = '0';
+
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = 'Close';
+          closeBtn.style.backgroundColor = '#4CAF50';
+          closeBtn.style.color = '#fff';
+          closeBtn.style.border = 'none';
+          closeBtn.style.borderRadius = '6px';
+          closeBtn.style.padding = '8px 16px';
+          closeBtn.style.fontWeight = '700';
+          closeBtn.style.cursor = 'pointer';
+          closeBtn.style.margin = '0';
+          closeBtn.style.alignSelf = 'stretch';
+
+          closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+          });
+
+          content.appendChild(closeBtn);
+
+          const img = document.createElement('img');
+          img.id = 'modalGeneratedImage';
+          content.appendChild(img);
+
+          modal.appendChild(content);
+          document.body.appendChild(modal);
+
+          modal.addEventListener('click', e => {
+            if (e.target === modal) modal.style.display = 'none';
+          });
+        }
+
+        const img = document.getElementById('modalGeneratedImage');
+        img.src = canvas.toDataURL('image/png');
+        img.style.width = canvas.width * scale + 'px';
+        img.style.height = 'auto';
+        img.style.borderRadius = '12px';
+        img.style.userSelect = 'none';
+        img.style.display = 'block';
+
+        modal.style.display = 'flex';
+      }).catch(err => {
+        document.body.removeChild(offscreen);
+        console.error('Failed to generate image:', err);
+        alert('Failed to generate image.');
+      });
+    };
+
+    // Append footer image immediately to start loading
+    offscreen.appendChild(footerImg);
   });
 }
+
 
 export { generateImageFromStatsContainer };
