@@ -536,7 +536,7 @@ export class AddNewWorkflow {
     Array.from(this.buttonsWrapper.children).forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         const labelRaw = btn.textContent;
-console.log(`[R2 Selected Wager Type: ${labelraw}`);
+console.log(`[R2 Selected Wager Type: ${btn.textContent}`);
         this.selectedWagerType = labelRaw;
 console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
         // Find the wager object matching this label (using wager_label_template or WagerType)
