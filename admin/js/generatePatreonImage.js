@@ -29,7 +29,7 @@ export async function generatePatreonImage(pickData) {
 
         // === HEADER ===
         const headerImg = document.createElement('img');
-        headerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageHeader.png';
+        headerImg.src = 'https://capper.ogcapperbets.com/admin/images/pickHeader.png';
         headerImg.style.display = 'block';
         headerImg.style.margin = '0 auto 8px';
         headerImg.style.maxWidth = '100%';
@@ -38,7 +38,7 @@ export async function generatePatreonImage(pickData) {
 
         // === CONFIDENTIALITY NOTICE ===
         const confNotice = document.createElement('div');
-        confNotice.textContent = '⚠️ CONFIDENTIALITY NOTICE ⚠️ All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.';
+       // confNotice.textContent = '⚠️ CONFIDENTIALITY NOTICE ⚠️ All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.';
         confNotice.style.fontSize = '9px';
         confNotice.style.fontWeight = '700';
         confNotice.style.color = 'red';
@@ -64,7 +64,7 @@ export async function generatePatreonImage(pickData) {
         titleBlock.style.padding = '6px 0';
         titleBlock.style.marginBottom = '8px';
         titleBlock.textContent = 'OFFICIAL PICK';
-        mainContent.appendChild(titleBlock);
+       // mainContent.appendChild(titleBlock);
 
         // Sections helper function
         function createSection(title) {
@@ -157,7 +157,7 @@ export async function generatePatreonImage(pickData) {
           watermark.style.position = 'absolute';
           watermark.style.color = '#000';
           watermark.style.opacity = '0.15';
-          watermark.style.fontSize = '20px';
+          watermark.style.fontSize = '26px';
           watermark.style.fontWeight = '700';
           watermark.style.userSelect = 'none';
           watermark.style.pointerEvents = 'none';
