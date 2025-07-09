@@ -40,7 +40,7 @@ export class AddNewWorkflow {
     this.selectedGame = null;
     this.selectedTeam = null;
     this.selectedWagerType = null;
-    this.selectedWagerObj = null; // store full wager object for final use
+    this.selectedWagerTypeObj = null; // fixed: declare this to store wager object
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
@@ -536,15 +536,15 @@ export class AddNewWorkflow {
     Array.from(this.buttonsWrapper.children).forEach((btn, idx) => {
       btn.addEventListener('click', () => {
         const labelRaw = btn.textContent;
-console.log(`[R2 Selected Wager Type: ${btn.textContent}`);
+        console.log(`[R2 Selected Wager Type: ${btn.textContent}`);
         this.selectedWagerType = labelRaw;
-console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
-        // Find the wager object matching this label (using wager_label_template or WagerType)
-    //    this.selectedWagerObj = this.wagerTypesData.find(wager => {
-    //      const wagerLabel = wager.wager_label_template || wager.WagerType || '';
-          // Compare ignoring spaces and line breaks for robustness
-    //      return wagerLabel.replace(/\s/g, '') === labelRaw.replace(/\s/g, '');
-    //    }) || null;
+        console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
+
+        // FIX: assign selectedWagerTypeObj for use during submit
+        this.selectedWagerTypeObj = this.wagerTypesData.find(wager => {
+          const wagerLabel = wager.wager_label_template || wager.WagerType || '';
+          return wagerLabel.replace(/\s/g, '') === labelRaw.replace(/\s/g, '');
+        }) || null;
 
         if (labelRaw.includes('[[NUM]]')) {
           this.showNumberInputModal(labelRaw).then((num) => {
@@ -1009,7 +1009,7 @@ console.log(`[R3 Selected Wager Type: ${this.selectedWagerType}`);
     this.selectedGame = null;
     this.selectedTeam = null;
     this.selectedWagerType = null;
-    this.selectedWagerObj = null;
+    this.selectedWagerTypeObj = null;
     this.selectedUnit = null;
     this.selectedPhrase = null;
     this.notes = '';
