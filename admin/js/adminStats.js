@@ -264,9 +264,20 @@ function renderPickListing(picks, container) {
     leftBlock.style.textAlign = 'left';
 
     const teamEl = document.createElement('div');
-    teamEl.textContent = `${data.user_SelectedTeam || 'N/A'} - ${data.sys_UnitFractions || 'N/A'}`;
+    teamEl.textContent = data.user_SelectedTeam || 'N/A';
     teamEl.style.fontWeight = '600';
     leftBlock.appendChild(teamEl);
+
+    const wagerDescEl = document.createElement('div');
+    wagerDescEl.textContent = data.sys_UnitFractions
+      ? `- ${data.sys_UnitFractions}`
+      : '';
+    wagerDescEl.style.display = 'inline';
+    wagerDescEl.style.marginLeft = '4px';
+    wagerDescEl.style.fontWeight = 'normal';
+    wagerDescEl.style.fontSize = '13px';
+    wagerDescEl.style.color = '#444';
+    leftBlock.appendChild(wagerDescEl);
 
     const wagerEl = document.createElement('div');
     wagerEl.textContent = data.sys_FinalWagerType || 'N/A';
@@ -274,13 +285,13 @@ function renderPickListing(picks, container) {
     wagerEl.style.color = '#555';
     leftBlock.appendChild(wagerEl);
 
-    const wagerDescEl = document.createElement('div');
-    wagerDescEl.textContent = data.sys_WagerDesc || '';
-    wagerDescEl.style.fontSize = '11px';
-    wagerDescEl.style.color = '#777';
-    wagerDescEl.style.fontStyle = 'italic';
-    wagerDescEl.style.marginBottom = '4px';
-    leftBlock.appendChild(wagerDescEl);
+    const wagerDescExtraEl = document.createElement('div');
+    wagerDescExtraEl.textContent = data.sys_WagerDesc || '';
+    wagerDescExtraEl.style.fontSize = '11px';
+    wagerDescExtraEl.style.color = '#777';
+    wagerDescExtraEl.style.fontStyle = 'italic';
+    wagerDescExtraEl.style.marginBottom = '4px';
+    leftBlock.appendChild(wagerDescExtraEl);
 
     listingDiv.appendChild(leftBlock);
 
@@ -593,6 +604,42 @@ function generateImageFromStatsContainer(day) {
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
+    // Watermark settings
+    const picksHeight = picksDiv.offsetHeight || 300;
+
+    // Starting offset 100px down, spacing 200px
+    let watermarkTop = headerImg.offsetHeight + 100;
+    const watermarkSpacing = 200;
+
+    // Number of watermarks to add based on picks height and spacing
+    const watermarkCount = Math.ceil(picksHeight / watermarkSpacing);
+
+    for (let i = 0; i < watermarkCount; i++) {
+      const watermark = document.createElement('div');
+      watermark.textContent = '© ogcapperbets.com ©';
+      watermark.style.position = 'absolute';
+      watermark.style.color = '#000';
+      watermark.style.opacity = '0.15';
+      watermark.style.fontSize = '20px';
+      watermark.style.fontWeight = '700';
+      watermark.style.userSelect = 'none';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.whiteSpace = 'nowrap';
+      watermark.style.transform = 'rotate(315deg)';
+      watermark.style.zIndex = '0';
+
+      watermark.style.left = '75px';
+      watermark.style.top = `${watermarkTop}px`;
+
+      offscreen.appendChild(watermark);
+      watermarkTop += watermarkSpacing;
+    }
+
+    // bottom spacing
+    const bottomSpacing = document.createElement('div');
+    bottomSpacing.style.height = '10px';
+    offscreen.appendChild(bottomSpacing);
+
     // Footer image
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
@@ -600,48 +647,12 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.marginTop = '10px';
     footerImg.style.maxWidth = '100%';
     footerImg.style.height = 'auto';
-
     offscreen.appendChild(footerImg);
 
-    // Append offscreen container to DOM first
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
     document.body.appendChild(offscreen);
-
-    // Wait for footer image load to get accurate height measurements
-    footerImg.onload = () => {
-      setTimeout(() => {
-        const headerHeight = headerImg.offsetHeight;
-        const footerHeight = footerImg.offsetHeight;
-        const containerHeight = offscreen.offsetHeight;
-
-        const watermarkAreaHeight = containerHeight - headerHeight - footerHeight - 20; // 20px buffer
-        const watermarkLeft = 75;
-        const watermarkSpacing = 125;
-        const watermarkCount = Math.floor(watermarkAreaHeight / watermarkSpacing);
-
-        for (let i = 0; i < watermarkCount; i++) {
-          const watermark = document.createElement('div');
-          watermark.textContent = '© ogcapperbets.com ©';
-          watermark.style.position = 'absolute';
-          watermark.style.color = '#000';
-          watermark.style.opacity = '0.15';
-          watermark.style.fontSize = '20px';
-          watermark.style.fontWeight = '700';
-          watermark.style.userSelect = 'none';
-          watermark.style.pointerEvents = 'none';
-          watermark.style.whiteSpace = 'nowrap';
-          watermark.style.transform = 'rotate(315deg)';
-          watermark.style.zIndex = '0';
-
-          watermark.style.left = `${watermarkLeft}px`;
-          watermark.style.top = `${headerHeight + i * watermarkSpacing}px`;
-
-          offscreen.appendChild(watermark);
-        }
-      }, 50);
-    };
 
     html2canvas(offscreen, {
       scale: 2,
@@ -669,10 +680,10 @@ function generateImageFromStatsContainer(day) {
         modal.style.height = '100vh';
         modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
         modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';  // vertical center
+        modal.style.justifyContent = 'center'; // horizontal center
         modal.style.zIndex = '100000';
-        modal.style.padding = '0';
+        modal.style.padding = '0'; // remove padding to avoid top gap
 
         const content = document.createElement('div');
         content.style.position = 'relative';
@@ -680,11 +691,11 @@ function generateImageFromStatsContainer(day) {
         content.style.borderRadius = '12px';
         content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
         content.style.overflow = 'auto';
-        content.style.maxHeight = 'calc(100vh - 20px)';
+        content.style.maxHeight = 'calc(100vh - 20px)'; // some vertical padding
         content.style.display = 'flex';
         content.style.flexDirection = 'column';
         content.style.alignItems = 'center';
-        content.style.padding = '0';
+        content.style.padding = '0'; // remove padding
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
@@ -695,7 +706,7 @@ function generateImageFromStatsContainer(day) {
         closeBtn.style.padding = '8px 16px';
         closeBtn.style.fontWeight = '700';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.margin = '0';
+        closeBtn.style.margin = '0'; // remove margin
         closeBtn.style.alignSelf = 'stretch';
 
         closeBtn.addEventListener('click', () => {
