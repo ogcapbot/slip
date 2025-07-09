@@ -1,9 +1,4 @@
-// ############################################################
-// #################### Initialization & UI Setup
-// ############################################################
-// This section initializes state, sets up the UI skeleton including
-// buttons, titles, status messages, notes textarea, and event handlers.
-// It prepares the container for the workflow steps.
+// addNew.js
 import { db } from '../firebaseInit.js';
 import {
   collection,
@@ -21,9 +16,10 @@ const PAGE_LIMIT = 15;
 const PAGE_LIMIT_SPORTS = 100;
 
 export class AddNewWorkflow {
-  constructor(container, userId) {
+  constructor(container, userId, userInfo = {}) {
     this.container = container;
     this.userId = userId;
+    this.userInfo = userInfo; // includes userDisplayName, username, accessCode, accessType, loginCount
 
     this.sportLastVisible = null;
     this.leagueLastVisible = null;
@@ -34,6 +30,7 @@ export class AddNewWorkflow {
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
+    this.unitsData = []; // keep full units data for rank and other fields
 
     this.selectedSport = null;
     this.selectedLeague = null;
@@ -47,21 +44,83 @@ export class AddNewWorkflow {
 
     this.step = 1;
 
+    this.sys_UserStartTime = new Date();
+
     this.renderInitialUI();
     this.loadSports();
   }
 
-  // Insert a space before key wager keywords for better readability when displayed
+  // ############################################################
+  // #################### Utility functions
+  // ############################################################
   addSpaceBeforeKeywords(label) {
     return label.replace(/(PLUS|MINUS|OVER|UNDER)/g, ' $1');
   }
 
-  // Clear the main container content
   clearContainer() {
     this.container.innerHTML = '';
   }
 
-  // Build the initial UI layout: title, buttons wrapper, load more, submit button, status, and notes textarea
+  formatWagerLabel(label) {
+    let formatted = label.replace(/\(([^)]+)\)/g, '<br>($1)');
+    formatted = formatted.replace(/ (\bPLUS\b|\bMINUS\b|\bOVER\b|\bUNDER\b)/g, '<br>$1');
+    return formatted;
+  }
+
+  formatUnitLabel(label) {
+    return label.replace(/\(([^)]+)\)/g, '<br>($1)');
+  }
+
+  formatGameDisplay(game) {
+    const awayTeam = game.awayTeam || '';
+    const homeTeam = game.homeTeam || '';
+
+    const parts = game.startTimeET.split(/[- :]/);
+    const startTime = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
+
+    const now = new Date();
+    const diffMs = startTime - now;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    const formatESTTime = (date) =>
+      date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'America/New_York',
+      });
+
+    const formatLocalTime = (date) =>
+      date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+
+    let timeLabel, dateLabel;
+
+    if (diffMs < 0) {
+      timeLabel = formatESTTime(startTime);
+      dateLabel = `Started @ ${timeLabel}`;
+    } else if (diffDays === 0) {
+      timeLabel = formatESTTime(startTime);
+      dateLabel = `Today @ ${timeLabel}`;
+    } else if (diffDays === 1) {
+      timeLabel = formatLocalTime(startTime);
+      dateLabel = `Tomorrow @ ${timeLabel}`;
+    } else if (diffDays >= 2) {
+      timeLabel = formatLocalTime(startTime);
+      dateLabel = `${diffDays} Days Away @ ${timeLabel}`;
+    } else {
+      dateLabel = startTime.toLocaleDateString();
+    }
+
+    return `${awayTeam}\n@ ${homeTeam}\n${dateLabel}`;
+  }
+
+  // ############################################################
+  // #################### Initial UI rendering and container setup
+  // ############################################################
   renderInitialUI() {
     console.log('[Init] Rendering initial UI');
     this.clearContainer();
@@ -125,7 +184,6 @@ export class AddNewWorkflow {
     this.container.insertBefore(this.notesContainer, this.submitBtn);
   }
 
-  // Show status messages (optionally styled as error)
   setStatus(msg, isError = false) {
     this.statusMsg.textContent = msg;
     this.statusMsg.style.color = isError ? 'red' : 'inherit';
@@ -133,9 +191,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Sports Loading & Rendering
+  // #################### Load Sports (Step 1)
   // ############################################################
-  // Loads active sports, paginates if necessary, renders buttons for user selection
   async loadSports(loadMore = false) {
     console.log('[LoadSports] Loading sports...');
     this.step = 1;
@@ -203,9 +260,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Leagues Loading & Rendering
+  // #################### Load Leagues (Step 2)
   // ############################################################
-  // Loads leagues filtered by selected sport, paginates, renders buttons for selection
   async loadLeagues(loadMore = false) {
     if (!this.selectedSport) {
       this.setStatus('Please select a sport first.', true);
@@ -280,10 +336,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Games Loading & Rendering
+  // #################### Load Games (Step 3)
   // ############################################################
-  // Loads upcoming games filtered by selected league with cutoff time,
-  // paginates, and renders buttons for selection.
   async loadGames(loadMore = false) {
     if (!this.selectedLeague) {
       this.setStatus('Please select a league first.', true);
@@ -347,6 +401,12 @@ export class AddNewWorkflow {
             awayTeam: data.awayTeam,
             homeTeam: data.homeTeam,
             startTimeET: data.startTimeET,
+            startTimeUTC: data.startTimeUTC,
+            leagueLongname: data.leagueLongname,
+            leagueShortname: data.leagueShortname,
+            sportKey: data.sportKey,
+            sportName: data.sportName,
+            expireAt: data.expireAt,
           });
         }
       });
@@ -374,61 +434,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Game Display Formatting
+  // #################### Load Teams (Step 4)
   // ############################################################
-  // Formats game info to include away team, home team, and start time label
-  // including handling for started games, today, tomorrow, or days away
-  formatGameDisplay(game) {
-    const awayTeam = game.awayTeam || '';
-    const homeTeam = game.homeTeam || '';
-
-    const parts = game.startTimeET.split(/[- :]/);
-    const startTime = new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]);
-
-    const now = new Date();
-    const diffMs = startTime - now;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    const formatESTTime = (date) =>
-      date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: 'America/New_York',
-      });
-
-    const formatLocalTime = (date) =>
-      date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      });
-
-    let timeLabel, dateLabel;
-
-    if (diffMs < 0) {
-      timeLabel = formatESTTime(startTime);
-      dateLabel = `Started @ ${timeLabel}`;
-    } else if (diffDays === 0) {
-      timeLabel = formatESTTime(startTime);
-      dateLabel = `Today @ ${timeLabel}`;
-    } else if (diffDays === 1) {
-      timeLabel = formatLocalTime(startTime);
-      dateLabel = `Tomorrow @ ${timeLabel}`;
-    } else if (diffDays >= 2) {
-      timeLabel = formatLocalTime(startTime);
-      dateLabel = `${diffDays} Days Away @ ${timeLabel}`;
-    } else {
-      dateLabel = startTime.toLocaleDateString();
-    }
-
-    return `${awayTeam}\n@ ${homeTeam}\n${dateLabel}`;
-  }
-
-  // ############################################################
-  // #################### Teams Loading & Rendering
-  // ############################################################
-  // Loads away and home teams from the selected game and renders buttons for selection
   async loadTeams() {
     if (!this.selectedGame) {
       this.setStatus('Please select a game first.', true);
@@ -452,10 +459,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Wager Types Loading & Rendering
+  // #################### Load Wager Types (Step 5)
   // ############################################################
-  // Loads global and sport-specific wager types, renders buttons for user selection,
-  // and handles wager types that require numeric input.
   async loadWagerTypes() {
     if (!this.selectedTeam) {
       this.setStatus('Please select a team first.', true);
@@ -496,7 +501,6 @@ export class AddNewWorkflow {
     }
   }
 
-  // Render wager type buttons, add click handlers to select wager and open modal if needed
   renderWagerTypes(globalWagers, sportWagers) {
     this.buttonsWrapper.innerHTML = '';
 
@@ -526,10 +530,10 @@ export class AddNewWorkflow {
 
     Array.from(this.buttonsWrapper.children).forEach((btn) => {
       btn.addEventListener('click', () => {
-        const label = btn.textContent;
-        this.selectedWagerType = label;
-        if (label.includes('[[NUM]]')) {
-          this.showNumberInputModal(label).then((num) => {
+        const labelRaw = btn.textContent;
+        this.selectedWagerType = labelRaw;
+        if (labelRaw.includes('[[NUM]]')) {
+          this.showNumberInputModal(labelRaw).then((num) => {
             this.wagerNumberValue = num;
             this.loadUnits();
           });
@@ -541,17 +545,9 @@ export class AddNewWorkflow {
     });
   }
 
-  // Format wager label for button display - inserts <br> before specific keywords
-  formatWagerLabel(label) {
-    let formatted = label.replace(/\(([^)]+)\)/g, '<br>($1)');
-    formatted = formatted.replace(/ (\bPLUS\b|\bMINUS\b|\bOVER\b|\bUNDER\b)/g, '<br>$1');
-    return formatted;
-  }
-
   // ############################################################
-  // #################### Units Loading & Rendering
+  // #################### Load Units (Step 6)
   // ############################################################
-  // Loads units ordered by rank, renders buttons for unit selection
   async loadUnits() {
     if (!this.selectedWagerType) {
       this.setStatus('Please select a wager type first.', true);
@@ -573,12 +569,12 @@ export class AddNewWorkflow {
         limit(50)
       );
       const snapshot = await getDocs(unitsQuery);
-      const units = snapshot.docs.map((doc) => doc.data());
+      this.unitsData = snapshot.docs.map((doc) => doc.data());
 
-      console.log(`[LoadUnits] Loaded ${units.length} units`);
+      console.log(`[LoadUnits] Loaded ${this.unitsData.length} units`);
 
       this.renderButtons(
-        units.map((u) => this.formatUnitLabel(u.display_unit)),
+        this.unitsData.map((u) => this.formatUnitLabel(u.display_unit)),
         'unit'
       );
     } catch (error) {
@@ -587,16 +583,9 @@ export class AddNewWorkflow {
     }
   }
 
-  // Format unit label to insert <br> before content inside parentheses for display
-  formatUnitLabel(label) {
-    return label.replace(/\(([^)]+)\)/g, '<br>($1)');
-  }
-
   // ############################################################
-  // #################### Phrases Loading & Rendering
+  // #################### Load Phrases (Step 7)
   // ############################################################
-  // Loads hype phrases filtered by active status, shuffles and orders,
-  // paginates and renders phrase buttons.
   async loadPhrases(loadMore = false) {
     if (!this.selectedUnit) {
       this.setStatus('Please select units first.', true);
@@ -658,9 +647,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Notes Section Handling
+  // #################### Show Notes Section (Step 8)
   // ############################################################
-  // Displays textarea for optional notes/comments
   showNotesSection() {
     console.log('[Notes] Showing Notes/Comments section (optional)');
     this.step = 8;
@@ -676,33 +664,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Load More Button Handling
+  // #################### Render Buttons with proper event handlers
   // ############################################################
-  // Handles load more button clicks for pagination
-  async onLoadMore() {
-    console.log(`[LoadMore] Load More clicked at step ${this.step}`);
-    switch (this.step) {
-      case 1:
-        await this.loadSports(true);
-        break;
-      case 2:
-        await this.loadLeagues(true);
-        break;
-      case 3:
-        await this.loadGames(true);
-        break;
-      case 7:
-        await this.loadPhrases(true);
-        break;
-      default:
-        this.loadMoreBtn.style.display = 'none';
-    }
-  }
-
-  // ############################################################
-  // #################### Button Rendering & Selection Handling
-  // ############################################################
-  // Renders buttons for any selection type with appropriate content and behavior
   renderButtons(items, type) {
     console.log(`[RenderButtons] Rendering ${items.length} buttons for type: ${type}`);
     this.buttonsWrapper.innerHTML = '';
@@ -768,8 +731,6 @@ export class AddNewWorkflow {
               this.loadWagerTypes();
             }
             break;
-          case 'wagerType':
-            break;
           case 'unit':
             if (this.selectedUnit !== label) {
               console.log(`[Selection] Unit selected: ${label}`);
@@ -798,52 +759,150 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Submission Handling
+  // #################### Load More Handler
   // ############################################################
-  // Validates all required selections and submits the new official pick to Firestore
+  async onLoadMore() {
+    console.log(`[LoadMore] Load More clicked at step ${this.step}`);
+    switch (this.step) {
+      case 1:
+        await this.loadSports(true);
+        break;
+      case 2:
+        await this.loadLeagues(true);
+        break;
+      case 3:
+        await this.loadGames(true);
+        break;
+      case 7:
+        await this.loadPhrases(true);
+        break;
+      default:
+        this.loadMoreBtn.style.display = 'none';
+    }
+  }
+
+  // ############################################################
+  // #################### Submit Handler
+  // ############################################################
   async onSubmit() {
     console.log('[Submit] Submit button clicked');
 
-    if (
-      !this.selectedSport ||
-      !this.selectedLeague ||
-      !this.selectedGame ||
-      !this.selectedTeam ||
-      !this.selectedWagerType ||
-      !this.selectedUnit ||
-      !this.selectedPhrase
-    ) {
-      this.setStatus('Please complete all steps before submitting.', true);
-      return;
-    }
-
-    if (this.selectedWagerType.includes('[[NUM]]') && (this.wagerNumberValue === null || this.wagerNumberValue === undefined)) {
-      this.setStatus('Please enter a valid wager number.', true);
-      return;
-    }
+    // Remove old validations because user cannot bypass steps
 
     this.setStatus('Submitting your selection...');
 
     try {
-      await addDoc(collection(db, 'OfficialPicks'), {
-        userId: this.userId,
-        sport: this.selectedSport,
-        league: this.selectedLeague,
-        gameId: this.selectedGame.id,
-        awayTeam: this.selectedGame.awayTeam,
-        homeTeam: this.selectedGame.homeTeam,
-        teamSelected: this.selectedTeam,
-        wagerType: this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''),
-        unit: this.selectedUnit,
-        phrase: this.selectedPhrase,
-        notes: this.notes,
+      // Prepare values with correct formatting and trimming <br> tags for saved data
+
+      // Remove <br> from units for saved value but keep display separate
+      let selectedUnitData = this.unitsData.find(
+        (u) => this.formatUnitLabel(u.display_unit) === this.selectedUnit
+      );
+
+      // Defensive fallback if not found
+      if (!selectedUnitData) {
+        // Try direct match without formatting
+        selectedUnitData = this.unitsData.find(
+          (u) => u.display_unit === this.selectedUnit || u.display_unit.replace(/\n/g, '<br>') === this.selectedUnit
+        ) || {};
+      }
+
+      // Clean up wager type for storage (fix missing spaces)
+      let cleanUserWagerType = this.selectedWagerType;
+      cleanUserWagerType = cleanUserWagerType.replace(/([a-z])([A-Z])/g, '$1 $2'); // insert space between words like SpreadPLUS -> Spread PLUS
+      cleanUserWagerType = cleanUserWagerType.replace(/ \[\[NUM\]\]/g, '[[NUM]]'); // remove space before [[NUM]] if any
+
+      // Final wager type string with number replaced if any
+      let finalWagerType = cleanUserWagerType;
+      if (this.wagerNumberValue !== null && this.wagerNumberValue !== undefined) {
+        finalWagerType = finalWagerType.replace('[[NUM]]', this.wagerNumberValue);
+      } else {
+        finalWagerType = finalWagerType.replace('[[NUM]]', '');
+      }
+
+      // Clean game display for saving (remove line breaks)
+      let cleanGameDisplay = this.selectedGame.display.replace(/\n/g, ' ');
+
+      // Compose sys_PostTitle1 and 2 with corrected unit fractions and time format (h:mm AM/PM EST)
+      const estStartDate = new Date(this.selectedGame.startTimeET + ' EST');
+      const estTimeStr = estStartDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+
+      // Use sys_UnitFractions for unit display in post titles
+      const unitFractionDisplay = selectedUnitData['Unit Fractions'] || '';
+
+      const sys_PostTitle1 = `${unitFractionDisplay} - ${this.selectedPhrase} - ${this.selectedSport} - ${estTimeStr}`;
+      const sys_PostTitle2 = `${unitFractionDisplay} - ${this.selectedPhrase} - ${this.selectedTeam} - ${estTimeStr}`;
+
+      // Clean phrase for saving and get other sys phrase fields
+      // Assuming phraseButtonsData is just strings; if phrase objects needed, refactor accordingly
+      // For now, we get phrase object by matching phrase string
+      // Since phrase data is not stored, minimal fields:
+      // Let’s hardcode or extend later if needed - for now we save phrase string only
+
+      const phraseEnergy = ''; // no data available currently
+      const phrasePromo = '';
+      const phraseType = '';
+
+      // Compose PostDesc1 and PostDesc2 without line breaks
+      const cleanPhrase = this.selectedPhrase.replace(/\n/g, ' ');
+
+      const sys_PostDesc1 = `${cleanPhrase} - ${phraseEnergy} - ${phrasePromo}`;
+      const sys_PostDesc2 = `${cleanPhrase} - ${cleanGameDisplay} - ${phraseEnergy} - ${phrasePromo}`;
+
+      // Build submission object with all required fields
+      const submissionObj = {
+        user_UserId: this.userId || 'anonymous',
+        user_Sport: this.selectedSport,
+        user_League: this.selectedLeague,
+        user_GameDisplay: cleanGameDisplay,
+        user_SelectedTeam: this.selectedTeam,
+        user_WagerType: cleanUserWagerType,
+        user_WagerNum: this.wagerNumberValue,
+        user_UnitDisplay: this.selectedUnit,
+        user_Phrase: this.selectedPhrase,
+        user_Notes: this.notes || '',
+
+        sys_Username: this.userInfo.userName || 'unknown',
+        sys_UserDisplayName: this.userInfo.userDisplayName || '',
+        sys_AccessCode: this.userInfo.accessCode || '',
+        sys_AccessType: this.userInfo.accessType || '',
+        sys_LoginCount: this.userInfo.loginCount || 0,
+
+        sys_FinalWagerType: finalWagerType,
+        sys_GameAwayTeam: this.selectedGame.awayTeam,
+        sys_GameHomeTeam: this.selectedGame.homeTeam,
+        sys_GameId: this.selectedGame.id,
+        sys_GameStatus: "Pending",
+
+        sys_PhraseEnergy: phraseEnergy,
+        sys_PhrasePromo: phrasePromo,
+        sys_PhraseType: phraseType,
+
+        sys_PostDesc1: sys_PostDesc1,
+        sys_PostDesc2: sys_PostDesc2,
+
+        sys_PostTitle1: sys_PostTitle1,
+        sys_PostTitle2: sys_PostTitle2,
+
+        sys_Unit100Ex: selectedUnitData['Unit $100 Ex'] || '',
+        sys_UnitFractions: unitFractionDisplay,
+        sys_UnitNoZero: selectedUnitData['Unit No Zero'] || null,
+        sys_UnitPercent: selectedUnitData['Unit %'] || '',
+        sys_UnitRank: selectedUnitData['Rank'] || null,
+        sys_UnitsValue: selectedUnitData['Units'] || null,
+
+        sys_UserStartTime: Timestamp.fromDate(this.sys_UserStartTime),
+        sys_UserEndTime: Timestamp.now(),
+
+        sys_SubmissionSuccess: true,
         timestamp: Timestamp.now(),
-      });
+      };
+
+      await addDoc(collection(db, 'OfficialPicks'), submissionObj);
 
       console.log('[Submit] Submission successful');
 
       this.showSubmissionSummary();
-
     } catch (error) {
       console.error('[Submit] Error submitting:', error);
       this.setStatus('Failed to submit your selection.', true);
@@ -851,15 +910,19 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Submission Summary Display
+  // #################### Show Submission Summary
   // ############################################################
-  // Shows a summary of the submission after successful save
   showSubmissionSummary() {
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Submission Summary');
 
-    const wagerTypeFixed = this.addSpaceBeforeKeywords(this.selectedWagerType.replace('[[NUM]]', this.wagerNumberValue !== null ? this.wagerNumberValue : ''));
+    const wagerTypeFixed = this.addSpaceBeforeKeywords(
+      this.selectedWagerType.replace(
+        '[[NUM]]',
+        this.wagerNumberValue !== null ? this.wagerNumberValue : ''
+      )
+    );
 
-    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
+    const successMsg = `Your ${this.selectedTeam} ${this.selectedUnit.replace(/<br>/g, ' ')} ${wagerTypeFixed} Official Pick has been Successfully Saved.`;
 
     this.buttonsWrapper.innerHTML = '';
     this.notesContainer.style.display = 'none';
@@ -877,10 +940,10 @@ export class AddNewWorkflow {
     const fields = [
       { label: 'Sport', value: this.selectedSport },
       { label: 'League', value: this.selectedLeague },
-      { label: 'Game', value: `${this.selectedGame?.awayTeam} @ ${this.selectedGame?.homeTeam}` },
+      { label: 'Game', value: this.selectedGame?.display.replace(/\n/g, ' ') },
       { label: 'Team', value: this.selectedTeam },
       { label: 'Wager Type', value: wagerTypeFixed },
-      { label: 'Unit', value: this.selectedUnit },
+      { label: 'Unit', value: this.selectedUnit.replace(/<br>/g, ' ') },
       { label: 'Phrase', value: this.selectedPhrase },
       { label: 'Notes', value: this.notes || 'None' },
     ];
@@ -900,9 +963,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Workflow Reset
+  // #################### Reset Workflow after submission
   // ############################################################
-  // Resets all selections and reloads the sports step to start fresh
   resetWorkflow() {
     console.log('[Reset] Resetting workflow for new submission');
     this.step = 1;
@@ -925,6 +987,9 @@ export class AddNewWorkflow {
     this.leagueButtonsData = [];
     this.gameButtonsData = [];
     this.phraseButtonsData = [];
+    this.unitsData = [];
+
+    this.sys_UserStartTime = new Date();
 
     this.titleEl.textContent = this.addSpaceBeforeKeywords('Please select a Sport');
     this.loadMoreBtn.style.display = 'none';
@@ -936,9 +1001,8 @@ export class AddNewWorkflow {
   }
 
   // ############################################################
-  // #################### Number Input Modal for Wager Number
+  // #################### Modal for number input when wager has [[NUM]]
   // ############################################################
-  // Prompts the user to input a wager number (whole or half increments)
   showNumberInputModal(wagerLabel) {
     return new Promise((resolve) => {
       const modal = document.createElement('div');
