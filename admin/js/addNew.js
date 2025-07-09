@@ -692,7 +692,7 @@ export class AddNewWorkflow {
 
       if (type === 'game' || type === 'unit') {
         btn.style.whiteSpace = 'pre-line';
-        btn.innerHTML = label.replace(/\n/g, '<br>');
+        btn.innerHTML = label.replace(/\n/g, ' <br>');
       } else {
         btn.textContent = label;
       }
