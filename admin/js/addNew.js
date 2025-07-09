@@ -1000,18 +1000,40 @@ export class AddNewWorkflow {
     patreonButton.classList.add('admin-button');
     patreonButton.style.marginTop = '12px';
     patreonButton.addEventListener('click', () => {
-      // Call the function imported from generatePatreonImage.js
-      generatePatreonImage({
-        sport: this.selectedSport,
-        league: this.selectedLeague,
-        gameDisplay: this.selectedGame?.display.replace(/\n/g, ' ') || '',
-        team: this.selectedTeam,
-        wagerType: wagerTypeFixed,
-        unit: this.selectedUnit.replace(/<br>/g, ' '),
-        phrase: this.selectedPhrase,
-        notes: this.notes || '',
-        userInfo: this.userInfo,
-        selectedGameData: this.selectedGame,
+      // Build the pickData object for generatePatreonImage
+      const pickData = {
+        FULL_SPORT_NAME: this.selectedSport,
+        FULL_LEAGUE_NAME: this.selectedLeague,
+        FULL_TEAM_ENTERED: this.selectedTeam,
+        FULL_BET_TYPE: wagerTypeFixed,
+        FULL_WAGER_OUTPUT: `${this.selectedUnit.replace(/<br>/g, ' ')} ${wagerTypeFixed}`,
+        PICK_DESC: this.selectedWagerTypeObj?.pick_desc_template
+          ? this.selectedWagerTypeObj.pick_desc_template
+              .replace(/\[\[TEAM\]\]/g, this.selectedTeam)
+              .replace(/\[\[NUM\]\]/g, this.wagerNumberValue ?? '')
+          : '',
+        NOTES: this.notes || '',
+        TITLE: `${this.selectedPhrase}`,
+        PICKID: '', // Could be added if available
+        CAPPERS_NAME: this.userInfo.userDisplayName || this.userInfo.userName || 'Unknown',
+        USER_INPUT_VALUE: this.wagerNumberValue !== null ? this.wagerNumberValue : '',
+        LONG_DATE_SECONDS: new Date().toLocaleString(),
+        HOME_TEAM_FULL_NAME: this.selectedGame?.homeTeam || '',
+        AWAY_TEAM_FULL_NAME: this.selectedGame?.awayTeam || '',
+        DATE_AND_TIME_GAME_START: this.selectedGame?.startTimeET || '',
+      };
+
+      generatePatreonImage(pickData).then((imageDataUrl) => {
+        // Show the image in a new tab or modal for user to download or share
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write('<title>Patreon Image</title>');
+          newWindow.document.write(`<img src="${imageDataUrl}" style="max-width: 100%;">`);
+        } else {
+          alert('Please allow popups to see the generated image.');
+        }
+      }).catch(err => {
+        alert('Error generating image: ' + err.message);
       });
     });
 
