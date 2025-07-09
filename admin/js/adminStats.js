@@ -263,11 +263,10 @@ function renderPickListing(picks, container) {
     leftBlock.style.flex = '1 1 auto';
     leftBlock.style.textAlign = 'left';
 
-    // Team and units inline
-    const teamUnitsDiv = document.createElement('div');
-    teamUnitsDiv.style.fontWeight = '600';
-    teamUnitsDiv.textContent = `${data.user_SelectedTeam || 'N/A'} - ${data.sys_UnitFractions || 'N/A'}`;
-    leftBlock.appendChild(teamUnitsDiv);
+    const teamEl = document.createElement('div');
+    teamEl.textContent = `${data.user_SelectedTeam || 'N/A'} - ${data.sys_UnitFractions || 'N/A'}`;
+    teamEl.style.fontWeight = '600';
+    leftBlock.appendChild(teamEl);
 
     const wagerEl = document.createElement('div');
     wagerEl.textContent = data.sys_FinalWagerType || 'N/A';
@@ -594,7 +593,7 @@ function generateImageFromStatsContainer(day) {
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-    // Watermark settings - placed after footer loads
+    // Footer image
     const footerImg = document.createElement('img');
     footerImg.src = 'https://capper.ogcapperbets.com/admin/images/imageFooter.png';
     footerImg.style.display = 'block';
@@ -602,44 +601,47 @@ function generateImageFromStatsContainer(day) {
     footerImg.style.maxWidth = '100%';
     footerImg.style.height = 'auto';
 
-    footerImg.onload = () => {
-      const headerHeight = headerImg.offsetHeight;
-      const footerHeight = footerImg.offsetHeight;
-      const containerHeight = offscreen.offsetHeight;
-
-      // Calculate vertical space between header bottom and footer top
-      const watermarkAreaHeight = containerHeight - headerHeight - footerHeight - 20; // 20px margin buffer
-      const watermarkLeft = 75; // px from left
-      const watermarkSpacing = 125; // vertical spacing between watermarks
-      const watermarkCount = Math.floor(watermarkAreaHeight / watermarkSpacing);
-
-      for (let i = 0; i < watermarkCount; i++) {
-        const watermark = document.createElement('div');
-        watermark.textContent = '© ogcapperbets.com ©';
-        watermark.style.position = 'absolute';
-        watermark.style.color = '#000';
-        watermark.style.opacity = '0.15';
-        watermark.style.fontSize = '20px';
-        watermark.style.fontWeight = '700';
-        watermark.style.userSelect = 'none';
-        watermark.style.pointerEvents = 'none';
-        watermark.style.whiteSpace = 'nowrap';
-        watermark.style.transform = 'rotate(315deg)';
-        watermark.style.zIndex = '0';
-
-        watermark.style.left = `${watermarkLeft}px`;
-        watermark.style.top = `${headerHeight + i * watermarkSpacing}px`;
-
-        offscreen.appendChild(watermark);
-      }
-    };
-
     offscreen.appendChild(footerImg);
 
+    // Append offscreen container to DOM first
     offscreen.style.position = 'fixed';
     offscreen.style.left = '-9999px';
     offscreen.style.top = '-9999px';
     document.body.appendChild(offscreen);
+
+    // Wait for footer image load to get accurate height measurements
+    footerImg.onload = () => {
+      setTimeout(() => {
+        const headerHeight = headerImg.offsetHeight;
+        const footerHeight = footerImg.offsetHeight;
+        const containerHeight = offscreen.offsetHeight;
+
+        const watermarkAreaHeight = containerHeight - headerHeight - footerHeight - 20; // 20px buffer
+        const watermarkLeft = 75;
+        const watermarkSpacing = 125;
+        const watermarkCount = Math.floor(watermarkAreaHeight / watermarkSpacing);
+
+        for (let i = 0; i < watermarkCount; i++) {
+          const watermark = document.createElement('div');
+          watermark.textContent = '© ogcapperbets.com ©';
+          watermark.style.position = 'absolute';
+          watermark.style.color = '#000';
+          watermark.style.opacity = '0.15';
+          watermark.style.fontSize = '20px';
+          watermark.style.fontWeight = '700';
+          watermark.style.userSelect = 'none';
+          watermark.style.pointerEvents = 'none';
+          watermark.style.whiteSpace = 'nowrap';
+          watermark.style.transform = 'rotate(315deg)';
+          watermark.style.zIndex = '0';
+
+          watermark.style.left = `${watermarkLeft}px`;
+          watermark.style.top = `${headerHeight + i * watermarkSpacing}px`;
+
+          offscreen.appendChild(watermark);
+        }
+      }, 50);
+    };
 
     html2canvas(offscreen, {
       scale: 2,
@@ -667,10 +669,10 @@ function generateImageFromStatsContainer(day) {
         modal.style.height = '100vh';
         modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
         modal.style.display = 'flex';
-        modal.style.alignItems = 'center';  // vertical center
-        modal.style.justifyContent = 'center'; // horizontal center
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
         modal.style.zIndex = '100000';
-        modal.style.padding = '0'; // remove padding to avoid top gap
+        modal.style.padding = '0';
 
         const content = document.createElement('div');
         content.style.position = 'relative';
@@ -678,11 +680,11 @@ function generateImageFromStatsContainer(day) {
         content.style.borderRadius = '12px';
         content.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
         content.style.overflow = 'auto';
-        content.style.maxHeight = 'calc(100vh - 20px)'; // some vertical padding
+        content.style.maxHeight = 'calc(100vh - 20px)';
         content.style.display = 'flex';
         content.style.flexDirection = 'column';
         content.style.alignItems = 'center';
-        content.style.padding = '0'; // remove padding
+        content.style.padding = '0';
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
@@ -693,7 +695,7 @@ function generateImageFromStatsContainer(day) {
         closeBtn.style.padding = '8px 16px';
         closeBtn.style.fontWeight = '700';
         closeBtn.style.cursor = 'pointer';
-        closeBtn.style.margin = '0'; // remove margin
+        closeBtn.style.margin = '0';
         closeBtn.style.alignSelf = 'stretch';
 
         closeBtn.addEventListener('click', () => {
