@@ -70,10 +70,10 @@ function computeStats(picks) {
   };
 
   picks.forEach(({ data }) => {
-    const val = data.gameWinLossDraw;
-    const units = parseFloat(data.unit) || 0;
+    const val = data.sys_GameStatus;
+    const units = parseFloat(data.sys_UnitsValue) || 0;
 
-    if (val === null || val === undefined || val === '' || val === 'null') {
+    if (val === null || val === undefined || val === '' || val === 'null' || val === 'Pending') {
       counts.Pending++;
       counts.UnitsPending += units;
     } else if (STATUS_VALUES.includes(val)) {
@@ -142,7 +142,6 @@ function renderStatsSummary(counts, container) {
   const completed = counts.Win + counts.Lost + counts.Push;
   const winPercent = completed ? ((counts.Win / completed) * 100).toFixed(1) : '0.0';
 
-  // Container for first line: win % left, total picks right
   const line1 = document.createElement('div');
   line1.style.display = 'flex';
   line1.style.justifyContent = 'space-between';
@@ -166,7 +165,6 @@ function renderStatsSummary(counts, container) {
   line1.appendChild(totalPicksDiv);
   container.appendChild(line1);
 
-  // Container for second line: total units center (smaller font now)
   const line2 = document.createElement('div');
   line2.style.textAlign = 'center';
   line2.style.fontWeight = '800';
@@ -195,7 +193,6 @@ function renderStatsSummary(counts, container) {
   line2.appendChild(unitsText);
   container.appendChild(line2);
 
-  // Container for bottom status summary icons (without label text)
   const totalsRow = document.createElement('div');
   totalsRow.style.display = 'flex';
   totalsRow.style.justifyContent = 'center';
@@ -223,15 +220,11 @@ function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
 
   img.addEventListener('click', async () => {
     if (currentStatus === statusText) {
-      const pw = prompt('Password required to reset status:');
-      if (pw !== 'super123') {
-        alert('Incorrect password. Status not changed.');
-        return;
-      }
+      // Reset to Pending without password
       try {
         const docRef = doc(db, 'OfficialPicks', pickId);
-        await updateDoc(docRef, { gameWinLossDraw: '' });
-        onStatusChange('');
+        await updateDoc(docRef, { sys_GameStatus: 'Pending' });
+        onStatusChange('Pending');
       } catch (error) {
         console.error('Error resetting status:', error);
         alert('Failed to reset status.');
@@ -241,7 +234,7 @@ function createStatusButton(statusText, pickId, currentStatus, onStatusChange) {
 
     try {
       const docRef = doc(db, 'OfficialPicks', pickId);
-      await updateDoc(docRef, { gameWinLossDraw: statusText });
+      await updateDoc(docRef, { sys_GameStatus: statusText });
       onStatusChange(statusText);
     } catch (error) {
       console.error('Error updating status:', error);
@@ -271,18 +264,26 @@ function renderPickListing(picks, container) {
     leftBlock.style.textAlign = 'left';
 
     const teamEl = document.createElement('div');
-    teamEl.textContent = data.teamSelected || 'N/A';
+    teamEl.textContent = data.user_SelectedTeam || 'N/A';
     teamEl.style.fontWeight = '600';
     leftBlock.appendChild(teamEl);
 
     const wagerEl = document.createElement('div');
-    wagerEl.textContent = data.wagerType || 'N/A';
+    wagerEl.textContent = data.sys_FinalWagerType || 'N/A';
     wagerEl.style.fontSize = '12px';
     wagerEl.style.color = '#555';
     leftBlock.appendChild(wagerEl);
 
+    const wagerDescEl = document.createElement('div');
+    wagerDescEl.textContent = data.sys_WagerDesc || '';
+    wagerDescEl.style.fontSize = '11px';
+    wagerDescEl.style.color = '#777';
+    wagerDescEl.style.fontStyle = 'italic';
+    wagerDescEl.style.marginBottom = '4px';
+    leftBlock.appendChild(wagerDescEl);
+
     const unitsEl = document.createElement('div');
-    unitsEl.textContent = data.unit || 'N/A';
+    unitsEl.textContent = data.sys_UnitFractions || 'N/A';
     unitsEl.style.fontSize = '12px';
     unitsEl.style.color = '#555';
     leftBlock.appendChild(unitsEl);
@@ -293,7 +294,7 @@ function renderPickListing(picks, container) {
     rightBlock.style.display = 'flex';
     rightBlock.style.alignItems = 'center';
 
-    let currentStatus = data.gameWinLossDraw;
+    let currentStatus = data.sys_GameStatus;
     if (currentStatus === null || currentStatus === undefined || currentStatus === '' || currentStatus === 'null') {
       currentStatus = 'Pending';
     }
@@ -354,10 +355,10 @@ Date: ${formatLongDateEST(day)}
 ═══════════════════════
 ${picks.map(({ data }) => `
 ═══════════════════════
-${data.teamSelected}
-${data.wagerType}
-${data.unit}
-Status: ${getStatusEmoji(data.gameWinLossDraw)}
+${data.user_SelectedTeam}
+${data.sys_FinalWagerType}
+${data.sys_UnitFractions}
+Status: ${getStatusEmoji(data.sys_GameStatus)}
 `).join('')}
 
 ═══════════════════════
@@ -368,139 +369,6 @@ Status: ${getStatusEmoji(data.gameWinLossDraw)}
 All OG Capper Bets Content is PRIVATE. Leaking, Stealing or Sharing ANY Content is STRICTLY PROHIBITED. Violation = Termination. No Refund. No Appeal. Lifetime Ban.
 Created: ${formatLongDateTimeEST()}
 `.trim();
-}
-
-// New clean text function to fix spacing issues on paste
-function cleanOutputText(text) {
-  return text
-    // Normalize line Endings to \n
-    .replace(/\r\n?/g, '\n')
-    // Remove zero-width and other invisible Unicode chars
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    // Collapse multiple blank lines to a single blank line
-    .replace(/\n{3,}/g, '\n\n')
-    // Trim trailing spaces on each line
-    .split('\n')
-    .map(line => line.trimEnd())
-    .join('\n');
-}
-
-function showTextOutputModal(textOutput) {
-  let modal = document.getElementById('textOutputModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'textOutputModal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '100000';
-
-    const content = document.createElement('div');
-    content.style.backgroundColor = '#222';
-    content.style.color = '#eee';
-    content.style.padding = '20px';
-    content.style.borderRadius = '10px';
-    content.style.width = '85vw';
-    content.style.maxWidth = '500px';
-    content.style.maxHeight = '80vh';
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-
-    const textarea = document.createElement('textarea');
-    textarea.style.flex = '1';
-    textarea.style.width = '100%';
-    textarea.style.resize = 'none';
-    textarea.style.backgroundColor = '#111';
-    textarea.style.color = '#eee';
-    textarea.style.fontFamily = 'monospace';
-    textarea.style.fontSize = '14px';
-    textarea.style.padding = '10px';
-    textarea.style.minHeight = '50vh';
-    textarea.style.whiteSpace = 'pre'; // preserve formatting exactly
-    textarea.id = 'textOutputArea';
-
-    const btnContainer = document.createElement('div');
-    btnContainer.style.marginTop = '12px';
-    btnContainer.style.textAlign = 'right';
-
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'Copy All';
-    copyBtn.style.marginRight = '12px';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-
-    btnContainer.appendChild(copyBtn);
-    btnContainer.appendChild(closeBtn);
-
-    content.appendChild(textarea);
-    content.appendChild(btnContainer);
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    copyBtn.addEventListener('click', async () => {
-      const textarea = document.getElementById('textOutputArea');
-      if (!textarea) return;
-      const rawText = textarea.value;
-
-      // Convert line breaks to <br> for HTML clipboard
-      const htmlText = rawText.replace(/\n/g, '<br>');
-
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/html': new Blob([htmlText], { type: 'text/html' }),
-            'text/plain': new Blob([rawText], { type: 'text/plain' }),
-          })
-        ]);
-        alert('Copied text with HTML line breaks to clipboard!');
-      } catch (err) {
-        console.error('Clipboard write failed:', err);
-        alert('Failed to copy.');
-      }
-    });
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-
-    modal.addEventListener('click', e => {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-  }
-
-  const textarea = document.getElementById('textOutputArea');
-  textarea.value = textOutput;
-  modal.style.display = 'flex';
-}
-
-async function showStatsAsText(day) {
-  try {
-    let picks = [];
-    if (day === 'all') {
-      const officialPicksRef = collection(db, 'OfficialPicks');
-      const q = query(officialPicksRef);
-      const snapshot = await getDocs(q);
-      picks = snapshot.docs.slice(0, 25).map(doc => ({
-        id: doc.id,
-        data: doc.data()
-      }));
-    } else {
-      picks = await fetchPicksByDate(day);
-    }
-
-    const textOutput = generateTextStatsOutput(day, picks);
-    showTextOutputModal(textOutput);
-  } catch (error) {
-    console.error('Failed to show stats as text:', error);
-    alert('Error loading stats as text.');
-  }
 }
 
 export async function loadStatsForDay(day) {
@@ -701,10 +569,9 @@ function generateImageFromStatsContainer(day) {
 
     // Hide top buttons area as before
     const topButtonsDiv = document.createElement('div');
-topButtonsDiv.style.height = '65px';
-topButtonsDiv.style.display = 'none';  // hide and remove space
-offscreen.appendChild(topButtonsDiv);
-
+    topButtonsDiv.style.height = '65px';
+    topButtonsDiv.style.display = 'none';  // hide and remove space
+    offscreen.appendChild(topButtonsDiv);
 
     const longDateStr = formatLongDateEST(day);
     if (longDateStr) {
@@ -734,33 +601,29 @@ offscreen.appendChild(topButtonsDiv);
     offscreen.appendChild(picksDiv);
     renderPickListing(picks, picksDiv);
 
-// Watermark settings
-renderPickListing(picks, picksDiv);
+    // Watermark settings
+    const picksHeight = picksDiv.offsetHeight || 300;
+    const watermarkCount = Math.floor((picksHeight / 100) * (finalWidth / 25)); // Adjust density
 
-// Watermark settings
-// Remove previous image watermark loop and replace with CSS text watermark:
-const picksHeight = picksDiv.offsetHeight || 300;
-const watermarkCount = Math.floor((picksHeight / 100) * (finalWidth / 25)); // Adjust density
+    for (let i = 0; i < watermarkCount; i++) {
+      const watermark = document.createElement('div');
+      watermark.textContent = '© ogcapperbets.com ©';
+      watermark.style.position = 'absolute';
+      watermark.style.color = '#000';
+      watermark.style.opacity = '0.15';
+      watermark.style.fontSize = '20px';
+      watermark.style.fontWeight = '700';
+      watermark.style.userSelect = 'none';
+      watermark.style.pointerEvents = 'none';
+      watermark.style.whiteSpace = 'nowrap';
+      watermark.style.transform = 'rotate(300deg)';
+      watermark.style.zIndex = '0';
 
-for (let i = 0; i < watermarkCount; i++) {
-  const watermark = document.createElement('div');
-  watermark.textContent = '© ogcapperbets.com ©';
-  watermark.style.position = 'absolute';
-  watermark.style.color = '#000';
-  watermark.style.opacity = '0.15';
-  watermark.style.fontSize = '20px';
-  watermark.style.fontWeight = '700';
-  watermark.style.userSelect = 'none';
-  watermark.style.pointerEvents = 'none';
-  watermark.style.whiteSpace = 'nowrap';
-  watermark.style.transform = 'rotate(300deg)';
-  watermark.style.zIndex = '0';
+      watermark.style.left = `${5 + Math.random() * (finalWidth - 150)}px`;
+      watermark.style.top = `${headerImg.offsetHeight + 75 + Math.random() * (picksHeight - 20)}px`;
 
-  watermark.style.left = `${5 + Math.random() * (finalWidth - 150)}px`;
-  watermark.style.top = `${headerImg.offsetHeight + 75 + Math.random() * (picksHeight - 20)}px`;
-
-  offscreen.appendChild(watermark);
-}
+      offscreen.appendChild(watermark);
+    }
     // bottom spacing
     const bottomSpacing = document.createElement('div');
     bottomSpacing.style.height = '10px';
