@@ -69,7 +69,7 @@
       const [homeBadge, awayBadge, myLogo] = await Promise.all([
         fetchTeamBadge(homeTeam),
         fetchTeamBadge(awayTeam),
-        loadImage('https://capper.ogcapperbets.com/test/mainLogo.jpg') // example small logo, replace with your own
+        loadImage('https://capper.ogcapperbets.com/test/mainLogo.jpeg') // example small logo, replace with your own
       ]);
 
       drawComposite(homeBadge, awayBadge, myLogo);
