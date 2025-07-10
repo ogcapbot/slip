@@ -87,7 +87,9 @@
 
     for (const field of imageFields) {
       if (teamData[field]) {
-        return loadImage(teamData[field]);
+        // Clean URL: remove extra quotes or whitespace
+        const cleanUrl = teamData[field].trim().replace(/^"+|"+$/g, '');
+        return loadImage(cleanUrl);
       }
     }
 
