@@ -21,7 +21,6 @@
 <canvas id="resultCanvas" width="400" height="200"></canvas>
 
 <script>
-  // Your JSON games data (shortened for brevity)
   const games = {
     "3459b340e7689285cc224182397c2edc": {
       "awayTeam": "New York Mets",
@@ -38,14 +37,13 @@
     // Add all your games here similarly...
   };
 
-  const apiKey = '123'; // Your TheSportsDB API key
+  const apiKey = '123';
 
   const select = document.getElementById('gameSelect');
   const goBtn = document.getElementById('goBtn');
   const canvas = document.getElementById('resultCanvas');
   const ctx = canvas.getContext('2d');
 
-  // Populate dropdown with games
   for (const gameId in games) {
     const game = games[gameId];
     const option = document.createElement('option');
@@ -61,19 +59,17 @@
   goBtn.addEventListener('click', async () => {
     const gameId = select.value;
     if (!gameId) return;
-    
+
     const { homeTeam, awayTeam } = games[gameId];
 
     try {
-      // Fetch badges for both teams from TheSportsDB
       const [homeBadge, awayBadge, myLogo] = await Promise.all([
         fetchTeamBadge(homeTeam),
         fetchTeamBadge(awayTeam),
-        loadImage('https://capper.ogcapperbets.com/test/mainLogo.jpeg') // example small logo, replace with your own
+        loadImage('https://capper.ogcapperbets.com/test/mainLogo.jpeg')
       ]);
 
       drawComposite(homeBadge, awayBadge, myLogo);
-
     } catch (err) {
       alert('Error loading images: ' + err.message);
     }
@@ -85,15 +81,24 @@
     if (!resp.ok) throw new Error('API error for team ' + teamName);
     const data = await resp.json();
     if (!data.teams || data.teams.length === 0) throw new Error('No team found for ' + teamName);
-    const badgeUrl = data.teams[0].strTeamBadge;
-    if (!badgeUrl) throw new Error('No badge found for ' + teamName);
-    return loadImage(badgeUrl);
+
+    const teamData = data.teams[0];
+    const imageFields = ['strBadge', 'strTeamBadge', 'strLogo', 'strTeamLogo', 'strFanart1', 'strFanart2'];
+
+    for (const field of imageFields) {
+      if (teamData[field]) {
+        return loadImage(teamData[field]);
+      }
+    }
+
+    const placeholderURL = 'https://via.placeholder.com/150?text=No+Image';
+    return loadImage(placeholderURL);
   }
 
   function loadImage(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous'; // Needed for canvas cross-origin images
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error('Failed to load image: ' + src));
       img.src = src;
@@ -105,13 +110,8 @@
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw home logo left side
     ctx.drawImage(homeImg, 30, 50, 150, 100);
-
-    // Draw away logo right side
     ctx.drawImage(awayImg, 220, 50, 150, 100);
-
-    // Draw your logo centered bottom
     ctx.drawImage(myLogo, canvas.width / 2 - 30, 160, 60, 30);
   }
 </script>
