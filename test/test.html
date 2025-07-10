@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Game Logo Composer</title>
+<title>Game Logo Composer with CORS Proxy</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
   select, button { font-size: 16px; padding: 5px; margin-right: 10px; }
@@ -38,6 +38,7 @@
   };
 
   const apiKey = '123';
+  const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
 
   const select = document.getElementById('gameSelect');
   const goBtn = document.getElementById('goBtn');
@@ -77,7 +78,7 @@
 
   async function fetchTeamBadge(teamName) {
     const url = `https://www.thesportsdb.com/api/v1/json/${apiKey}/searchteams.php?t=${encodeURIComponent(teamName)}`;
-    const resp = await fetch(url);
+    const resp = await fetch(proxyUrl + url);
     if (!resp.ok) throw new Error('API error for team ' + teamName);
     const data = await resp.json();
     if (!data.teams || data.teams.length === 0) throw new Error('No team found for ' + teamName);
@@ -87,7 +88,6 @@
 
     for (const field of imageFields) {
       if (teamData[field]) {
-        // Clean URL: remove extra quotes or whitespace
         const cleanUrl = teamData[field].trim().replace(/^"+|"+$/g, '');
         return loadImage(cleanUrl);
       }
@@ -103,7 +103,7 @@
       img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error('Failed to load image: ' + src));
-      img.src = src;
+      img.src = proxyUrl + src;
     });
   }
 
