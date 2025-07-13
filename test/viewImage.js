@@ -11,22 +11,20 @@ function getEasternDateStringMMDDYYYY() {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(now); // e.g. "07/18/2025"
+  }).format(now);
   return easternDate;
 }
 
 function createModal() {
   console.log("[Modal] Creating modal...");
   const modalOverlay = document.createElement("div");
-  modalOverlay.id = "imageModalOverlay";
   Object.assign(modalOverlay.style, {
-    position: "fixed",
-    top: "0", left: "0", right: "0", bottom: "0",
+    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: "rgba(0,0,0,0.6)",
     display: "none",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: "1000",
+    zIndex: 1000,
   });
 
   const modalContent = document.createElement("div");
@@ -54,15 +52,11 @@ function createModal() {
 
   const okButton = document.createElement("button");
   okButton.textContent = "OK";
-  okButton.style.padding = "8px 16px";
-  okButton.style.fontSize = "1rem";
-  okButton.style.cursor = "pointer";
+  Object.assign(okButton.style, { padding: "8px 16px", fontSize: "1rem", cursor: "pointer" });
 
   const cancelButton = document.createElement("button");
   cancelButton.textContent = "Cancel";
-  cancelButton.style.padding = "8px 16px";
-  cancelButton.style.fontSize = "1rem";
-  cancelButton.style.cursor = "pointer";
+  Object.assign(cancelButton.style, { padding: "8px 16px", fontSize: "1rem", cursor: "pointer" });
 
   buttonsDiv.appendChild(okButton);
   buttonsDiv.appendChild(cancelButton);
@@ -79,16 +73,11 @@ function createModal() {
 
   okButton.addEventListener("click", closeModal);
   cancelButton.addEventListener("click", closeModal);
-  modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) {
-      console.log("[Modal] Overlay clicked - closing modal.");
-      closeModal();
-    }
+  modalOverlay.addEventListener("click", e => {
+    if (e.target === modalOverlay) closeModal();
   });
 
   return {
-    modalOverlay,
-    modalImage,
     show: (src) => {
       console.log("[Modal] Showing image:", src);
       modalImage.src = src;
@@ -97,36 +86,27 @@ function createModal() {
   };
 }
 
-function createImageGrid(sportName, images, modal) {
-  console.log(`[UI] Creating image grid for sport: "${sportName}" with ${images.length} images.`);
-  const section = document.createElement("section");
-  section.style.marginBottom = "20px";
-
-  const title = document.createElement("h4");
-  title.textContent = sportName;
-  title.style.fontFamily = "'Oswald', sans-serif";
-  title.style.marginBottom = "8px";
-  title.style.textAlign = "center"; // center the title
-  section.appendChild(title);
-
+function createImageGrid(images, modal) {
   const grid = document.createElement("div");
   Object.assign(grid.style, {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: "6px",
     maxWidth: "400px",
-    margin: "0 auto", // center the grid horizontally
+    margin: "0 auto",
   });
 
   images.forEach(({ strThumb }) => {
     const imgBtn = document.createElement("img");
     imgBtn.src = strThumb;
-    imgBtn.alt = sportName;
-    imgBtn.style.cursor = "pointer";
-    imgBtn.style.borderRadius = "4px";
-    imgBtn.style.objectFit = "cover";
-    imgBtn.style.width = "125px";
-    imgBtn.style.height = "auto";
+    imgBtn.alt = "";
+    Object.assign(imgBtn.style, {
+      cursor: "pointer",
+      borderRadius: "4px",
+      objectFit: "cover",
+      width: "125px",
+      height: "auto",
+    });
 
     imgBtn.addEventListener("click", () => {
       modal.show(strThumb);
@@ -135,18 +115,52 @@ function createImageGrid(sportName, images, modal) {
     grid.appendChild(imgBtn);
   });
 
-  section.appendChild(grid);
-  return section;
+  return grid;
+}
+
+function createLeagueSection(leagueName, images, modal) {
+  const leagueSection = document.createElement("section");
+  leagueSection.style.marginBottom = "15px";
+
+  const leagueTitle = document.createElement("h5");
+  leagueTitle.textContent = leagueName;
+  leagueTitle.style.fontFamily = "'Oswald', sans-serif";
+  leagueTitle.style.textAlign = "center";
+  leagueTitle.style.marginBottom = "6px";
+
+  leagueSection.appendChild(leagueTitle);
+  leagueSection.appendChild(createImageGrid(images, modal));
+
+  return leagueSection;
+}
+
+function createSportSection(sportName, leaguesGrouped, modal) {
+  const sportSection = document.createElement("section");
+  sportSection.style.marginBottom = "30px";
+
+  const sportTitle = document.createElement("h4");
+  sportTitle.textContent = sportName;
+  sportTitle.style.fontFamily = "'Oswald', sans-serif";
+  sportTitle.style.marginBottom = "10px";
+  sportTitle.style.textAlign = "center";
+
+  sportSection.appendChild(sportTitle);
+
+  for (const leagueName in leaguesGrouped) {
+    const leagueSection = createLeagueSection(leagueName, leaguesGrouped[leagueName], modal);
+    sportSection.appendChild(leagueSection);
+  }
+
+  return sportSection;
 }
 
 async function loadImages() {
   console.log("[Load] Starting to load images...");
 
   const container = document.createElement("div");
-  container.id = "imagesContainer";
   Object.assign(container.style, {
     maxWidth: "400px",
-    margin: "20px auto", // centers the entire container horizontally
+    margin: "20px auto",
     padding: "0 5px",
   });
   document.body.insertBefore(container, document.querySelector("footer"));
@@ -172,7 +186,7 @@ async function loadImages() {
     }
 
     const docs = [];
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach(doc => {
       const data = doc.data();
       if (data.strSport && data.strThumb) {
         docs.push(data);
@@ -188,6 +202,10 @@ async function loadImages() {
       const sportB = b.strSport.toLowerCase();
       if (sportA < sportB) return -1;
       if (sportA > sportB) return 1;
+      const leagueA = (a.strLeague || "").toLowerCase();
+      const leagueB = (b.strLeague || "").toLowerCase();
+      if (leagueA < leagueB) return -1;
+      if (leagueA > leagueB) return 1;
       const thumbA = a.strThumb.toLowerCase();
       const thumbB = b.strThumb.toLowerCase();
       if (thumbA < thumbB) return -1;
@@ -197,17 +215,27 @@ async function loadImages() {
 
     console.log("[Load] Sorted documents");
 
-    const grouped = docs.reduce((acc, curr) => {
+    // Group by sport
+    const groupedBySport = docs.reduce((acc, curr) => {
       if (!acc[curr.strSport]) acc[curr.strSport] = [];
       acc[curr.strSport].push(curr);
       return acc;
     }, {});
 
-    console.log("[Load] Grouped by sport:", Object.keys(grouped));
+    console.log("[Load] Grouped by sport:", Object.keys(groupedBySport));
 
-    for (const sport in grouped) {
-      const section = createImageGrid(sport, grouped[sport], modal);
-      container.appendChild(section);
+    // For each sport, group by league
+    for (const sport in groupedBySport) {
+      const sportDocs = groupedBySport[sport];
+      const groupedByLeague = sportDocs.reduce((acc, curr) => {
+        const leagueName = curr.strLeague || "Unknown League";
+        if (!acc[leagueName]) acc[leagueName] = [];
+        acc[leagueName].push(curr);
+        return acc;
+      }, {});
+
+      const sportSection = createSportSection(sport, groupedByLeague, modal);
+      container.appendChild(sportSection);
     }
   } catch (error) {
     console.error("[Load] Error loading images:", error);
