@@ -1,122 +1,29 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Game Logo Composer with CORS Proxy</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  select, button { font-size: 16px; padding: 5px; margin-right: 10px; }
-  canvas { border: 1px solid #ccc; margin-top: 20px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  
+  <title>OG Capper Bets - Official Pick Image Creator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin/css/styles.css" />
 </head>
 <body>
+  <header>
+    <h3>OG Capper Bets</h3>
+    <h3>Official Pick Image Creator</h3>
+    <h6 class="red-text">Official Use Only</h6>
+    <h6 id="userDisplay" style="color: gray; font-size: smaller; margin-top: 6px; display:none;"></h6>
+  </header>
 
-<h2>Select a Game</h2>
+  
 
-<select id="gameSelect">
-  <option value="">-- Select a game --</option>
-</select>
-<button id="goBtn" disabled>Go</button>
+  <footer id="versionFooter"><h6>Version 7.25</h6></footer>
 
-<canvas id="resultCanvas" width="400" height="200"></canvas>
+  <script type="module" src="admin/firebaseInit.js"></script>
+  <script type="module" src="admin/js/auth.js"></script>
 
-<script>
-  const games = {
-    "3459b340e7689285cc224182397c2edc": {
-      "awayTeam": "New York Mets",
-      "homeTeam": "Baltimore Orioles"
-    },
-    "c80fda2bfcc2067ff84d85bea8c00414": {
-      "awayTeam": "Chicago Cubs",
-      "homeTeam": "Minnesota Twins"
-    },
-    "156af101f7e69d7ad099b3032da185a2": {
-      "awayTeam": "Miami Marlins",
-      "homeTeam": "Cincinnati Reds"
-    }
-    // Add all your games here similarly...
-  };
-
-  const apiKey = '123';
-  const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-
-  const select = document.getElementById('gameSelect');
-  const goBtn = document.getElementById('goBtn');
-  const canvas = document.getElementById('resultCanvas');
-  const ctx = canvas.getContext('2d');
-
-  for (const gameId in games) {
-    const game = games[gameId];
-    const option = document.createElement('option');
-    option.value = gameId;
-    option.textContent = `${game.homeTeam} vs ${game.awayTeam}`;
-    select.appendChild(option);
-  }
-
-  select.addEventListener('change', () => {
-    goBtn.disabled = !select.value;
-  });
-
-  goBtn.addEventListener('click', async () => {
-    const gameId = select.value;
-    if (!gameId) return;
-
-    const { homeTeam, awayTeam } = games[gameId];
-
-    try {
-      const [homeBadge, awayBadge, myLogo] = await Promise.all([
-        fetchTeamBadge(homeTeam),
-        fetchTeamBadge(awayTeam),
-        loadImage('https://capper.ogcapperbets.com/test/mainLogo.jpeg')
-      ]);
-
-      drawComposite(homeBadge, awayBadge, myLogo);
-    } catch (err) {
-      alert('Error loading images: ' + err.message);
-    }
-  });
-
-  async function fetchTeamBadge(teamName) {
-    const url = `https://www.thesportsdb.com/api/v1/json/${apiKey}/searchteams.php?t=${encodeURIComponent(teamName)}`;
-    const resp = await fetch(proxyUrl + url);
-    if (!resp.ok) throw new Error('API error for team ' + teamName);
-    const data = await resp.json();
-    if (!data.teams || data.teams.length === 0) throw new Error('No team found for ' + teamName);
-
-    const teamData = data.teams[0];
-    const imageFields = ['strBadge', 'strTeamBadge', 'strLogo', 'strTeamLogo', 'strFanart1', 'strFanart2'];
-
-    for (const field of imageFields) {
-      if (teamData[field]) {
-        const cleanUrl = teamData[field].trim().replace(/^"+|"+$/g, '');
-        return loadImage(cleanUrl);
-      }
-    }
-
-    const placeholderURL = 'https://via.placeholder.com/150?text=No+Image';
-    return loadImage(placeholderURL);
-  }
-
-  function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Failed to load image: ' + src));
-      img.src = proxyUrl + src;
-    });
-  }
-
-  function drawComposite(homeImg, awayImg, myLogo) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.drawImage(homeImg, 30, 50, 150, 100);
-    ctx.drawImage(awayImg, 220, 50, 150, 100);
-    ctx.drawImage(myLogo, canvas.width / 2 - 30, 160, 60, 30);
-  }
-</script>
-
+  
 </body>
 </html>
