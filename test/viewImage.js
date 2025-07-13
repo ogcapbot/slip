@@ -166,27 +166,36 @@ function createSportSection(sportName, leaguesGrouped, modal) {
 
   sportSection.appendChild(sportTitle);
 
-  // Container for either leagues or events grid
+  // Container for leagues/events
   const contentContainer = document.createElement("div");
   sportSection.appendChild(contentContainer);
 
   // Flatten leaguesGrouped to array of league objects (with strLeagueBadge)
   const leagues = Object.entries(leaguesGrouped).map(([leagueName, events]) => {
-    // Assume all events in league have same strLeagueBadge, pick from first event
     const badge = events[0]?.strLeagueBadge || "";
     return { strLeague: leagueName, strLeagueBadge: badge };
   });
 
-  // Function to show leagues grid
   function showLeagues() {
     contentContainer.innerHTML = "";
     const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
     contentContainer.appendChild(leagueGrid);
+
+    // Show all sport sections (restore)
+    Array.from(sportSection.parentElement.children).forEach(sibling => {
+      sibling.style.display = "";
+    });
   }
 
-  // Function to show events grid for a league
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
+
+    // Hide other sport sections while drilling in
+    Array.from(sportSection.parentElement.children).forEach(sibling => {
+      if (sibling !== sportSection) {
+        sibling.style.display = "none";
+      }
+    });
 
     const backBtn = document.createElement("button");
     backBtn.textContent = "← Back to leagues";
@@ -205,7 +214,6 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     contentContainer.appendChild(eventsGrid);
   }
 
-  // Initially show leagues
   showLeagues();
 
   return sportSection;
