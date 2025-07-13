@@ -178,6 +178,7 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     contentContainer.innerHTML = "";
     const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
     contentContainer.appendChild(leagueGrid);
+    sportTitle.style.display = ""; // show sport title on leagues view
 
     if (sportSection.parentElement) {
       Array.from(sportSection.parentElement.children).forEach(sibling => {
@@ -188,6 +189,7 @@ function createSportSection(sportName, leaguesGrouped, modal) {
 
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
+    sportTitle.style.display = "none"; // hide sport title on league events view
 
     if (sportSection.parentElement) {
       Array.from(sportSection.parentElement.children).forEach(sibling => {
@@ -197,16 +199,6 @@ function createSportSection(sportName, leaguesGrouped, modal) {
       });
     }
 
-    const backBtn = document.createElement("button");
-    backBtn.textContent = "← Back to leagues";
-    Object.assign(backBtn.style, {
-      marginBottom: "12px",
-      cursor: "pointer",
-      padding: "6px 12px",
-      fontSize: "0.9rem",
-    });
-    backBtn.addEventListener("click", showLeagues);
-
     const leagueEvents = leaguesGrouped[leagueName] || [];
     const leagueBadgeUrl = leagueEvents.length ? leagueEvents[0].strLeagueBadge : "";
 
@@ -215,17 +207,30 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     leagueBadgeImg.alt = leagueName;
     leagueBadgeImg.style.width = "250px";
     leagueBadgeImg.style.display = "block";
-    leagueBadgeImg.style.margin = "0 auto 10px auto";
+    leagueBadgeImg.style.margin = "0 auto 4px auto"; // reduced margin bottom
     leagueBadgeImg.style.borderRadius = "12px";
     leagueBadgeImg.style.objectFit = "contain";
+
+    const backBtn = document.createElement("button");
+    backBtn.textContent = "← Back to leagues";
+    Object.assign(backBtn.style, {
+      marginBottom: "10px",
+      cursor: "pointer",
+      padding: "6px 12px",
+      fontSize: "0.9rem",
+      display: "block",
+      marginLeft: "auto",
+      marginRight: "auto",
+    });
+    backBtn.addEventListener("click", showLeagues);
 
     const leagueTitleText = document.createElement("h3");
     leagueTitleText.style.textAlign = "center";
     leagueTitleText.style.marginBottom = "20px";
     leagueTitleText.textContent = `${sportName} - ${leagueName}`;
 
-    contentContainer.appendChild(backBtn);
     contentContainer.appendChild(leagueBadgeImg);
+    contentContainer.appendChild(backBtn);
     contentContainer.appendChild(leagueTitleText);
 
     const eventsGrid = createImageGrid(leagueEvents, modal);
