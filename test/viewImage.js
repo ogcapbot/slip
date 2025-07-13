@@ -4,11 +4,15 @@ import { app } from "./firebaseInit.js"; // fixed import path
 
 const db = getFirestore(app);
 
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = (date.getMonth() + 1).toString().padStart(2, "0");
-  const d = date.getDate().toString().padStart(2, "0");
-  return `${y}-${m}-${d}`;
+function getEasternDateStringMMDDYYYY() {
+  const now = new Date();
+  const easternDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now); // e.g. "07/18/2025"
+  return easternDate;
 }
 
 function createModal() {
@@ -148,8 +152,8 @@ async function loadImages() {
 
   const modal = createModal();
 
-  const todayStr = formatDate(new Date());
-  console.log("[Load] Today's date (dateEastern):", todayStr);
+  const todayStr = getEasternDateStringMMDDYYYY();
+  console.log("[Load] Eastern Time today's date (MM/DD/YYYY):", todayStr);
 
   try {
     const collRef = collection(db, "gameEvents_1");
