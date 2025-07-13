@@ -1,6 +1,6 @@
 // viewImage.js
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { app } from "../firebaseInit.js"; // assuming firebaseInit exports initialized app
+import { app } from "./firebaseInit.js"; // assuming firebaseInit exports initialized app
 
 const db = getFirestore(app);
 
