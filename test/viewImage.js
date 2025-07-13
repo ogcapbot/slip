@@ -181,21 +181,24 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
     contentContainer.appendChild(leagueGrid);
 
-    // Show all sport sections (restore)
-    Array.from(sportSection.parentElement.children).forEach(sibling => {
-      sibling.style.display = "";
-    });
+    if (sportSection.parentElement) {
+      Array.from(sportSection.parentElement.children).forEach(sibling => {
+        sibling.style.display = "";
+      });
+    }
   }
 
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
 
     // Hide other sport sections while drilling in
-    Array.from(sportSection.parentElement.children).forEach(sibling => {
-      if (sibling !== sportSection) {
-        sibling.style.display = "none";
-      }
-    });
+    if (sportSection.parentElement) {
+      Array.from(sportSection.parentElement.children).forEach(sibling => {
+        if (sibling !== sportSection) {
+          sibling.style.display = "none";
+        }
+      });
+    }
 
     const backBtn = document.createElement("button");
     backBtn.textContent = "← Back to leagues";
