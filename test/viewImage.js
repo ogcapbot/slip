@@ -1,6 +1,6 @@
 // viewImage.js
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { app } from "./firebaseInit.js"; // fixed import path
+import { app } from "./firebaseInit.js";
 
 const db = getFirestore(app);
 
@@ -106,6 +106,7 @@ function createImageGrid(sportName, images, modal) {
   title.textContent = sportName;
   title.style.fontFamily = "'Oswald', sans-serif";
   title.style.marginBottom = "8px";
+  title.style.textAlign = "center"; // center the title
   section.appendChild(title);
 
   const grid = document.createElement("div");
@@ -114,18 +115,18 @@ function createImageGrid(sportName, images, modal) {
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: "6px",
     maxWidth: "400px",
+    margin: "0 auto", // center the grid horizontally
   });
 
   images.forEach(({ strThumb }) => {
     const imgBtn = document.createElement("img");
     imgBtn.src = strThumb;
     imgBtn.alt = sportName;
-    imgBtn.width = 125;
-    imgBtn.height = "auto";
     imgBtn.style.cursor = "pointer";
     imgBtn.style.borderRadius = "4px";
     imgBtn.style.objectFit = "cover";
     imgBtn.style.width = "125px";
+    imgBtn.style.height = "auto";
 
     imgBtn.addEventListener("click", () => {
       modal.show(strThumb);
@@ -145,7 +146,7 @@ async function loadImages() {
   container.id = "imagesContainer";
   Object.assign(container.style, {
     maxWidth: "400px",
-    margin: "20px auto",
+    margin: "20px auto", // centers the entire container horizontally
     padding: "0 5px",
   });
   document.body.insertBefore(container, document.querySelector("footer"));
