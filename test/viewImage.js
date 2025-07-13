@@ -207,10 +207,28 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     });
     backBtn.addEventListener("click", showLeagues);
 
-    contentContainer.appendChild(backBtn);
+    const leagueEvents = leaguesGrouped[leagueName] || [];
+    const leagueBadgeUrl = leagueEvents.length ? leagueEvents[0].strLeagueBadge : "";
 
-    const events = leaguesGrouped[leagueName] || [];
-    const eventsGrid = createImageGrid(events, modal);
+    const leagueBadgeImg = document.createElement("img");
+    leagueBadgeImg.src = leagueBadgeUrl;
+    leagueBadgeImg.alt = leagueName;
+    leagueBadgeImg.style.width = "250px";
+    leagueBadgeImg.style.display = "block";
+    leagueBadgeImg.style.margin = "0 auto 10px auto";
+    leagueBadgeImg.style.borderRadius = "12px";
+    leagueBadgeImg.style.objectFit = "contain";
+
+    const leagueTitleText = document.createElement("h3");
+    leagueTitleText.style.textAlign = "center";
+    leagueTitleText.style.marginBottom = "20px";
+    leagueTitleText.textContent = `${sportName} - ${leagueName}`;
+
+    contentContainer.appendChild(backBtn);
+    contentContainer.appendChild(leagueBadgeImg);
+    contentContainer.appendChild(leagueTitleText);
+
+    const eventsGrid = createImageGrid(leagueEvents, modal);
     contentContainer.appendChild(eventsGrid);
   }
 
