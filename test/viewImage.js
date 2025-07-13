@@ -1,4 +1,3 @@
-// viewImage.js
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { app } from "./firebaseInit.js";
 
@@ -6,17 +5,15 @@ const db = getFirestore(app);
 
 function getEasternDateStringMMDDYYYY() {
   const now = new Date();
-  const easternDate = new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(now);
-  return easternDate;
 }
 
 function createModal() {
-  console.log("[Modal] Creating modal...");
   const modalOverlay = document.createElement("div");
   Object.assign(modalOverlay.style, {
     position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -38,9 +35,11 @@ function createModal() {
   });
 
   const modalImage = document.createElement("img");
-  modalImage.style.width = "300px";
-  modalImage.style.maxWidth = "100%";
-  modalImage.style.borderRadius = "6px";
+  Object.assign(modalImage.style, {
+    width: "300px",
+    maxWidth: "100%",
+    borderRadius: "6px",
+  });
 
   const buttonsDiv = document.createElement("div");
   Object.assign(buttonsDiv.style, {
@@ -66,7 +65,6 @@ function createModal() {
   document.body.appendChild(modalOverlay);
 
   function closeModal() {
-    console.log("[Modal] Closing modal.");
     modalOverlay.style.display = "none";
     modalImage.src = "";
   }
@@ -79,7 +77,6 @@ function createModal() {
 
   return {
     show: (src) => {
-      console.log("[Modal] Showing image:", src);
       modalImage.src = src;
       modalOverlay.style.display = "flex";
     },
@@ -118,25 +115,48 @@ function createImageGrid(images, modal) {
   return grid;
 }
 
-function createLeagueSection(leagueName, images, modal) {
-  const leagueSection = document.createElement("section");
-  leagueSection.style.marginBottom = "15px";
+function createLeagueBadgeGrid(leagues, onLeagueClick) {
+  const grid = document.createElement("div");
+  Object.assign(grid.style, {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px",
+    maxWidth: "400px",
+    margin: "0 auto",
+    justifyItems: "center",
+  });
 
-  const leagueTitle = document.createElement("h5");
-  leagueTitle.textContent = leagueName;
-  leagueTitle.style.fontFamily = "'Oswald', sans-serif";
-  leagueTitle.style.textAlign = "center";
-  leagueTitle.style.marginBottom = "6px";
+  leagues.forEach(({ strLeague, strLeagueBadge }) => {
+    const imgBtn = document.createElement("img");
+    imgBtn.src = strLeagueBadge || "";
+    imgBtn.alt = strLeague;
+    imgBtn.title = strLeague;
+    Object.assign(imgBtn.style, {
+      cursor: "pointer",
+      width: "100px",
+      height: "100px",
+      objectFit: "contain",
+      borderRadius: "8px",
+      border: "1px solid #ccc",
+      backgroundColor: "#fff",
+      padding: "5px",
+    });
 
-  leagueSection.appendChild(leagueTitle);
-  leagueSection.appendChild(createImageGrid(images, modal));
+    imgBtn.addEventListener("click", () => onLeagueClick(strLeague));
+    grid.appendChild(imgBtn);
+  });
 
-  return leagueSection;
+  return grid;
 }
 
 function createSportSection(sportName, leaguesGrouped, modal) {
   const sportSection = document.createElement("section");
-  sportSection.style.marginBottom = "30px";
+  Object.assign(sportSection.style, {
+    marginBottom: "30px",
+    maxWidth: "400px",
+    marginLeft: "auto",
+    marginRight: "auto",
+  });
 
   const sportTitle = document.createElement("h4");
   sportTitle.textContent = sportName;
@@ -146,10 +166,47 @@ function createSportSection(sportName, leaguesGrouped, modal) {
 
   sportSection.appendChild(sportTitle);
 
-  for (const leagueName in leaguesGrouped) {
-    const leagueSection = createLeagueSection(leagueName, leaguesGrouped[leagueName], modal);
-    sportSection.appendChild(leagueSection);
+  // Container for either leagues or events grid
+  const contentContainer = document.createElement("div");
+  sportSection.appendChild(contentContainer);
+
+  // Flatten leaguesGrouped to array of league objects (with strLeagueBadge)
+  const leagues = Object.entries(leaguesGrouped).map(([leagueName, events]) => {
+    // Assume all events in league have same strLeagueBadge, pick from first event
+    const badge = events[0]?.strLeagueBadge || "";
+    return { strLeague: leagueName, strLeagueBadge: badge };
+  });
+
+  // Function to show leagues grid
+  function showLeagues() {
+    contentContainer.innerHTML = "";
+    const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
+    contentContainer.appendChild(leagueGrid);
   }
+
+  // Function to show events grid for a league
+  function showLeagueEvents(leagueName) {
+    contentContainer.innerHTML = "";
+
+    const backBtn = document.createElement("button");
+    backBtn.textContent = "← Back to leagues";
+    Object.assign(backBtn.style, {
+      marginBottom: "12px",
+      cursor: "pointer",
+      padding: "6px 12px",
+      fontSize: "0.9rem",
+    });
+    backBtn.addEventListener("click", showLeagues);
+
+    contentContainer.appendChild(backBtn);
+
+    const events = leaguesGrouped[leagueName] || [];
+    const eventsGrid = createImageGrid(events, modal);
+    contentContainer.appendChild(eventsGrid);
+  }
+
+  // Initially show leagues
+  showLeagues();
 
   return sportSection;
 }
@@ -188,22 +245,22 @@ async function loadImages() {
     const docs = [];
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.strSport && data.strThumb) {
+      if (data.strSport && data.strLeague && data.strLeagueBadge && data.strThumb) {
         docs.push(data);
       } else {
-        console.warn("[Load] Skipping doc missing strSport or strThumb:", doc.id);
+        console.warn("[Load] Skipping doc missing required fields:", doc.id);
       }
     });
 
-    console.log("[Load] Filtered documents with strSport and strThumb:", docs.length);
+    console.log("[Load] Filtered docs:", docs.length);
 
     docs.sort((a, b) => {
       const sportA = a.strSport.toLowerCase();
       const sportB = b.strSport.toLowerCase();
       if (sportA < sportB) return -1;
       if (sportA > sportB) return 1;
-      const leagueA = (a.strLeague || "").toLowerCase();
-      const leagueB = (b.strLeague || "").toLowerCase();
+      const leagueA = a.strLeague.toLowerCase();
+      const leagueB = b.strLeague.toLowerCase();
       if (leagueA < leagueB) return -1;
       if (leagueA > leagueB) return 1;
       const thumbA = a.strThumb.toLowerCase();
@@ -213,30 +270,23 @@ async function loadImages() {
       return 0;
     });
 
-    console.log("[Load] Sorted documents");
+    console.log("[Load] Sorted docs");
 
-    // Group by sport
+    // Group by sport then by league
     const groupedBySport = docs.reduce((acc, curr) => {
-      if (!acc[curr.strSport]) acc[curr.strSport] = [];
-      acc[curr.strSport].push(curr);
+      if (!acc[curr.strSport]) acc[curr.strSport] = {};
+      if (!acc[curr.strSport][curr.strLeague]) acc[curr.strSport][curr.strLeague] = [];
+      acc[curr.strSport][curr.strLeague].push(curr);
       return acc;
     }, {});
 
-    console.log("[Load] Grouped by sport:", Object.keys(groupedBySport));
+    console.log("[Load] Grouped by sport and league:", Object.keys(groupedBySport));
 
-    // For each sport, group by league
     for (const sport in groupedBySport) {
-      const sportDocs = groupedBySport[sport];
-      const groupedByLeague = sportDocs.reduce((acc, curr) => {
-        const leagueName = curr.strLeague || "Unknown League";
-        if (!acc[leagueName]) acc[leagueName] = [];
-        acc[leagueName].push(curr);
-        return acc;
-      }, {});
-
-      const sportSection = createSportSection(sport, groupedByLeague, modal);
+      const sportSection = createSportSection(sport, groupedBySport[sport], modal);
       container.appendChild(sportSection);
     }
+
   } catch (error) {
     console.error("[Load] Error loading images:", error);
     const errorMsg = document.createElement("p");
