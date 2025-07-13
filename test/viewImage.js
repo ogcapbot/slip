@@ -166,11 +166,9 @@ function createSportSection(sportName, leaguesGrouped, modal) {
 
   sportSection.appendChild(sportTitle);
 
-  // Container for leagues/events
   const contentContainer = document.createElement("div");
   sportSection.appendChild(contentContainer);
 
-  // Flatten leaguesGrouped to array of league objects (with strLeagueBadge)
   const leagues = Object.entries(leaguesGrouped).map(([leagueName, events]) => {
     const badge = events[0]?.strLeagueBadge || "";
     return { strLeague: leagueName, strLeagueBadge: badge };
@@ -191,7 +189,6 @@ function createSportSection(sportName, leaguesGrouped, modal) {
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
 
-    // Hide other sport sections while drilling in
     if (sportSection.parentElement) {
       Array.from(sportSection.parentElement.children).forEach(sibling => {
         if (sibling !== sportSection) {
@@ -256,10 +253,16 @@ async function loadImages() {
     const docs = [];
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.strSport && data.strLeague && data.strLeagueBadge && data.strThumb) {
+      if (
+        data.strSport &&
+        data.strLeague &&
+        data.strLeagueBadge &&
+        data.strThumb &&
+        data.strStatus !== "FT"
+      ) {
         docs.push(data);
       } else {
-        console.warn("[Load] Skipping doc missing required fields:", doc.id);
+        console.warn("[Load] Skipping doc missing required fields or finished:", doc.id);
       }
     });
 
@@ -283,7 +286,6 @@ async function loadImages() {
 
     console.log("[Load] Sorted docs");
 
-    // Group by sport then by league
     const groupedBySport = docs.reduce((acc, curr) => {
       if (!acc[curr.strSport]) acc[curr.strSport] = {};
       if (!acc[curr.strSport][curr.strLeague]) acc[curr.strSport][curr.strLeague] = [];
