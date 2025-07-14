@@ -1,398 +1,477 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { 
+  getFirestore, collection, query, where, getDocs, orderBy 
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { app } from "./firebaseInit.js";
 
-const firebaseConfig = {
-  // Your Firebase config here
-};
-
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let units = [];
-let currentDoc = null;
-
-const modalElements = {
-  container: null,
-  content: null,
-};
-
-window.onload = async () => {
-  console.log("[Load] Starting to load images...");
-  await loadUnits();
-  await loadImages();
-};
-
-async function loadUnits() {
-  try {
-    const unitsCol = collection(db, "Units");
-    const q = query(unitsCol, orderBy("Rank"));
-    const unitSnapshot = await getDocs(q);
-    units = unitSnapshot.docs.map(doc => doc.data()["Unit Fractions"]);
-    console.log("[Modal] Loaded units:", units);
-  } catch (err) {
-    console.error("[Modal] Error loading units:", err);
-  }
-}
-
-async function loadImages() {
-  try {
-    const imagesCol = collection(db, "gameEvents_1");
-    const q = query(imagesCol, orderBy("strSport"), orderBy("strLeague"));
-    const snapshot = await getDocs(q);
-    const docs = snapshot.docs
-      .map(doc => doc.data())
-      .filter(doc => doc.strStatus !== "FT" && doc.strThumb && doc.strSport && doc.strLeague);
-
-    console.log("[Load] Filtered docs:", docs.length);
-
-    const grouped = groupBySportAndLeague(docs);
-    console.log("[Load] Grouped by sport and league:", Object.keys(grouped));
-
-    showSports(grouped);
-  } catch (err) {
-    console.error("[Load] Error loading images:", err);
-  }
-}
-
-function groupBySportAndLeague(docs) {
-  const grouped = {};
-  docs.forEach(doc => {
-    if (!grouped[doc.strSport]) grouped[doc.strSport] = {};
-    if (!grouped[doc.strSport][doc.strLeague]) grouped[doc.strSport][doc.strLeague] = [];
-    grouped[doc.strSport][doc.strLeague].push(doc);
-  });
-  return grouped;
-}
-
-function showSports(groupedData) {
-  const container = document.getElementById("imagesContainer");
-  container.innerHTML = "";
-  for (const sport in groupedData) {
-    const sportSection = document.createElement("section");
-    const sportTitle = document.createElement("h4");
-    sportTitle.textContent = sport;
-    sportSection.appendChild(sportTitle);
-
-    const leaguesContainer = document.createElement("div");
-    leaguesContainer.style.display = "flex";
-    leaguesContainer.style.flexWrap = "wrap";
-    leaguesContainer.style.gap = "12px";
-    sportSection.appendChild(leaguesContainer);
-
-    for (const league in groupedData[sport]) {
-      const leagueData = groupedData[sport][league];
-      const leagueImg = leagueData[0].strLeagueBadge;
-
-      const leagueBtn = document.createElement("button");
-      leagueBtn.style.border = "none";
-      leagueBtn.style.background = "transparent";
-      leagueBtn.style.cursor = "pointer";
-      leagueBtn.style.padding = "4px";
-      leagueBtn.style.borderRadius = "8px";
-
-      const img = document.createElement("img");
-      img.src = leagueImg;
-      img.alt = league;
-      img.style.width = "80px";
-      img.style.height = "80px";
-      img.style.objectFit = "contain";
-      leagueBtn.appendChild(img);
-
-      leagueBtn.onclick = () => {
-        showLeagueEvents(sport, league, leagueData);
-      };
-
-      leaguesContainer.appendChild(leagueBtn);
-    }
-
-    container.appendChild(sportSection);
-  }
-}
-
-function showLeagueEvents(sport, league, events) {
-  const container = document.getElementById("imagesContainer");
-  container.innerHTML = "";
-
-  const backBtn = document.createElement("button");
-  backBtn.textContent = "← Back to leagues";
-  backBtn.style.marginBottom = "20px";
-  backBtn.style.padding = "6px 12px";
-  backBtn.style.cursor = "pointer";
-  backBtn.onclick = () => {
-    loadImages();
-  };
-  container.appendChild(backBtn);
-
-  const header = document.createElement("h3");
-  header.style.textAlign = "center";
-  header.style.marginBottom = "20px";
-  header.textContent = `${sport} - ${league}`;
-  container.appendChild(header);
-
-  const eventsGrid = document.createElement("div");
-  eventsGrid.style.display = "grid";
-  eventsGrid.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
-  eventsGrid.style.gap = "12px";
-  container.appendChild(eventsGrid);
-
-  events.forEach(event => {
-    const eventBtn = document.createElement("button");
-    eventBtn.style.border = "none";
-    eventBtn.style.background = "transparent";
-    eventBtn.style.padding = "0";
-    eventBtn.style.cursor = "pointer";
-    eventBtn.style.borderRadius = "8px";
-    eventBtn.style.overflow = "hidden";
-
-    const img = document.createElement("img");
-    img.src = event.strThumb;
-    img.alt = `${event.strAwayTeam} vs ${event.strHomeTeam}`;
-    img.style.width = "100%";
-    img.style.height = "auto";
-    img.style.display = "block";
-    img.style.objectFit = "cover";
-    eventBtn.appendChild(img);
-
-    eventBtn.onclick = () => openModal(event);
-    eventsGrid.appendChild(eventBtn);
-  });
+function getEasternDateStringMMDDYYYY() {
+  const now = new Date();
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
 }
 
 function createModal() {
-  if (!modalElements.container) {
-    const container = document.createElement("div");
-    container.style.position = "fixed";
-    container.style.top = "0";
-    container.style.left = "0";
-    container.style.width = "100vw";
-    container.style.height = "100vh";
-    container.style.backgroundColor = "rgba(0,0,0,0.6)";
-    container.style.display = "none";
-    container.style.justifyContent = "center";
-    container.style.alignItems = "center";
-    container.style.zIndex = "1000";
-
-    const content = document.createElement("div");
-    content.style.background = "#fff";
-    content.style.borderRadius = "12px";
-    content.style.padding = "16px";
-    content.style.width = "320px";
-    content.style.maxHeight = "90vh";
-    content.style.overflowY = "auto";
-    content.style.boxSizing = "border-box";
-    content.style.textAlign = "center";
-    container.appendChild(content);
-
-    document.body.appendChild(container);
-
-    modalElements.container = container;
-    modalElements.content = content;
-  }
-  return modalElements;
-}
-
-function closeModal() {
-  if (modalElements.container) {
-    modalElements.container.style.display = "none";
-    modalElements.content.innerHTML = "";
-  }
-}
-
-function openModal(doc) {
-  currentDoc = doc;
-  const modal = createModal();
-  const { container, content } = modal;
-
-  content.innerHTML = "";
-
-  // Image
-  const img = document.createElement("img");
-  img.src = doc.strThumb;
-  img.alt = `${doc.strAwayTeam} vs ${doc.strHomeTeam}`;
-  img.style.width = "100%";
-  img.style.borderRadius = "8px";
-  img.style.objectFit = "cover";
-  content.appendChild(img);
-
-  // Teams buttons container (flipped order)
-  const teamsContainer = document.createElement("div");
-  teamsContainer.style.display = "flex";
-  teamsContainer.style.justifyContent = "space-between";
-  teamsContainer.style.marginTop = "12px";
-  teamsContainer.style.marginBottom = "12px";
-  content.appendChild(teamsContainer);
-
-  const homeBtn = document.createElement("button");
-  homeBtn.textContent = doc.strHomeTeam;
-  homeBtn.style.flex = "1";
-  homeBtn.style.marginRight = "6px";
-  homeBtn.style.padding = "6px 0";
-  homeBtn.style.fontSize = "0.9rem";
-  homeBtn.style.cursor = "pointer";
-  homeBtn.style.whiteSpace = "nowrap";
-
-  const awayBtn = document.createElement("button");
-  awayBtn.textContent = doc.strAwayTeam;
-  awayBtn.style.flex = "1";
-  awayBtn.style.marginLeft = "6px";
-  awayBtn.style.padding = "6px 0";
-  awayBtn.style.fontSize = "0.9rem";
-  awayBtn.style.cursor = "pointer";
-  awayBtn.style.whiteSpace = "nowrap";
-
-  // Flip buttons visually: append awayBtn first to left, then homeBtn to right
-  teamsContainer.appendChild(awayBtn);
-  teamsContainer.appendChild(homeBtn);
-
-  // Selected team display (hidden initially)
-  const selectedTeamDisplay = document.createElement("div");
-  selectedTeamDisplay.style.margin = "10px 0 0";
-  selectedTeamDisplay.style.fontWeight = "bold";
-  selectedTeamDisplay.style.fontSize = "1.2rem";
-  selectedTeamDisplay.style.display = "none";
-  content.appendChild(selectedTeamDisplay);
-
-  // Units dropdown container (hidden initially)
-  const unitsContainer = document.createElement("div");
-  unitsContainer.style.marginTop = "10px";
-  unitsContainer.style.display = "none";
-  content.appendChild(unitsContainer);
-
-  const unitsSelect = document.createElement("select");
-  unitsSelect.style.width = "100%";
-  unitsSelect.style.fontSize = "1rem";
-  unitsSelect.style.padding = "6px";
-  unitsSelect.style.borderRadius = "6px";
-  unitsSelect.style.border = "1px solid #ccc";
-
-  const defaultOption = document.createElement("option");
-  defaultOption.textContent = "Select Unit";
-  defaultOption.value = "";
-  defaultOption.disabled = true;
-  defaultOption.selected = true;
-  unitsSelect.appendChild(defaultOption);
-
-  units.forEach(unit => {
-    const option = document.createElement("option");
-    option.textContent = unit;
-    option.value = unit;
-    unitsSelect.appendChild(option);
+  const modalOverlay = document.createElement("div");
+  Object.assign(modalOverlay.style, {
+    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "none",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    flexDirection: "column",
+    overflowY: "auto",
   });
 
-  unitsContainer.appendChild(unitsSelect);
+  const modalContent = document.createElement("div");
+  Object.assign(modalContent.style, {
+    backgroundColor: "white",
+    borderRadius: "8px",
+    padding: "15px",
+    textAlign: "center",
+    maxWidth: "90vw",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  });
 
-  // Selected unit display (hidden initially)
-  const selectedUnitDisplay = document.createElement("div");
-  selectedUnitDisplay.style.margin = "10px 0 0";
-  selectedUnitDisplay.style.fontWeight = "bold";
-  selectedUnitDisplay.style.fontSize = "1.2rem";
-  selectedUnitDisplay.style.display = "none";
-  content.appendChild(selectedUnitDisplay);
+  const modalImage = document.createElement("img");
+  Object.assign(modalImage.style, {
+    width: "300px",
+    maxWidth: "100%",
+    borderRadius: "6px",
+  });
 
-  // Copy to Clipboard button (hidden initially)
-  const copyBtn = document.createElement("button");
-  copyBtn.textContent = "Copy to Clipboard";
-  copyBtn.style.padding = "8px 18px";
-  copyBtn.style.fontSize = "1rem";
-  copyBtn.style.cursor = "pointer";
-  copyBtn.style.margin = "10px auto 0";
-  copyBtn.style.display = "none";
-  copyBtn.style.width = "100%";
-  content.appendChild(copyBtn);
+  const modalCanvas = document.createElement("canvas");
+  modalCanvas.style.display = "none";
+  modalCanvas.style.borderRadius = "6px";
+  modalCanvas.style.width = "300px";
+  modalCanvas.style.maxWidth = "100%";
 
-  // Buttons container (OK, Cancel)
-  const btnContainer = document.createElement("div");
-  btnContainer.style.marginTop = "15px";
-  btnContainer.style.display = "flex";
-  btnContainer.style.justifyContent = "space-around";
-  content.appendChild(btnContainer);
+  const unitSelect = document.createElement("select");
+  unitSelect.style.marginTop = "15px";
+  unitSelect.style.padding = "8px";
+  unitSelect.style.fontSize = "1rem";
+  unitSelect.style.width = "150px";
 
-  const okBtn = document.createElement("button");
-  okBtn.textContent = "OK";
-  okBtn.style.padding = "8px 18px";
-  okBtn.style.fontSize = "1rem";
-  okBtn.style.cursor = "pointer";
+  const copyButton = document.createElement("button");
+  copyButton.textContent = "Copy to Clipboard";
+  Object.assign(copyButton.style, {
+    marginTop: "12px",
+    padding: "8px 16px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    display: "none",
+  });
 
-  const cancelBtn = document.createElement("button");
-  cancelBtn.textContent = "Cancel";
-  cancelBtn.style.padding = "8px 18px";
-  cancelBtn.style.fontSize = "1rem";
-  cancelBtn.style.cursor = "pointer";
+  const buttonsDiv = document.createElement("div");
+  Object.assign(buttonsDiv.style, {
+    marginTop: "15px",
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+  });
 
-  btnContainer.appendChild(okBtn);
-  btnContainer.appendChild(cancelBtn);
+  const okButton = document.createElement("button");
+  okButton.textContent = "OK";
+  Object.assign(okButton.style, { padding: "8px 16px", fontSize: "1rem", cursor: "pointer" });
 
-  // Initial visibility setup
-  teamsContainer.style.display = "flex";
-  unitsContainer.style.display = "none";
-  selectedTeamDisplay.style.display = "none";
-  selectedUnitDisplay.style.display = "none";
-  copyBtn.style.display = "none";
+  const cancelButton = document.createElement("button");
+  cancelButton.textContent = "Cancel";
+  Object.assign(cancelButton.style, { padding: "8px 16px", fontSize: "1rem", cursor: "pointer" });
 
-  // Team buttons click handlers
-  homeBtn.onclick = () => {
-    selectedTeamDisplay.textContent = doc.strHomeTeam;
-    selectedTeamDisplay.style.display = "block";
-    teamsContainer.style.display = "none";
-    unitsContainer.style.display = "block";
-  };
-  awayBtn.onclick = () => {
-    selectedTeamDisplay.textContent = doc.strAwayTeam;
-    selectedTeamDisplay.style.display = "block";
-    teamsContainer.style.display = "none";
-    unitsContainer.style.display = "block";
-  };
+  buttonsDiv.appendChild(okButton);
+  buttonsDiv.appendChild(cancelButton);
 
-  // Units dropdown change handler
-  unitsSelect.onchange = () => {
-    selectedUnitDisplay.textContent = unitsSelect.value;
-    selectedUnitDisplay.style.display = "block";
-    unitsContainer.style.display = "none";
-    copyBtn.style.display = "block";
-  };
+  modalContent.appendChild(modalImage);
+  modalContent.appendChild(modalCanvas);
+  modalContent.appendChild(unitSelect);
+  modalContent.appendChild(copyButton);
+  modalContent.appendChild(buttonsDiv);
+  modalOverlay.appendChild(modalContent);
+  document.body.appendChild(modalOverlay);
 
-  // Copy to Clipboard button click handler
-  copyBtn.onclick = async () => {
+  let originalImage = null;
+  let selectedUnit = null;
+  let unitsList = [];
+
+  async function loadUnits() {
+    if (unitsList.length) return unitsList;
+    const unitsCol = collection(db, "Units");
+    const q = query(unitsCol, orderBy("Rank"));
+    const snapshot = await getDocs(q);
+    unitsList = snapshot.docs
+      .map(doc => doc.data())
+      .filter(u => u["Unit Fractions"])
+      .map(u => u["Unit Fractions"]);
+    console.log("[Modal] Loaded units:", unitsList);
+    return unitsList;
+  }
+
+  function drawCanvasWithUnit(unitText) {
+    const img = originalImage;
+    const canvas = modalCanvas;
+    const ctx = canvas.getContext("2d");
+
+    const scale = 300 / img.naturalWidth;
+    canvas.width = img.naturalWidth * scale;
+    canvas.height = img.naturalHeight * scale + 40;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height - 40);
+
+    ctx.fillStyle = "white";
+    const padding = 8;
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+    ctx.fillStyle = "black";
+    ctx.font = "bold 20px Arial";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText(unitText, canvas.width / 2, canvas.height - 20);
+  }
+
+  unitSelect.addEventListener("change", () => {
+    selectedUnit = unitSelect.value;
+    if (!selectedUnit) return;
+
+    unitSelect.style.display = "none";
+    modalImage.style.display = "none";
+    modalCanvas.style.display = "block";
+    copyButton.style.display = "inline-block";
+
+    drawCanvasWithUnit(selectedUnit);
+  });
+
+  copyButton.addEventListener("click", async () => {
     try {
-      const dataUrl = await htmlToImage(content);
-      const blob = await (await fetch(dataUrl)).blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          [blob.type]: blob,
-        }),
-      ]);
-      alert("Image copied to clipboard!");
+      modalCanvas.toBlob(async blob => {
+        if (!blob) throw new Error("Canvas is empty");
+        const item = new ClipboardItem({ "image/png": blob });
+        await navigator.clipboard.write([item]);
+        alert("Image copied to clipboard!");
+      });
     } catch (err) {
       alert("Failed to copy image: " + err.message);
     }
+  });
+
+  function closeModal() {
+    modalOverlay.style.display = "none";
+    modalImage.src = "";
+    modalImage.style.display = "block";
+    modalCanvas.style.display = "none";
+    unitSelect.style.display = "none";
+    copyButton.style.display = "none";
+    unitSelect.innerHTML = "";
+    originalImage = null;
+    selectedUnit = null;
+  }
+
+  okButton.addEventListener("click", closeModal);
+  cancelButton.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", e => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  async function show(src) {
+    modalOverlay.style.display = "flex";
+
+    modalImage.style.display = "block";
+    modalCanvas.style.display = "none";
+    unitSelect.style.display = "none";
+    copyButton.style.display = "none";
+    unitSelect.innerHTML = "";
+
+    modalImage.crossOrigin = "anonymous";  // <--- CORS fix
+    modalImage.src = src;
+
+    await new Promise((res, rej) => {
+      modalImage.onload = () => res();
+      modalImage.onerror = () => rej(new Error("Image failed to load"));
+    });
+
+    originalImage = modalImage;
+
+    const units = await loadUnits();
+    if (units.length > 0) {
+      const defaultOption = document.createElement("option");
+      defaultOption.textContent = "Select Units";
+      defaultOption.value = "";
+      unitSelect.appendChild(defaultOption);
+
+      units.forEach(unit => {
+        const option = document.createElement("option");
+        option.value = unit;
+        option.textContent = unit;
+        unitSelect.appendChild(option);
+      });
+
+      unitSelect.style.display = "inline-block";
+    }
+  }
+
+  return {
+    show,
   };
-
-  okBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-
-  container.style.display = "flex";
 }
 
-// Utility to load html-to-image module dynamically from CDN (fixed version)
-async function htmlToImage(element) {
-  const module = await import(
-    "https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/lib/html-to-image.min.js"
-  );
-  return module.toPng(element, { cacheBust: true });
+function createImageGrid(images, modal) {
+  const grid = document.createElement("div");
+  Object.assign(grid.style, {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "6px",
+    maxWidth: "400px",
+    margin: "0 auto",
+  });
+
+  images.forEach(({ strThumb }) => {
+    const imgBtn = document.createElement("img");
+    imgBtn.src = strThumb;
+    imgBtn.alt = "";
+    Object.assign(imgBtn.style, {
+      cursor: "pointer",
+      borderRadius: "4px",
+      objectFit: "cover",
+      width: "125px",
+      height: "auto",
+    });
+
+    imgBtn.addEventListener("click", () => {
+      modal.show(strThumb);
+    });
+
+    grid.appendChild(imgBtn);
+  });
+
+  return grid;
 }
 
-function closeModal() {
-  if (modalElements.container) {
-    modalElements.container.style.display = "none";
-    modalElements.content.innerHTML = "";
+function createLeagueBadgeGrid(leagues, onLeagueClick) {
+  const grid = document.createElement("div");
+  Object.assign(grid.style, {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "10px",
+    maxWidth: "400px",
+    margin: "0 auto",
+    justifyItems: "center",
+  });
+
+  leagues.forEach(({ strLeague, strLeagueBadge }) => {
+    const imgBtn = document.createElement("img");
+    imgBtn.src = strLeagueBadge || "";
+    imgBtn.alt = strLeague;
+    imgBtn.title = strLeague;
+    Object.assign(imgBtn.style, {
+      cursor: "pointer",
+      width: "100px",
+      height: "100px",
+      objectFit: "contain",
+      borderRadius: "8px",
+      border: "1px solid #ccc",
+      backgroundColor: "#fff",
+      padding: "5px",
+    });
+
+    imgBtn.addEventListener("click", () => onLeagueClick(strLeague));
+    grid.appendChild(imgBtn);
+  });
+
+  return grid;
+}
+
+function createSportSection(sportName, leaguesGrouped, modal) {
+  const sportSection = document.createElement("section");
+  Object.assign(sportSection.style, {
+    marginBottom: "30px",
+    maxWidth: "400px",
+    marginLeft: "auto",
+    marginRight: "auto",
+  });
+
+  const sportTitle = document.createElement("h4");
+  sportTitle.textContent = sportName;
+  sportTitle.style.fontFamily = "'Oswald', sans-serif";
+  sportTitle.style.marginBottom = "10px";
+  sportTitle.style.textAlign = "center";
+
+  sportSection.appendChild(sportTitle);
+
+  const contentContainer = document.createElement("div");
+  sportSection.appendChild(contentContainer);
+
+  const leagues = Object.entries(leaguesGrouped).map(([leagueName, events]) => {
+    const badge = events[0]?.strLeagueBadge || "";
+    return { strLeague: leagueName, strLeagueBadge: badge };
+  });
+
+  function showLeagues() {
+    contentContainer.innerHTML = "";
+    const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
+    contentContainer.appendChild(leagueGrid);
+    sportTitle.style.display = "";
+
+    if (sportSection.parentElement) {
+      Array.from(sportSection.parentElement.children).forEach(sibling => {
+        sibling.style.display = "";
+      });
+    }
+  }
+
+  function showLeagueEvents(leagueName) {
+    contentContainer.innerHTML = "";
+    sportTitle.style.display = "none";
+
+    if (sportSection.parentElement) {
+      Array.from(sportSection.parentElement.children).forEach(sibling => {
+        if (sibling !== sportSection) {
+          sibling.style.display = "none";
+        }
+      });
+    }
+
+    const leagueEvents = leaguesGrouped[leagueName] || [];
+    const leagueBadgeUrl = leagueEvents.length ? leagueEvents[0].strLeagueBadge : "";
+
+    const leagueBadgeImg = document.createElement("img");
+    leagueBadgeImg.src = leagueBadgeUrl;
+    leagueBadgeImg.alt = leagueName;
+    leagueBadgeImg.style.width = "250px";
+    leagueBadgeImg.style.display = "block";
+    leagueBadgeImg.style.margin = "0 auto 4px auto";
+    leagueBadgeImg.style.borderRadius = "12px";
+    leagueBadgeImg.style.objectFit = "contain";
+
+    const backBtn = document.createElement("button");
+    backBtn.textContent = "← Back to leagues";
+    Object.assign(backBtn.style, {
+      marginBottom: "10px",
+      cursor: "pointer",
+      padding: "6px 12px",
+      fontSize: "0.9rem",
+      display: "block",
+      marginLeft: "auto",
+      marginRight: "auto",
+    });
+    backBtn.addEventListener("click", showLeagues);
+
+    const leagueTitleText = document.createElement("h3");
+    leagueTitleText.style.textAlign = "center";
+    leagueTitleText.style.marginBottom = "20px";
+    leagueTitleText.textContent = `${sportName} - ${leagueName}`;
+
+    contentContainer.appendChild(leagueBadgeImg);
+    contentContainer.appendChild(backBtn);
+    contentContainer.appendChild(leagueTitleText);
+
+    const eventsGrid = createImageGrid(leagueEvents, modal);
+    contentContainer.appendChild(eventsGrid);
+  }
+
+  showLeagues();
+
+  return sportSection;
+}
+
+async function loadImages() {
+  console.log("[Load] Starting to load images...");
+
+  const container = document.createElement("div");
+  Object.assign(container.style, {
+    maxWidth: "400px",
+    margin: "20px auto",
+    padding: "0 5px",
+  });
+  document.body.insertBefore(container, document.querySelector("footer"));
+
+  const modal = createModal();
+
+  const todayStr = getEasternDateStringMMDDYYYY();
+  console.log("[Load] Eastern Time today's date (MM/DD/YYYY):", todayStr);
+
+  try {
+    const collRef = collection(db, "gameEvents_1");
+    const q = query(collRef, where("dateEastern", "==", todayStr));
+    const querySnapshot = await getDocs(q);
+
+    console.log("[Load] Documents found:", querySnapshot.size);
+
+    if (querySnapshot.empty) {
+      console.warn("[Load] No documents found for today.");
+      const noDataMsg = document.createElement("p");
+      noDataMsg.textContent = "No games found for today.";
+      container.appendChild(noDataMsg);
+      return;
+    }
+
+    const docs = [];
+    querySnapshot.forEach(doc => {
+      const data = doc.data();
+      if (
+        data.strSport &&
+        data.strLeague &&
+        data.strLeagueBadge &&
+        data.strThumb &&
+        data.strStatus !== "FT"
+      ) {
+        docs.push(data);
+      } else {
+        console.warn("[Load] Skipping doc missing required fields or finished:", doc.id);
+      }
+    });
+
+    console.log("[Load] Filtered docs:", docs.length);
+
+    docs.sort((a, b) => {
+      const sportA = a.strSport.toLowerCase();
+      const sportB = b.strSport.toLowerCase();
+      if (sportA < sportB) return -1;
+      if (sportA > sportB) return 1;
+      const leagueA = a.strLeague.toLowerCase();
+      const leagueB = b.strLeague.toLowerCase();
+      if (leagueA < leagueB) return -1;
+      if (leagueA > leagueB) return 1;
+      const thumbA = a.strThumb.toLowerCase();
+      const thumbB = b.strThumb.toLowerCase();
+      if (thumbA < thumbB) return -1;
+      if (thumbA > thumbB) return 1;
+      return 0;
+    });
+
+    console.log("[Load] Sorted docs");
+
+    const groupedBySport = docs.reduce((acc, curr) => {
+      if (!acc[curr.strSport]) acc[curr.strSport] = {};
+      if (!acc[curr.strSport][curr.strLeague]) acc[curr.strSport][curr.strLeague] = [];
+      acc[curr.strSport][curr.strLeague].push(curr);
+      return acc;
+    }, {});
+
+    console.log("[Load] Grouped by sport and league:", Object.keys(groupedBySport));
+
+    for (const sport in groupedBySport) {
+      const sportSection = createSportSection(sport, groupedBySport[sport], modal);
+      container.appendChild(sportSection);
+    }
+
+  } catch (error) {
+    console.error("[Load] Error loading images:", error);
+    const errorMsg = document.createElement("p");
+    errorMsg.style.color = "red";
+    errorMsg.textContent = `Error loading images: ${error.message}`;
+    container.appendChild(errorMsg);
   }
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+  loadImages();
+});
