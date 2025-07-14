@@ -55,11 +55,45 @@ function createModal() {
   modalCanvas.style.width = "300px";
   modalCanvas.style.maxWidth = "100%";
 
+  // Container for team buttons
+  const teamButtonsContainer = document.createElement("div");
+  Object.assign(teamButtonsContainer.style, {
+    marginTop: "12px",
+    width: "100%",
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+  });
+
+  // Team buttons
+  const awayTeamButton = document.createElement("button");
+  const homeTeamButton = document.createElement("button");
+  Object.assign(awayTeamButton.style, homeTeamButton.style, {
+    flex: "1",
+    padding: "8px",
+    cursor: "pointer",
+  });
+
+  teamButtonsContainer.appendChild(awayTeamButton);
+  teamButtonsContainer.appendChild(homeTeamButton);
+
+  // Chosen team display
+  const chosenTeamDisplay = document.createElement("div");
+  Object.assign(chosenTeamDisplay.style, {
+    marginTop: "10px",
+    fontWeight: "bold",
+    fontSize: "1.2rem",
+    whiteSpace: "pre-line",
+    display: "none",
+  });
+
+  // Units dropdown
   const unitSelect = document.createElement("select");
   unitSelect.style.marginTop = "15px";
   unitSelect.style.padding = "8px";
   unitSelect.style.fontSize = "1rem";
   unitSelect.style.width = "150px";
+  unitSelect.style.display = "none";
 
   const copyButton = document.createElement("button");
   copyButton.textContent = "Copy to Clipboard";
@@ -92,6 +126,8 @@ function createModal() {
 
   modalContent.appendChild(modalImage);
   modalContent.appendChild(modalCanvas);
+  modalContent.appendChild(teamButtonsContainer);
+  modalContent.appendChild(chosenTeamDisplay);
   modalContent.appendChild(unitSelect);
   modalContent.appendChild(copyButton);
   modalContent.appendChild(buttonsDiv);
@@ -101,6 +137,7 @@ function createModal() {
   let originalImage = null;
   let selectedUnit = null;
   let unitsList = [];
+  let chosenTeam = null;
 
   async function loadUnits() {
     if (unitsList.length) return unitsList;
@@ -128,7 +165,6 @@ function createModal() {
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height - 40);
 
     ctx.fillStyle = "white";
-    const padding = 8;
     ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
 
     ctx.fillStyle = "black";
@@ -137,6 +173,51 @@ function createModal() {
     ctx.textAlign = "center";
     ctx.fillText(unitText, canvas.width / 2, canvas.height - 20);
   }
+
+  function resetModalState() {
+    chosenTeam = null;
+    selectedUnit = null;
+
+    teamButtonsContainer.style.display = "flex";
+    unitSelect.style.display = "none";
+    copyButton.style.display = "none";
+    chosenTeamDisplay.style.display = "none";
+
+    chosenTeamDisplay.textContent = "";
+    unitSelect.innerHTML = "";
+    modalImage.style.display = "block";
+    modalCanvas.style.display = "none";
+  }
+
+  teamButtonsContainer.addEventListener("click", async (event) => {
+    if (event.target === awayTeamButton || event.target === homeTeamButton) {
+      chosenTeam = event.target.textContent;
+
+      // Hide team buttons, show chosen team text
+      teamButtonsContainer.style.display = "none";
+      chosenTeamDisplay.textContent = chosenTeam;
+      chosenTeamDisplay.style.display = "block";
+
+      // Show units dropdown now
+      const units = await loadUnits();
+      if (units.length > 0) {
+        unitSelect.innerHTML = "";
+        const defaultOption = document.createElement("option");
+        defaultOption.textContent = "Select Units";
+        defaultOption.value = "";
+        unitSelect.appendChild(defaultOption);
+
+        units.forEach(unit => {
+          const option = document.createElement("option");
+          option.value = unit;
+          option.textContent = unit;
+          unitSelect.appendChild(option);
+        });
+
+        unitSelect.style.display = "inline-block";
+      }
+    }
+  });
 
   unitSelect.addEventListener("change", () => {
     selectedUnit = unitSelect.value;
@@ -147,7 +228,7 @@ function createModal() {
     modalCanvas.style.display = "block";
     copyButton.style.display = "inline-block";
 
-    drawCanvasWithUnit(selectedUnit);
+    drawCanvasWithUnit(`${chosenTeam}\n${selectedUnit}`);
   });
 
   copyButton.addEventListener("click", async () => {
@@ -166,13 +247,7 @@ function createModal() {
   function closeModal() {
     modalOverlay.style.display = "none";
     modalImage.src = "";
-    modalImage.style.display = "block";
-    modalCanvas.style.display = "none";
-    unitSelect.style.display = "none";
-    copyButton.style.display = "none";
-    unitSelect.innerHTML = "";
-    originalImage = null;
-    selectedUnit = null;
+    resetModalState();
   }
 
   okButton.addEventListener("click", closeModal);
@@ -181,17 +256,15 @@ function createModal() {
     if (e.target === modalOverlay) closeModal();
   });
 
-  async function show(src) {
+  async function show(src, awayTeam, homeTeam) {
     modalOverlay.style.display = "flex";
+    resetModalState();
 
-    modalImage.style.display = "block";
-    modalCanvas.style.display = "none";
-    unitSelect.style.display = "none";
-    copyButton.style.display = "none";
-    unitSelect.innerHTML = "";
-
-    modalImage.crossOrigin = "anonymous";  // <--- CORS fix
+    modalImage.crossOrigin = "anonymous";
     modalImage.src = src;
+
+    awayTeamButton.textContent = awayTeam;
+    homeTeamButton.textContent = homeTeam;
 
     await new Promise((res, rej) => {
       modalImage.onload = () => res();
@@ -199,23 +272,6 @@ function createModal() {
     });
 
     originalImage = modalImage;
-
-    const units = await loadUnits();
-    if (units.length > 0) {
-      const defaultOption = document.createElement("option");
-      defaultOption.textContent = "Select Units";
-      defaultOption.value = "";
-      unitSelect.appendChild(defaultOption);
-
-      units.forEach(unit => {
-        const option = document.createElement("option");
-        option.value = unit;
-        option.textContent = unit;
-        unitSelect.appendChild(option);
-      });
-
-      unitSelect.style.display = "inline-block";
-    }
   }
 
   return {
@@ -233,9 +289,9 @@ function createImageGrid(images, modal) {
     margin: "0 auto",
   });
 
-  images.forEach(({ strThumb }) => {
+  images.forEach(item => {
     const imgBtn = document.createElement("img");
-    imgBtn.src = strThumb;
+    imgBtn.src = item.strThumb;
     imgBtn.alt = "";
     Object.assign(imgBtn.style, {
       cursor: "pointer",
@@ -246,7 +302,7 @@ function createImageGrid(images, modal) {
     });
 
     imgBtn.addEventListener("click", () => {
-      modal.show(strThumb);
+      modal.show(item.strThumb, item.strAwayTeam, item.strHomeTeam);
     });
 
     grid.appendChild(imgBtn);
