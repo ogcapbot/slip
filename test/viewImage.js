@@ -114,7 +114,7 @@ function createModal() {
   let unitsList = [];
 
   // Your Discord webhook URL:
-  const webhookURL = 'https://discord.com/api/webhooks/1394430918382325840/qoj5OVC25k3hRQi48nHaao_I9cY3a3ItUD28clobMWGphj2pRO8GaetagispnrOkYG5j';
+  const webhookURL = 'https://discord.com/api/webhooks/1394432107274571776/Qn9t9iCKJBiWAhXFJ1bMMUHjzshYRgs4vL8s6CvwszvTnw_IfnF8WussmpN0GctSIrmj';
 
   async function loadUnits() {
     if (unitsList.length) return unitsList;
