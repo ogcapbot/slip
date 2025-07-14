@@ -1,13 +1,21 @@
 import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
   getFirestore,
   collection,
   getDocs,
   query,
+  where,
   orderBy
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Assumes firebaseInit.js already initializes Firebase app
-const db = getFirestore();
+const firebaseConfig = {
+  // Your Firebase config here
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let units = [];
 let currentDoc = null;
@@ -380,4 +388,11 @@ async function htmlToImage(element) {
     "https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/lib/html-to-image.min.js"
   );
   return module.toPng(element, { cacheBust: true });
+}
+
+function closeModal() {
+  if (modalElements.container) {
+    modalElements.container.style.display = "none";
+    modalElements.content.innerHTML = "";
+  }
 }
