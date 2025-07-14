@@ -1,6 +1,8 @@
 import { db } from "./firebaseInit.js";
 import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+// Now use db for collection queries:
+const unitsCol = collection(db, "Units");
 
 let units = [];
 let currentDoc = null;
