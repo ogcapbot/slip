@@ -111,6 +111,7 @@ function createModal() {
       .map(doc => doc.data())
       .filter(u => u["Unit Fractions"])
       .map(u => u["Unit Fractions"]);
+    console.log("[Modal] Loaded units:", unitsList);
     return unitsList;
   }
 
@@ -189,6 +190,7 @@ function createModal() {
     copyButton.style.display = "none";
     unitSelect.innerHTML = "";
 
+    modalImage.crossOrigin = "anonymous";  // <--- CORS fix
     modalImage.src = src;
 
     await new Promise((res, rej) => {
