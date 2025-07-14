@@ -379,7 +379,7 @@ function openModal(doc) {
 
   copyBtn.onclick = async () => {
     try {
-      const dataUrl = await htmlToImage.toPng(content, { cacheBust: true });
+      const dataUrl = await window.htmlToImage.toPng(content, { cacheBust: true });
       const blob = await (await fetch(dataUrl)).blob();
       await navigator.clipboard.write([
         new ClipboardItem({
