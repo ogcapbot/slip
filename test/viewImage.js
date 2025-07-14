@@ -1,4 +1,4 @@
-import * as htmlToImage from "https://cdn.skypack.dev/html-to-image@1.11.23";
+import * as htmlToImage from "https://cdn.skypack.dev/html-to-image@1.11.19";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getFirestore,
