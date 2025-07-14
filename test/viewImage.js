@@ -200,6 +200,13 @@ function createModal() {
   return modalElements;
 }
 
+function closeModal() {
+  if (modalElements.container) {
+    modalElements.container.style.display = "none";
+    modalElements.content.innerHTML = "";
+  }
+}
+
 function openModal(doc) {
   currentDoc = doc;
   const modal = createModal();
