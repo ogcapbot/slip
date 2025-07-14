@@ -46,7 +46,7 @@ function createModal() {
 
   const modalImage = document.createElement("img");
   Object.assign(modalImage.style, {
-    width: "100%",
+    width: "400",
     maxWidth: "100%",
     borderRadius: "6px",
   });
@@ -136,7 +136,7 @@ function createModal() {
     const canvas = modalCanvas;
     const ctx = canvas.getContext("2d");
 
-    const scale = 300 / img.naturalWidth;
+    const scale = 500 / img.naturalWidth;
     canvas.width = img.naturalWidth * scale;
     canvas.height = img.naturalHeight * scale + 40;
 
