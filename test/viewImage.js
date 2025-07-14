@@ -1,8 +1,21 @@
-import { db } from "./firebaseInit.js";
-import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Now use db for collection queries:
-const unitsCol = collection(db, "Units");
+const firebaseConfig = {
+  // Your Firebase config here
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 let units = [];
 let currentDoc = null;
@@ -13,27 +26,41 @@ const modalElements = {
 };
 
 window.onload = async () => {
+  console.log("[Load] Starting to load images...");
   await loadUnits();
   await loadImages();
 };
 
 async function loadUnits() {
-  const unitsCol = collection(db, "Units");
-  const q = query(unitsCol, orderBy("Rank"));
-  const snapshot = await getDocs(q);
-  units = snapshot.docs.map(doc => doc.data()["Unit Fractions"]);
+  try {
+    const unitsCol = collection(db, "Units");
+    const q = query(unitsCol, orderBy("Rank"));
+    const unitSnapshot = await getDocs(q);
+    units = unitSnapshot.docs.map(doc => doc.data()["Unit Fractions"]);
+    console.log("[Modal] Loaded units:", units);
+  } catch (err) {
+    console.error("[Modal] Error loading units:", err);
+  }
 }
 
 async function loadImages() {
-  const imagesCol = collection(db, "gameEvents_1");
-  const q = query(imagesCol, orderBy("strSport"), orderBy("strLeague"));
-  const snapshot = await getDocs(q);
-  const docs = snapshot.docs
-    .map(doc => doc.data())
-    .filter(doc => doc.strStatus !== "FT" && doc.strThumb && doc.strSport && doc.strLeague);
+  try {
+    const imagesCol = collection(db, "gameEvents_1");
+    const q = query(imagesCol, orderBy("strSport"), orderBy("strLeague"));
+    const snapshot = await getDocs(q);
+    const docs = snapshot.docs
+      .map(doc => doc.data())
+      .filter(doc => doc.strStatus !== "FT" && doc.strThumb && doc.strSport && doc.strLeague);
 
-  const grouped = groupBySportAndLeague(docs);
-  showSports(grouped);
+    console.log("[Load] Filtered docs:", docs.length);
+
+    const grouped = groupBySportAndLeague(docs);
+    console.log("[Load] Grouped by sport and league:", Object.keys(grouped));
+
+    showSports(grouped);
+  } catch (err) {
+    console.error("[Load] Error loading images:", err);
+  }
 }
 
 function groupBySportAndLeague(docs) {
@@ -100,7 +127,9 @@ function showLeagueEvents(sport, league, events) {
   backBtn.style.marginBottom = "20px";
   backBtn.style.padding = "6px 12px";
   backBtn.style.cursor = "pointer";
-  backBtn.onclick = () => loadImages();
+  backBtn.onclick = () => {
+    loadImages();
+  };
   container.appendChild(backBtn);
 
   const header = document.createElement("h3");
@@ -171,6 +200,8 @@ function createModal() {
   return modalElements;
 }
 
+
+
 function openModal(doc) {
   currentDoc = doc;
   const modal = createModal();
@@ -178,6 +209,7 @@ function openModal(doc) {
 
   content.innerHTML = "";
 
+  // Image
   const img = document.createElement("img");
   img.src = doc.strThumb;
   img.alt = `${doc.strAwayTeam} vs ${doc.strHomeTeam}`;
@@ -186,6 +218,7 @@ function openModal(doc) {
   img.style.objectFit = "cover";
   content.appendChild(img);
 
+  // Teams buttons container (flipped order)
   const teamsContainer = document.createElement("div");
   teamsContainer.style.display = "flex";
   teamsContainer.style.justifyContent = "space-between";
@@ -211,10 +244,11 @@ function openModal(doc) {
   awayBtn.style.cursor = "pointer";
   awayBtn.style.whiteSpace = "nowrap";
 
-  // Flip buttons: awayBtn left, homeBtn right
+  // Flip buttons visually: append awayBtn first to left, then homeBtn to right
   teamsContainer.appendChild(awayBtn);
   teamsContainer.appendChild(homeBtn);
 
+  // Selected team display (hidden initially)
   const selectedTeamDisplay = document.createElement("div");
   selectedTeamDisplay.style.margin = "10px 0 0";
   selectedTeamDisplay.style.fontWeight = "bold";
@@ -222,6 +256,7 @@ function openModal(doc) {
   selectedTeamDisplay.style.display = "none";
   content.appendChild(selectedTeamDisplay);
 
+  // Units dropdown container (hidden initially)
   const unitsContainer = document.createElement("div");
   unitsContainer.style.marginTop = "10px";
   unitsContainer.style.display = "none";
@@ -250,6 +285,7 @@ function openModal(doc) {
 
   unitsContainer.appendChild(unitsSelect);
 
+  // Selected unit display (hidden initially)
   const selectedUnitDisplay = document.createElement("div");
   selectedUnitDisplay.style.margin = "10px 0 0";
   selectedUnitDisplay.style.fontWeight = "bold";
@@ -257,6 +293,7 @@ function openModal(doc) {
   selectedUnitDisplay.style.display = "none";
   content.appendChild(selectedUnitDisplay);
 
+  // Copy to Clipboard button (hidden initially)
   const copyBtn = document.createElement("button");
   copyBtn.textContent = "Copy to Clipboard";
   copyBtn.style.padding = "8px 18px";
@@ -267,6 +304,7 @@ function openModal(doc) {
   copyBtn.style.width = "100%";
   content.appendChild(copyBtn);
 
+  // Buttons container (OK, Cancel)
   const btnContainer = document.createElement("div");
   btnContainer.style.marginTop = "15px";
   btnContainer.style.display = "flex";
@@ -288,12 +326,14 @@ function openModal(doc) {
   btnContainer.appendChild(okBtn);
   btnContainer.appendChild(cancelBtn);
 
+  // Initial visibility setup
   teamsContainer.style.display = "flex";
   unitsContainer.style.display = "none";
   selectedTeamDisplay.style.display = "none";
   selectedUnitDisplay.style.display = "none";
   copyBtn.style.display = "none";
 
+  // Team buttons click handlers
   homeBtn.onclick = () => {
     selectedTeamDisplay.textContent = doc.strHomeTeam;
     selectedTeamDisplay.style.display = "block";
@@ -307,6 +347,7 @@ function openModal(doc) {
     unitsContainer.style.display = "block";
   };
 
+  // Units dropdown change handler
   unitsSelect.onchange = () => {
     selectedUnitDisplay.textContent = unitsSelect.value;
     selectedUnitDisplay.style.display = "block";
@@ -314,12 +355,16 @@ function openModal(doc) {
     copyBtn.style.display = "block";
   };
 
+  // Copy to Clipboard button click handler
   copyBtn.onclick = async () => {
     try {
-      const module = await import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/lib/html-to-image.min.js");
-      const dataUrl = await module.toPng(content, { cacheBust: true });
+      const dataUrl = await htmlToImage(content);
       const blob = await (await fetch(dataUrl)).blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob,
+        }),
+      ]);
       alert("Image copied to clipboard!");
     } catch (err) {
       alert("Failed to copy image: " + err.message);
@@ -330,6 +375,14 @@ function openModal(doc) {
   cancelBtn.onclick = closeModal;
 
   container.style.display = "flex";
+}
+
+// Utility to load html-to-image module dynamically from CDN (fixed version)
+async function htmlToImage(element) {
+  const module = await import(
+    "https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/lib/html-to-image.min.js"
+  );
+  return module.toPng(element, { cacheBust: true });
 }
 
 function closeModal() {
