@@ -46,7 +46,7 @@ function createModal() {
 
   const modalImage = document.createElement("img");
   Object.assign(modalImage.style, {
-    width: "300px",
+    width: "375px",
     maxWidth: "100%",
     borderRadius: "6px",
   });
@@ -54,7 +54,7 @@ function createModal() {
   const modalCanvas = document.createElement("canvas");
   modalCanvas.style.display = "none";
   modalCanvas.style.borderRadius = "6px";
-  modalCanvas.style.width = "300px";
+  modalCanvas.style.width = "400px";
   modalCanvas.style.maxWidth = "100%";
 
   const unitSelect = document.createElement("select");
