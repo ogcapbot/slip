@@ -428,7 +428,7 @@ function openModal(doc) {
   // Copy to Clipboard handler
   copyBtn.onclick = async () => {
     try {
-      const dataUrl = await htmlToImage(content);
+      const dataUrl = await htmlToImage.toPng(content, { cacheBust: true });
       const blob = await (await fetch(dataUrl)).blob();
       await navigator.clipboard.write([
         new ClipboardItem({
@@ -456,20 +456,7 @@ function closeModal() {
   }
 }
 
-// html-to-image utility (using html-to-image library)
-// Minimal implementation:
-function htmlToImage(element) {
-  return new Promise((resolve, reject) => {
-    import("https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/dist/html-to-image.min.js")
-      .then(({ toPng }) => {
-        toPng(element, { cacheBust: true })
-          .then((dataUrl) => resolve(dataUrl))
-          .catch((err) => reject(err));
-      })
-      .catch((err) => reject(err));
-  });
-}
+// Remove the old htmlToImage function - no longer needed since using global from script tag
 
 // Start
 loadImages();
-
