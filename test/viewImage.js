@@ -1,3 +1,4 @@
+import * as htmlToImage from "https://esm.sh/html-to-image@1.11.23";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getFirestore,
@@ -455,8 +456,6 @@ function closeModal() {
     modalElements.container.style.display = "none";
   }
 }
-
-// Remove the old htmlToImage function - no longer needed since using global from script tag
 
 // Start
 loadImages();
