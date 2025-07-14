@@ -8,6 +8,9 @@ import {
   orderBy,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Import html-to-image as ES module
+import * as htmlToImage from "https://cdn.jsdelivr.net/npm/html-to-image@1.11.23/esm/index.js";
+
 const db = getFirestore();
 
 let units = [];
@@ -379,7 +382,7 @@ function openModal(doc) {
 
   copyBtn.onclick = async () => {
     try {
-      const dataUrl = await window.htmlToImage.toPng(content, { cacheBust: true });
+      const dataUrl = await htmlToImage.toPng(content, { cacheBust: true });
       const blob = await (await fetch(dataUrl)).blob();
       await navigator.clipboard.write([
         new ClipboardItem({
