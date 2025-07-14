@@ -4,7 +4,9 @@ import {
 import { app } from "./firebaseInit.js";
 
 const db = getFirestore(app);
+const FIREBASE_STORAGE_BASE_URL = "https://firebasestorage.googleapis.com/v0/b/ogcapperbets.firebasestorage.app/o/";
 
+// Returns Eastern Time date string in MM/DD/YYYY format
 function getEasternDateStringMMDDYYYY() {
   const now = new Date();
   return new Intl.DateTimeFormat("en-US", {
@@ -265,8 +267,6 @@ function createModal() {
   };
 }
 
-// The rest of your code remains unchanged...
-
 function createImageGrid(images, modal) {
   const grid = document.createElement("div");
   Object.assign(grid.style, {
@@ -277,9 +277,19 @@ function createImageGrid(images, modal) {
     margin: "0 auto",
   });
 
-  images.forEach(({ strThumb }) => {
+  images.forEach((docData) => {
+    // Use firebaseStoragePath if available, else fallback to strThumb
+    let imgSrc;
+    if (docData.firebaseStoragePath) {
+      imgSrc = FIREBASE_STORAGE_BASE_URL + encodeURIComponent(docData.firebaseStoragePath) + "?alt=media";
+    } else if (docData.strThumb) {
+      imgSrc = docData.strThumb;
+    } else {
+      return; // skip if no image url at all
+    }
+
     const imgBtn = document.createElement("img");
-    imgBtn.src = strThumb;
+    imgBtn.src = imgSrc;
     imgBtn.alt = "";
     Object.assign(imgBtn.style, {
       cursor: "pointer",
@@ -290,7 +300,7 @@ function createImageGrid(images, modal) {
     });
 
     imgBtn.addEventListener("click", () => {
-      modal.show(strThumb);
+      modal.show(imgSrc);
     });
 
     grid.appendChild(imgBtn);
@@ -464,7 +474,7 @@ async function loadImages() {
         data.strSport &&
         data.strLeague &&
         data.strLeagueBadge &&
-        data.strThumb &&
+        (data.firebaseStoragePath || data.strThumb) &&
         data.strStatus !== "FT"
       ) {
         docs.push(data);
@@ -484,10 +494,10 @@ async function loadImages() {
       const leagueB = b.strLeague.toLowerCase();
       if (leagueA < leagueB) return -1;
       if (leagueA > leagueB) return 1;
-      const thumbA = a.strThumb.toLowerCase();
-      const thumbB = b.strThumb.toLowerCase();
-      if (thumbA < thumbB) return -1;
-      if (thumbA > thumbB) return 1;
+      const imgA = (a.firebaseStoragePath || a.strThumb || "").toLowerCase();
+      const imgB = (b.firebaseStoragePath || b.strThumb || "").toLowerCase();
+      if (imgA < imgB) return -1;
+      if (imgA > imgB) return 1;
       return 0;
     });
 
