@@ -90,6 +90,17 @@ function createModal() {
   buttonsDiv.appendChild(okButton);
   buttonsDiv.appendChild(cancelButton);
 
+  // New Upload to Discord button
+  const uploadWebhookButton = document.createElement("button");
+  uploadWebhookButton.textContent = "Upload to Discord";
+  Object.assign(uploadWebhookButton.style, {
+    padding: "8px 16px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    display: "none",
+  });
+  buttonsDiv.appendChild(uploadWebhookButton);
+
   modalContent.appendChild(modalImage);
   modalContent.appendChild(modalCanvas);
   modalContent.appendChild(unitSelect);
@@ -101,6 +112,9 @@ function createModal() {
   let originalImage = null;
   let selectedUnit = null;
   let unitsList = [];
+
+  // Your Discord webhook URL:
+  const webhookURL = 'https://discord.com/api/webhooks/1394430918382325840/qoj5OVC25k3hRQi48nHaao_I9cY3a3ItUD28clobMWGphj2pRO8GaetagispnrOkYG5j';
 
   async function loadUnits() {
     if (unitsList.length) return unitsList;
@@ -146,6 +160,7 @@ function createModal() {
     modalImage.style.display = "none";
     modalCanvas.style.display = "block";
     copyButton.style.display = "inline-block";
+    uploadWebhookButton.style.display = "inline-block";
 
     drawCanvasWithUnit(selectedUnit);
   });
@@ -163,6 +178,31 @@ function createModal() {
     }
   });
 
+  uploadWebhookButton.addEventListener("click", async () => {
+    try {
+      modalCanvas.toBlob(async (blob) => {
+        if (!blob) throw new Error("Canvas is empty");
+
+        const formData = new FormData();
+        formData.append('file', blob, 'canvas.png');
+
+        const response = await fetch(webhookURL, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          alert('Image successfully uploaded to Discord!');
+        } else {
+          const errorText = await response.text();
+          alert('Upload failed: ' + errorText);
+        }
+      }, 'image/png');
+    } catch (err) {
+      alert('Error uploading image: ' + err.message);
+    }
+  });
+
   function closeModal() {
     modalOverlay.style.display = "none";
     modalImage.src = "";
@@ -170,6 +210,7 @@ function createModal() {
     modalCanvas.style.display = "none";
     unitSelect.style.display = "none";
     copyButton.style.display = "none";
+    uploadWebhookButton.style.display = "none";
     unitSelect.innerHTML = "";
     originalImage = null;
     selectedUnit = null;
@@ -188,6 +229,7 @@ function createModal() {
     modalCanvas.style.display = "none";
     unitSelect.style.display = "none";
     copyButton.style.display = "none";
+    uploadWebhookButton.style.display = "none";
     unitSelect.innerHTML = "";
 
     modalImage.crossOrigin = "anonymous";  // <--- CORS fix
@@ -222,6 +264,8 @@ function createModal() {
     show,
   };
 }
+
+// The rest of your code remains unchanged...
 
 function createImageGrid(images, modal) {
   const grid = document.createElement("div");
