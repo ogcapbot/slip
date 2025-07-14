@@ -1,4 +1,6 @@
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { 
+  getFirestore, collection, query, where, getDocs, orderBy 
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { app } from "./firebaseInit.js";
 
 const db = getFirestore(app);
@@ -22,6 +24,8 @@ function createModal() {
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
+    flexDirection: "column",
+    overflowY: "auto",
   });
 
   const modalContent = document.createElement("div");
@@ -32,6 +36,10 @@ function createModal() {
     textAlign: "center",
     maxWidth: "90vw",
     maxHeight: "90vh",
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   });
 
   const modalImage = document.createElement("img");
@@ -41,9 +49,31 @@ function createModal() {
     borderRadius: "6px",
   });
 
+  const modalCanvas = document.createElement("canvas");
+  modalCanvas.style.display = "none";
+  modalCanvas.style.borderRadius = "6px";
+  modalCanvas.style.width = "300px";
+  modalCanvas.style.maxWidth = "100%";
+
+  const unitSelect = document.createElement("select");
+  unitSelect.style.marginTop = "15px";
+  unitSelect.style.padding = "8px";
+  unitSelect.style.fontSize = "1rem";
+  unitSelect.style.width = "150px";
+
+  const copyButton = document.createElement("button");
+  copyButton.textContent = "Copy to Clipboard";
+  Object.assign(copyButton.style, {
+    marginTop: "12px",
+    padding: "8px 16px",
+    fontSize: "1rem",
+    cursor: "pointer",
+    display: "none",
+  });
+
   const buttonsDiv = document.createElement("div");
   Object.assign(buttonsDiv.style, {
-    marginTop: "10px",
+    marginTop: "15px",
     display: "flex",
     justifyContent: "center",
     gap: "20px",
@@ -59,14 +89,89 @@ function createModal() {
 
   buttonsDiv.appendChild(okButton);
   buttonsDiv.appendChild(cancelButton);
+
   modalContent.appendChild(modalImage);
+  modalContent.appendChild(modalCanvas);
+  modalContent.appendChild(unitSelect);
+  modalContent.appendChild(copyButton);
   modalContent.appendChild(buttonsDiv);
   modalOverlay.appendChild(modalContent);
   document.body.appendChild(modalOverlay);
 
+  let originalImage = null;
+  let selectedUnit = null;
+  let unitsList = [];
+
+  async function loadUnits() {
+    if (unitsList.length) return unitsList;
+    const unitsCol = collection(db, "Units");
+    const q = query(unitsCol, orderBy("Rank"));
+    const snapshot = await getDocs(q);
+    unitsList = snapshot.docs
+      .map(doc => doc.data())
+      .filter(u => u["Fraction Units"])
+      .map(u => u["Fraction Units"]);
+    return unitsList;
+  }
+
+  function drawCanvasWithUnit(unitText) {
+    const img = originalImage;
+    const canvas = modalCanvas;
+    const ctx = canvas.getContext("2d");
+
+    const scale = 300 / img.naturalWidth;
+    canvas.width = img.naturalWidth * scale;
+    canvas.height = img.naturalHeight * scale + 40;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height - 40);
+
+    ctx.fillStyle = "white";
+    const padding = 8;
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+    ctx.fillStyle = "black";
+    ctx.font = "bold 20px Arial";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText(unitText, canvas.width / 2, canvas.height - 20);
+  }
+
+  unitSelect.addEventListener("change", () => {
+    selectedUnit = unitSelect.value;
+    if (!selectedUnit) return;
+
+    unitSelect.style.display = "none";
+    modalImage.style.display = "none";
+    modalCanvas.style.display = "block";
+    copyButton.style.display = "inline-block";
+
+    drawCanvasWithUnit(selectedUnit);
+  });
+
+  copyButton.addEventListener("click", async () => {
+    try {
+      modalCanvas.toBlob(async blob => {
+        if (!blob) throw new Error("Canvas is empty");
+        const item = new ClipboardItem({ "image/png": blob });
+        await navigator.clipboard.write([item]);
+        alert("Image copied to clipboard!");
+      });
+    } catch (err) {
+      alert("Failed to copy image: " + err.message);
+    }
+  });
+
   function closeModal() {
     modalOverlay.style.display = "none";
     modalImage.src = "";
+    modalImage.style.display = "block";
+    modalCanvas.style.display = "none";
+    unitSelect.style.display = "none";
+    copyButton.style.display = "none";
+    unitSelect.innerHTML = "";
+    originalImage = null;
+    selectedUnit = null;
   }
 
   okButton.addEventListener("click", closeModal);
@@ -75,11 +180,44 @@ function createModal() {
     if (e.target === modalOverlay) closeModal();
   });
 
+  async function show(src) {
+    modalOverlay.style.display = "flex";
+
+    modalImage.style.display = "block";
+    modalCanvas.style.display = "none";
+    unitSelect.style.display = "none";
+    copyButton.style.display = "none";
+    unitSelect.innerHTML = "";
+
+    modalImage.src = src;
+
+    await new Promise((res, rej) => {
+      modalImage.onload = () => res();
+      modalImage.onerror = () => rej(new Error("Image failed to load"));
+    });
+
+    originalImage = modalImage;
+
+    const units = await loadUnits();
+    if (units.length > 0) {
+      const defaultOption = document.createElement("option");
+      defaultOption.textContent = "Select Units";
+      defaultOption.value = "";
+      unitSelect.appendChild(defaultOption);
+
+      units.forEach(unit => {
+        const option = document.createElement("option");
+        option.value = unit;
+        option.textContent = unit;
+        unitSelect.appendChild(option);
+      });
+
+      unitSelect.style.display = "inline-block";
+    }
+  }
+
   return {
-    show: (src) => {
-      modalImage.src = src;
-      modalOverlay.style.display = "flex";
-    },
+    show,
   };
 }
 
@@ -178,7 +316,7 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     contentContainer.innerHTML = "";
     const leagueGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
     contentContainer.appendChild(leagueGrid);
-    sportTitle.style.display = ""; // show sport title on leagues view
+    sportTitle.style.display = "";
 
     if (sportSection.parentElement) {
       Array.from(sportSection.parentElement.children).forEach(sibling => {
@@ -189,7 +327,7 @@ function createSportSection(sportName, leaguesGrouped, modal) {
 
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
-    sportTitle.style.display = "none"; // hide sport title on league events view
+    sportTitle.style.display = "none";
 
     if (sportSection.parentElement) {
       Array.from(sportSection.parentElement.children).forEach(sibling => {
@@ -207,7 +345,7 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     leagueBadgeImg.alt = leagueName;
     leagueBadgeImg.style.width = "250px";
     leagueBadgeImg.style.display = "block";
-    leagueBadgeImg.style.margin = "0 auto 4px auto"; // reduced margin bottom
+    leagueBadgeImg.style.margin = "0 auto 4px auto";
     leagueBadgeImg.style.borderRadius = "12px";
     leagueBadgeImg.style.objectFit = "contain";
 
