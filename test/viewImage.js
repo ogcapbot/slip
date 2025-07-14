@@ -288,6 +288,8 @@ function createImageGrid(images, modal) {
       return; // skip if no image url at all
     }
 
+    console.log("[ImageGrid] Using image source:", imgSrc, "for doc");
+
     const imgBtn = document.createElement("img");
     imgBtn.src = imgSrc;
     imgBtn.alt = "";
@@ -300,6 +302,7 @@ function createImageGrid(images, modal) {
     });
 
     imgBtn.addEventListener("click", () => {
+      console.log("[ImageGrid] Image clicked, showing modal for:", imgSrc);
       modal.show(imgSrc);
     });
 
