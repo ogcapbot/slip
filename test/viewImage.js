@@ -46,7 +46,7 @@ function createModal() {
 
   const modalImage = document.createElement("img");
   Object.assign(modalImage.style, {
-    width: "575px",
+    width: "100%",
     maxWidth: "100%",
     borderRadius: "6px",
   });
