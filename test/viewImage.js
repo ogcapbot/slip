@@ -1,4 +1,3 @@
-import * as htmlToImage from "https://cdn.skypack.dev/html-to-image@1.11.19";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getFirestore,
@@ -9,12 +8,9 @@ import {
   orderBy,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Initialize Firebase (assuming your firebaseInit.js is loaded separately)
-
 // Firestore instance
 const db = getFirestore();
 
-// Global state
 let units = [];
 let modalElements = {};
 let currentDoc = null;
@@ -23,23 +19,17 @@ console.log("[Load] Starting to load images...");
 
 async function loadImages() {
   try {
-    // Clear any previous content
     document.querySelector("main")?.remove();
     const main = document.createElement("main");
     document.body.insertBefore(main, document.querySelector("footer"));
 
-    // Today's date string MM/DD/YYYY
     const today = new Date();
     const todayStr = `${String(today.getMonth() + 1).padStart(2, "0")}/${String(
       today.getDate()
     ).padStart(2, "0")}/${today.getFullYear()}`;
     console.log("[Load] Eastern Time today's date (MM/DD/YYYY):", todayStr);
 
-    // Query documents for today's date, filtering out strStatus 'FT' and ensuring required fields exist
-    const q = query(
-      collection(db, "gameEvents_1"),
-      where("dateEastern", "==", todayStr)
-    );
+    const q = query(collection(db, "gameEvents_1"), where("dateEastern", "==", todayStr));
     const snapshot = await getDocs(q);
 
     const docs = [];
@@ -56,40 +46,29 @@ async function loadImages() {
       ) {
         docs.push({ id: doc.id, ...data });
       } else {
-        console.warn(
-          `[Load] Skipping doc missing required fields or finished: ${doc.id}`
-        );
+        console.warn(`[Load] Skipping doc missing required fields or finished: ${doc.id}`);
       }
     });
 
     console.log("[Load] Filtered docs:", docs.length);
 
-    // Sort by sport, league, then strThumb (alphabetical)
     docs.sort((a, b) => {
-      if (a.strSport !== b.strSport)
-        return a.strSport.localeCompare(b.strSport);
-      if (a.strLeague !== b.strLeague)
-        return a.strLeague.localeCompare(b.strLeague);
+      if (a.strSport !== b.strSport) return a.strSport.localeCompare(b.strSport);
+      if (a.strLeague !== b.strLeague) return a.strLeague.localeCompare(b.strLeague);
       return a.strThumb.localeCompare(b.strThumb);
     });
 
-    // Group by sport then league
     const grouped = {};
     for (const doc of docs) {
       if (!grouped[doc.strSport]) grouped[doc.strSport] = {};
-      if (!grouped[doc.strSport][doc.strLeague])
-        grouped[doc.strSport][doc.strLeague] = [];
+      if (!grouped[doc.strSport][doc.strLeague]) grouped[doc.strSport][doc.strLeague] = [];
       grouped[doc.strSport][doc.strLeague].push(doc);
     }
 
     console.log("[Load] Grouped by sport and league:", Object.keys(grouped));
 
-    // Show sports with league badges first
     showSportsAndLeagues(grouped, main);
-
-    // Load units for modal usage
     await loadUnits();
-
   } catch (error) {
     console.error("[Load] Error loading images:", error);
     displayError(`Error loading images: ${error.message}`);
@@ -103,17 +82,15 @@ function displayError(msg) {
 }
 
 function showSportsAndLeagues(grouped, container) {
-  container.innerHTML = ""; // clear container
+  container.innerHTML = "";
 
   for (const sport of Object.keys(grouped)) {
-    // Sport title
     const sportTitle = document.createElement("h2");
     sportTitle.textContent = sport;
     sportTitle.style.textAlign = "center";
     sportTitle.style.marginTop = "2rem";
     container.appendChild(sportTitle);
 
-    // League container grid
     const leagueGrid = document.createElement("div");
     leagueGrid.style.display = "grid";
     leagueGrid.style.gridTemplateColumns = "repeat(auto-fit,minmax(100px,1fr))";
@@ -123,7 +100,7 @@ function showSportsAndLeagues(grouped, container) {
     container.appendChild(leagueGrid);
 
     for (const league of Object.keys(grouped[sport])) {
-      const leagueData = grouped[sport][league][0]; // first doc to get badge, league name
+      const leagueData = grouped[sport][league][0];
 
       const leagueBtn = document.createElement("button");
       leagueBtn.style.border = "none";
@@ -135,7 +112,6 @@ function showSportsAndLeagues(grouped, container) {
       leagueBtn.style.flexDirection = "column";
       leagueBtn.style.alignItems = "center";
 
-      // League badge image
       const badgeImg = document.createElement("img");
       badgeImg.src = leagueData.strLeagueBadge;
       badgeImg.alt = league;
@@ -143,7 +119,6 @@ function showSportsAndLeagues(grouped, container) {
       badgeImg.style.borderRadius = "8px";
       badgeImg.style.marginBottom = "5px";
 
-      // League text label
       const leagueLabel = document.createElement("span");
       leagueLabel.textContent = league;
       leagueLabel.style.fontWeight = "600";
@@ -155,7 +130,6 @@ function showSportsAndLeagues(grouped, container) {
       leagueBtn.appendChild(leagueLabel);
       leagueGrid.appendChild(leagueBtn);
 
-      // Click to show events for this league
       leagueBtn.addEventListener("click", () => {
         showEventsForLeague(sport, league, grouped[sport][league], container);
       });
@@ -164,9 +138,8 @@ function showSportsAndLeagues(grouped, container) {
 }
 
 function showEventsForLeague(sport, league, events, container) {
-  container.innerHTML = ""; // clear container
+  container.innerHTML = "";
 
-  // Back button + league badge + title container
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to leagues";
   backBtn.style.marginBottom = "10px";
@@ -176,7 +149,6 @@ function showEventsForLeague(sport, league, events, container) {
   backBtn.addEventListener("click", () => loadImages());
   container.appendChild(backBtn);
 
-  // League badge and title container
   const headerDiv = document.createElement("div");
   headerDiv.style.textAlign = "center";
   headerDiv.style.marginBottom = "1rem";
@@ -196,7 +168,6 @@ function showEventsForLeague(sport, league, events, container) {
   headerDiv.appendChild(title);
   container.appendChild(headerDiv);
 
-  // Events grid container
   const grid = document.createElement("div");
   grid.style.display = "grid";
   grid.style.gridTemplateColumns = "repeat(3, 1fr)";
@@ -222,12 +193,9 @@ function showEventsForLeague(sport, league, events, container) {
   }
 }
 
-// Load Units collection ordered by Rank
 async function loadUnits() {
   try {
-    const unitsSnap = await getDocs(
-      query(collection(db, "Units"), orderBy("Rank", "asc"))
-    );
+    const unitsSnap = await getDocs(query(collection(db, "Units"), orderBy("Rank", "asc")));
     units = [];
     unitsSnap.forEach((doc) => {
       const data = doc.data();
@@ -241,7 +209,6 @@ async function loadUnits() {
   }
 }
 
-// Modal elements container to avoid recreating
 function createModal() {
   if (modalElements.container) return modalElements.container;
 
@@ -264,13 +231,9 @@ function createModal() {
   content.style.position = "relative";
 
   modal.appendChild(content);
-
   document.body.appendChild(modal);
 
-  modalElements = {
-    container: modal,
-    content,
-  };
+  modalElements = { container: modal, content };
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) closeModal();
@@ -286,7 +249,6 @@ function openModal(doc) {
   const { content } = modalElements;
   content.innerHTML = "";
 
-  // Image
   const img = document.createElement("img");
   img.src = doc.strThumb;
   img.alt = doc.strSport;
@@ -295,7 +257,6 @@ function openModal(doc) {
   img.style.objectFit = "cover";
   content.appendChild(img);
 
-  // Teams buttons container
   const teamsContainer = document.createElement("div");
   teamsContainer.style.display = "flex";
   teamsContainer.style.justifyContent = "space-between";
@@ -303,7 +264,6 @@ function openModal(doc) {
   teamsContainer.style.marginBottom = "12px";
   content.appendChild(teamsContainer);
 
-  // Away team button (left)
   const awayBtn = document.createElement("button");
   awayBtn.textContent = doc.strAwayTeam;
   awayBtn.style.flex = "1";
@@ -313,7 +273,6 @@ function openModal(doc) {
   awayBtn.style.cursor = "pointer";
   teamsContainer.appendChild(awayBtn);
 
-  // Home team button (right)
   const homeBtn = document.createElement("button");
   homeBtn.textContent = doc.strHomeTeam;
   homeBtn.style.flex = "1";
@@ -323,7 +282,6 @@ function openModal(doc) {
   homeBtn.style.cursor = "pointer";
   teamsContainer.appendChild(homeBtn);
 
-  // Selected team display (hidden initially)
   const selectedTeamDisplay = document.createElement("div");
   selectedTeamDisplay.style.margin = "10px 0";
   selectedTeamDisplay.style.fontWeight = "bold";
@@ -331,7 +289,6 @@ function openModal(doc) {
   selectedTeamDisplay.style.display = "none";
   content.appendChild(selectedTeamDisplay);
 
-  // Units dropdown container (hidden initially)
   const unitsContainer = document.createElement("div");
   unitsContainer.style.marginTop = "10px";
   unitsContainer.style.display = "none";
@@ -360,7 +317,6 @@ function openModal(doc) {
 
   unitsContainer.appendChild(unitsSelect);
 
-  // Selected unit display (hidden initially)
   const selectedUnitDisplay = document.createElement("div");
   selectedUnitDisplay.style.margin = "10px 0 0";
   selectedUnitDisplay.style.fontWeight = "bold";
@@ -368,7 +324,6 @@ function openModal(doc) {
   selectedUnitDisplay.style.display = "none";
   content.appendChild(selectedUnitDisplay);
 
-  // Buttons container
   const btnContainer = document.createElement("div");
   btnContainer.style.marginTop = "15px";
   btnContainer.style.display = "flex";
@@ -398,13 +353,11 @@ function openModal(doc) {
   btnContainer.appendChild(okBtn);
   btnContainer.appendChild(cancelBtn);
 
-  // Initial state: show team buttons, hide units dropdown and selected displays
   teamsContainer.style.display = "flex";
   unitsContainer.style.display = "none";
   selectedTeamDisplay.style.display = "none";
   selectedUnitDisplay.style.display = "none";
 
-  // Team button click handlers
   awayBtn.onclick = () => {
     selectedTeamDisplay.textContent = doc.strAwayTeam;
     selectedTeamDisplay.style.display = "block";
@@ -419,14 +372,12 @@ function openModal(doc) {
     unitsContainer.style.display = "block";
   };
 
-  // Units dropdown change handler
   unitsSelect.onchange = () => {
     selectedUnitDisplay.textContent = unitsSelect.value;
     selectedUnitDisplay.style.display = "block";
     unitsContainer.style.display = "none";
   };
 
-  // Copy to Clipboard handler
   copyBtn.onclick = async () => {
     try {
       const dataUrl = await htmlToImage.toPng(content, { cacheBust: true });
@@ -442,7 +393,6 @@ function openModal(doc) {
     }
   };
 
-  // Append copy button below unit display
   content.insertBefore(copyBtn, btnContainer);
 
   okBtn.onclick = closeModal;
@@ -457,5 +407,4 @@ function closeModal() {
   }
 }
 
-// Start
 loadImages();
