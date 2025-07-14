@@ -109,8 +109,8 @@ function createModal() {
     const snapshot = await getDocs(q);
     unitsList = snapshot.docs
       .map(doc => doc.data())
-      .filter(u => u["Fraction Units"])
-      .map(u => u["Fraction Units"]);
+      .filter(u => u["Unit Fractions"])
+      .map(u => u["Unit Fractions"]);
     return unitsList;
   }
 
