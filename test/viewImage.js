@@ -17,6 +17,22 @@ function getEasternDateStringMMDDYYYY() {
   }).format(now);
 }
 
+// Helper to parse MM/DD/YYYY to Date in Eastern time zone (approximate)
+function parseEasternDate(mmddyyyy) {
+  const [month, day, year] = mmddyyyy.split("/").map(Number);
+  // Construct Date as UTC with those parts to avoid local timezone issues
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+// Helper to get difference in days between two dates
+function diffDays(date1, date2) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  // Clear time part for accurate day diff
+  const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
+  const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+  return Math.floor((utc2 - utc1) / msPerDay);
+}
+
 function createModal() {
   const modalOverlay = document.createElement("div");
   Object.assign(modalOverlay.style, {
@@ -384,6 +400,44 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     }
   }
 
+  // Added function to calculate the next game date for a sport
+  function getNextGameDateForSport(leaguesGrouped) {
+    const todayEasternStr = getEasternDateStringMMDDYYYY();
+    const todayDate = parseEasternDate(todayEasternStr);
+
+    // Find earliest future date from all events in this sport
+    let nextDate = null;
+
+    for (const leagueName in leaguesGrouped) {
+      const events = leaguesGrouped[leagueName];
+      for (const ev of events) {
+        if (!ev.dateEastern) continue;
+        const eventDate = parseEasternDate(ev.dateEastern);
+        if (eventDate >= todayDate) {
+          if (nextDate === null || eventDate < nextDate) {
+            nextDate = eventDate;
+          }
+        }
+      }
+    }
+
+    return nextDate;
+  }
+
+  // Helper to format the next game date display string
+  function formatNextGameString(nextDate) {
+    if (!nextDate) return "Next Game: Unknown";
+
+    const todayEasternStr = getEasternDateStringMMDDYYYY();
+    const todayDate = parseEasternDate(todayEasternStr);
+    const diff = diffDays(todayDate, nextDate);
+
+    if (diff === 0) return "Next Game: Today";
+    if (diff === 1) return "Next Game: Tomorrow";
+    if (diff > 1) return `Next Game: ${diff} Days Away`;
+    return "Next Game: Unknown";
+  }
+
   function showLeagueEvents(leagueName) {
     contentContainer.innerHTML = "";
     sportTitle.style.display = "none";
@@ -435,6 +489,23 @@ function createSportSection(sportName, leaguesGrouped, modal) {
   }
 
   showLeagues();
+
+  // Add the images grid for the sport badges
+  const badgesGrid = createLeagueBadgeGrid(leagues, showLeagueEvents);
+  sportSection.appendChild(badgesGrid);
+
+  // Calculate next game date for this sport overall (from all leagues)
+  const nextGameDate = getNextGameDateForSport(leaguesGrouped);
+  const nextGameText = formatNextGameString(nextGameDate);
+
+  // Create a div for displaying next game info below badges grid
+  const nextGameDiv = document.createElement("div");
+  nextGameDiv.style.textAlign = "center";
+  nextGameDiv.style.marginTop = "8px";
+  nextGameDiv.style.fontWeight = "bold";
+  nextGameDiv.textContent = nextGameText;
+
+  sportSection.appendChild(nextGameDiv);
 
   return sportSection;
 }
