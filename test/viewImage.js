@@ -30,8 +30,10 @@ function diffDays(date1, date2) {
 }
 
 function createModal() {
-  // Your original modal code exactly as before
-  // [Place your full modal code here unchanged]
+  // Your original modal code here exactly as before
+  // ... (unchanged) ...
+  // For brevity here, copy your modal code from original without any change
+  // Must return { show } method to open modal with image src
 }
 
 function createImageGrid(images, modal) {
@@ -118,7 +120,7 @@ function createLeagueBadgeGridSimple(leagues, onLeagueClick) {
     justifyItems: "center",
   });
 
-  leagues.forEach(({ strLeague, strLeagueBadge }) => {
+  leagues.forEach(({ strLeague, strLeagueBadge, firstEventImg }) => {
     const container = document.createElement("div");
     container.style.textAlign = "center";
 
@@ -139,7 +141,8 @@ function createLeagueBadgeGridSimple(leagues, onLeagueClick) {
       margin: "0 auto",
     });
 
-    imgBtn.addEventListener("click", () => onLeagueClick(strLeague));
+    imgBtn.addEventListener("click", () => onLeagueClick(firstEventImg));
+
     container.appendChild(imgBtn);
 
     grid.appendChild(container);
@@ -285,7 +288,6 @@ function createSportSection(sportName, leaguesGrouped, modal) {
     contentContainer.appendChild(backBtn);
     contentContainer.appendChild(leagueTitleText);
 
-    // This uses your existing createImageGrid which opens modal on event image click
     const eventsGrid = createImageGrid(leagueEvents, modal);
     contentContainer.appendChild(eventsGrid);
   }
@@ -404,6 +406,7 @@ async function loadImages() {
     leaguesTomorrow.sort((a, b) => a.strLeague.localeCompare(b.strLeague));
     leaguesOthers.sort((a, b) => a.strLeague.localeCompare(b.strLeague));
 
+    // --- Create Today and Tomorrow Sections ---
     function createSection(title, leagues) {
       const section = document.createElement("section");
       Object.assign(section.style, {
@@ -445,6 +448,7 @@ async function loadImages() {
     container.appendChild(todaySection);
     container.appendChild(tomorrowSection);
 
+    // --- Show All button and full sports display ---
     const showAllBtn = document.createElement("button");
     showAllBtn.textContent = "Show All";
     Object.assign(showAllBtn.style, {
