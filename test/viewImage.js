@@ -457,8 +457,10 @@ async function loadImages() {
 
   try {
     const collRef = collection(db, "gameEvents_1");
-    const q = query(collRef, where("dateEastern", "==", todayStr));
-    const querySnapshot = await getDocs(q);
+    //const q = query(collRef, where("dateEastern", "==", todayStr));
+    //const querySnapshot = await getDocs(q);
+
+    const querySnapshot = await getDocs(collRef);
 
     console.log("[Load] Documents found:", querySnapshot.size);
 
