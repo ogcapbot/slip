@@ -24,17 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalClose = document.getElementById('modalClose');
   const modalSend = document.getElementById('modalSend');
 
-  // Modal control
   modalClose.addEventListener('click', () => {
     modal.classList.remove('show');
     modal.classList.add('hidden');
   });
 
   modalSend.addEventListener('click', () => {
-    alert("Send clicked — not yet implemented.");
+    alert("Send clicked — no action yet.");
   });
 
-  // Access Code Check
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
     accessMsg.textContent = '';
@@ -67,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Search Functionality
   teamSearchInput.addEventListener('input', async () => {
     const queryText = teamSearchInput.value.trim().toLowerCase();
     resultsContainer.innerHTML = '';
@@ -81,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = doc.data();
         const home = data.event_home_team_name?.toLowerCase();
         const away = data.event_away_team_name?.toLowerCase();
-
         if (home?.includes(queryText) || away?.includes(queryText)) {
           results.push(data);
         }
@@ -102,9 +98,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const card = document.createElement('div');
         card.className = 'team-card';
+
         card.innerHTML = `
-          <img class="team-thumb" src="${event.event_img_thumb}" alt="Event Thumb" />
-          <div class="team-title">${event.event_name_short_alt || ''}</div>
+          <div class="split-image">
+            <div class="left-click">
+              <img src="${event.event_img_thumb}" alt="Event Thumb" />
+            </div>
+            <div class="right-click">
+              <img src="${event.event_img_thumb}" alt="Event Thumb" />
+            </div>
+          </div>
+          <div class="team-labels">
+            <div>${event.event_home_team_name}</div>
+            <div>${event.event_away_team_name}</div>
+          </div>
           <div class="card-content">
             <div class="left-col">
               <div>${event.event_sport_name || ''}</div>
@@ -119,9 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
 
-        card.addEventListener('click', () => {
+        card.querySelector('.left-click').addEventListener('click', () => {
           modalImage.src = event.event_img_thumb || '';
-          modalTitle.textContent = event.event_name_short_alt || 'Event';
+          modalTitle.textContent = event.event_home_team_name;
+          modal.classList.remove('hidden');
+          modal.classList.add('show');
+        });
+
+        card.querySelector('.right-click').addEventListener('click', () => {
+          modalImage.src = event.event_img_thumb || '';
+          modalTitle.textContent = event.event_away_team_name;
           modal.classList.remove('hidden');
           modal.classList.add('show');
         });
