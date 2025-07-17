@@ -1,3 +1,12 @@
+// app.js
+import {
+  collection,
+  getDocs,
+  query,
+  where
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   const accessSection = document.getElementById('access-section');
   const searchSection = document.getElementById('search-section');
@@ -7,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const teamSearchInput = document.getElementById('team-search');
   const resultsContainer = document.getElementById('results');
 
-  // 🔐 Validate Access Code
+  // 🔐 Validate Access Code from "Users"
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
 
@@ -17,9 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const snapshot = await db.collection('Users')
-        .where('accessCode', '==', code)
-        .get();
+      const q = query(collection(db, "Users"), where("accessCode", "==", code));
+      const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
         accessMsg.textContent = 'Invalid access code ❌';
@@ -29,19 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
-      accessMsg.textContent = 'Error checking access code.';
+      accessMsg.textContent = 'Error checking code.';
     }
   });
 
-  // 🔍 Team Search Logic
+  // 🔍 Search "event_data" by team name
   teamSearchInput.addEventListener('input', async () => {
-    const query = teamSearchInput.value.trim().toLowerCase();
+    const queryText = teamSearchInput.value.trim().toLowerCase();
     resultsContainer.innerHTML = '';
 
-    if (query.length < 2) return;
+    if (queryText.length < 2) return;
 
     try {
-      const snapshot = await db.collection('event_data').get();
+      const snapshot = await getDocs(collection(db, "event_data"));
       const results = [];
 
       snapshot.forEach(doc => {
@@ -49,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const home = data.event_home_team_name?.toLowerCase();
         const away = data.event_away_team_name?.toLowerCase();
 
-        if (home?.includes(query) || away?.includes(query)) {
+        if (home?.includes(queryText) || away?.includes(queryText)) {
           results.push(data);
         }
       });
