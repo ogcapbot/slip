@@ -22,16 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalClose = document.getElementById('modalClose');
   const modalSend = document.getElementById('modalSend');
 
-  // Modal controls
-  modalClose.addEventListener('click', () => modal.classList.add('hidden'));
-  modalSend.addEventListener('click', () => {
-    alert('Send clicked (hook this up later)');
+  // Modal control
+  modalClose.addEventListener('click', () => {
+    modal.classList.remove('show');
+    modal.classList.add('hidden');
   });
 
-  // Access Code
+  modalSend.addEventListener('click', () => {
+    alert("Send clicked — not yet implemented.");
+  });
+
+  // Access Code Check
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
-
     if (!code) {
       accessMsg.textContent = 'Please enter a code.';
       return;
@@ -53,11 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Team search
+  // Search Functionality
   teamSearchInput.addEventListener('input', async () => {
     const queryText = teamSearchInput.value.trim().toLowerCase();
     resultsContainer.innerHTML = '';
-
     if (queryText.length < 2) return;
 
     try {
@@ -107,9 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         card.addEventListener('click', () => {
-          modalImage.src = event.event_img_thumb;
+          modalImage.src = event.event_img_thumb || '';
           modalTitle.textContent = event.event_name_short_alt || 'Event';
           modal.classList.remove('hidden');
+          modal.classList.add('show');
         });
 
         resultsContainer.appendChild(card);
