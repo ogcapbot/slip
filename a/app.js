@@ -33,35 +33,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle team search
   teamSearchInput.addEventListener('input', async () => {
-    const query = teamSearchInput.value.trim().toLowerCase();
+  const query = teamSearchInput.value.trim().toLowerCase();
+  resultsContainer.innerHTML = '';
 
-    resultsContainer.innerHTML = '';
+  if (query.length < 2) return;
 
-    if (query.length < 2) return;
+  try {
+    const snapshot = await db.collection('teams').get();
+    let results = [];
 
-    try {
-      const teamsSnapshot = await db.collection('teams')
-        .where('searchName', '>=', query)
-        .where('searchName', '<=', query + '\uf8ff')
-        .get();
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const home = data.event_home_team_name?.toLowerCase();
+      const away = data.event_away_team_name?.toLowerCase();
 
-      if (teamsSnapshot.empty) {
-        resultsContainer.innerHTML = '<p>No teams found.</p>';
-        return;
+      if (home?.includes(query) || away?.includes(query)) {
+        results.push(data);
       }
+    });
 
-      teamsSnapshot.forEach(doc => {
-        const team = doc.data();
-        const div = document.createElement('div');
-        div.className = 'team-card';
-        div.innerHTML = `
-          <img src="${team.thumbnail}" alt="${team.name}" />
-          <h4>${team.name}</h4>
-        `;
-        resultsContainer.appendChild(div);
-      });
-    } catch (err) {
-      console.error('Error searching teams:', err);
+    if (results.length === 0) {
+      resultsContainer.innerHTML = '<p>No matching teams found.</p>';
+      return;
     }
-  });
+
+    results.forEach(event => {
+      const div = document.createElement('div');
+      div.className = 'team-card';
+
+      const estTime = new Date(event.event_timestamp_est).toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      });
+
+      div.innerHTML = `
+        <img src="${event.event_img_thumb}" alt="Event thumbnail" />
+        <div>
+          <h4>${event.event_name_long}</h4>
+          <p><strong>When:</strong> ${estTime}</p>
+          <p><strong>Venue:</strong> ${event.event_venue}, ${event.event_country}</p>
+          <p><strong>Sport:</strong> ${event.event_sport_name} | <strong>League:</strong> ${event.event_league_name_short}</p>
+        </div>
+        <img src="${event.event_img_league_badge}" alt="League badge" style="width: 30px; height: 30px;" />
+      `;
+
+      resultsContainer.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error('Error fetching data:', err);
+    resultsContainer.innerHTML = '<p>Error loading results.</p>';
+  }
 });
+};
