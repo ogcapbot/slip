@@ -6,7 +6,7 @@ import {
   where
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const accessCodeInput = document.getElementById('accessCodeInput');
   const accessCodeButton = document.getElementById('accessCodeButton');
   const errorMessage = document.getElementById('errorMessage');
@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modalImage = document.getElementById('modalImage');
   const modalTeamName = document.getElementById('modalTeamName');
   const closeModal = document.getElementById('closeModal');
+
+  let allEvents = [];
 
   accessCodeButton.addEventListener('click', async () => {
     const inputCode = accessCodeInput.value.trim();
@@ -30,33 +32,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     errorMessage.textContent = '';
-    document.querySelector('h1').textContent = `🎉 Welcome, ${querySnapshot.docs[0].data().userDisplayname}! Search Events Below`;
+    const displayName = querySnapshot.docs[0].data().userDisplayname;
+    document.querySelector('h1').textContent = `🎉 Welcome, ${displayName}! Search Events Below`;
     accessCodeInput.classList.add('hidden');
     accessCodeButton.classList.add('hidden');
     searchContainer.classList.remove('hidden');
 
-    loadEvents();
+    await fetchEvents();
   });
 
-  async function loadEvents() {
-    const eventRef = collection(db, 'event_data');
-    const snapshot = await getDocs(eventRef);
-    const events = snapshot.docs.map(doc => doc.data());
-
-    renderEvents(events);
-
-    searchInput.addEventListener('input', () => {
-      const term = searchInput.value.toLowerCase();
-      const filtered = events.filter(event =>
-        event.event_home_team_name.toLowerCase().includes(term) ||
-        event.event_away_team_name.toLowerCase().includes(term)
-      );
-      renderEvents(filtered);
-    });
+  async function fetchEvents() {
+    const snapshot = await getDocs(collection(db, 'event_data'));
+    allEvents = snapshot.docs.map(doc => doc.data());
   }
 
   function renderEvents(events) {
     eventsContainer.innerHTML = '';
+    if (events.length === 0) {
+      eventsContainer.classList.add('hidden');
+      return;
+    }
+
+    eventsContainer.classList.remove('hidden');
 
     events.forEach(event => {
       const card = document.createElement('div');
@@ -65,10 +62,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.innerHTML = `
         <div class="event-thumb-wrapper">
           <div class="click-zone left">
-            <img src="${event.event_img_thumb}" alt="thumb" class="event-thumb"/>
+            <img src="${event.event_img_thumb}" class="event-thumb" />
           </div>
           <div class="click-zone right">
-            <img src="${event.event_img_thumb}" alt="thumb" class="event-thumb"/>
+            <img src="${event.event_img_thumb}" class="event-thumb" />
           </div>
         </div>
         <div class="event-team-names">
@@ -78,12 +75,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="event-details">
           <div class="event-left">
             <div>${event.event_sport_name}</div>
-            <img src="${event.event_img_league_badge}" class="event-league-badge" alt="league" />
+            <img src="${event.event_img_league_badge}" class="event-league-badge" />
           </div>
           <div class="event-right">
             <p><strong>Date:</strong> ${new Date(event.event_expire_at).toLocaleString()}</p>
             <p><strong>Venue:</strong> ${event.event_venue || 'Unknown'}</p>
-            <p><strong>League:</strong> ${event.event_league_name_short_alt || 'N/A'}</p>
+            <p><strong>League:</strong> ${event.event_league_name_short || 'N/A'}</p>
             <p><strong>Match:</strong> ${event.event_home_team_name} vs ${event.event_away_team_name}</p>
           </div>
         </div>
@@ -100,6 +97,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       eventsContainer.appendChild(card);
     });
   }
+
+  searchInput.addEventListener('input', () => {
+    const term = searchInput.value.trim().toLowerCase();
+    if (!term) {
+      eventsContainer.classList.add('hidden');
+      eventsContainer.innerHTML = '';
+      return;
+    }
+
+    const filtered = allEvents.filter(event =>
+      event.event_home_team_name.toLowerCase().includes(term) ||
+      event.event_away_team_name.toLowerCase().includes(term)
+    );
+    renderEvents(filtered);
+  });
 
   function openModal(imageUrl, teamName) {
     modalImage.src = imageUrl;
