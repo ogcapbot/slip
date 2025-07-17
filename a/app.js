@@ -1,4 +1,3 @@
-// app.js
 import {
   collection,
   getDocs,
@@ -17,7 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const teamSearchInput = document.getElementById('team-search');
   const resultsContainer = document.getElementById('results');
 
-  // 🔐 Validate Access Code from "Users"
+  const modal = document.getElementById('eventModal');
+  const modalImage = document.getElementById('modalImage');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalClose = document.getElementById('modalClose');
+  const modalSend = document.getElementById('modalSend');
+
+  // Modal controls
+  modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+  modalSend.addEventListener('click', () => {
+    alert('Send clicked (hook this up later)');
+  });
+
+  // Access Code
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
 
@@ -42,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔍 Search "event_data" by team name
+  // Team search
   teamSearchInput.addEventListener('input', async () => {
     const queryText = teamSearchInput.value.trim().toLowerCase();
     resultsContainer.innerHTML = '';
@@ -76,19 +87,32 @@ document.addEventListener('DOMContentLoaded', () => {
             })
           : 'Unknown';
 
-        const div = document.createElement('div');
-        div.className = 'team-card';
-        div.innerHTML = `
-          <img src="${event.event_img_thumb}" alt="Thumb" />
-          <div>
-            <h4>${event.event_name_long}</h4>
-            <p><strong>When:</strong> ${estTime}</p>
-            <p><strong>Venue:</strong> ${event.event_venue || 'N/A'}, ${event.event_country || ''}</p>
-            <p><strong>Sport:</strong> ${event.event_sport_name || 'N/A'} | <strong>League:</strong> ${event.event_league_name_short || ''}</p>
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+          <img class="team-thumb" src="${event.event_img_thumb}" alt="Event Thumb" />
+          <div class="team-title">${event.event_name_short_alt || ''}</div>
+          <div class="card-content">
+            <div class="left-col">
+              <div>${event.event_sport_name || ''}</div>
+              <img src="${event.event_img_league_badge}" alt="League Badge" />
+            </div>
+            <div class="right-col">
+              <p><strong>Date:</strong> ${estTime}</p>
+              <p><strong>Venue:</strong> ${event.event_venue || 'N/A'}, ${event.event_country || ''}</p>
+              <p><strong>League:</strong> ${event.event_league_name_short || ''}</p>
+              <p><strong>Match:</strong> ${event.event_home_team_name} vs ${event.event_away_team_name}</p>
+            </div>
           </div>
-          <img src="${event.event_img_league_badge}" alt="Badge" />
         `;
-        resultsContainer.appendChild(div);
+
+        card.addEventListener('click', () => {
+          modalImage.src = event.event_img_thumb;
+          modalTitle.textContent = event.event_name_short_alt || 'Event';
+          modal.classList.remove('hidden');
+        });
+
+        resultsContainer.appendChild(card);
       });
 
     } catch (err) {
