@@ -24,16 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputCode = accessCodeInput.value.trim();
     const usersRef = collection(db, 'Users');
     const q = query(usersRef, where('accessCode', '==', inputCode));
-    const querySnapshot = await getDocs(q);
+    const snapshot = await getDocs(q);
 
-    if (querySnapshot.empty) {
-      errorMessage.textContent = 'Error checking code.';
+    if (snapshot.empty) {
+      errorMessage.textContent = 'Invalid access code.';
       return;
     }
 
+    const user = snapshot.docs[0].data();
+    document.querySelector('h1').textContent = `🎉 Welcome, ${user.userDisplayname}! Search Events Below`;
     errorMessage.textContent = '';
-    const displayName = querySnapshot.docs[0].data().userDisplayname;
-    document.querySelector('h1').textContent = `🎉 Welcome, ${displayName}! Search Events Below`;
     accessCodeInput.classList.add('hidden');
     accessCodeButton.classList.add('hidden');
     searchContainer.classList.remove('hidden');
@@ -86,10 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
+      // LEFT = home
       card.querySelector('.click-zone.left').addEventListener('click', () => {
         openModal(event.event_img_thumb, event.event_home_team_name);
       });
 
+      // RIGHT = away
       card.querySelector('.click-zone.right').addEventListener('click', () => {
         openModal(event.event_img_thumb, event.event_away_team_name);
       });
@@ -102,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const term = searchInput.value.trim().toLowerCase();
     if (!term) {
       eventsContainer.classList.add('hidden');
-      eventsContainer.innerHTML = '';
       return;
     }
 
@@ -110,12 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
       event.event_home_team_name.toLowerCase().includes(term) ||
       event.event_away_team_name.toLowerCase().includes(term)
     );
+
     renderEvents(filtered);
   });
 
   function openModal(imageUrl, teamName) {
-    modalImage.src = imageUrl;
-    modalTeamName.textContent = teamName;
+    modalImage.src = imageUrl || '';
+    modalTeamName.textContent = teamName || 'Team Name';
     modal.classList.remove('hidden');
   }
 
