@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchContainer = document.getElementById('searchContainer');
   const searchInput = document.getElementById('searchInput');
   const eventsContainer = document.getElementById('eventsContainer');
+
   const modal = document.getElementById('eventModal');
   const modalImage = document.getElementById('modalImage');
   const modalTeamName = document.getElementById('modalTeamName');
@@ -33,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const user = snapshot.docs[0].data();
     document.querySelector('h1').textContent = `🎉 Welcome, ${user.userDisplayname}! Search Events Below`;
-    errorMessage.textContent = '';
     accessCodeInput.classList.add('hidden');
     accessCodeButton.classList.add('hidden');
+    errorMessage.textContent = '';
     searchContainer.classList.remove('hidden');
 
     await fetchEvents();
@@ -86,12 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // LEFT = home
       card.querySelector('.click-zone.left').addEventListener('click', () => {
         openModal(event.event_img_thumb, event.event_home_team_name);
       });
 
-      // RIGHT = away
       card.querySelector('.click-zone.right').addEventListener('click', () => {
         openModal(event.event_img_thumb, event.event_away_team_name);
       });
@@ -116,8 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function openModal(imageUrl, teamName) {
-    modalImage.src = imageUrl || '';
-    modalTeamName.textContent = teamName || 'Team Name';
+    if (!imageUrl || !teamName) return;
+    modalImage.src = imageUrl;
+    modalTeamName.textContent = teamName;
     modal.classList.remove('hidden');
   }
 
