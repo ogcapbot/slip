@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const teamSearchInput = document.getElementById('team-search');
   const resultsContainer = document.getElementById('results');
 
-  // Handle access code check
+  // 🔐 Validate Access Code
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
 
@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const snapshot = await db.collection('users').where('code', '==', code).get();
+      const snapshot = await db.collection('Users')
+        .where('accessCode', '==', code)
+        .get();
 
       if (snapshot.empty) {
         accessMsg.textContent = 'Invalid access code ❌';
@@ -27,11 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
-      accessMsg.textContent = 'Error checking code.';
+      accessMsg.textContent = 'Error checking access code.';
     }
   });
 
-  // Handle team search
+  // 🔍 Team Search Logic
   teamSearchInput.addEventListener('input', async () => {
     const query = teamSearchInput.value.trim().toLowerCase();
     resultsContainer.innerHTML = '';
@@ -39,8 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (query.length < 2) return;
 
     try {
-      const snapshot = await db.collection('teams').get();
-      let results = [];
+      const snapshot = await db.collection('event_data').get();
+      const results = [];
 
       snapshot.forEach(doc => {
         const data = doc.data();
@@ -58,25 +60,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       results.forEach(event => {
+        const estTime = event.event_timestamp_est
+          ? new Date(event.event_timestamp_est).toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'short'
+            })
+          : 'Unknown';
+
         const div = document.createElement('div');
         div.className = 'team-card';
-
-        const estTime = new Date(event.event_timestamp_est).toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        });
-
         div.innerHTML = `
-          <img src="${event.event_img_thumb}" alt="Event thumbnail" />
+          <img src="${event.event_img_thumb}" alt="Thumb" />
           <div>
             <h4>${event.event_name_long}</h4>
             <p><strong>When:</strong> ${estTime}</p>
-            <p><strong>Venue:</strong> ${event.event_venue}, ${event.event_country}</p>
-            <p><strong>Sport:</strong> ${event.event_sport_name} | <strong>League:</strong> ${event.event_league_name_short}</p>
+            <p><strong>Venue:</strong> ${event.event_venue || 'N/A'}, ${event.event_country || ''}</p>
+            <p><strong>Sport:</strong> ${event.event_sport_name || 'N/A'} | <strong>League:</strong> ${event.event_league_name_short || ''}</p>
           </div>
-          <img src="${event.event_img_league_badge}" alt="League badge" />
+          <img src="${event.event_img_league_badge}" alt="Badge" />
         `;
-
         resultsContainer.appendChild(div);
       });
 
