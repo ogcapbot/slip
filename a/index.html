@@ -2,40 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Team Search Access</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Event Search</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- Access Code Screen -->
   <section id="access-section">
     <h2>🔐 Enter Access Code</h2>
     <input type="text" id="access-code" placeholder="Access Code" />
-    <button id="submit-code">Enter</button>
-    <p id="access-message"></p>
-    <div id="loader" class="hidden loader"></div>
+    <button id="access-btn">Enter</button>
+    <p id="access-error" class="error hidden">Invalid code. Please try again.</p>
   </section>
 
-  <!-- Search Screen -->
   <section id="search-section" class="hidden">
-    <h2 id="welcome-message">🔍 Search Events</h2>
+    <h2 id="welcome-message">🎉 Welcome! Search Events Below</h2>
     <input type="text" id="team-search" placeholder="Enter team name..." />
     <div id="results"></div>
   </section>
 
-  <!-- Modal -->
-  <div id="eventModal" class="modal hidden">
+  <div id="modal" class="modal hidden">
     <div class="modal-content">
-      <img id="modalImage" src="" alt="Event Image" />
-      <h3 id="modalTitle">Event</h3>
+      <img id="modal-image" src="" alt="Event Image" />
+      <h3 id="modal-team-name">Team Name</h3>
       <div class="modal-buttons">
-        <button id="modalClose">Close</button>
-        <button id="modalSend">Send</button>
+        <button id="close-modal">Close</button>
+        <button id="send-btn">Send</button>
       </div>
     </div>
   </div>
 
+  <!-- Firebase Config -->
+  <script type="module" src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
