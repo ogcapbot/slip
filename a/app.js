@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const teamSearchInput = document.getElementById('team-search');
   const resultsContainer = document.getElementById('results');
 
-  // Handle access code validation
+  // Handle access code check
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
 
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const snapshot = await db.collection('users').where('code', '==', code).get();
 
       if (snapshot.empty) {
-        accessMsg.textContent = 'Invalid code ❌';
+        accessMsg.textContent = 'Invalid access code ❌';
       } else {
         accessSection.classList.add('hidden');
         searchSection.classList.remove('hidden');
@@ -33,56 +33,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle team search
   teamSearchInput.addEventListener('input', async () => {
-  const query = teamSearchInput.value.trim().toLowerCase();
-  resultsContainer.innerHTML = '';
+    const query = teamSearchInput.value.trim().toLowerCase();
+    resultsContainer.innerHTML = '';
 
-  if (query.length < 2) return;
+    if (query.length < 2) return;
 
-  try {
-    const snapshot = await db.collection('teams').get();
-    let results = [];
+    try {
+      const snapshot = await db.collection('teams').get();
+      let results = [];
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const home = data.event_home_team_name?.toLowerCase();
-      const away = data.event_away_team_name?.toLowerCase();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const home = data.event_home_team_name?.toLowerCase();
+        const away = data.event_away_team_name?.toLowerCase();
 
-      if (home?.includes(query) || away?.includes(query)) {
-        results.push(data);
-      }
-    });
-
-    if (results.length === 0) {
-      resultsContainer.innerHTML = '<p>No matching teams found.</p>';
-      return;
-    }
-
-    results.forEach(event => {
-      const div = document.createElement('div');
-      div.className = 'team-card';
-
-      const estTime = new Date(event.event_timestamp_est).toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
+        if (home?.includes(query) || away?.includes(query)) {
+          results.push(data);
+        }
       });
 
-      div.innerHTML = `
-        <img src="${event.event_img_thumb}" alt="Event thumbnail" />
-        <div>
-          <h4>${event.event_name_long}</h4>
-          <p><strong>When:</strong> ${estTime}</p>
-          <p><strong>Venue:</strong> ${event.event_venue}, ${event.event_country}</p>
-          <p><strong>Sport:</strong> ${event.event_sport_name} | <strong>League:</strong> ${event.event_league_name_short}</p>
-        </div>
-        <img src="${event.event_img_league_badge}" alt="League badge" style="width: 30px; height: 30px;" />
-      `;
+      if (results.length === 0) {
+        resultsContainer.innerHTML = '<p>No matching teams found.</p>';
+        return;
+      }
 
-      resultsContainer.appendChild(div);
-    });
+      results.forEach(event => {
+        const div = document.createElement('div');
+        div.className = 'team-card';
 
-  } catch (err) {
-    console.error('Error fetching data:', err);
-    resultsContainer.innerHTML = '<p>Error loading results.</p>';
-  }
+        const estTime = new Date(event.event_timestamp_est).toLocaleString('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short'
+        });
+
+        div.innerHTML = `
+          <img src="${event.event_img_thumb}" alt="Event thumbnail" />
+          <div>
+            <h4>${event.event_name_long}</h4>
+            <p><strong>When:</strong> ${estTime}</p>
+            <p><strong>Venue:</strong> ${event.event_venue}, ${event.event_country}</p>
+            <p><strong>Sport:</strong> ${event.event_sport_name} | <strong>League:</strong> ${event.event_league_name_short}</p>
+          </div>
+          <img src="${event.event_img_league_badge}" alt="League badge" />
+        `;
+
+        resultsContainer.appendChild(div);
+      });
+
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      resultsContainer.innerHTML = '<p>Error loading results.</p>';
+    }
+  });
 });
-};
