@@ -1,35 +1,136 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  text-align: center;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+input, button {
+  padding: 10px;
+  margin: 10px 0;
+  width: 100%;
+  font-size: 16px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: red;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Event layout */
+.event-card {
+  background-color: white;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+.event-thumb-wrapper {
+  display: flex;
+  position: relative;
+}
+
+.event-thumb {
+  width: 100%;
+  display: block;
+}
+
+.click-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  cursor: pointer;
+}
+
+.click-zone.left {
+  left: 0;
+}
+
+.click-zone.right {
+  right: 0;
+}
+
+.event-team-names {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  padding: 10px 20px;
+  text-align: center;
+}
+
+.event-details {
+  display: flex;
+  padding: 15px 20px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.event-left {
+  width: 30%;
+}
+
+.event-right {
+  width: 70%;
+}
+
+.event-league-badge {
+  width: 40px;
+  height: auto;
+  margin-top: 5px;
+}
+
+/* Modal styling */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.6);
-  display: none;
+  background: rgba(0,0,0,0.6);
+  display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal-content {
-  background-color: white;
+  background: #fff;
   padding: 20px;
-  width: 280px;
+  width: 90%;
+  max-width: 300px;
   border-radius: 8px;
   text-align: center;
 }
 
 .modal img {
-  width: 100%;
-  margin-bottom: 12px;
+  max-width: 100%;
+  height: auto;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: space-around;
-  margin-top: 20px;
-}
-
-.hidden {
-  display: none !important;
+  margin-top: 15px;
 }
