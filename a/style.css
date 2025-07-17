@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-  max-width: 700px;
+  max-width: 500px;
   margin: 40px auto;
   padding: 0 16px;
 }
@@ -44,6 +44,10 @@ button:hover {
   font-weight: bold;
 }
 
+.hidden {
+  display: none;
+}
+
 .event-card {
   background-color: #fff;
   border-radius: 8px;
@@ -61,13 +65,17 @@ button:hover {
 
 .click-zone {
   width: 50%;
-  height: auto;
-  cursor: pointer;
+  overflow: hidden;
 }
 
 .event-thumb {
-  width: 100%;
+  width: 200%;
+  transform: translateX(-0%);
   display: block;
+}
+
+.click-zone.right .event-thumb {
+  transform: translateX(-50%);
 }
 
 .event-team-names {
@@ -75,12 +83,14 @@ button:hover {
   justify-content: space-around;
   font-weight: bold;
   padding: 8px 0;
+  font-size: 1rem;
 }
 
 .event-details {
   display: flex;
   padding: 10px;
   border-top: 1px solid #eee;
+  font-size: 0.95rem;
 }
 
 .event-left {
@@ -129,8 +139,4 @@ button:hover {
   display: flex;
   justify-content: space-around;
   margin-top: 20px;
-}
-
-.hidden {
-  display: none;
 }
