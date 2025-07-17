@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const accessCodeInput = document.getElementById('access-code');
   const submitCodeBtn = document.getElementById('submit-code');
   const accessMsg = document.getElementById('access-message');
+  const loader = document.getElementById('loader');
+  const welcomeMessage = document.getElementById('welcome-message');
   const teamSearchInput = document.getElementById('team-search');
   const resultsContainer = document.getElementById('results');
 
@@ -35,7 +37,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Access Code Check
   submitCodeBtn.addEventListener('click', async () => {
     const code = accessCodeInput.value.trim();
+    accessMsg.textContent = '';
+    loader.classList.remove('hidden');
+
     if (!code) {
+      loader.classList.add('hidden');
       accessMsg.textContent = 'Please enter a code.';
       return;
     }
@@ -44,13 +50,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const q = query(collection(db, "Users"), where("accessCode", "==", code));
       const snapshot = await getDocs(q);
 
+      loader.classList.add('hidden');
+
       if (snapshot.empty) {
         accessMsg.textContent = 'Invalid access code ❌';
       } else {
+        const userDoc = snapshot.docs[0].data();
         accessSection.classList.add('hidden');
         searchSection.classList.remove('hidden');
+        welcomeMessage.textContent = `🎉 Welcome, ${userDoc.userDisplayname || 'User'}! Search Events Below`;
       }
     } catch (err) {
+      loader.classList.add('hidden');
       console.error(err);
       accessMsg.textContent = 'Error checking code.';
     }
