@@ -5,7 +5,8 @@ import {
   query,
   where
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+
+import { db } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const accessSection = document.getElementById('access-section');
