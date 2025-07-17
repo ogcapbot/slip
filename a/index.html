@@ -2,36 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Team Event Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OG Capper Bets</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <section id="access-section">
-    <h2>🔐 Enter Access Code</h2>
-    <input type="text" id="access-code" placeholder="Access Code" />
-    <button id="access-btn">Enter</button>
-    <p id="access-error" class="error hidden">Invalid code. Please try again.</p>
-  </section>
+  <div class="container">
+    <h1>🔐 Enter Access Code</h1>
+    <input type="text" id="accessCodeInput" placeholder="Access Code" />
+    <button id="accessCodeButton">Enter</button>
+    <p id="errorMessage" class="error-message"></p>
 
-  <section id="search-section" class="hidden">
-    <h2 id="welcome-message">🎉 Welcome! Search Events Below</h2>
-    <input type="text" id="team-search" placeholder="Enter team name..." />
-    <div id="results"></div>
-  </section>
+    <div id="searchContainer" class="hidden">
+      <h2>🔍 Search Events</h2>
+      <input type="text" id="searchInput" placeholder="Enter team name..." />
+    </div>
 
-  <div id="modal" class="modal hidden">
+    <div id="eventsContainer"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="eventModal" class="modal hidden">
     <div class="modal-content">
-      <img id="modal-image" src="" alt="Event Image" />
-      <h3 id="modal-team-name">Team Name</h3>
+      <img id="modalImage" src="" alt="Event Image" />
+      <h2 id="modalTeamName">Team Name</h2>
       <div class="modal-buttons">
-        <button id="close-modal">Close</button>
-        <button id="send-btn">Send</button>
+        <button id="closeModal">Close</button>
+        <button id="sendPick">Send</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase Config -->
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
 </body>
