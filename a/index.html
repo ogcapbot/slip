@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Access</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <!-- Access Code Page -->
+  <section id="access-section">
+    <h2>Enter Access Code</h2>
+    <input type="text" id="access-code" placeholder="Access Code" />
+    <button id="submit-code">Enter</button>
+    <p id="access-message"></p>
+  </section>
+
+  <!-- Search Page -->
+  <section id="search-section" class="hidden">
+    <h2>Search for a Team</h2>
+    <input type="text" id="team-search" placeholder="Team Name" />
+    <div id="results"></div>
+  </section>
+
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
