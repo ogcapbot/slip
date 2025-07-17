@@ -1,16 +1,25 @@
-body {
+/* General Reset */
+* {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
+}
+
+body {
   font-family: Arial, sans-serif;
   background-color: #f0f0f0;
   color: #000;
 }
 
+/* Container */
 .container {
   max-width: 480px;
   margin: auto;
   padding: 20px;
+  width: 100%;
 }
 
+/* Inputs & Buttons */
 input, button {
   width: 100%;
   padding: 12px;
@@ -39,6 +48,7 @@ button:hover {
   display: none !important;
 }
 
+/* Event Card */
 .event-card {
   background: #fff;
   border-radius: 8px;
@@ -54,6 +64,7 @@ button:hover {
 
 .event-thumb {
   width: 100%;
+  height: auto;
   display: block;
   object-fit: cover;
 }
@@ -84,6 +95,7 @@ button:hover {
 
 .event-details {
   display: flex;
+  flex-wrap: wrap;
   padding: 10px;
 }
 
@@ -134,4 +146,31 @@ button:hover {
   display: flex;
   justify-content: space-around;
   margin-top: 15px;
+}
+
+/* Responsive Fix */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  input, button {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .event-details {
+    flex-direction: column;
+  }
+
+  .details-left, .details-right {
+    width: 100%;
+    text-align: left;
+  }
+
+  .team-labels {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
 }
