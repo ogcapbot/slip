@@ -1,71 +1,75 @@
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f2f2f2;
   margin: 0;
   padding: 0;
+  font-family: sans-serif;
+  background-color: #f2f2f2;
   text-align: center;
 }
 
-section {
-  margin: 20px auto;
-  max-width: 600px;
+h1, h2 {
+  margin-top: 20px;
 }
 
-.hidden {
-  display: none;
+#access-screen {
+  padding: 40px 20px;
 }
 
 input[type="text"] {
   padding: 10px;
-  font-size: 16px;
-  width: 100%;
-  max-width: 100%;
-  margin: 10px 0;
-  box-sizing: border-box;
+  font-size: 1rem;
+  width: 90%;
+  max-width: 500px;
+  margin-bottom: 20px;
 }
 
 button {
-  background-color: #007bff;
-  color: white;
   padding: 10px 20px;
-  margin: 10px 5px;
-  font-size: 16px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0056b3;
+#event-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px;
 }
 
 .event-card {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  margin: 20px auto;
-  padding: 15px;
-  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 95%;
+  max-width: 500px;
+  margin-bottom: 30px;
+  overflow: hidden;
 }
 
-.event-thumb {
+.event-image {
   width: 100%;
-  max-width: 100%;
   display: flex;
   cursor: pointer;
 }
 
-.event-thumb .half {
+.event-half {
   width: 50%;
-  height: auto;
-  object-fit: cover;
+  display: inline-block;
 }
 
-.team-names {
+.event-names {
   display: flex;
   justify-content: space-between;
   font-weight: bold;
-  margin-top: 10px;
+  padding: 10px;
+}
+
+.event-details {
+  text-align: left;
+  padding: 10px 15px;
 }
 
 .modal {
@@ -74,22 +78,32 @@ button:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6);
+  background-color: rgba(0,0,0,0.6);
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.modal.hidden {
+  display: none;
 }
 
 .modal-content {
   background: white;
   padding: 20px;
   border-radius: 10px;
-  max-width: 90%;
-  width: 300px;
   text-align: center;
+  max-width: 90%;
 }
 
-.modal img {
-  max-width: 100%;
-  border-radius: 10px;
+.modal-content img {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
