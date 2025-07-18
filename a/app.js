@@ -1,163 +1,155 @@
-import { db } from './firebase-config.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import {
+  getFirestore,
   collection,
   getDocs,
   query,
+  where,
   orderBy
-} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  // Your Firebase config here
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const accessSection = document.getElementById('access-section');
 const mainSection = document.getElementById('main-section');
-const accessInput = document.getElementById('access-code');
 const accessBtn = document.getElementById('access-btn');
+const accessCodeInput = document.getElementById('access-code');
 const searchInput = document.getElementById('search-input');
 const eventsContainer = document.getElementById('events-container');
+const loadMoreBtn = document.getElementById('load-more-btn');
+
 const modal = document.getElementById('modal');
-const modalImage = document.getElementById('modal-image');
-const modalTeamName = document.getElementById('modal-team-name');
-const closeModalBtn = document.getElementById('close-modal');
+const modalImg = document.getElementById('modal-image');
+const modalTeam = document.getElementById('modal-team-name');
+const modalClose = document.getElementById('modal-close');
 
-const allowedCode = 'ogcap2025';
 let allEvents = [];
-let todayEvents = [];
-let futureEvents = [];
-let displayIndex = 0;
-const batchSize = 5;
+let filteredEvents = [];
+let displayedCount = 0;
 
-// 🔓 Access logic
-accessBtn.addEventListener('click', () => {
-  if (accessInput.value.trim().toLowerCase() === allowedCode) {
-    accessSection.classList.add('hidden');
-    mainSection.classList.remove('hidden');
-    loadEvents();
-  } else {
-    alert('Invalid access code!');
-  }
-});
+const EVENTS_LIMIT = 5;
+const ACCESS_CODE = "OGCAP2025";
 
-async function loadEvents() {
-  const q = query(collection(db, 'events'), orderBy('event_timestamp_est'));
-  const snapshot = await getDocs(q);
-  allEvents = snapshot.docs.map(doc => doc.data());
-
-  const now = new Date();
-  const estNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  estNow.setHours(0, 0, 0, 0);
-  const todayStart = estNow.getTime() / 1000;
-  const todayEnd = todayStart + 86400;
-
-  todayEvents = allEvents.filter(ev =>
-    ev.event_timestamp_est >= todayStart && ev.event_timestamp_est < todayEnd
-  );
-
-  futureEvents = allEvents.filter(ev =>
-    ev.event_timestamp_est >= todayEnd
-  );
-
-  renderEvents(todayEvents);
-
-  if (futureEvents.length > 0) {
-    appendLoadMoreButton();
-  }
+function formatDate(timestamp) {
+  return new Date(timestamp).toLocaleString();
 }
 
-function renderEvents(events) {
-  eventsContainer.innerHTML = '';
-  if (events.length === 0) {
-    eventsContainer.innerHTML = `<p style="text-align:center;margin:20px 0;">No events for today.</p>`;
-  } else {
-    events.forEach(ev => eventsContainer.appendChild(buildEventCard(ev)));
-  }
-}
-
-function loadMoreEvents() {
-  const nextBatch = futureEvents.slice(displayIndex, displayIndex + batchSize);
-  nextBatch.forEach(ev => eventsContainer.appendChild(buildEventCard(ev)));
-  displayIndex += batchSize;
-
-  if (displayIndex < futureEvents.length) {
-    appendLoadMoreButton();
-  }
-}
-
-function appendLoadMoreButton() {
-  const btn = document.createElement('button');
-  btn.textContent = 'Load More';
-  btn.className = 'load-more-btn';
-  btn.addEventListener('click', () => {
-    btn.remove();
-    loadMoreEvents();
-  });
-  eventsContainer.appendChild(btn);
-}
-
-function buildEventCard(ev) {
+function renderEvent(event) {
   const card = document.createElement('div');
   card.className = 'event-card';
 
-  const eventDate = new Date(ev.event_timestamp_est * 1000);
-  const formattedDate = eventDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const thumb = document.createElement('div');
+  thumb.className = 'event-thumb';
 
-  card.innerHTML = `
-    <div class="event-thumb-wrapper">
-      <img src="${ev.event_img_thumb}" alt="Thumb" class="event-thumb">
-      <div class="click-zone left" data-team="${ev.event_home_team_name}" data-img="${ev.event_img_thumb}"></div>
-      <div class="click-zone right" data-team="${ev.event_away_team_name}" data-img="${ev.event_img_thumb}"></div>
-    </div>
-    <div class="team-labels">
-      <span>${ev.event_home_team_name}</span>
-      <span>${ev.event_away_team_name}</span>
-    </div>
-    <div class="event-details">
-      <div class="details-left">
-        <div>${ev.event_sport_name}</div>
-        <img src="${ev.event_img_league_badge}" class="event-league-badge">
-      </div>
-      <div class="details-right">
-        <p><strong>Date:</strong> ${formattedDate}</p>
-        <p><strong>Venue:</strong> ${ev.event_venue}</p>
-        <p><strong>League:</strong> ${ev.event_league_name_short || 'N/A'}</p>
-        <p><strong>Match:</strong> ${ev.event_home_team_name} vs ${ev.event_away_team_name}</p>
-      </div>
-    </div>
+  const left = document.createElement('img');
+  left.src = event.event_thumb;
+  left.className = 'half';
+  left.addEventListener('click', () => openModal(event.event_thumb, event.event_home_team_name));
+
+  const right = document.createElement('img');
+  right.src = event.event_thumb;
+  right.className = 'half';
+  right.addEventListener('click', () => openModal(event.event_thumb, event.event_away_team_name));
+
+  thumb.appendChild(left);
+  thumb.appendChild(right);
+
+  const names = document.createElement('div');
+  names.className = 'team-names';
+  names.innerHTML = `<div>${event.event_home_team_name}</div><div>${event.event_away_team_name}</div>`;
+
+  const info = document.createElement('div');
+  info.innerHTML = `
+    <p><strong>${event.sport_name}</strong></p>
+    <p><img src="${event.league_logo}" height="25" /></p>
+    <p><strong>Date:</strong> ${formatDate(event.event_timestamp_est)}</p>
+    <p><strong>Venue:</strong> ${event.event_venue}</p>
+    <p><strong>League:</strong> ${event.league_name || 'N/A'}</p>
+    <p><strong>Match:</strong> ${event.event_home_team_name} vs ${event.event_away_team_name}</p>
   `;
 
-  card.querySelectorAll('.click-zone').forEach(zone => {
-    zone.addEventListener('click', () => {
-      modalImage.src = zone.dataset.img;
-      modalTeamName.textContent = zone.dataset.team;
-      modal.classList.remove('hidden');
-    });
-  });
+  card.appendChild(thumb);
+  card.appendChild(names);
+  card.appendChild(info);
 
-  return card;
+  eventsContainer.appendChild(card);
 }
 
-// Modal close
-closeModalBtn.addEventListener('click', () => {
+function openModal(imgUrl, teamName) {
+  modalImg.src = imgUrl;
+  modalTeam.textContent = teamName;
+  modal.classList.remove('hidden');
+}
+
+modalClose.addEventListener('click', () => {
   modal.classList.add('hidden');
 });
 
-// Search filter logic
-searchInput.addEventListener('input', () => {
-  const term = searchInput.value.trim().toLowerCase();
-  const filteredToday = todayEvents.filter(ev =>
-    ev.event_home_team_name.toLowerCase().includes(term) ||
-    ev.event_away_team_name.toLowerCase().includes(term)
+function showEvents(events, reset = false) {
+  if (reset) {
+    eventsContainer.innerHTML = '';
+    displayedCount = 0;
+  }
+
+  const remaining = events.slice(displayedCount, displayedCount + EVENTS_LIMIT);
+  remaining.forEach(renderEvent);
+  displayedCount += remaining.length;
+
+  loadMoreBtn.classList.toggle('hidden', displayedCount >= events.length);
+}
+
+function filterToday(events) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  return events.filter(e => {
+    const d = new Date(e.event_timestamp_est);
+    return d >= today && d < tomorrow;
+  });
+}
+
+function searchAndDisplay(query = '') {
+  const lower = query.toLowerCase();
+  filteredEvents = allEvents.filter(e =>
+    e.event_home_team_name.toLowerCase().includes(lower) ||
+    e.event_away_team_name.toLowerCase().includes(lower)
   );
 
-  if (filteredToday.length > 0) {
-    renderEvents(filteredToday);
+  const todayFiltered = filterToday(filteredEvents);
+
+  if (todayFiltered.length > 0) {
+    showEvents(todayFiltered, true);
   } else {
-    eventsContainer.innerHTML = `<p style="text-align:center;margin:20px 0;">No events for today.</p>`;
-    const futureFiltered = futureEvents.filter(ev =>
-      ev.event_home_team_name.toLowerCase().includes(term) ||
-      ev.event_away_team_name.toLowerCase().includes(term)
-    );
-    if (futureFiltered.length > 0) {
-      futureEvents = futureFiltered;
-      displayIndex = 0;
-      appendLoadMoreButton();
-    }
+    eventsContainer.innerHTML = `<p>No results for today.</p>`;
+    showEvents(filteredEvents, false);
   }
+}
+
+accessBtn.addEventListener('click', async () => {
+  if (accessCodeInput.value.trim() !== ACCESS_CODE) {
+    alert('Incorrect access code.');
+    return;
+  }
+
+  accessSection.classList.add('hidden');
+  mainSection.classList.remove('hidden');
+
+  const snapshot = await getDocs(query(collection(db, 'events'), orderBy('event_timestamp_est')));
+  allEvents = snapshot.docs.map(doc => doc.data());
+  searchAndDisplay();
+});
+
+searchInput.addEventListener('input', () => {
+  searchAndDisplay(searchInput.value);
+});
+
+loadMoreBtn.addEventListener('click', () => {
+  showEvents(filteredEvents);
 });
