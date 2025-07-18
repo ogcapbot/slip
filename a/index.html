@@ -3,35 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Event Viewer</title>
+  <title>Team Search Access</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- Access Code Screen -->
-  <section id="access-screen">
-    <h1>🔐 Enter Access Code</h1>
+  <section id="access-section">
+    <h2>🔐 Enter Access Code</h2>
     <input type="text" id="access-code" placeholder="Access Code" />
-    <button id="access-submit">Enter</button>
-    <p id="access-error" class="error"></p>
+    <button id="submit-code">Enter</button>
+    <p id="access-message"></p>
+    <div id="loader" class="hidden loader"></div>
   </section>
 
-  <!-- Main App -->
-  <section id="app-screen" class="hidden">
-    <h2>🔍 Search Events</h2>
-    <input type="text" id="search-input" placeholder="Search team name..." />
+  <!-- Search Screen -->
+  <section id="search-section" class="hidden">
+    <h2 id="welcome-message">🔍 Search Events</h2>
+    <input type="text" id="team-search" placeholder="Enter team name..." />
     <div id="results"></div>
-    <button id="load-more" class="hidden">Load More</button>
   </section>
 
   <!-- Modal -->
-  <div id="modal" class="modal hidden">
+  <div id="eventModal" class="modal hidden">
     <div class="modal-content">
-      <img id="modal-image" src="" alt="Event Thumb" />
-      <h3 id="modal-team"></h3>
-      <div class="modal-actions">
-        <button id="modal-close">Close</button>
-        <button id="modal-send">Send</button>
+      <img id="modalImage" src="" alt="Event Image" />
+      <h3 id="modalTitle">Event</h3>
+      <div class="modal-buttons">
+        <button id="modalClose">Close</button>
+        <button id="modalSend">Send</button>
       </div>
     </div>
   </div>
