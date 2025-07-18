@@ -1,155 +1,161 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import {
   getFirestore,
   collection,
-  getDocs,
   query,
+  orderBy,
   where,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+  getDocs,
+  limit,
+  startAfter
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  // Your Firebase config here
-};
+// ✅ Your Firebase config — KEEP THIS AS YOU HAVE IT
+import { firebaseConfig } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const accessSection = document.getElementById('access-section');
-const mainSection = document.getElementById('main-section');
-const accessBtn = document.getElementById('access-btn');
-const accessCodeInput = document.getElementById('access-code');
-const searchInput = document.getElementById('search-input');
-const eventsContainer = document.getElementById('events-container');
-const loadMoreBtn = document.getElementById('load-more-btn');
+const accessBtn = document.getElementById("access-btn");
+const accessScreen = document.getElementById("access-screen");
+const appScreen = document.getElementById("app");
 
-const modal = document.getElementById('modal');
-const modalImg = document.getElementById('modal-image');
-const modalTeam = document.getElementById('modal-team-name');
-const modalClose = document.getElementById('modal-close');
+const searchInput = document.getElementById("search-input");
+const eventList = document.getElementById("event-list");
+const loadMoreBtn = document.getElementById("load-more");
 
-let allEvents = [];
-let filteredEvents = [];
-let displayedCount = 0;
+let lastVisible = null;
+let currentQuery = null;
+let currentSearchTerm = "";
+let hasMore = true;
 
-const EVENTS_LIMIT = 5;
-const ACCESS_CODE = "OGCAP2025";
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const todayTimestamp = today.getTime();
 
-function formatDate(timestamp) {
-  return new Date(timestamp).toLocaleString();
-}
+const EVENTS_PER_PAGE = 5;
 
-function renderEvent(event) {
-  const card = document.createElement('div');
-  card.className = 'event-card';
-
-  const thumb = document.createElement('div');
-  thumb.className = 'event-thumb';
-
-  const left = document.createElement('img');
-  left.src = event.event_thumb;
-  left.className = 'half';
-  left.addEventListener('click', () => openModal(event.event_thumb, event.event_home_team_name));
-
-  const right = document.createElement('img');
-  right.src = event.event_thumb;
-  right.className = 'half';
-  right.addEventListener('click', () => openModal(event.event_thumb, event.event_away_team_name));
-
-  thumb.appendChild(left);
-  thumb.appendChild(right);
-
-  const names = document.createElement('div');
-  names.className = 'team-names';
-  names.innerHTML = `<div>${event.event_home_team_name}</div><div>${event.event_away_team_name}</div>`;
-
-  const info = document.createElement('div');
-  info.innerHTML = `
-    <p><strong>${event.sport_name}</strong></p>
-    <p><img src="${event.league_logo}" height="25" /></p>
-    <p><strong>Date:</strong> ${formatDate(event.event_timestamp_est)}</p>
-    <p><strong>Venue:</strong> ${event.event_venue}</p>
-    <p><strong>League:</strong> ${event.league_name || 'N/A'}</p>
-    <p><strong>Match:</strong> ${event.event_home_team_name} vs ${event.event_away_team_name}</p>
-  `;
-
-  card.appendChild(thumb);
-  card.appendChild(names);
-  card.appendChild(info);
-
-  eventsContainer.appendChild(card);
-}
-
-function openModal(imgUrl, teamName) {
-  modalImg.src = imgUrl;
-  modalTeam.textContent = teamName;
-  modal.classList.remove('hidden');
-}
-
-modalClose.addEventListener('click', () => {
-  modal.classList.add('hidden');
+accessBtn.addEventListener("click", () => {
+  const code = document.getElementById("access-code").value.trim();
+  if (code === "yourAccessCode") {
+    accessScreen.style.display = "none";
+    appScreen.style.display = "block";
+    fetchEvents();
+  } else {
+    alert("Invalid access code.");
+  }
 });
 
-function showEvents(events, reset = false) {
-  if (reset) {
-    eventsContainer.innerHTML = '';
-    displayedCount = 0;
+searchInput.addEventListener("input", () => {
+  eventList.innerHTML = "";
+  lastVisible = null;
+  currentSearchTerm = searchInput.value.trim().toLowerCase();
+  fetchEvents();
+});
+
+loadMoreBtn.addEventListener("click", () => {
+  if (hasMore) {
+    fetchEvents(true);
   }
+});
 
-  const remaining = events.slice(displayedCount, displayedCount + EVENTS_LIMIT);
-  remaining.forEach(renderEvent);
-  displayedCount += remaining.length;
+async function fetchEvents(isLoadMore = false) {
+  let q = collection(db, "events");
 
-  loadMoreBtn.classList.toggle('hidden', displayedCount >= events.length);
-}
-
-function filterToday(events) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-
-  return events.filter(e => {
-    const d = new Date(e.event_timestamp_est);
-    return d >= today && d < tomorrow;
-  });
-}
-
-function searchAndDisplay(query = '') {
-  const lower = query.toLowerCase();
-  filteredEvents = allEvents.filter(e =>
-    e.event_home_team_name.toLowerCase().includes(lower) ||
-    e.event_away_team_name.toLowerCase().includes(lower)
+  q = query(
+    q,
+    orderBy("event_timestamp_est"),
+    ...(currentSearchTerm
+      ? [where("search_team_names", "array-contains", currentSearchTerm)]
+      : [where("event_timestamp_est", ">=", todayTimestamp)]),
+    ...(lastVisible ? [startAfter(lastVisible)] : []),
+    limit(EVENTS_PER_PAGE)
   );
 
-  const todayFiltered = filterToday(filteredEvents);
+  currentQuery = q;
+  const snapshot = await getDocs(q);
 
-  if (todayFiltered.length > 0) {
-    showEvents(todayFiltered, true);
-  } else {
-    eventsContainer.innerHTML = `<p>No results for today.</p>`;
-    showEvents(filteredEvents, false);
-  }
-}
-
-accessBtn.addEventListener('click', async () => {
-  if (accessCodeInput.value.trim() !== ACCESS_CODE) {
-    alert('Incorrect access code.');
+  if (snapshot.empty && !isLoadMore) {
+    eventList.innerHTML = "<p>No results for today.</p>";
+    loadMoreBtn.style.display = "none";
     return;
   }
 
-  accessSection.classList.add('hidden');
-  mainSection.classList.remove('hidden');
+  snapshot.forEach(doc => renderEventCard(doc.data()));
 
-  const snapshot = await getDocs(query(collection(db, 'events'), orderBy('event_timestamp_est')));
-  allEvents = snapshot.docs.map(doc => doc.data());
-  searchAndDisplay();
+  lastVisible = snapshot.docs[snapshot.docs.length - 1];
+  hasMore = snapshot.docs.length === EVENTS_PER_PAGE;
+  loadMoreBtn.style.display = hasMore ? "block" : "none";
+}
+
+function renderEventCard(data) {
+  const card = document.createElement("div");
+  card.className = "event-card";
+
+  const imageRow = document.createElement("div");
+  imageRow.className = "event-image";
+
+  const leftSide = document.createElement("div");
+  leftSide.className = "event-half";
+  const rightSide = document.createElement("div");
+  rightSide.className = "event-half";
+
+  const img = document.createElement("img");
+  img.src = data.event_image;
+  img.alt = "Event Image";
+  img.style.width = "100%";
+
+  const img2 = img.cloneNode();
+
+  leftSide.appendChild(img);
+  rightSide.appendChild(img2);
+
+  leftSide.addEventListener("click", () =>
+    openModal(data.event_image, data.event_home_team_name)
+  );
+  rightSide.addEventListener("click", () =>
+    openModal(data.event_image, data.event_away_team_name)
+  );
+
+  imageRow.appendChild(leftSide);
+  imageRow.appendChild(rightSide);
+
+  const names = document.createElement("div");
+  names.className = "event-names";
+  names.innerHTML = `
+    <div>${data.event_home_team_name}</div>
+    <div>${data.event_away_team_name}</div>
+  `;
+
+  const details = document.createElement("div");
+  details.className = "event-details";
+  const date = new Date(data.event_timestamp_est).toLocaleString();
+
+  details.innerHTML = `
+    <p><strong>${data.sport_name || "Event"}</strong></p>
+    <p><strong>Date:</strong> ${date}</p>
+    <p><strong>Venue:</strong> ${data.venue_name || "TBA"}</p>
+    <p><strong>League:</strong> ${data.league_name || "N/A"}</p>
+    <p><strong>Match:</strong> ${data.event_home_team_name} vs ${data.event_away_team_name}</p>
+  `;
+
+  card.appendChild(imageRow);
+  card.appendChild(names);
+  card.appendChild(details);
+  eventList.appendChild(card);
+}
+
+function openModal(imageUrl, teamName) {
+  document.getElementById("modal-image").src = imageUrl;
+  document.getElementById("modal-team-name").textContent = teamName;
+  document.getElementById("modal").classList.remove("hidden");
+}
+
+document.getElementById("modal-close").addEventListener("click", () => {
+  document.getElementById("modal").classList.add("hidden");
 });
 
-searchInput.addEventListener('input', () => {
-  searchAndDisplay(searchInput.value);
-});
-
-loadMoreBtn.addEventListener('click', () => {
-  showEvents(filteredEvents);
+document.getElementById("modal-send").addEventListener("click", () => {
+  alert("Team selected!");
+  document.getElementById("modal").classList.add("hidden");
 });
