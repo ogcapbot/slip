@@ -3,30 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Event Access</title>
-  <link rel="stylesheet" href="style.css"/>
+  <title>Event Viewer</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="access-screen">
+
+  <!-- Access Code Screen -->
+  <section id="access-screen">
     <h1>🔐 Enter Access Code</h1>
     <input type="text" id="access-code" placeholder="Access Code" />
-    <button id="access-btn">Enter</button>
-  </div>
+    <button id="access-submit">Enter</button>
+    <p id="access-error" class="error"></p>
+  </section>
 
-  <div id="app" style="display: none;">
-    <h1>🎉 Welcome, OG Cap Bot! Search Events Below</h1>
+  <!-- Main App -->
+  <section id="app-screen" class="hidden">
     <h2>🔍 Search Events</h2>
-    <input type="text" id="search-input" placeholder="Enter team name..." />
-    <div id="event-list"></div>
-    <button id="load-more" style="display: none;">Load More</button>
-  </div>
+    <input type="text" id="search-input" placeholder="Search team name..." />
+    <div id="results"></div>
+    <button id="load-more" class="hidden">Load More</button>
+  </section>
 
   <!-- Modal -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
-      <img id="modal-image" src="" alt="Event Image" />
-      <h2 id="modal-team-name">Team Name</h2>
-      <div class="modal-buttons">
+      <img id="modal-image" src="" alt="Event Thumb" />
+      <h3 id="modal-team"></h3>
+      <div class="modal-actions">
         <button id="modal-close">Close</button>
         <button id="modal-send">Send</button>
       </div>
