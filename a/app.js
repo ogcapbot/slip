@@ -1,161 +1,149 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { app, db } from './firebase-config.js';
 import {
-  getFirestore,
   collection,
   query,
-  orderBy,
   where,
-  getDocs,
+  orderBy,
   limit,
-  startAfter
+  getDocs,
+  startAfter,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// ✅ Your Firebase config — KEEP THIS AS YOU HAVE IT
-import { firebaseConfig } from './firebase-config.js';
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+// ✅ DOM Elements
 const accessBtn = document.getElementById("access-btn");
 const accessScreen = document.getElementById("access-screen");
 const appScreen = document.getElementById("app");
-
 const searchInput = document.getElementById("search-input");
-const eventList = document.getElementById("event-list");
+const resultsDiv = document.getElementById("results");
 const loadMoreBtn = document.getElementById("load-more");
 
 let lastVisible = null;
 let currentQuery = null;
 let currentSearchTerm = "";
-let hasMore = true;
-
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const todayTimestamp = today.getTime();
-
-const EVENTS_PER_PAGE = 5;
 
 accessBtn.addEventListener("click", () => {
-  const code = document.getElementById("access-code").value.trim();
-  if (code === "yourAccessCode") {
-    accessScreen.style.display = "none";
-    appScreen.style.display = "block";
-    fetchEvents();
-  } else {
-    alert("Invalid access code.");
-  }
+  accessScreen.style.display = "none";
+  appScreen.style.display = "block";
+  fetchEventsForToday();
 });
 
-searchInput.addEventListener("input", () => {
-  eventList.innerHTML = "";
-  lastVisible = null;
-  currentSearchTerm = searchInput.value.trim().toLowerCase();
-  fetchEvents();
-});
+function formatDate(date) {
+  return date.toISOString().split('T')[0];
+}
 
-loadMoreBtn.addEventListener("click", () => {
-  if (hasMore) {
-    fetchEvents(true);
-  }
-});
+function getTodayBounds() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
 
-async function fetchEvents(isLoadMore = false) {
-  let q = collection(db, "events");
+async function fetchEventsForToday(searchTerm = "") {
+  resultsDiv.innerHTML = "";
+  const { start, end } = getTodayBounds();
+  const eventsRef = collection(db, "events");
 
-  q = query(
-    q,
+  let q = query(
+    eventsRef,
+    where("event_timestamp_est", ">=", start),
+    where("event_timestamp_est", "<=", end),
     orderBy("event_timestamp_est"),
-    ...(currentSearchTerm
-      ? [where("search_team_names", "array-contains", currentSearchTerm)]
-      : [where("event_timestamp_est", ">=", todayTimestamp)]),
-    ...(lastVisible ? [startAfter(lastVisible)] : []),
-    limit(EVENTS_PER_PAGE)
+    limit(5)
   );
 
+  if (searchTerm) {
+    q = query(
+      eventsRef,
+      where("event_timestamp_est", ">=", start),
+      where("event_timestamp_est", "<=", end),
+      where("searchTerms", "array-contains", searchTerm.toLowerCase()),
+      orderBy("event_timestamp_est"),
+      limit(5)
+    );
+  }
+
   currentQuery = q;
+  currentSearchTerm = searchTerm;
   const snapshot = await getDocs(q);
 
-  if (snapshot.empty && !isLoadMore) {
-    eventList.innerHTML = "<p>No results for today.</p>";
-    loadMoreBtn.style.display = "none";
+  if (snapshot.empty) {
+    resultsDiv.innerHTML = `
+      <p>No results for today.</p>
+      <button id="load-more">Load More</button>
+    `;
+    document.getElementById("load-more").addEventListener("click", loadMoreEvents);
     return;
   }
 
-  snapshot.forEach(doc => renderEventCard(doc.data()));
+  snapshot.forEach(doc => {
+    const event = doc.data();
+    resultsDiv.innerHTML += renderEventCard(event);
+  });
 
   lastVisible = snapshot.docs[snapshot.docs.length - 1];
-  hasMore = snapshot.docs.length === EVENTS_PER_PAGE;
-  loadMoreBtn.style.display = hasMore ? "block" : "none";
+
+  if (snapshot.size === 5) {
+    resultsDiv.innerHTML += `<button id="load-more">Load More</button>`;
+    document.getElementById("load-more").addEventListener("click", loadMoreEvents);
+  }
 }
 
-function renderEventCard(data) {
-  const card = document.createElement("div");
-  card.className = "event-card";
-
-  const imageRow = document.createElement("div");
-  imageRow.className = "event-image";
-
-  const leftSide = document.createElement("div");
-  leftSide.className = "event-half";
-  const rightSide = document.createElement("div");
-  rightSide.className = "event-half";
-
-  const img = document.createElement("img");
-  img.src = data.event_image;
-  img.alt = "Event Image";
-  img.style.width = "100%";
-
-  const img2 = img.cloneNode();
-
-  leftSide.appendChild(img);
-  rightSide.appendChild(img2);
-
-  leftSide.addEventListener("click", () =>
-    openModal(data.event_image, data.event_home_team_name)
-  );
-  rightSide.addEventListener("click", () =>
-    openModal(data.event_image, data.event_away_team_name)
+async function loadMoreEvents() {
+  const eventsRef = collection(db, "events");
+  let q = query(
+    eventsRef,
+    orderBy("event_timestamp_est"),
+    startAfter(lastVisible),
+    limit(5)
   );
 
-  imageRow.appendChild(leftSide);
-  imageRow.appendChild(rightSide);
+  if (currentSearchTerm) {
+    q = query(
+      eventsRef,
+      where("searchTerms", "array-contains", currentSearchTerm.toLowerCase()),
+      orderBy("event_timestamp_est"),
+      startAfter(lastVisible),
+      limit(5)
+    );
+  }
 
-  const names = document.createElement("div");
-  names.className = "event-names";
-  names.innerHTML = `
-    <div>${data.event_home_team_name}</div>
-    <div>${data.event_away_team_name}</div>
-  `;
+  const snapshot = await getDocs(q);
 
-  const details = document.createElement("div");
-  details.className = "event-details";
-  const date = new Date(data.event_timestamp_est).toLocaleString();
+  if (snapshot.empty) {
+    return;
+  }
 
-  details.innerHTML = `
-    <p><strong>${data.sport_name || "Event"}</strong></p>
-    <p><strong>Date:</strong> ${date}</p>
-    <p><strong>Venue:</strong> ${data.venue_name || "TBA"}</p>
-    <p><strong>League:</strong> ${data.league_name || "N/A"}</p>
-    <p><strong>Match:</strong> ${data.event_home_team_name} vs ${data.event_away_team_name}</p>
-  `;
+  snapshot.forEach(doc => {
+    const event = doc.data();
+    resultsDiv.innerHTML += renderEventCard(event);
+  });
 
-  card.appendChild(imageRow);
-  card.appendChild(names);
-  card.appendChild(details);
-  eventList.appendChild(card);
+  lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  if (snapshot.size < 5) {
+    const loadMoreBtn = document.getElementById("load-more");
+    if (loadMoreBtn) loadMoreBtn.remove();
+  }
 }
 
-function openModal(imageUrl, teamName) {
-  document.getElementById("modal-image").src = imageUrl;
-  document.getElementById("modal-team-name").textContent = teamName;
-  document.getElementById("modal").classList.remove("hidden");
+function renderEventCard(event) {
+  return `
+    <div class="event-card">
+      <img src="${event.image}" alt="Event Image" />
+      <h3>${event.team_home} vs ${event.team_away}</h3>
+      <p><strong>Date:</strong> ${new Date(event.event_timestamp_est).toLocaleString()}</p>
+      <p><strong>Venue:</strong> ${event.venue}</p>
+      <p><strong>League:</strong> ${event.league}</p>
+    </div>
+  `;
 }
 
-document.getElementById("modal-close").addEventListener("click", () => {
-  document.getElementById("modal").classList.add("hidden");
-});
+searchInput.addEventListener("input", debounceSearch);
 
-document.getElementById("modal-send").addEventListener("click", () => {
-  alert("Team selected!");
-  document.getElementById("modal").classList.add("hidden");
-});
+function debounceSearch(e) {
+  clearTimeout(debounceSearch.timer);
+  debounceSearch.timer = setTimeout(() => {
+    fetchEventsForToday(e.target.value.trim());
+  }, 300);
+}
