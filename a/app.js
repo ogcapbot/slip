@@ -1,149 +1,150 @@
-import { app, db } from './firebase-config.js';
+import { db } from './firebase-config.js';
 import {
   collection,
   query,
   where,
   orderBy,
-  limit,
   getDocs,
   startAfter,
+  limit
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// ✅ DOM Elements
-const accessBtn = document.getElementById("access-btn");
-const accessScreen = document.getElementById("access-screen");
-const appScreen = document.getElementById("app");
-const searchInput = document.getElementById("search-input");
-const resultsDiv = document.getElementById("results");
-const loadMoreBtn = document.getElementById("load-more");
+const ACCESS_CODE = 'yourAccessCode'; // Replace with your desired access code
 
-let lastVisible = null;
-let currentQuery = null;
-let currentSearchTerm = "";
+const accessScreen = document.getElementById('access-screen');
+const appScreen = document.getElementById('app-screen');
+const accessInput = document.getElementById('access-code');
+const accessBtn = document.getElementById('access-submit');
+const accessError = document.getElementById('access-error');
+const searchInput = document.getElementById('search-input');
+const results = document.getElementById('results');
+const loadMoreBtn = document.getElementById('load-more');
 
-accessBtn.addEventListener("click", () => {
-  accessScreen.style.display = "none";
-  appScreen.style.display = "block";
-  fetchEventsForToday();
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modal-image');
+const modalTeam = document.getElementById('modal-team');
+const modalClose = document.getElementById('modal-close');
+
+let allResults = [];
+let displayed = 0;
+const pageSize = 5;
+
+// Date helpers
+const isToday = (timestamp) => {
+  const today = new Date();
+  const date = new Date(timestamp);
+  return date.toDateString() === today.toDateString();
+};
+
+// Load users and validate access code
+accessBtn.addEventListener('click', async () => {
+  const code = accessInput.value.trim();
+  const snapshot = await getDocs(collection(db, 'Users'));
+  const valid = snapshot.docs.some(doc => doc.data().access_code === code);
+  if (valid || code === ACCESS_CODE) {
+    accessScreen.classList.add('hidden');
+    appScreen.classList.remove('hidden');
+    loadTodayEvents();
+  } else {
+    accessError.textContent = 'Invalid access code.';
+  }
 });
 
-function formatDate(date) {
-  return date.toISOString().split('T')[0];
-}
-
-function getTodayBounds() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
-}
-
-async function fetchEventsForToday(searchTerm = "") {
-  resultsDiv.innerHTML = "";
-  const { start, end } = getTodayBounds();
-  const eventsRef = collection(db, "events");
-
-  let q = query(
-    eventsRef,
-    where("event_timestamp_est", ">=", start),
-    where("event_timestamp_est", "<=", end),
-    orderBy("event_timestamp_est"),
-    limit(5)
-  );
-
-  if (searchTerm) {
-    q = query(
-      eventsRef,
-      where("event_timestamp_est", ">=", start),
-      where("event_timestamp_est", "<=", end),
-      where("searchTerms", "array-contains", searchTerm.toLowerCase()),
-      orderBy("event_timestamp_est"),
-      limit(5)
-    );
-  }
-
-  currentQuery = q;
-  currentSearchTerm = searchTerm;
+async function loadTodayEvents(search = '') {
+  const q = query(collection(db, 'event_data'), orderBy('event_timestamp_est'));
   const snapshot = await getDocs(q);
+  const data = snapshot.docs
+    .map(doc => doc.data())
+    .filter(e => isToday(e.event_timestamp_est))
+    .filter(e =>
+      e.event_home_team_name.toLowerCase().includes(search) ||
+      e.event_away_team_name.toLowerCase().includes(search)
+    );
 
-  if (snapshot.empty) {
-    resultsDiv.innerHTML = `
-      <p>No results for today.</p>
-      <button id="load-more">Load More</button>
-    `;
-    document.getElementById("load-more").addEventListener("click", loadMoreEvents);
-    return;
-  }
+  allResults = data;
+  displayed = 0;
+  results.innerHTML = '';
 
-  snapshot.forEach(doc => {
-    const event = doc.data();
-    resultsDiv.innerHTML += renderEventCard(event);
-  });
-
-  lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-  if (snapshot.size === 5) {
-    resultsDiv.innerHTML += `<button id="load-more">Load More</button>`;
-    document.getElementById("load-more").addEventListener("click", loadMoreEvents);
+  if (data.length === 0) {
+    results.innerHTML = `<p>No results for today.</p>`;
+    checkFutureEvents(search);
+  } else {
+    renderNextBatch();
   }
 }
 
-async function loadMoreEvents() {
-  const eventsRef = collection(db, "events");
-  let q = query(
-    eventsRef,
-    orderBy("event_timestamp_est"),
-    startAfter(lastVisible),
-    limit(5)
-  );
+function renderNextBatch() {
+  const next = allResults.slice(displayed, displayed + pageSize);
+  next.forEach(renderEventCard);
+  displayed += next.length;
 
-  if (currentSearchTerm) {
-    q = query(
-      eventsRef,
-      where("searchTerms", "array-contains", currentSearchTerm.toLowerCase()),
-      orderBy("event_timestamp_est"),
-      startAfter(lastVisible),
-      limit(5)
-    );
-  }
+  loadMoreBtn.classList.toggle('hidden', displayed >= allResults.length);
+}
 
+loadMoreBtn.addEventListener('click', renderNextBatch);
+
+searchInput.addEventListener('input', (e) => {
+  loadTodayEvents(e.target.value.toLowerCase());
+});
+
+async function checkFutureEvents(search = '') {
+  const q = query(collection(db, 'event_data'), orderBy('event_timestamp_est'));
   const snapshot = await getDocs(q);
-
-  if (snapshot.empty) {
-    return;
-  }
-
-  snapshot.forEach(doc => {
-    const event = doc.data();
-    resultsDiv.innerHTML += renderEventCard(event);
-  });
-
-  lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-  if (snapshot.size < 5) {
-    const loadMoreBtn = document.getElementById("load-more");
-    if (loadMoreBtn) loadMoreBtn.remove();
+  const data = snapshot.docs
+    .map(doc => doc.data())
+    .filter(e =>
+      !isToday(e.event_timestamp_est) &&
+      (e.event_home_team_name.toLowerCase().includes(search) ||
+       e.event_away_team_name.toLowerCase().includes(search))
+    );
+  if (data.length > 0) {
+    allResults = data;
+    displayed = 0;
+    loadMoreBtn.classList.remove('hidden');
   }
 }
 
 function renderEventCard(event) {
-  return `
-    <div class="event-card">
-      <img src="${event.image}" alt="Event Image" />
-      <h3>${event.team_home} vs ${event.team_away}</h3>
-      <p><strong>Date:</strong> ${new Date(event.event_timestamp_est).toLocaleString()}</p>
-      <p><strong>Venue:</strong> ${event.venue}</p>
-      <p><strong>League:</strong> ${event.league}</p>
-    </div>
+  const card = document.createElement('div');
+  card.className = 'event-card';
+
+  const thumb = document.createElement('div');
+  thumb.className = 'event-thumb';
+
+  const left = document.createElement('img');
+  const right = document.createElement('img');
+  left.src = right.src = event.event_img_thumb;
+
+  left.addEventListener('click', () =>
+    openModal(event.event_img_thumb, event.event_home_team_name));
+  right.addEventListener('click', () =>
+    openModal(event.event_img_thumb, event.event_away_team_name));
+
+  thumb.appendChild(left);
+  thumb.appendChild(right);
+
+  const names = document.createElement('div');
+  names.className = 'event-names';
+  names.innerHTML = `
+    <div>${event.event_home_team_name}</div>
+    <div>${event.event_away_team_name}</div>
   `;
+
+  card.appendChild(thumb);
+  card.appendChild(names);
+  results.appendChild(card);
 }
 
-searchInput.addEventListener("input", debounceSearch);
-
-function debounceSearch(e) {
-  clearTimeout(debounceSearch.timer);
-  debounceSearch.timer = setTimeout(() => {
-    fetchEventsForToday(e.target.value.trim());
-  }, 300);
+function openModal(img, team) {
+  modalImg.src = img;
+  modalTeam.textContent = team;
+  modal.classList.remove('hidden');
 }
+
+modalClose.addEventListener('click', () => {
+  modal.classList.add('hidden');
+});
+
+document.getElementById('modal-send').addEventListener('click', () => {
+  alert('Send functionality not implemented yet');
+});
