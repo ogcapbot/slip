@@ -3,29 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>OG Cap Events</title>
+  <title>OG Cap Bot</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <section id="access-section" class="container">
-    <h2>🔐 Enter Access Code</h2>
-    <input id="access-code" type="text" placeholder="Access Code" />
+  <section id="access-section">
+    <h1>🔐 Enter Access Code</h1>
+    <input type="text" id="access-code" placeholder="Access Code" />
     <button id="access-btn">Enter</button>
   </section>
 
-  <section id="main-section" class="container hidden">
+  <section id="main-section" class="hidden">
+    <h1>🎉 Welcome, OG Cap Bot! Search Events Below</h1>
     <h2>🔍 Search Events</h2>
     <input type="text" id="search-input" placeholder="Enter team name..." />
     <div id="events-container"></div>
+    <button id="load-more-btn" class="hidden">Load More</button>
   </section>
 
   <div id="modal" class="modal hidden">
     <div class="modal-content">
-      <img id="modal-image" src="" alt="Event Image" />
-      <h3 id="modal-team-name">Team Name</h3>
+      <img id="modal-image" src="" alt="Event Image"/>
+      <h2 id="modal-team-name">Team Name</h2>
       <div class="modal-buttons">
-        <button id="close-modal">Close</button>
-        <button disabled>Send</button>
+        <button id="modal-close">Close</button>
+        <button id="modal-send">Send</button>
       </div>
     </div>
   </div>
