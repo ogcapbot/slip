@@ -1,120 +1,73 @@
-/* General Reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
   font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
-  color: #000;
+  background-color: #f2f2f2;
+  margin: 0;
+  padding: 0;
+  text-align: center;
 }
 
-/* Container */
-.container {
-  max-width: 480px;
-  margin: auto;
-  padding: 20px;
-  width: 100%;
+section {
+  margin: 20px auto;
+  max-width: 600px;
 }
 
-/* Inputs & Buttons */
-input, button {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
+.hidden {
+  display: none;
+}
+
+input[type="text"] {
+  padding: 10px;
   font-size: 16px;
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
+  box-sizing: border-box;
 }
 
 button {
   background-color: #007bff;
-  color: #fff;
+  color: white;
+  padding: 10px 20px;
+  margin: 10px 5px;
+  font-size: 16px;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
-  border-radius: 4px;
 }
 
 button:hover {
   background-color: #0056b3;
 }
 
-.error-message {
-  color: red;
-  text-align: center;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* Event Card */
 .event-card {
-  background: #fff;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.event-thumb-wrapper {
-  position: relative;
-  width: 100%;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin: 20px auto;
+  padding: 15px;
+  max-width: 100%;
 }
 
 .event-thumb {
   width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-}
-
-.click-zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
+  max-width: 100%;
+  display: flex;
   cursor: pointer;
 }
 
-.click-zone.left {
-  left: 0;
+.event-thumb .half {
+  width: 50%;
+  height: auto;
+  object-fit: cover;
 }
 
-.click-zone.right {
-  right: 0;
-}
-
-.team-labels {
+.team-names {
   display: flex;
   justify-content: space-between;
   font-weight: bold;
-  padding: 10px;
-  background: #eee;
+  margin-top: 10px;
 }
 
-.event-details {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 10px;
-}
-
-.details-left {
-  width: 30%;
-  text-align: center;
-}
-
-.details-right {
-  width: 70%;
-  font-size: 14px;
-}
-
-.event-league-badge {
-  width: 40px;
-  margin-top: 5px;
-}
-
-/* Modal */
 .modal {
   position: fixed;
   top: 0;
@@ -123,54 +76,20 @@ button:hover {
   height: 100%;
   background: rgba(0,0,0,0.6);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 999;
+  align-items: center;
 }
 
 .modal-content {
-  background: #fff;
+  background: white;
   padding: 20px;
-  width: 90%;
-  max-width: 300px;
-  border-radius: 8px;
+  border-radius: 10px;
+  max-width: 90%;
+  width: 300px;
   text-align: center;
 }
 
 .modal img {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 15px;
-}
-
-/* Responsive Fix */
-@media (max-width: 480px) {
-  .container {
-    padding: 10px;
-  }
-
-  input, button {
-    font-size: 16px;
-    padding: 10px;
-  }
-
-  .event-details {
-    flex-direction: column;
-  }
-
-  .details-left, .details-right {
-    width: 100%;
-    text-align: left;
-  }
-
-  .team-labels {
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-  }
+  max-width: 100%;
+  border-radius: 10px;
 }
